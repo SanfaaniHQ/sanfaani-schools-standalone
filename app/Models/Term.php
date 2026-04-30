@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class AcademicSession extends Model
+class Term extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'school_id',
+        'academic_session_id',
         'name',
         'starts_at',
         'ends_at',
@@ -31,8 +31,8 @@ class AcademicSession extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function terms(): HasMany
+    public function academicSession(): BelongsTo
     {
-        return $this->hasMany(Term::class);
+        return $this->belongsTo(AcademicSession::class);
     }
 }

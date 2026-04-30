@@ -7,6 +7,7 @@ use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
 use App\Http\Controllers\School\SubjectController;
+use App\Http\Controllers\School\TermController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -52,6 +53,9 @@ Route::middleware(['auth', 'role:school_admin'])
 
         Route::resource('sessions', AcademicSessionController::class)
             ->parameters(['sessions' => 'academicSession'])
+            ->except(['show', 'destroy']);
+
+        Route::resource('terms', TermController::class)
             ->except(['show', 'destroy']);
     });
 

@@ -16,12 +16,14 @@ class SchoolAdminDashboardController extends Controller
         }
 
         return view('school.dashboard', [
-            'school' => $school,
-            'totalSchoolUsers' => $school->users()->count(),
-            'totalClasses' => $school->schoolClasses()->count(),
-            'totalSubjects' => $school->subjects()->count(),
-            'totalSessions' => $school->academicSessions()->count(),
-            'activeSession' => $school->academicSessions()->where('is_active', true)->first(),
-        ]);
+    'school' => $school,
+    'totalSchoolUsers' => $school->users()->count(),
+    'totalClasses' => $school->schoolClasses()->count(),
+    'totalSubjects' => $school->subjects()->count(),
+    'totalSessions' => $school->academicSessions()->count(),
+    'activeSession' => $school->academicSessions()->where('is_active', true)->first(),
+    'totalTerms' => $school->terms()->count(),
+    'activeTerm' => $school->terms()->where('is_active', true)->first(),
+]);
     }
 }

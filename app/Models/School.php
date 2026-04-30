@@ -40,4 +40,9 @@ class School extends Model
     {
         return $this->hasMany(AcademicSession::class);
     }
+
+    public function terms(): HasMany
+    {
+        return $this->hasMany(Term::class);
+    }
 }
