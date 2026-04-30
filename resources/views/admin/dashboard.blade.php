@@ -23,7 +23,12 @@
                 </p>
             </div>
 
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <p class="text-sm font-medium text-gray-500">Total Schools</p>
+                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSchools }}</p>
+                </div>
+
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Total Users</p>
                     <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalUsers }}</p>
@@ -51,15 +56,16 @@
             </div>
 
             <div class="mt-8 grid gap-6 lg:grid-cols-3">
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <a href="{{ route('admin.schools.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">School Management</h4>
                     <p class="mt-2 text-sm text-gray-600">
                         Add, edit, activate, and manage schools.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming in Step 7
+                        Open module
                     </p>
-                </div>
+                </a>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <h4 class="text-base font-semibold text-gray-900">Result System</h4>
