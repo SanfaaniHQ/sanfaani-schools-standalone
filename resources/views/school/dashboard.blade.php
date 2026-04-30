@@ -35,6 +35,11 @@
                 </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <p class="text-sm font-medium text-gray-500">Students</p>
+                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalStudents }}</p>
+                </div>
+
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Classes</p>
                     <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalClasses }}</p>
                 </div>
@@ -124,15 +129,16 @@
                     </p>
                 </a>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <a href="{{ route('school.students.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Students</h4>
                     <p class="mt-2 text-sm text-gray-600">
-                        Manage student records for this school.
+                        Manage student records for {{ $school->name }}.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming later
+                        Open module
                     </p>
-                </div>
+                </a>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <h4 class="text-base font-semibold text-gray-900">Results</h4>
