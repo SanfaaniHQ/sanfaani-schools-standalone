@@ -40,6 +40,11 @@
                 </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <p class="text-sm font-medium text-gray-500">Results</p>
+                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalResults }}</p>
+                </div>
+
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Classes</p>
                     <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalClasses }}</p>
                 </div>
@@ -140,15 +145,16 @@
                     </p>
                 </a>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <h4 class="text-base font-semibold text-gray-900">Results</h4>
+                <a href="{{ route('school.results.manual.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Manual Result Entry</h4>
                     <p class="mt-2 text-sm text-gray-600">
-                        Enter, review, and publish student results.
+                        Enter and update student scores manually.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming later
+                        Open module
                     </p>
-                </div>
+                </a>
             </div>
 
         </div>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\School\AcademicSessionController;
+use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
 use App\Http\Controllers\School\StudentController;
@@ -61,6 +62,14 @@ Route::middleware(['auth', 'role:school_admin'])
 
         Route::resource('students', StudentController::class)
             ->except(['show', 'destroy']);
+
+        Route::prefix('results')
+            ->name('results.')
+            ->group(function () {
+                Route::resource('manual', ManualResultController::class)
+                    ->parameters(['manual' => 'studentResult'])
+                    ->except(['show', 'destroy']);
+            });
     });
 
 Route::middleware('auth')->group(function () {

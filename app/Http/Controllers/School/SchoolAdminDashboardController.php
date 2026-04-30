@@ -25,6 +25,7 @@ class SchoolAdminDashboardController extends Controller
     'totalTerms' => $school->terms()->count(),
     'activeTerm' => $school->terms()->where('is_active', true)->first(),
     'totalStudents' => $school->students()->count(),
+    'totalResults' => $school->studentResults()->count(),
 ]);
     }
 }
