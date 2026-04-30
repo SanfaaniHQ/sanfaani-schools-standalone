@@ -1,14 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-gray-900">
-                    Super Admin Dashboard
-                </h2>
-                <p class="mt-1 text-sm text-gray-500">
-                    Sanfaani Schools control panel
-                </p>
-            </div>
+        <div>
+            <h2 class="text-xl font-semibold leading-tight text-gray-900">
+                Super Admin Dashboard
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Sanfaani Schools control panel
+            </p>
         </div>
     </x-slot>
 
@@ -19,6 +17,7 @@
                 <h3 class="text-lg font-semibold text-gray-900">
                     Welcome back, {{ auth()->user()->name }}
                 </h3>
+
                 <p class="mt-2 text-sm text-gray-600">
                     This dashboard will control schools, users, students, results, scratch cards, and system settings.
                 </p>
