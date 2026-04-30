@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\School\SchoolAdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -12,6 +13,10 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     if (auth()->user()->hasRole('super_admin')) {
         return redirect()->route('admin.dashboard');
+    }
+
+    if (auth()->user()->hasRole('school_admin')) {
+        return redirect()->route('school.dashboard');
     }
 
     return view('dashboard');
@@ -26,6 +31,14 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::resource('schools', SchoolController::class)
             ->except(['show', 'destroy']);
+    });
+
+Route::middleware(['auth', 'role:school_admin'])
+    ->prefix('school')
+    ->name('school.')
+    ->group(function () {
+        Route::get('/dashboard', [SchoolAdminDashboardController::class, 'index'])
+            ->name('dashboard');
     });
 
 Route::middleware('auth')->group(function () {
