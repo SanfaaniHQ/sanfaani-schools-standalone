@@ -23,7 +23,7 @@
                 </p>
             </div>
 
-            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
+            <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">School</p>
                     <p class="mt-3 text-lg font-semibold text-gray-900">{{ $school->name }}</p>
@@ -42,6 +42,18 @@
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Subjects</p>
                     <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSubjects }}</p>
+                </div>
+
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <p class="text-sm font-medium text-gray-500">Sessions</p>
+                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSessions }}</p>
+                </div>
+
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <p class="text-sm font-medium text-gray-500">Current Session</p>
+                    <p class="mt-3 text-lg font-semibold text-gray-900">
+                        {{ $activeSession?->name ?? 'Not set' }}
+                    </p>
                 </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
@@ -72,6 +84,17 @@
                     <h4 class="text-base font-semibold text-gray-900">Subjects</h4>
                     <p class="mt-2 text-sm text-gray-600">
                         Manage subjects for {{ $school->name }}.
+                    </p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Open module
+                    </p>
+                </a>
+
+                <a href="{{ route('school.sessions.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Academic Sessions</h4>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Manage academic sessions for {{ $school->name }}.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
                         Open module

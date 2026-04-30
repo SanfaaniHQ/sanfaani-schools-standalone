@@ -20,6 +20,8 @@ class SchoolAdminDashboardController extends Controller
             'totalSchoolUsers' => $school->users()->count(),
             'totalClasses' => $school->schoolClasses()->count(),
             'totalSubjects' => $school->subjects()->count(),
+            'totalSessions' => $school->academicSessions()->count(),
+            'activeSession' => $school->academicSessions()->where('is_active', true)->first(),
         ]);
     }
 }

@@ -35,4 +35,9 @@ class School extends Model
     {
         return $this->hasMany(Subject::class);
     }
+
+    public function academicSessions(): HasMany
+    {
+        return $this->hasMany(AcademicSession::class);
+    }
 }

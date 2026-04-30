@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
 use App\Http\Controllers\School\SubjectController;
@@ -47,6 +48,10 @@ Route::middleware(['auth', 'role:school_admin'])
             ->except(['show', 'destroy']);
 
         Route::resource('subjects', SubjectController::class)
+            ->except(['show', 'destroy']);
+
+        Route::resource('sessions', AcademicSessionController::class)
+            ->parameters(['sessions' => 'academicSession'])
             ->except(['show', 'destroy']);
     });
 
