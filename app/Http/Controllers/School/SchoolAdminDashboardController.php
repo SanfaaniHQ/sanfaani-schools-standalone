@@ -19,6 +19,7 @@ class SchoolAdminDashboardController extends Controller
             'school' => $school,
             'totalSchoolUsers' => $school->users()->count(),
             'totalClasses' => $school->schoolClasses()->count(),
+            'totalSubjects' => $school->subjects()->count(),
         ]);
     }
 }
