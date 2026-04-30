@@ -18,6 +18,7 @@ class SchoolAdminDashboardController extends Controller
         return view('school.dashboard', [
             'school' => $school,
             'totalSchoolUsers' => $school->users()->count(),
+            'totalClasses' => $school->schoolClasses()->count(),
         ]);
     }
 }

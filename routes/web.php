@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
+use App\Http\Controllers\School\SchoolClassController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -39,6 +40,10 @@ Route::middleware(['auth', 'role:school_admin'])
     ->group(function () {
         Route::get('/dashboard', [SchoolAdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        Route::resource('classes', SchoolClassController::class)
+            ->parameters(['classes' => 'class'])
+            ->except(['show', 'destroy']);
     });
 
 Route::middleware('auth')->group(function () {
