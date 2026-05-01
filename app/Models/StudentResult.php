@@ -22,6 +22,7 @@ class StudentResult extends Model
         'total_score',
         'grade',
         'remark',
+        'teacher_remark',
         'status',
         'recorded_by',
     ];

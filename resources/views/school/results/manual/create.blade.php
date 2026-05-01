@@ -119,8 +119,22 @@
                         </div>
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Teacher Remark</label>
+                        <textarea name="teacher_remark"
+                                  rows="4"
+                                  placeholder="Optional teacher comment for this subject result"
+                                  class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">{{ old('teacher_remark') }}</textarea>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Optional. Maximum 500 characters.
+                        </p>
+                        @error('teacher_remark')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
-                        Total score, grade, and remark will be calculated automatically after saving.
+                        Total score, grade, and performance remark will be calculated automatically using this school's grading scale after saving.
                     </div>
 
                     <div class="flex items-center justify-end gap-3">

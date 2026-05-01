@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
+use App\Services\ResultGradingService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -68,7 +69,7 @@ class ManualResultController extends Controller
         $data['school_class_id'] = $student->school_class_id;
         $data['recorded_by'] = auth()->id();
 
-        $data = $this->calculateResult($data);
+        $data = $this->calculateResult($school, $data);
 
         StudentResult::create($data);
 
@@ -106,7 +107,7 @@ class ManualResultController extends Controller
             ->firstOrFail();
 
         $data['school_class_id'] = $student->school_class_id;
-        $data = $this->calculateResult($data);
+        $data = $this->calculateResult($school, $data);
 
         $studentResult->update($data);
 
@@ -142,43 +143,22 @@ class ManualResultController extends Controller
             ],
             'ca_score' => ['required', 'numeric', 'min:0', 'max:40'],
             'exam_score' => ['required', 'numeric', 'min:0', 'max:60'],
+            'teacher_remark' => ['nullable', 'string', 'max:500'],
             'status' => ['required', Rule::in(['draft', 'reviewed'])],
         ]);
     }
 
-    private function calculateResult(array $data): array
+    private function calculateResult(School $school, array $data): array
     {
         $total = (float) $data['ca_score'] + (float) $data['exam_score'];
 
+        $grading = app(ResultGradingService::class)->calculate($school, $total);
+
         $data['total_score'] = $total;
-        $data['grade'] = $this->gradeForScore($total);
-        $data['remark'] = $this->remarkForGrade($data['grade']);
+        $data['grade'] = $grading['grade'];
+        $data['remark'] = $grading['remark'];
 
         return $data;
-    }
-
-    private function gradeForScore(float $score): string
-    {
-        return match (true) {
-            $score >= 70 => 'A',
-            $score >= 60 => 'B',
-            $score >= 50 => 'C',
-            $score >= 45 => 'D',
-            $score >= 40 => 'E',
-            default => 'F',
-        };
-    }
-
-    private function remarkForGrade(string $grade): string
-    {
-        return match ($grade) {
-            'A' => 'Excellent',
-            'B' => 'Very Good',
-            'C' => 'Good',
-            'D' => 'Fair',
-            'E' => 'Pass',
-            default => 'Fail',
-        };
     }
 
     private function currentSchoolOrFail(): School

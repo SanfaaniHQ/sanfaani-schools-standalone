@@ -55,4 +55,9 @@ class School extends Model
     {
         return $this->hasMany(StudentResult::class);
     }
+
+    public function gradingScales(): HasMany
+    {
+        return $this->hasMany(GradingScale::class);
+    }
 }

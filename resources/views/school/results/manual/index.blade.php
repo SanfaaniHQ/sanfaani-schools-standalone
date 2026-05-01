@@ -101,7 +101,16 @@
 
                                     <td class="px-6 py-4">
                                         <div class="font-medium text-gray-900">{{ $result->grade }}</div>
-                                        <div class="text-sm text-gray-500">{{ $result->remark }}</div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ $result->remark }}
+                                        </div>
+
+                                        @if ($result->teacher_remark)
+                                            <div class="mt-2 rounded-lg bg-gray-50 p-2 text-xs text-gray-600">
+                                                <span class="font-medium text-gray-700">Teacher:</span>
+                                                {{ $result->teacher_remark }}
+                                            </div>
+                                        @endif
                                     </td>
 
                                     <td class="px-6 py-4">

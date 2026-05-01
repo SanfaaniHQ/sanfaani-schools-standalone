@@ -4,7 +4,9 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\School\AcademicSessionController;
+use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ManualResultController;
+use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
 use App\Http\Controllers\School\StudentController;
@@ -63,12 +65,25 @@ Route::middleware(['auth', 'role:school_admin'])
         Route::resource('students', StudentController::class)
             ->except(['show', 'destroy']);
 
+        Route::resource('grading-scales', GradingScaleController::class)
+            ->parameters(['grading-scales' => 'gradingScale'])
+            ->except(['show', 'destroy']);
+
         Route::prefix('results')
             ->name('results.')
             ->group(function () {
                 Route::resource('manual', ManualResultController::class)
                     ->parameters(['manual' => 'studentResult'])
                     ->except(['show', 'destroy']);
+
+                Route::get('/upload', [ResultUploadController::class, 'index'])
+                    ->name('upload.index');
+
+                Route::post('/upload', [ResultUploadController::class, 'store'])
+                    ->name('upload.store');
+
+                Route::get('/upload/template', [ResultUploadController::class, 'downloadTemplate'])
+                    ->name('upload.template');
             });
     });
 

@@ -112,6 +112,17 @@
                     </p>
                 </a>
 
+                <a href="{{ route('school.grading-scales.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Grading System</h4>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Set custom score ranges, grades, and remarks for this school.
+                    </p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Open module
+                    </p>
+                </a>
+
                 <a href="{{ route('school.sessions.index') }}"
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Academic Sessions</h4>
@@ -150,6 +161,17 @@
                     <h4 class="text-base font-semibold text-gray-900">Manual Result Entry</h4>
                     <p class="mt-2 text-sm text-gray-600">
                         Enter and update student scores manually.
+                    </p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Open module
+                    </p>
+                </a>
+
+                <a href="{{ route('school.results.upload.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">CSV Result Upload</h4>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Upload student results in bulk using a CSV file from Excel.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
                         Open module
