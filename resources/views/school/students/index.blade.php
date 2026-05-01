@@ -10,10 +10,17 @@
                 </p>
             </div>
 
-            <a href="{{ route('school.students.create') }}"
-               class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
-                Add Student
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('school.students.upload.index') }}"
+                   class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Bulk Upload
+                </a>
+
+                <a href="{{ route('school.students.create') }}"
+                   class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                    Add Student
+                </a>
+            </div>
         </div>
     </x-slot>
 

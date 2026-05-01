@@ -9,6 +9,7 @@ use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
+use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
 use App\Http\Controllers\School\SubjectController;
 use App\Http\Controllers\School\TermController;
@@ -61,6 +62,15 @@ Route::middleware(['auth', 'role:school_admin'])
 
         Route::resource('terms', TermController::class)
             ->except(['show', 'destroy']);
+
+        Route::get('/students/upload', [StudentBulkUploadController::class, 'index'])
+            ->name('students.upload.index');
+
+        Route::post('/students/upload', [StudentBulkUploadController::class, 'store'])
+            ->name('students.upload.store');
+
+        Route::get('/students/upload/template', [StudentBulkUploadController::class, 'downloadTemplate'])
+            ->name('students.upload.template');
 
         Route::resource('students', StudentController::class)
             ->except(['show', 'destroy']);

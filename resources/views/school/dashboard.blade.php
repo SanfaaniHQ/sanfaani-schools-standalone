@@ -156,6 +156,17 @@
                     </p>
                 </a>
 
+                <a href="{{ route('school.students.upload.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Student Bulk Upload</h4>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Upload many students into a selected class using CSV.
+                    </p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Open module
+                    </p>
+                </a>
+
                 <a href="{{ route('school.results.manual.index') }}"
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Manual Result Entry</h4>
