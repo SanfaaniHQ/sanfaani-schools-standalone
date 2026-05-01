@@ -6,36 +6,31 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class StudentResult extends Model
+class ResultPublication extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'school_id',
-        'student_id',
         'school_class_id',
-        'subject_id',
         'academic_session_id',
         'term_id',
-        'ca_score',
-        'exam_score',
-        'total_score',
-        'grade',
-        'remark',
-        'teacher_remark',
+        'result_type',
+        'scope_type',
+        'subject_id',
+        'student_id',
         'status',
+        'scheduled_publish_at',
         'published_at',
         'published_by',
         'unpublished_at',
         'unpublished_by',
         'unpublish_reason',
-        'recorded_by',
+        'created_by',
     ];
 
     protected $casts = [
-        'ca_score' => 'decimal:2',
-        'exam_score' => 'decimal:2',
-        'total_score' => 'decimal:2',
+        'scheduled_publish_at' => 'datetime',
         'published_at' => 'datetime',
         'unpublished_at' => 'datetime',
     ];
@@ -45,19 +40,9 @@ class StudentResult extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function student(): BelongsTo
-    {
-        return $this->belongsTo(Student::class);
-    }
-
     public function schoolClass(): BelongsTo
     {
         return $this->belongsTo(SchoolClass::class);
-    }
-
-    public function subject(): BelongsTo
-    {
-        return $this->belongsTo(Subject::class);
     }
 
     public function academicSession(): BelongsTo
@@ -70,6 +55,16 @@ class StudentResult extends Model
         return $this->belongsTo(Term::class);
     }
 
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(Student::class);
+    }
+
     public function publishedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'published_by');
@@ -80,8 +75,8 @@ class StudentResult extends Model
         return $this->belongsTo(User::class, 'unpublished_by');
     }
 
-    public function recordedBy(): BelongsTo
+    public function createdBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'recorded_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

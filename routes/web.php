@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ManualResultController;
+use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
@@ -85,6 +86,15 @@ Route::middleware(['auth', 'role:school_admin'])
                 Route::resource('manual', ManualResultController::class)
                     ->parameters(['manual' => 'studentResult'])
                     ->except(['show', 'destroy']);
+
+                Route::get('/publishing', [ResultPublishingController::class, 'index'])
+                    ->name('publishing.index');
+
+                Route::post('/publishing/publish', [ResultPublishingController::class, 'publish'])
+                    ->name('publishing.publish');
+
+                Route::post('/publishing/unpublish', [ResultPublishingController::class, 'unpublish'])
+                    ->name('publishing.unpublish');
 
                 Route::get('/upload', [ResultUploadController::class, 'index'])
                     ->name('upload.index');
