@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\SchoolController;
+use App\Http\Controllers\Admin\ScratchCardRequestController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\School\AcademicSessionController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
+use App\Http\Controllers\School\ScratchCardController;
 use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
 use App\Http\Controllers\School\SubjectController;
@@ -41,6 +43,31 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::resource('schools', SchoolController::class)
             ->except(['show', 'destroy']);
+
+        Route::prefix('scratch-card-requests')
+            ->name('scratch-card-requests.')
+            ->group(function () {
+                Route::get('/', [ScratchCardRequestController::class, 'index'])
+                    ->name('index');
+
+                Route::get('/{batch}', [ScratchCardRequestController::class, 'show'])
+                    ->name('show');
+
+                Route::post('/{batch}/confirm-payment', [ScratchCardRequestController::class, 'confirmPayment'])
+                    ->name('confirm-payment');
+
+                Route::post('/{batch}/generate', [ScratchCardRequestController::class, 'generate'])
+                    ->name('generate');
+
+                Route::get('/{batch}/download', [ScratchCardRequestController::class, 'download'])
+                    ->name('download');
+
+                Route::post('/{batch}/revoke', [ScratchCardRequestController::class, 'revokeBatch'])
+                    ->name('revoke');
+            });
+
+        Route::post('/scratch-cards/{card}/revoke', [ScratchCardRequestController::class, 'revokeCard'])
+            ->name('scratch-cards.revoke');
     });
 
 Route::middleware(['auth', 'role:school_admin'])
@@ -79,6 +106,25 @@ Route::middleware(['auth', 'role:school_admin'])
         Route::resource('grading-scales', GradingScaleController::class)
             ->parameters(['grading-scales' => 'gradingScale'])
             ->except(['show', 'destroy']);
+
+        Route::prefix('scratch-cards')
+            ->name('scratch-cards.')
+            ->group(function () {
+                Route::get('/', [ScratchCardController::class, 'index'])
+                    ->name('index');
+
+                Route::get('/create', [ScratchCardController::class, 'create'])
+                    ->name('create');
+
+                Route::post('/', [ScratchCardController::class, 'store'])
+                    ->name('store');
+
+                Route::get('/batches/{batch}', [ScratchCardController::class, 'show'])
+                    ->name('show');
+
+                Route::get('/batches/{batch}/download', [ScratchCardController::class, 'download'])
+                    ->name('download');
+            });
 
         Route::prefix('results')
             ->name('results.')

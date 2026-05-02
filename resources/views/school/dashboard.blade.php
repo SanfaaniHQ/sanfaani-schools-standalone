@@ -189,6 +189,17 @@
                     </p>
                 </a>
 
+                <a href="{{ route('school.scratch-cards.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Scratch Cards</h4>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Request result access scratch cards and download generated batches.
+                    </p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Open module
+                    </p>
+                </a>
+
                 <a href="{{ route('school.results.upload.index') }}"
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">CSV Result Upload</h4>

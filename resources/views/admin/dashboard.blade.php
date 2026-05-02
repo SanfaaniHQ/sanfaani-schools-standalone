@@ -77,15 +77,16 @@
                     </p>
                 </div>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <a href="{{ route('admin.scratch-card-requests.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Scratch Cards</h4>
                     <p class="mt-2 text-sm text-gray-600">
-                        Generate PINs and serial numbers for public result checking.
+                        Approve requests, generate cards, and manage revocation.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming later
+                        Open module
                     </p>
-                </div>
+                </a>
             </div>
 
         </div>
