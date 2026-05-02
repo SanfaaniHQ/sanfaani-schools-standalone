@@ -65,4 +65,39 @@ class School extends Model
     {
         return $this->hasMany(ResultPublication::class);
     }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(SchoolSubscription::class);
+    }
+
+    public function featureOverrides(): HasMany
+    {
+        return $this->hasMany(SchoolFeatureOverride::class);
+    }
+
+    public function resultAccessPolicies(): HasMany
+    {
+        return $this->hasMany(SchoolResultAccessPolicy::class);
+    }
+
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function scratchCardBatches(): HasMany
+    {
+        return $this->hasMany(ScratchCardBatch::class);
+    }
+
+    public function scratchCards(): HasMany
+    {
+        return $this->hasMany(ScratchCard::class);
+    }
+
+    public function scratchCardUsages(): HasMany
+    {
+        return $this->hasMany(ScratchCardUsage::class);
+    }
 }

@@ -46,6 +46,21 @@ class Student extends Model
         return $this->hasMany(StudentResult::class);
     }
 
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function usedScratchCards(): HasMany
+    {
+        return $this->hasMany(ScratchCard::class, 'used_by_student_id');
+    }
+
+    public function scratchCardUsages(): HasMany
+    {
+        return $this->hasMany(ScratchCardUsage::class);
+    }
+
     public function fullName(): string
     {
         return trim($this->first_name . ' ' . $this->middle_name . ' ' . $this->last_name);
