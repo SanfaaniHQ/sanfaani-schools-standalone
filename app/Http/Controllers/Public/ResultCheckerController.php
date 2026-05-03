@@ -8,6 +8,7 @@ use App\Models\School;
 use App\Models\Student;
 use App\Models\Term;
 use App\Services\PublicResultAccessService;
+use App\Services\ReportCardService;
 use App\Services\ResultGradingService;
 use App\Services\ScratchCardAccessService;
 use App\Services\AuditLogService;
@@ -240,6 +241,14 @@ class ResultCheckerController extends Controller
             'overall' => $overall,
             'verification' => $verification,
             'verificationUrl' => route('public.results.verify', $verification->verification_code),
+            'reportCard' => app(ReportCardService::class)->displayData(
+                $school,
+                $student,
+                $academicSession,
+                $term,
+                $results,
+                true
+            ),
             'printMode' => $request->boolean('print'),
         ]);
     }

@@ -22,10 +22,12 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         $school = $this->currentSchoolOrFail();
+        $selectedAcademicSessionId = $request->filled('academic_session_id') ? $request->integer('academic_session_id') : null;
+        $selectedClassId = $request->filled('school_class_id') ? $request->integer('school_class_id') : null;
 
         $students = $school->students()
             ->when($request->boolean('include_archived'), fn ($query) => $query->withTrashed())
-            ->with('schoolClass')
+            ->with(['schoolClass', 'currentEnrollment.schoolClass', 'currentEnrollment.academicSession'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->input('search');
 
@@ -37,6 +39,13 @@ class StudentController extends Controller
                         ->orWhere('guardian_phone', 'like', "%{$search}%");
                 });
             })
+            ->when($selectedAcademicSessionId, function ($query) use ($selectedAcademicSessionId, $selectedClassId) {
+                $query->whereHas('classEnrollments', function ($query) use ($selectedAcademicSessionId, $selectedClassId) {
+                    $query->where('academic_session_id', $selectedAcademicSessionId)
+                        ->when($selectedClassId, fn ($query) => $query->where('school_class_id', $selectedClassId));
+                });
+            })
+            ->when(! $selectedAcademicSessionId && $selectedClassId, fn ($query) => $query->where('school_class_id', $selectedClassId))
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -46,6 +55,10 @@ class StudentController extends Controller
             'students' => $students,
             'search' => $request->input('search'),
             'includeArchived' => $request->boolean('include_archived'),
+            'academicSessions' => $school->academicSessions()->latest()->get(),
+            'classes' => $this->classesForSchool($school),
+            'selectedAcademicSessionId' => $selectedAcademicSessionId,
+            'selectedClassId' => $selectedClassId,
         ]);
     }
 
@@ -65,7 +78,7 @@ class StudentController extends Controller
 
         $this->authorizeStudent($student, $school);
 
-        $student->load('schoolClass');
+        $student->load(['schoolClass', 'classEnrollments.academicSession', 'classEnrollments.schoolClass', 'classEnrollments.promotedFrom.schoolClass']);
 
         $academicSessions = $school->academicSessions()
             ->where('status', 'active')
@@ -112,6 +125,9 @@ class StudentController extends Controller
                 ->orderBy('name')
                 ->get(),
             'results' => $results,
+            'classEnrollments' => $student->classEnrollments
+                ->sortByDesc(fn ($enrollment) => $enrollment->academicSession?->starts_at?->timestamp ?? $enrollment->id)
+                ->values(),
             'totalResults' => $student->results()->where('school_id', $school->id)->count(),
             'publishedResults' => $student->results()->where('school_id', $school->id)->where('status', 'published')->count(),
             'reviewedResults' => $student->results()->where('school_id', $school->id)->where('status', 'reviewed')->count(),
@@ -150,7 +166,7 @@ class StudentController extends Controller
             'guardian_phone' => ['nullable', 'string', 'max:50'],
             'guardian_email' => ['nullable', 'email', 'max:150'],
             'address' => ['nullable', 'string'],
-            'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'withdrawn'])],
+            'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'transferred', 'withdrawn'])],
         ]);
 
         $autoGenerate = $request->boolean('auto_generate_admission_number') || blank($data['admission_number'] ?? null);
@@ -229,7 +245,7 @@ class StudentController extends Controller
             'guardian_phone' => ['nullable', 'string', 'max:50'],
             'guardian_email' => ['nullable', 'email', 'max:150'],
             'address' => ['nullable', 'string'],
-            'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'withdrawn'])],
+            'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'transferred', 'withdrawn'])],
         ]);
 
         $student->update($data);

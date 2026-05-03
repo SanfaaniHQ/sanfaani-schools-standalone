@@ -24,9 +24,13 @@ These records define the school structure used by result entry, upload, publishi
 
 Students have school-specific admission numbers, class links, profile details, soft delete support, bulk upload support, and Student 360 views.
 
+## Student Promotion
+
+School Admin users can promote an entire class or selected students into a new academic session and class. Promotion creates enrollment and promotion history records, so old results remain tied to the original class/session. Students may be promoted, repeated, graduated, transferred, withdrawn, or skipped without deleting academic history.
+
 ## Student 360 Profile
 
-The profile brings student identity, class details, and result history together for school staff.
+The profile brings student identity, class details, class enrollment history, promotion source, and result history together for school staff.
 
 ## Result Entry and Upload
 
@@ -39,6 +43,10 @@ Schools can define custom grading ranges and remarks to match conventional, Isla
 ## Result Publishing
 
 Results can be reviewed, published, and unpublished safely. Public result checking only returns published results that meet access rules.
+
+## Report Card Settings
+
+School Admin users can configure report-card presentation separately from academic scores. Settings include the template foundation, colors, header layout, visible school/student fields, result table style, teacher/head teacher titles and names, optional signatures, and automated comment switches. Super Admin plan features can control availability for report card basics, customization, signatures, auto comments, PDF, QR, and templates.
 
 ## Scratch Cards
 
@@ -58,4 +66,4 @@ The public result checker supports English, French, and Arabic language files, i
 
 ## Future Modules
 
-PDF result generation, QR image generation, CBT, assessment/test results, SMS, mobile app, parent portal, student portal, and biometric attendance remain future modules.
+PDF result generation, QR image generation, teacher/class assignment rollover, CBT, assessment/test results, SMS, mobile app, parent portal, student portal, and biometric attendance remain future modules.

@@ -40,12 +40,32 @@
             @endif
 
             <div class="mb-6 rounded-2xl bg-white p-4 shadow-sm">
-                <form method="GET" action="{{ route('school.students.index') }}" class="flex gap-3">
+                <form method="GET" action="{{ route('school.students.index') }}" class="grid gap-3 lg:grid-cols-5">
                     <input type="text"
                            name="search"
                            value="{{ $search }}"
                            placeholder="Search by name, admission number, or guardian phone"
-                           class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                           class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 lg:col-span-2">
+
+                    <select name="academic_session_id"
+                            class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                        <option value="">Current class view</option>
+                        @foreach ($academicSessions as $academicSession)
+                            <option value="{{ $academicSession->id }}" @selected((int) $selectedAcademicSessionId === (int) $academicSession->id)>
+                                {{ $academicSession->name }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <select name="school_class_id"
+                            class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                        <option value="">All classes</option>
+                        @foreach ($classes as $class)
+                            <option value="{{ $class->id }}" @selected((int) $selectedClassId === (int) $class->id)>
+                                {{ $class->name }} {{ $class->section }}
+                            </option>
+                        @endforeach
+                    </select>
 
                     @if ($canManageStudents)
                         <label class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700">
@@ -59,7 +79,7 @@
                         Search
                     </button>
 
-                    @if ($search)
+                    @if ($search || $selectedAcademicSessionId || $selectedClassId)
                         <a href="{{ route('school.students.index') }}"
                            class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             Clear

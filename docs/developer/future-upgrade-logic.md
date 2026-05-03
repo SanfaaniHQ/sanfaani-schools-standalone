@@ -16,6 +16,24 @@ PDF generation can build from the print-friendly result view. Move to queued gen
 
 The system already exposes verification codes and URLs. QR image generation can later render the verification URL as an image on result slips.
 
+## Report Card Designer
+
+The current report-card settings foundation supports safe school-level display choices. A future designer can add more templates, PDF generation, QR placement, watermarks, custom sections, and per-class layouts without storing presentation fields inside `student_results`.
+
+## Promotion Rules Automation
+
+Future promotion automation can suggest actions from result averages, attendance, conduct, or configured pass rules. Suggestions should remain reviewable by School Admin users and should create the same promotion batch/item records as manual promotion.
+
+## Graduation Certificates
+
+Graduation certificate generation can use student identity, final class/session, school branding, and approval records. It should not depend on changing historical result records.
+
+## Teacher/Class Assignment Rollover
+
+Teacher assignment should be a separate session-aware module. A future `teacher_assignments` table can hold `school_id`, `user_id`, nullable `school_class_id`, nullable `subject_id`, `academic_session_id`, nullable `term_id`, `assignment_type`, `status`, and timestamps.
+
+Future rollover should copy assignments from the previous session, support class teacher, subject teacher, and result officer assignments, and avoid re-entering teacher details every session.
+
 ## Paystack and Flutterwave
 
 Gateway work should read from `config/payments.php`. Never hardcode public or secret keys. Add callbacks, webhook verification, idempotency checks, and gateway references before enabling live payments.

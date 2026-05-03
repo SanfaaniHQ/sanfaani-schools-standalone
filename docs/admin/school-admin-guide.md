@@ -13,6 +13,14 @@
 
 Add students manually or upload students in bulk. If an admission number is blank and auto-generation is selected, the system generates a school-specific admission number. Manual admission numbers are allowed when unique inside the school.
 
+## Student Promotion
+
+Use Student Promotions when moving learners into a new academic session or class. Promotion moves students forward without deleting previous results or rewriting old academic records.
+
+To promote an entire class, choose the from session/class, choose the to session/class, select the entire-class option, preview the list, then confirm. To promote selected students, choose the same source and target context, select only the students who should move, review each row action, then confirm.
+
+Students who repeat should use the repeat action and the appropriate target class for the new session. Final-year students can be marked graduated. Students who leave the school can be marked transferred or withdrawn. Students left unchecked or marked skip remain in their previous/current placement.
+
 ## Staff
 
 Create staff users for result officers and future teachers. Staff users should use email or `staff_code`, not admission numbers.
@@ -25,10 +33,16 @@ Use manual result entry for smaller batches or corrections. Use result upload fo
 
 Publish only after review. Unpublish results before major corrections. Published results control what parents can check publicly.
 
+## Report Card Settings
+
+Open Report Card Settings to control how result slips are displayed. These settings change the report-card appearance only; they do not change student scores. Configure colors, header style, visible school/student fields, teacher and head teacher titles/names, optional signatures, and automated comment switches.
+
+Use the preview page before relying on a new layout in production. Advanced PDF, QR, and full report designer features remain future upgrades unless enabled later.
+
 ## Scratch Cards
 
 Request scratch cards from the school portal. Cards become available after Super Admin approval and generation.
 
 ## Student 360 Profile
 
-Use the Student 360 profile to review a student's records, class, and result history.
+Use the Student 360 profile to review a student's records, current class, class history, promotion source, and result history.

@@ -17,10 +17,19 @@
 ## Students and Results
 
 - `students`: student identity, admission number, class, contact/profile data, and soft delete state.
+- `student_class_enrollments`: class placement history per student and academic session.
+- `student_promotion_batches`: promotion operations created by a school user.
+- `student_promotion_items`: per-student promotion actions and outcomes.
 - `admission_number_settings`: school-specific admission number pattern, next number, and reset cycle.
 - `student_results`: scores, grading, teacher remarks, publication status, result type, session, and term.
 - `result_publications`: publication batches and tracking.
 - `result_verifications`: verification codes and links for public result authenticity.
+
+## Report Cards
+
+- `report_card_templates`: reusable report-card template definitions and preview metadata.
+- `school_report_card_settings`: school-specific report-card display, branding, signatures, and comment preferences.
+- `report_card_comment_rules`: optional average-based comments for class teacher or head teacher remarks.
 
 ## Plans and Access
 

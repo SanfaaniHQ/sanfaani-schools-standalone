@@ -1,5 +1,10 @@
 @php
-    $logoUrl = $school->logoUrl();
+    $reportSettings = $reportCard['settings'] ?? null;
+    $showLogo = $reportSettings?->show_logo ?? true;
+    $logoUrl = $showLogo ? $school->logoUrl() : null;
+    $primaryColor = $reportSettings?->primary_color ?: '#111827';
+    $showTeacherRemark = $reportSettings?->show_teacher_remark ?? true;
+    $resultClass = $reportCard['resultClass'] ?? $results->first()?->schoolClass ?? $student->schoolClass;
 
     $formatScore = fn ($value) => number_format((float) $value, 2);
     $printMode = $printMode ?? false;
@@ -47,24 +52,34 @@
                 <div class="print-surface rounded-lg bg-white p-6 shadow-sm sm:p-8">
                     <header class="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex items-center gap-4">
-                            @if ($logoUrl)
-                                <img src="{{ $logoUrl }}"
-                                     alt="{{ $school->name }}"
-                                     class="h-16 w-16 rounded-lg border border-gray-200 object-cover">
-                            @else
-                                <div class="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-900 text-xl font-semibold text-white">
-                                    {{ $school->initials() }}
-                                </div>
+                            @if ($showLogo)
+                                @if ($logoUrl)
+                                    <img src="{{ $logoUrl }}"
+                                         alt="{{ $school->name }}"
+                                         class="h-16 w-16 rounded-lg border border-gray-200 object-cover">
+                                @else
+                                    <div class="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-900 text-xl font-semibold text-white">
+                                        {{ $school->initials() }}
+                                    </div>
+                                @endif
                             @endif
 
                             <div>
                                 <p class="text-sm font-medium uppercase tracking-wide text-gray-500">
                                     {{ __('public_result.result_slip') }}
                                 </p>
-                                <h1 class="text-2xl font-semibold text-gray-900">{{ $school->name }}</h1>
-                                @if ($school->address)
+                                <h1 class="text-2xl font-semibold" style="color: {{ $primaryColor }}">{{ $school->name }}</h1>
+                                @if (($reportSettings?->show_school_address ?? true) && $school->address)
                                     <p class="mt-1 text-sm text-gray-600">{{ $school->address }}</p>
                                 @endif
+                                <p class="mt-1 text-sm text-gray-500">
+                                    @if (($reportSettings?->show_school_phone ?? true) && $school->phone)
+                                        {{ $school->phone }}
+                                    @endif
+                                    @if (($reportSettings?->show_school_email ?? true) && $school->email)
+                                        {{ $school->email }}
+                                    @endif
+                                </p>
                             </div>
                         </div>
 
@@ -87,7 +102,7 @@
                     </header>
 
                     <section class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div class="rounded-lg bg-gray-50 p-4">
+                        <div class="rounded-lg border-l-4 bg-gray-50 p-4" style="border-color: {{ $primaryColor }}">
                             <p class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ __('public_result.student_name') }}</p>
                             <p class="mt-1 font-semibold text-gray-900">{{ $student->fullName() }}</p>
                         </div>
@@ -97,7 +112,7 @@
                         </div>
                         <div class="rounded-lg bg-gray-50 p-4">
                             <p class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ __('public_result.class') }}</p>
-                            <p class="mt-1 font-semibold text-gray-900">{{ $student->schoolClass->name ?? 'N/A' }}</p>
+                            <p class="mt-1 font-semibold text-gray-900">{{ $resultClass?->name ?? 'N/A' }} {{ $resultClass?->section ?? '' }}</p>
                         </div>
                         <div class="rounded-lg bg-gray-50 p-4">
                             <p class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ __('public_result.result_type') }}</p>
@@ -132,7 +147,9 @@
                                         <th class="px-4 py-3 text-left">{{ __('public_result.total') }}</th>
                                         <th class="px-4 py-3 text-left">{{ __('public_result.grade') }}</th>
                                         <th class="px-4 py-3 text-left">{{ __('public_result.remark') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('public_result.teacher_remark') }}</th>
+                                        @if ($showTeacherRemark)
+                                            <th class="px-4 py-3 text-left">{{ __('public_result.teacher_remark') }}</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
@@ -144,7 +161,9 @@
                                             <td class="px-4 py-3 font-semibold text-gray-900">{{ $formatScore($result->total_score) }}</td>
                                             <td class="px-4 py-3 text-gray-700">{{ $result->grade }}</td>
                                             <td class="px-4 py-3 text-gray-700">{{ $result->remark }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $result->teacher_remark ?: __('public_result.not_available') }}</td>
+                                            @if ($showTeacherRemark)
+                                                <td class="px-4 py-3 text-gray-700">{{ $result->teacher_remark ?: __('public_result.not_available') }}</td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -183,6 +202,36 @@
                             </div>
                         </div>
                     </section>
+
+                    @if (($reportSettings?->show_class_teacher ?? true) || ($reportSettings?->show_head_teacher ?? true))
+                        <section class="mt-6 grid gap-4 sm:grid-cols-2">
+                            @if ($reportSettings?->show_class_teacher ?? true)
+                                <div class="rounded-lg border border-gray-200 p-4">
+                                    @if ($reportCard['classTeacherSignatureUrl'] ?? null)
+                                        <img src="{{ $reportCard['classTeacherSignatureUrl'] }}" alt="Class teacher signature" class="mb-3 h-12 object-contain">
+                                    @endif
+                                    <p class="text-sm font-semibold text-gray-900">{{ $reportSettings?->class_teacher_title ?: 'Class Teacher' }}</p>
+                                    <p class="mt-1 text-sm text-gray-600">{{ $reportSettings?->class_teacher_name ?: __('public_result.not_available') }}</p>
+                                    @if ($reportCard['classTeacherComment'] ?? null)
+                                        <p class="mt-3 text-sm text-gray-600">{{ $reportCard['classTeacherComment'] }}</p>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if ($reportSettings?->show_head_teacher ?? true)
+                                <div class="rounded-lg border border-gray-200 p-4">
+                                    @if ($reportCard['headTeacherSignatureUrl'] ?? null)
+                                        <img src="{{ $reportCard['headTeacherSignatureUrl'] }}" alt="Head teacher signature" class="mb-3 h-12 object-contain">
+                                    @endif
+                                    <p class="text-sm font-semibold text-gray-900">{{ $reportSettings?->head_teacher_title ?: 'Head Teacher' }}</p>
+                                    <p class="mt-1 text-sm text-gray-600">{{ $reportSettings?->head_teacher_name ?: __('public_result.not_available') }}</p>
+                                    @if ($reportCard['headTeacherComment'] ?? null)
+                                        <p class="mt-3 text-sm text-gray-600">{{ $reportCard['headTeacherComment'] }}</p>
+                                    @endif
+                                </div>
+                            @endif
+                        </section>
+                    @endif
 
                     <section class="no-print mt-6 grid gap-3 sm:grid-cols-2">
                         <button type="button"

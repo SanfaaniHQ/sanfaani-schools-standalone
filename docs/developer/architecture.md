@@ -20,6 +20,16 @@ Staff login may accept email or staff code. Student portal login is not implemen
 
 Student results link to school, class, student, subject, session, term, and result type. Publishing fields control public availability. Result publications and verifications support publication tracking and future verification.
 
+## Student Enrollment and Promotion Architecture
+
+`students.school_class_id` is a quick current-placement pointer for dashboards and lists. Historical placement belongs in `student_class_enrollments`, keyed by student and academic session. Promotion work creates `student_promotion_batches` and `student_promotion_items` so a school can audit who was promoted, repeated, graduated, transferred, withdrawn, or skipped.
+
+Promotion must never update old `student_results`. Result entry, upload, publishing, and public checking should continue to use their selected class/session/term context instead of assuming the student's current class is the historical result class.
+
+## Report Card Architecture
+
+Report-card display settings are intentionally separate from academic data. `report_card_templates` defines available template foundations, `school_report_card_settings` stores each school's display preferences, and `report_card_comment_rules` stores optional average-based comment rules. `ReportCardService` should prepare display data while leaving `student_results` as score records.
+
 ## Scratch Card Architecture
 
 Scratch card batches represent school requests and generated card groups. Scratch cards hold serial/PIN data and status. Scratch card usages preserve result access history. Cards should be revoked rather than deleted.

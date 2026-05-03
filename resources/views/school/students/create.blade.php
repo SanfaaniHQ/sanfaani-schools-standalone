@@ -114,6 +114,7 @@
                                 <option value="active" @selected(old('status') === 'active')>Active</option>
                                 <option value="inactive" @selected(old('status') === 'inactive')>Inactive</option>
                                 <option value="graduated" @selected(old('status') === 'graduated')>Graduated</option>
+                                <option value="transferred" @selected(old('status') === 'transferred')>Transferred</option>
                                 <option value="withdrawn" @selected(old('status') === 'withdrawn')>Withdrawn</option>
                             </select>
                             @error('status')

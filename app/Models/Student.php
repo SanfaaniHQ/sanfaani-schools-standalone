@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
@@ -46,6 +47,21 @@ class Student extends Model
     public function results(): HasMany
     {
         return $this->hasMany(StudentResult::class);
+    }
+
+    public function classEnrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class);
+    }
+
+    public function currentEnrollment(): HasOne
+    {
+        return $this->hasOne(StudentClassEnrollment::class)->latestOfMany();
+    }
+
+    public function promotionItems(): HasMany
+    {
+        return $this->hasMany(StudentPromotionItem::class);
     }
 
     public function paymentTransactions(): HasMany

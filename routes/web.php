@@ -20,6 +20,7 @@ use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultUploadController;
+use App\Http\Controllers\School\ReportCardSettingController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
 use App\Http\Controllers\School\SchoolProfileController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\School\ScratchCardController;
 use App\Http\Controllers\School\StaffUserController;
 use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
+use App\Http\Controllers\School\StudentPromotionController;
 use App\Http\Controllers\School\SubjectController;
 use App\Http\Controllers\School\TermController;
 use Illuminate\Support\Facades\Route;
@@ -220,6 +222,9 @@ Route::middleware(['auth'])
                         Route::get('/upload/template', [ResultUploadController::class, 'downloadTemplate'])
                             ->name('upload.template');
                     });
+
+                Route::get('/report-card-settings/preview', [ReportCardSettingController::class, 'preview'])
+                    ->name('report-card-settings.preview');
             });
 
         Route::middleware('role:school_admin')
@@ -256,6 +261,27 @@ Route::middleware(['auth'])
 
                 Route::patch('/profile', [SchoolProfileController::class, 'update'])
                     ->name('profile.update');
+
+                Route::get('/student-promotions', [StudentPromotionController::class, 'index'])
+                    ->name('student-promotions.index');
+
+                Route::get('/student-promotions/create', [StudentPromotionController::class, 'create'])
+                    ->name('student-promotions.create');
+
+                Route::post('/student-promotions/preview', [StudentPromotionController::class, 'preview'])
+                    ->name('student-promotions.preview');
+
+                Route::post('/student-promotions', [StudentPromotionController::class, 'store'])
+                    ->name('student-promotions.store');
+
+                Route::get('/student-promotions/history', [StudentPromotionController::class, 'history'])
+                    ->name('student-promotions.history');
+
+                Route::get('/report-card-settings', [ReportCardSettingController::class, 'edit'])
+                    ->name('report-card-settings.edit');
+
+                Route::patch('/report-card-settings', [ReportCardSettingController::class, 'update'])
+                    ->name('report-card-settings.update');
 
                 Route::delete('/students/{student}', [StudentController::class, 'destroy'])
                     ->name('students.destroy');

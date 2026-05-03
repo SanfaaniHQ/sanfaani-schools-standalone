@@ -41,6 +41,23 @@ class SchoolFeatureAccessService
         return null;
     }
 
+    public function isExplicitlyDisabled(School $school, string $featureKey): bool
+    {
+        $override = $this->activeOverride($school, $featureKey);
+
+        if ($override) {
+            return ! (bool) $override->is_enabled;
+        }
+
+        $planFeature = $this->activePlanFeature($school, $featureKey);
+
+        if ($planFeature) {
+            return ! (bool) $planFeature->is_enabled;
+        }
+
+        return false;
+    }
+
     private function activeOverride(School $school, string $featureKey)
     {
         return $school->featureOverrides()

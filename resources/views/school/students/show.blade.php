@@ -75,6 +75,11 @@
                     Academic Profile
                 </a>
 
+                <a href="#class-history"
+                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                    Class History
+                </a>
+
                 <a href="#result-profile"
                    class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
                     Result Profile
@@ -220,6 +225,55 @@
                             <span class="text-sm text-gray-500">No active subjects have been created yet.</span>
                         @endforelse
                     </div>
+                </div>
+            </div>
+
+            <div id="class-history" class="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm">
+                <div class="border-b border-gray-100 px-6 py-4">
+                    <h3 class="text-base font-semibold text-gray-900">Class History</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Promotion moves students into a new academic session/class without deleting previous results.
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Academic Session</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Class</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Enrolled At</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Promotion Source</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            @forelse ($classEnrollments as $enrollment)
+                                <tr>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $enrollment->academicSession->name ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                        {{ $enrollment->schoolClass->name ?? 'N/A' }} {{ $enrollment->schoolClass->section ?? '' }}
+                                    </td>
+                                    <td class="px-6 py-4"><x-status-badge :status="$enrollment->status" /></td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $enrollment->enrolled_at?->format('d M Y') ?? 'Backfilled/Not set' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        @if ($enrollment->promotedFrom)
+                                            From {{ $enrollment->promotedFrom->schoolClass->name ?? 'previous class' }}
+                                        @else
+                                            Original placement
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-10 text-center">
+                                        <p class="text-sm font-medium text-gray-900">No enrollment history yet.</p>
+                                        <p class="mt-1 text-sm text-gray-500">Promotion records will appear here after the first promotion run.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

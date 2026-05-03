@@ -105,6 +105,7 @@
                                 <option value="active" @selected(old('status', $student->status) === 'active')>Active</option>
                                 <option value="inactive" @selected(old('status', $student->status) === 'inactive')>Inactive</option>
                                 <option value="graduated" @selected(old('status', $student->status) === 'graduated')>Graduated</option>
+                                <option value="transferred" @selected(old('status', $student->status) === 'transferred')>Transferred</option>
                                 <option value="withdrawn" @selected(old('status', $student->status) === 'withdrawn')>Withdrawn</option>
                             </select>
                             @error('status')

@@ -63,6 +63,26 @@ class School extends Model
         return $this->hasMany(Student::class);
     }
 
+    public function studentClassEnrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class);
+    }
+
+    public function studentPromotionBatches(): HasMany
+    {
+        return $this->hasMany(StudentPromotionBatch::class);
+    }
+
+    public function reportCardSetting(): HasOne
+    {
+        return $this->hasOne(SchoolReportCardSetting::class);
+    }
+
+    public function reportCardCommentRules(): HasMany
+    {
+        return $this->hasMany(ReportCardCommentRule::class);
+    }
+
     public function admissionNumberSetting(): HasOne
     {
         return $this->hasOne(AdmissionNumberSetting::class);

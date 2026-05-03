@@ -32,6 +32,7 @@
             ? [
                 ['title' => 'Students', 'description' => 'Manage student records.', 'href' => route('school.students.index')],
                 ['title' => 'Student Bulk Upload', 'description' => 'Upload students with CSV.', 'href' => route('school.students.upload.index')],
+                ['title' => 'Student Promotions', 'description' => 'Promote classes, repeat students, and record graduation or transfers.', 'href' => route('school.student-promotions.index')],
                 ['title' => 'Student Profiles', 'description' => 'Open Student 360 profiles from the student list.', 'href' => route('school.students.index')],
             ]
             : [
@@ -44,6 +45,10 @@
             ['title' => 'CSV Result Upload', 'description' => 'Upload class-based result CSV files.', 'href' => route('school.results.upload.index')],
             ['title' => 'Result Publishing', 'description' => $isSchoolAdmin ? 'Publish or unpublish checked results.' : 'View publishing status and history.', 'href' => route('school.results.publishing.index')],
         ];
+
+        if ($isSchoolAdmin) {
+            $resultModules[] = ['title' => 'Report Card Settings', 'description' => 'Configure report card display, signatures, and comments.', 'href' => route('school.report-card-settings.edit')];
+        }
 
         $accessModules = $isSchoolAdmin
             ? [

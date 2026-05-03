@@ -39,6 +39,14 @@ The landing page should show the actual product value immediately: result manage
 
 Dashboard pages should group modules by workflow: setup, students, results, publishing, scratch cards, payments, and settings.
 
+## Student Promotion Pages
+
+Promotion screens should make the source session/class and target session/class obvious. Preview counts should show promoted, repeated, graduated, transferred, withdrawn, and skipped students before the final confirmation. Use clear warnings that published results and historical records are preserved.
+
+## Report Card Settings Pages
+
+Report-card settings should be grouped by Branding, Header Layout, Student Information, Result Table, Signatures, Automated Comments, and Preview. Preview should look close to a real report card while using sample data when no result exists.
+
 ## Loading and Confirmation
 
 Global JavaScript prevents double submits, disables submit buttons, applies loading text, and respects confirmation prompts.

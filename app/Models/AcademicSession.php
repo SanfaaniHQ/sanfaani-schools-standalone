@@ -37,4 +37,9 @@ class AcademicSession extends Model
     {
         return $this->hasMany(Term::class);
     }
+
+    public function studentClassEnrollments(): HasMany
+    {
+        return $this->hasMany(StudentClassEnrollment::class);
+    }
 }
