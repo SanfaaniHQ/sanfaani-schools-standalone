@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', env('SANFAANI_PLATFORM_NAME', 'Sanfaani Schools')),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', env('SANFAANI_PRODUCT_URL', 'https://schools.sanfaani.net')),
 
     /*
     |--------------------------------------------------------------------------

@@ -1,8 +1,11 @@
 @php
+    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
+    $currency = config('sanfaani.default_currency', 'NGN');
+
     $plans = [
         [
             'name' => 'Free Trial',
-            'price' => '&#8358;0',
+            'price' => $currency . ' 0',
             'note' => '30 days',
             'features' => ['Basic setup', 'Limited students if feature access exists', 'Standard modules', 'Onboarding guidance'],
         ],
@@ -33,7 +36,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Pricing - Sanfaani Schools</title>
+        <title>Pricing - {{ $platformName }}</title>
         <meta name="description" content="Flexible Sanfaani Schools pricing direction for pilot schools.">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -57,7 +60,7 @@
                         @foreach ($plans as $plan)
                             <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                                 <h2 class="text-xl font-semibold text-gray-950">{{ $plan['name'] }}</h2>
-                                <p class="mt-4 text-3xl font-semibold text-gray-950">{!! $plan['price'] !!}</p>
+                                <p class="mt-4 text-3xl font-semibold text-gray-950">{{ $plan['price'] }}</p>
                                 <p class="mt-2 text-sm text-gray-500">{{ $plan['note'] }}</p>
                                 <ul class="mt-6 space-y-3 text-sm text-gray-700">
                                     @foreach ($plan['features'] as $feature)
@@ -72,7 +75,7 @@
                     </div>
 
                     <div class="mt-10 rounded-2xl bg-gray-50 p-6 text-center text-sm leading-6 text-gray-600">
-                        Pricing can be structured per student, per term, per session, or custom school agreement. No final fixed production price is hard-coded in the app yet.
+                        Pricing can be structured per student, per term, per session, or by custom school agreement.
                     </div>
                 </div>
             </section>

@@ -1,4 +1,6 @@
 @php
+    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
+
     $groups = [
         [
             'title' => 'School Setup',
@@ -18,12 +20,12 @@
         [
             'title' => 'Access & Payments',
             'body' => 'Start with scratch card access and grow into flexible payment models.',
-            'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'School-paid access coming soon', 'Parent-paid access coming soon'],
+            'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'School-paid access - Coming Soon', 'Parent-paid access - Coming Soon'],
         ],
         [
             'title' => 'Future Modules',
             'body' => 'The foundation is ready for broader school operations.',
-            'items' => ['PDF result', 'QR verification', 'CBT', 'Assessment/test results', 'SMS', 'Mobile app', 'Biometric attendance'],
+            'items' => ['PDF result - Coming Soon', 'QR verification - Coming Soon', 'CBT - Coming Soon', 'Assessment/Test results - Coming Soon', 'SMS - Coming Soon', 'Mobile app - Coming Soon', 'Biometric attendance - Coming Soon'],
         ],
     ];
 @endphp
@@ -34,7 +36,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Features - Sanfaani Schools</title>
+        <title>Features - {{ $platformName }}</title>
         <meta name="description" content="Explore Sanfaani Schools features for setup, students, results, access, and future modules.">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -50,7 +52,7 @@
                             Serious result management for schools that need flexibility.
                         </h1>
                         <p class="mt-5 text-lg leading-8 text-gray-600">
-                            Sanfaani Schools keeps student admission numbers for students, staff codes for staff, and school codes for school identity. That separation keeps the platform clean as schools grow.
+                            {{ $platformName }} keeps student admission numbers for students, staff codes for staff, and school codes for school identity. That separation keeps the platform clean as schools grow.
                         </p>
                     </div>
 

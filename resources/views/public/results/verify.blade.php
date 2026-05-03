@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Verify Result - {{ config('app.name', 'Sanfaani Schools') }}</title>
+        <title>Verify Result - {{ config('sanfaani.platform_name', 'Sanfaani Schools') }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-gray-100 font-sans text-gray-900 antialiased">

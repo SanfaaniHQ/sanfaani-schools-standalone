@@ -1,11 +1,15 @@
+@php
+    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Request Demo - Sanfaani Schools</title>
-        <meta name="description" content="Request a Sanfaani Schools demo for result management and parent result checking.">
+        <title>Request Demo - {{ $platformName }}</title>
+        <meta name="description" content="Request a {{ $platformName }} demo for result management and parent result checking.">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-white font-sans text-gray-950 antialiased">
@@ -17,7 +21,7 @@
                     <div>
                         <p class="text-sm font-semibold text-gray-600">Request Demo</p>
                         <h1 class="mt-4 text-4xl font-semibold leading-tight text-gray-950 sm:text-5xl">
-                            See Sanfaani Schools with your school workflow in mind.
+                            See {{ $platformName }} with your school workflow in mind.
                         </h1>
                         <p class="mt-5 text-lg leading-8 text-gray-600">
                             Tell us your school type, student size, and preferred demo time. We will walk through setup, upload, publishing, scratch cards, and result checking.

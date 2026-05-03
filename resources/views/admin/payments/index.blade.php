@@ -4,8 +4,8 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             @if (session('success')) <div class="mb-6 rounded-xl bg-green-50 p-4 text-sm text-green-700">{{ session('success') }}</div> @endif
             <div class="mb-6 grid gap-4 md:grid-cols-3">
-                <div class="rounded-2xl bg-white p-5 shadow-sm"><h3 class="font-semibold">Paystack Auto Verification</h3><p class="mt-1 text-sm text-gray-500">Coming Soon</p></div>
-                <div class="rounded-2xl bg-white p-5 shadow-sm"><h3 class="font-semibold">Flutterwave Auto Verification</h3><p class="mt-1 text-sm text-gray-500">Coming Soon</p></div>
+                <div class="rounded-2xl bg-white p-5 shadow-sm"><h3 class="font-semibold">Paystack Auto Payment</h3><p class="mt-1 text-sm text-gray-500">{{ config('payments.paystack.enabled') ? 'Configured through environment settings' : 'Coming Soon / Not enabled' }}</p></div>
+                <div class="rounded-2xl bg-white p-5 shadow-sm"><h3 class="font-semibold">Flutterwave Auto Payment</h3><p class="mt-1 text-sm text-gray-500">{{ config('payments.flutterwave.enabled') ? 'Configured through environment settings' : 'Coming Soon / Not enabled' }}</p></div>
                 <div class="rounded-2xl bg-white p-5 shadow-sm"><h3 class="font-semibold">Parent Direct Result Payment</h3><p class="mt-1 text-sm text-gray-500">Coming Soon</p></div>
             </div>
             <div class="overflow-hidden rounded-2xl bg-white shadow-sm">

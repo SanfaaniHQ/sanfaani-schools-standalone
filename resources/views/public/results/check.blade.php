@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ __('public_result.check_result') }} - {{ config('app.name', 'Sanfaani Schools') }}</title>
+        <title>{{ __('public_result.check_result') }} - {{ config('sanfaani.platform_name', 'Sanfaani Schools') }}</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -15,7 +15,7 @@
             <div class="mx-auto max-w-3xl">
                 <div class="mb-6 text-center">
                     <p class="text-sm font-medium uppercase tracking-wide text-gray-500">
-                        {{ config('app.name', 'Sanfaani Schools') }}
+                        {{ config('sanfaani.platform_name', 'Sanfaani Schools') }}
                     </p>
                     <h1 class="mt-2 text-3xl font-semibold text-gray-900">
                         {{ __('public_result.check_result') }}
@@ -190,6 +190,7 @@
                         </div>
 
                         <button type="submit"
+                                data-loading-text="{{ __('public_result.view_result') }}..."
                                 class="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700">
                             {{ __('public_result.view_result') }}
                         </button>

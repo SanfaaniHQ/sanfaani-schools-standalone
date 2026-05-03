@@ -1,9 +1,12 @@
 @php
+    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
+
     $trustBadges = [
-        'Built for Nigerian and African schools',
-        'Supports conventional schools and madrasahs',
-        'Flexible grading and result access',
-        'English, French, Arabic-ready',
+        'Built for African schools',
+        'Madrasah-friendly',
+        'Flexible grading',
+        'Scratch card and school-paid access ready',
+        'English, French, and Arabic-ready',
     ];
 
     $quickActions = [
@@ -14,39 +17,39 @@
     ];
 
     $painPoints = [
-        'Excel result work is slow',
-        'Parents disturb staff for results',
-        'Schools use different grading styles',
-        'Scratch cards and payments are hard to manage manually',
-        'Result publishing mistakes damage trust',
-        'Small schools need affordability and flexibility',
+        'Result preparation takes too much time.',
+        'Parents keep requesting results manually.',
+        'Schools use different grading styles.',
+        'Manual scratch cards are hard to track.',
+        'Publishing mistakes can damage trust.',
+        'Small schools need flexible pricing and simple tools.',
     ];
 
     $solutions = [
-        'manage student records',
-        'upload results by class',
-        'apply custom grading scales',
+        'set up classes, subjects, sessions, and terms',
+        'add students manually or by bulk upload',
+        'enter or upload results by class',
+        'apply the school\'s custom grading system',
         'add teacher remarks',
-        'publish and unpublish results safely',
-        'issue scratch cards through approval flow',
+        'review, publish, and unpublish results safely',
+        'control result access through scratch cards or future school-paid access',
         'let parents check results online',
-        'prepare for PDF and QR verification',
     ];
 
     $features = [
         'Student Management',
-        'Class & Subject Setup',
-        'Flexible Grading Scales',
+        'Class and Subject Setup',
+        'Flexible Grading System',
         'Manual Result Entry',
         'CSV Result Upload',
-        'Result Publishing',
-        'Scratch Card Requests',
+        'Result Publishing Control',
+        'Scratch Card Request and Approval',
         'Public Result Checker',
         'Student 360 Profile',
-        'Multilingual Ready',
+        'Multilingual Foundation',
         'PDF Result - Coming Soon',
         'QR Verification - Coming Soon',
-        'CBT & Assessment Results - Coming Soon',
+        'CBT and Assessment Results - Coming Soon',
     ];
 
     $steps = [
@@ -83,8 +86,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Sanfaani Schools - School Result Management SaaS</title>
-        <meta name="description" content="Smart school results, portals, and access control for modern African schools.">
+        <title>{{ $platformName }} - School Result Management SaaS</title>
+        <meta name="description" content="Smart result management and online result checking for modern schools.">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-white font-sans text-gray-950 antialiased">
@@ -94,9 +97,9 @@
             <section class="border-b border-gray-100 bg-white">
                 <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
                     <div class="mx-auto max-w-4xl text-center">
-                        <p class="text-sm font-semibold text-gray-600">Sanfaani Schools</p>
+                        <p class="text-sm font-semibold text-gray-600">{{ $platformName }}</p>
                         <h1 class="mt-5 text-4xl font-semibold leading-tight text-gray-950 sm:text-6xl">
-                            Smart school results, portals, and access control for modern African schools.
+                            Smart result management and online result checking for modern schools.
                         </h1>
                         <p class="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-600">
                             Manage students, upload results, publish securely, and let parents check results online with flexible access options built for real school operations.
@@ -200,7 +203,7 @@
                         <h2 class="mt-3 text-3xl font-semibold text-gray-950">A focused operating system for school results.</h2>
                         <div class="mt-8 grid gap-3">
                             @foreach ($solutions as $solution)
-                                <div class="rounded-2xl bg-white p-4 text-sm font-medium text-gray-700 shadow-sm">Sanfaani Schools helps schools {{ $solution }}.</div>
+                                <div class="rounded-2xl bg-white p-4 text-sm font-medium text-gray-700 shadow-sm">{{ $platformName }} helps schools {{ $solution }}.</div>
                             @endforeach
                         </div>
                     </div>
@@ -217,7 +220,7 @@
                         @foreach ($features as $feature)
                             <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                                 <h3 class="text-base font-semibold text-gray-950">{{ $feature }}</h3>
-                                <p class="mt-2 text-sm leading-6 text-gray-600">A clean workflow that supports school teams without forcing student identity rules onto staff accounts.</p>
+                                <p class="mt-2 text-sm leading-6 text-gray-600">A clean workflow that supports student records, staff identities, and result operations with professional separation.</p>
                             </div>
                         @endforeach
                     </div>

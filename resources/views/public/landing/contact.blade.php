@@ -1,11 +1,17 @@
+@php
+    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
+    $productUrl = config('sanfaani.product_url', 'https://schools.sanfaani.net');
+    $salesEmail = config('sanfaani.sales_email', 'sales@sanfaani.net');
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>Contact Sales - Sanfaani Schools</title>
-        <meta name="description" content="Contact Sanfaani Schools for school result management and result checker setup.">
+        <title>Contact Sales - {{ $platformName }}</title>
+        <meta name="description" content="Contact {{ $platformName }} for school result management and result checker setup.">
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-white font-sans text-gray-950 antialiased">
@@ -24,7 +30,7 @@
                         </p>
 
                         <div class="mt-8 grid gap-4 sm:grid-cols-2">
-                            @foreach (['schools.sanfaani.net', 'Sanfaani SaaS', 'Conventional schools', 'Islamic and madrasah support'] as $item)
+                            @foreach ([parse_url($productUrl, PHP_URL_HOST) ?: $productUrl, $salesEmail, 'Conventional schools', 'Islamic and madrasah support'] as $item)
                                 <div class="rounded-2xl bg-gray-50 p-5 text-sm font-semibold text-gray-800">{{ $item }}</div>
                             @endforeach
                         </div>
