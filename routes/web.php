@@ -14,6 +14,7 @@ use App\Http\Controllers\Public\LandingPageController;
 use App\Http\Controllers\Public\ResultCheckerController;
 use App\Http\Controllers\Public\ResultVerificationController;
 use App\Http\Controllers\School\AcademicSessionController;
+use App\Http\Controllers\School\AdmissionNumberSettingController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ResultPublishingController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
 use App\Http\Controllers\School\ScratchCardController;
+use App\Http\Controllers\School\StaffUserController;
 use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
 use App\Http\Controllers\School\SubjectController;
@@ -220,6 +222,16 @@ Route::middleware(['auth'])
                     ->except(['show', 'destroy']);
 
                 Route::resource('terms', TermController::class)
+                    ->except(['show', 'destroy']);
+
+                Route::get('/admission-number-settings', [AdmissionNumberSettingController::class, 'edit'])
+                    ->name('admission-number-settings.edit');
+
+                Route::put('/admission-number-settings', [AdmissionNumberSettingController::class, 'update'])
+                    ->name('admission-number-settings.update');
+
+                Route::resource('staff', StaffUserController::class)
+                    ->parameters(['staff' => 'staff'])
                     ->except(['show', 'destroy']);
 
                 Route::resource('students', StudentController::class)

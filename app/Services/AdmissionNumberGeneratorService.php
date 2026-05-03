@@ -31,6 +31,8 @@ class AdmissionNumberGeneratorService
                 ->firstOrFail();
         }
 
+        $setting = $this->applyResetCycle($setting);
+
         $nextNumber = max(1, (int) $setting->next_number);
         $paddingLength = max(1, (int) $setting->padding_length);
 
@@ -49,6 +51,20 @@ class AdmissionNumberGeneratorService
         return $candidate;
     }
 
+    public function previewForSetting(AdmissionNumberSetting $setting): string
+    {
+        return $this->formatNumber(
+            $setting,
+            max(1, (int) $setting->next_number),
+            max(1, (int) $setting->padding_length)
+        );
+    }
+
+    public function defaultPrefixForSchool(School $school): string
+    {
+        return $this->defaultPrefix($school);
+    }
+
     private function formatNumber(AdmissionNumberSetting $setting, int $nextNumber, int $paddingLength): string
     {
         $separator = $setting->separator ?? '/';
@@ -60,6 +76,36 @@ class AdmissionNumberGeneratorService
         ], fn ($part) => $part !== null && $part !== '');
 
         return implode($separator, $parts);
+    }
+
+    private function applyResetCycle(AdmissionNumberSetting $setting): AdmissionNumberSetting
+    {
+        if ($setting->reset_cycle !== 'yearly') {
+            return $setting;
+        }
+
+        $resetKey = now()->format('Y');
+        $metadata = $setting->metadata ?? [];
+
+        if (! array_key_exists('last_reset_key', $metadata)) {
+            $metadata['last_reset_key'] = $resetKey;
+            $setting->update(['metadata' => $metadata]);
+
+            return $setting->fresh();
+        }
+
+        if (($metadata['last_reset_key'] ?? null) === $resetKey) {
+            return $setting;
+        }
+
+        $metadata['last_reset_key'] = $resetKey;
+
+        $setting->update([
+            'next_number' => 1,
+            'metadata' => $metadata,
+        ]);
+
+        return $setting->fresh();
     }
 
     private function yearSegment(?string $format): ?string

@@ -15,6 +15,16 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    @if (Auth::user()->hasRole('school_admin'))
+                        <x-nav-link :href="route('school.staff.index')" :active="request()->routeIs('school.staff.*')">
+                            Staff
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
+                            Admission Numbers
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -70,6 +80,16 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if (Auth::user()->hasRole('school_admin'))
+                <x-responsive-nav-link :href="route('school.staff.index')" :active="request()->routeIs('school.staff.*')">
+                    Staff
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
+                    Admission Numbers
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
