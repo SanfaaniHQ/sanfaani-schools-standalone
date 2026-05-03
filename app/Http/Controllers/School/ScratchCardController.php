@@ -8,8 +8,11 @@ use App\Models\ScratchCardBatch;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Term;
+use App\Notifications\ScratchCardRequestStatusNotification;
 use App\Services\AuditLogService;
+use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -124,6 +127,21 @@ class ScratchCardController extends Controller
             'quantity' => $batch->quantity,
             'payment_method' => $batch->payment_method,
         ], request: $request);
+
+        if (app(NotificationPreferenceService::class)->emailEnabled('scratch_card_request_submitted', $school, auth()->user(), 'school_admin')) {
+            try {
+                auth()->user()->notify(new ScratchCardRequestStatusNotification(
+                    $batch,
+                    'submitted',
+                    'Your request has been submitted for Super Admin review.'
+                ));
+            } catch (\Throwable $exception) {
+                Log::warning('Scratch card submitted notification failed.', [
+                    'batch_id' => $batch->id,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
 
         return redirect()
             ->route('school.scratch-cards.index')

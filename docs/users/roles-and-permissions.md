@@ -18,11 +18,11 @@ Teachers should be created as staff users with email or `staff_code`. A future t
 
 ## Parent Future Role
 
-Parents do not need portal accounts for the pilot. They currently use the public result checker with student admission number and scratch card access.
+Parents do not need portal accounts for the production launch. They currently use the public result checker with student admission number and scratch card access.
 
 ## Student Future Role
 
-Students do not have dashboard login in the pilot. Student identity is the school-specific admission number. A later student portal can use a password or linked user account without changing staff identity rules.
+Students do not have dashboard login in the production launch. Student identity is the school-specific admission number. A later student portal can use a password or linked user account without changing staff identity rules.
 
 ## Identity Boundary
 

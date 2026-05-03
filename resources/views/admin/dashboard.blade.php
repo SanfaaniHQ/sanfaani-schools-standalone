@@ -5,7 +5,7 @@
                 Super Admin Dashboard
             </h2>
             <p class="mt-1 text-sm text-gray-500">
-                Sanfaani Schools control panel
+                    Production control panel for {{ $platformSettings->platform_name }}
             </p>
         </div>
     </x-slot>
@@ -19,7 +19,7 @@
                 </h3>
 
                 <p class="mt-2 text-sm text-gray-600">
-                    This dashboard will control schools, users, students, results, scratch cards, and system settings.
+                        Monitor schools, users, results, scratch cards, payments, audit logs, and launch settings.
                 </p>
             </div>
 
@@ -85,6 +85,17 @@
                     </p>
                 </a>
 
+                <a href="{{ route('admin.platform-settings.edit') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Platform Settings</h4>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Update logos, favicon, login background, URLs, and support contacts.
+                    </p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+                        Open module
+                    </p>
+                </a>
+
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <h4 class="text-base font-semibold text-gray-900">Result System</h4>
                     <p class="mt-2 text-sm text-gray-600">
@@ -109,7 +120,7 @@
                 <a href="{{ route('admin.subscription-plans.index') }}"
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Plans & Features</h4>
-                    <p class="mt-2 text-sm text-gray-600">Manage plans, feature limits, and pilot access.</p>
+                    <p class="mt-2 text-sm text-gray-600">Manage plans, feature limits, and production access.</p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                 </a>
 

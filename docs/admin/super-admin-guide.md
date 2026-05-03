@@ -20,11 +20,11 @@ Scratch cards should be revoked, not deleted.
 
 ## Payments
 
-Manual payment is the active pilot flow. Paystack Auto Payment and Flutterwave Auto Payment are prepared through environment configuration but remain disabled until production keys and webhook handling are enabled.
+Manual payment is the active production launch flow. Paystack Auto Payment and Flutterwave Auto Payment are prepared through environment configuration but remain disabled until production keys and webhook handling are enabled.
 
 ## Plans and Feature Access
 
-Use subscription plans, feature overrides, and result access policies to shape pilot agreements. Avoid hardcoding commercial rules into views.
+Use subscription plans, feature overrides, and result access policies to shape production agreements. Avoid hardcoding commercial rules into views.
 
 ## Audit and Security
 

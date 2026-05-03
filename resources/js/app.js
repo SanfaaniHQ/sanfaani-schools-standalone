@@ -32,7 +32,8 @@ document.addEventListener('submit', (event) => {
         return;
     }
 
-    const submitter = form.querySelector('[data-submit-clicked="true"]')
+    const submitter = event.submitter
+        || form.querySelector('[data-submit-clicked="true"]')
         || form.querySelector('button[type="submit"], input[type="submit"]');
 
     const confirmMessage = submitter?.dataset.confirm || form.dataset.confirm;
@@ -40,6 +41,7 @@ document.addEventListener('submit', (event) => {
     if (confirmMessage && !window.confirm(confirmMessage)) {
         event.preventDefault();
         submitter?.removeAttribute('data-submit-clicked');
+        delete form.dataset.submitting;
         return;
     }
 

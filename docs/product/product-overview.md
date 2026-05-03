@@ -41,7 +41,7 @@ Sanfaani Schools is a school management and result checking platform for schools
 
 ## Business Model
 
-The pilot can support flexible pricing by student, term, session, or custom school agreement. Manual payment and scratch card access are active. Paystack, Flutterwave, parent direct payment, and school-paid result access are prepared as future upgrade paths.
+The production launch can support flexible pricing by student, term, session, or custom school agreement. Manual payment and scratch card access are active. Paystack, Flutterwave, parent direct payment, and school-paid result access are prepared as future upgrade paths.
 
 ## Roadmap
 

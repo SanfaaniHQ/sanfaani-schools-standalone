@@ -5,7 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ __('public_result.check_result') }} - {{ config('sanfaani.platform_name', 'Sanfaani Schools') }}</title>
+        <title>{{ __('public_result.check_result') }} - {{ $platformSettings->platform_name }}</title>
+
+        @if (! empty($platformFaviconUrl))
+            <link rel="icon" href="{{ $platformFaviconUrl }}">
+        @endif
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -14,9 +18,15 @@
         <main class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
             <div class="mx-auto max-w-3xl">
                 <div class="mb-6 text-center">
-                    <p class="text-sm font-medium uppercase tracking-wide text-gray-500">
-                        {{ config('sanfaani.platform_name', 'Sanfaani Schools') }}
-                    </p>
+                    <div class="mb-4 flex justify-center">
+                        @if ($selectedSchool?->logoUrl())
+                            <img src="{{ $selectedSchool->logoUrl() }}" alt="{{ $selectedSchool->name }}" class="h-14 w-14 rounded-2xl border border-gray-200 bg-white object-contain">
+                        @else
+                            <a href="{{ route('landing.home') }}" class="flex items-center gap-3">
+                                <x-platform-logo class="h-11 w-auto object-contain" mark-class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-700 text-sm font-semibold text-white" />
+                            </a>
+                        @endif
+                    </div>
                     <h1 class="mt-2 text-3xl font-semibold text-gray-900">
                         {{ __('public_result.check_result') }}
                     </h1>
@@ -214,6 +224,13 @@
                             </div>
                         @endforeach
                     </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-gray-500">
+                    <a href="{{ route('landing.home') }}" class="hover:text-gray-800">Home</a>
+                    <a href="{{ route('legal.privacy') }}" class="hover:text-gray-800">Privacy Policy</a>
+                    <a href="{{ route('legal.terms') }}" class="hover:text-gray-800">Terms</a>
+                    <span>{{ $platformSettings->support_email }}</span>
                 </div>
             </div>
         </main>

@@ -4,7 +4,7 @@
 
 Payment keys must never be hardcoded in PHP, Blade, JavaScript, or documentation examples. Put keys only in environment variables on the target server.
 
-## Current Pilot Flow
+## Current Production Launch Flow
 
 Manual payment is active. Admin users can confirm manual payments and preserve the payment transaction record.
 

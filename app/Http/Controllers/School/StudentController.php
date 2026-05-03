@@ -7,10 +7,14 @@ use App\Models\AcademicSession;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Term;
+use App\Notifications\StudentCreatedGuardianNotification;
 use App\Services\AuditLogService;
 use App\Services\AdmissionNumberGeneratorService;
+use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
@@ -152,7 +156,7 @@ class StudentController extends Controller
         $autoGenerate = $request->boolean('auto_generate_admission_number') || blank($data['admission_number'] ?? null);
         unset($data['auto_generate_admission_number']);
 
-        DB::transaction(function () use ($school, &$data, $autoGenerate) {
+        $student = DB::transaction(function () use ($school, &$data, $autoGenerate) {
             $data['school_id'] = $school->id;
 
             if ($autoGenerate) {
@@ -160,8 +164,23 @@ class StudentController extends Controller
                     ->generateForSchool($school);
             }
 
-            Student::create($data);
+            return Student::create($data);
         });
+
+        if (
+            filled($student->guardian_email)
+            && app(NotificationPreferenceService::class)->emailEnabled('student_created_guardian', $school)
+        ) {
+            try {
+                Notification::route('mail', $student->guardian_email)
+                    ->notify(new StudentCreatedGuardianNotification($student));
+            } catch (\Throwable $exception) {
+                Log::warning('Student guardian notification failed.', [
+                    'student_id' => $student->id,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
 
         return redirect()
             ->route('school.students.index')

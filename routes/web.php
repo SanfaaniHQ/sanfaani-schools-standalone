@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
 use App\Http\Controllers\Admin\ScratchCardRequestController;
 use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
+use App\Http\Controllers\School\SchoolProfileController;
 use App\Http\Controllers\School\ScratchCardController;
 use App\Http\Controllers\School\StaffUserController;
 use App\Http\Controllers\School\StudentBulkUploadController;
@@ -51,6 +53,12 @@ Route::get('/demo', [LandingPageController::class, 'demo'])
 Route::post('/demo', [LandingPageController::class, 'submitDemo'])
     ->middleware('throttle:5,1')
     ->name('landing.demo.submit');
+
+Route::view('/privacy-policy', 'public.legal.privacy')
+    ->name('legal.privacy');
+
+Route::view('/terms', 'public.legal.terms')
+    ->name('legal.terms');
 
 Route::get('/result-checker', [ResultCheckerController::class, 'index'])
     ->name('public.results.index');
@@ -93,6 +101,12 @@ Route::middleware(['auth', 'role:super_admin'])
     ->group(function () {
         Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        Route::get('/platform-settings', [PlatformSettingController::class, 'edit'])
+            ->name('platform-settings.edit');
+
+        Route::patch('/platform-settings', [PlatformSettingController::class, 'update'])
+            ->name('platform-settings.update');
 
         Route::resource('schools', SchoolController::class)
             ->except(['show', 'destroy']);
@@ -236,6 +250,12 @@ Route::middleware(['auth'])
 
                 Route::resource('students', StudentController::class)
                     ->except(['index', 'show', 'destroy']);
+
+                Route::get('/profile', [SchoolProfileController::class, 'edit'])
+                    ->name('profile.edit');
+
+                Route::patch('/profile', [SchoolProfileController::class, 'update'])
+                    ->name('profile.update');
 
                 Route::delete('/students/{student}', [StudentController::class, 'destroy'])
                     ->name('students.destroy');

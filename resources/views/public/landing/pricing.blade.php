@@ -1,6 +1,6 @@
 @php
-    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
-    $currency = config('sanfaani.default_currency', 'NGN');
+    $platformName = $platformSettings->platform_name;
+    $currency = $platformSettings->default_currency;
 
     $plans = [
         [
@@ -37,7 +37,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>Pricing - {{ $platformName }}</title>
-        <meta name="description" content="Flexible Sanfaani Schools pricing direction for pilot schools.">
+        <meta name="description" content="Flexible Sanfaani Schools pricing direction for production schools.">
+        @if (! empty($platformFaviconUrl))
+            <link rel="icon" href="{{ $platformFaviconUrl }}">
+        @endif
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-white font-sans text-gray-950 antialiased">
@@ -67,7 +70,7 @@
                                         <li class="rounded-2xl bg-gray-50 px-4 py-3">{{ $feature }}</li>
                                     @endforeach
                                 </ul>
-                                <a href="{{ route('landing.demo') }}" class="mt-6 block rounded-2xl bg-gray-950 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-gray-800">
+                                <a href="{{ route('landing.demo') }}" class="mt-6 block rounded-2xl bg-emerald-700 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-emerald-800">
                                     Request Demo
                                 </a>
                             </article>

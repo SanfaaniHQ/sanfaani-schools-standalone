@@ -21,10 +21,6 @@ class SchoolFeatureAccessService
             return (bool) $planFeature->is_enabled;
         }
 
-        if ($featureKey === 'public_result_checker' && $school->status === 'active') {
-            return true;
-        }
-
         return false;
     }
 

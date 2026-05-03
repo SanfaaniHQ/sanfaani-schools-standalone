@@ -1,5 +1,5 @@
 @php
-    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
+    $platformName = $platformSettings->platform_name;
 
     $groups = [
         [
@@ -38,6 +38,9 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>Features - {{ $platformName }}</title>
         <meta name="description" content="Explore Sanfaani Schools features for setup, students, results, access, and future modules.">
+        @if (! empty($platformFaviconUrl))
+            <link rel="icon" href="{{ $platformFaviconUrl }}">
+        @endif
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-white font-sans text-gray-950 antialiased">

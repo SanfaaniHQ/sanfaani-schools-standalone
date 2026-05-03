@@ -5,8 +5,11 @@ namespace App\Http\Controllers\School;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\User;
+use App\Notifications\UserAccountCreatedNotification;
+use App\Services\NotificationPreferenceService;
 use App\Services\StaffCodeGeneratorService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class StaffUserController extends Controller
@@ -74,6 +77,17 @@ class StaffUserController extends Controller
         ]);
 
         $user->syncRoles([$data['role']]);
+
+        if (app(NotificationPreferenceService::class)->emailEnabled('user_account_created', $school, $user, $data['role'])) {
+            try {
+                $user->notify(new UserAccountCreatedNotification($user, $data['role'], $school));
+            } catch (\Throwable $exception) {
+                Log::warning('User account created notification failed.', [
+                    'user_id' => $user->id,
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
 
         return redirect()
             ->route('school.staff.index')

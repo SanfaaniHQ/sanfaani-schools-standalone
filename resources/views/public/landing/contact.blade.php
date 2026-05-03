@@ -1,7 +1,7 @@
 @php
-    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
-    $productUrl = config('sanfaani.product_url', 'https://schools.sanfaani.net');
-    $salesEmail = config('sanfaani.sales_email', 'sales@sanfaani.net');
+    $platformName = $platformSettings->platform_name;
+    $productUrl = $platformSettings->product_url;
+    $salesEmail = $platformSettings->sales_email;
 @endphp
 
 <!DOCTYPE html>
@@ -12,6 +12,9 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>Contact Sales - {{ $platformName }}</title>
         <meta name="description" content="Contact {{ $platformName }} for school result management and result checker setup.">
+        @if (! empty($platformFaviconUrl))
+            <link rel="icon" href="{{ $platformFaviconUrl }}">
+        @endif
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-white font-sans text-gray-950 antialiased">
@@ -86,7 +89,7 @@
                                 @error('message') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
-                            <button type="submit" class="w-full rounded-2xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800">
+                            <button type="submit" data-loading-text="Sending..." class="w-full rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800">
                                 Contact Sales
                             </button>
                         </form>

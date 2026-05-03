@@ -106,14 +106,30 @@ class ResultCheckerController extends Controller
             return $this->backWithSafeError($request, __('public_result.check_details'));
         }
 
-        if (! $this->resultAccess->hasPublishedResults($school, $student, $academicSession, $term, $data['result_type'])) {
-            return $this->backWithSafeError($request, __('public_result.result_not_available'));
-        }
-
         $access = $this->resultAccess->evaluateAccess($school, $academicSession, $term, $data['result_type']);
 
         if (! $access['success']) {
             return $this->backWithSafeError($request, $access['message']);
+        }
+
+        $scratchCardAccess = $this->scratchCardAccess->validateAndRecord(
+            $school,
+            $student,
+            $academicSession,
+            $term,
+            $data['result_type'],
+            $data['scratch_card_serial'],
+            $data['scratch_card_pin'],
+            $request,
+            false
+        );
+
+        if (! $scratchCardAccess['success']) {
+            return $this->backWithSafeError($request, $scratchCardAccess['message']);
+        }
+
+        if (! $this->resultAccess->hasPublishedResults($school, $student, $academicSession, $term, $data['result_type'])) {
+            return $this->backWithSafeError($request, __('public_result.result_not_available'));
         }
 
         $scratchCardAccess = $this->scratchCardAccess->validateAndRecord(

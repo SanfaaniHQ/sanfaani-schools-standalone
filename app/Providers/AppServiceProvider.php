@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\PlatformSettingService;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(PlatformSettingService::class);
     }
 
     /**
@@ -19,6 +21,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('*', function ($view) {
+            $service = app(PlatformSettingService::class);
+            $settings = $service->get();
+
+            $view->with([
+                'platformSettings' => $settings,
+                'platformLogoUrl' => $service->assetUrl($settings->logo_path),
+                'platformFaviconUrl' => $service->assetUrl($settings->favicon_path),
+                'platformLoginBackgroundUrl' => $service->assetUrl($settings->login_background_path),
+                'platformInitials' => $service->initials($settings->platform_name),
+            ]);
+        });
     }
 }

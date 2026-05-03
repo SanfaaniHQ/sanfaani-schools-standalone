@@ -11,8 +11,12 @@ use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
+use App\Notifications\ResultPublishedNotification;
+use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use App\Services\AuditLogService;
 
@@ -63,6 +67,12 @@ class ResultPublishingController extends Controller
                 ->with('publishing_error', 'No matching results were found for the selected class, session, term, and scope.');
         }
 
+        $studentIds = (clone $query)
+            ->pluck('student_id')
+            ->unique()
+            ->values()
+            ->all();
+
         DB::transaction(function () use ($query, $school, $data) {
             $now = now();
 
@@ -103,6 +113,8 @@ class ResultPublishingController extends Controller
             'result_type' => $data['result_type'],
             'records' => $totalResults,
         ], request: $request);
+
+        $this->notifyGuardians($school, $data, $studentIds);
 
         return back()->with('success', "Results published successfully. Total records affected: {$totalResults}.");
     }
@@ -284,5 +296,43 @@ class ResultPublishingController extends Controller
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
+    }
+
+    private function notifyGuardians(School $school, array $data, array $studentIds): void
+    {
+        if (! app(NotificationPreferenceService::class)->emailEnabled('result_published', $school)) {
+            return;
+        }
+
+        $academicSession = AcademicSession::where('school_id', $school->id)
+            ->find($data['academic_session_id']);
+        $term = Term::where('school_id', $school->id)
+            ->find($data['term_id']);
+
+        if (! $academicSession || ! $term || empty($studentIds)) {
+            return;
+        }
+
+        Student::where('school_id', $school->id)
+            ->whereIn('id', $studentIds)
+            ->whereNotNull('guardian_email')
+            ->chunkById(100, function ($students) use ($academicSession, $term, $data) {
+                foreach ($students as $student) {
+                    try {
+                        Notification::route('mail', $student->guardian_email)
+                            ->notify(new ResultPublishedNotification(
+                                $student,
+                                $academicSession,
+                                $term,
+                                $data['result_type']
+                            ));
+                    } catch (\Throwable $exception) {
+                        Log::warning('Result published notification failed.', [
+                            'student_id' => $student->id,
+                            'message' => $exception->getMessage(),
+                        ]);
+                    }
+                }
+            });
     }
 }

@@ -79,4 +79,4 @@ Success message:
 
 ## Social Proof Placeholders
 
-Use real pilot school names and testimonials only after permission is received. Do not use fake schools or fake testimonials.
+Use real school names and testimonials only after permission is received. Do not use fake schools or fake testimonials.

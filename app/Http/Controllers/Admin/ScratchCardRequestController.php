@@ -6,8 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\PaymentTransaction;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardBatch;
+use App\Notifications\ScratchCardRequestStatusNotification;
 use App\Services\AuditLogService;
+use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -115,6 +118,12 @@ class ScratchCardRequestController extends Controller
 
         app(AuditLogService::class)->log('scratch_card_payment_confirmed', $batch, $batch->school, request: $request);
 
+        $this->notifySchoolAdmins(
+            $batch->refresh(),
+            'payment_confirmed',
+            'Payment has been confirmed. Card generation can now proceed.'
+        );
+
         return back()->with('success', 'Payment confirmed successfully.');
     }
 
@@ -182,6 +191,12 @@ class ScratchCardRequestController extends Controller
                 'max_uses' => $data['max_uses'],
             ], request: request());
         });
+
+        $this->notifySchoolAdmins(
+            $batch->refresh(),
+            'cards_generated',
+            'Scratch cards have been generated and are ready for download.'
+        );
 
         return back()->with('success', 'Scratch cards generated successfully.');
     }
@@ -271,6 +286,12 @@ class ScratchCardRequestController extends Controller
             ], request: request());
         });
 
+        $this->notifySchoolAdmins(
+            $batch->refresh(),
+            'batch_revoked',
+            'Scratch card batch was revoked. Reason: '.$data['revoke_reason']
+        );
+
         return back()->with('success', 'Scratch card batch revoked successfully.');
     }
 
@@ -306,5 +327,30 @@ class ScratchCardRequestController extends Controller
         } while (ScratchCard::where('serial_number', $serial)->exists());
 
         return $serial;
+    }
+
+    private function notifySchoolAdmins(ScratchCardBatch $batch, string $status, ?string $note = null): void
+    {
+        $school = $batch->school;
+
+        if (! $school || ! app(NotificationPreferenceService::class)->emailEnabled('scratch_card_'.$status, $school)) {
+            return;
+        }
+
+        $school->users()
+            ->whereNotNull('email')
+            ->whereHas('roles', fn ($query) => $query->where('name', 'school_admin'))
+            ->get()
+            ->each(function ($user) use ($batch, $status, $note) {
+                try {
+                    $user->notify(new ScratchCardRequestStatusNotification($batch, $status, $note));
+                } catch (\Throwable $exception) {
+                    Log::warning('Scratch card status notification failed.', [
+                        'batch_id' => $batch->id,
+                        'user_id' => $user->id,
+                        'message' => $exception->getMessage(),
+                    ]);
+                }
+            });
     }
 }

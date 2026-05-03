@@ -14,7 +14,7 @@
         <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <div class="rounded-2xl bg-white p-6 shadow-sm">
 
-                <form method="POST" action="{{ route('admin.schools.store') }}" data-loading-text="Saving..." class="space-y-6">
+                <form method="POST" action="{{ route('admin.schools.store') }}" enctype="multipart/form-data" data-loading-text="Saving..." class="space-y-6">
                     @csrf
 
                     <div>
@@ -70,8 +70,20 @@
                         <label class="block text-sm font-medium text-gray-700">Logo URL or Path</label>
                         <input type="text" name="logo" value="{{ old('logo') }}"
                                class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
-                        <p class="mt-1 text-xs text-gray-500">Optional. File upload can be added later.</p>
+                        <p class="mt-1 text-xs text-gray-500">Optional external URL or existing public disk path.</p>
                         @error('logo')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Upload School Logo</label>
+                        <input type="file"
+                               name="logo_upload"
+                               accept=".jpg,.jpeg,.png,.webp"
+                               class="mt-1 block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-gray-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-gray-700">
+                        <p class="mt-1 text-xs text-gray-500">JPG, PNG, or WebP. Maximum 2MB. Upload replaces the logo path above.</p>
+                        @error('logo_upload')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -135,6 +147,7 @@
                         </a>
 
                         <button type="submit"
+                                data-loading-text="Saving..."
                                 class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
                             Save School
                         </button>

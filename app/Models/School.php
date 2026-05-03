@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class School extends Model
 {
@@ -119,5 +121,30 @@ class School extends Model
     public function resultVerifications(): HasMany
     {
         return $this->hasMany(ResultVerification::class);
+    }
+
+    public function logoUrl(): ?string
+    {
+        if (! filled($this->logo)) {
+            return null;
+        }
+
+        if (Str::startsWith($this->logo, ['http://', 'https://'])) {
+            return $this->logo;
+        }
+
+        return Storage::disk('public')->url(ltrim($this->logo, '/'));
+    }
+
+    public function initials(): string
+    {
+        $words = preg_split('/\s+/', trim($this->name)) ?: [];
+        $initials = collect($words)
+            ->filter()
+            ->take(2)
+            ->map(fn (string $word) => mb_substr($word, 0, 1))
+            ->implode('');
+
+        return mb_strtoupper($initials ?: 'S');
     }
 }

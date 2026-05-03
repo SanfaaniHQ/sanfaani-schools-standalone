@@ -21,6 +21,7 @@
                 ['title' => 'Terms', 'description' => 'Manage terms for each session.', 'href' => route('school.terms.index')],
                 ['title' => 'Grading System', 'description' => 'Set score ranges, grades, and remarks.', 'href' => route('school.grading-scales.index')],
                 ['title' => 'Admission Numbers', 'description' => 'Configure student admission number format.', 'href' => route('school.admission-number-settings.edit')],
+                ['title' => 'School Profile', 'description' => 'Update contact details, language, and school logo.', 'href' => route('school.profile.edit')],
                 ['title' => 'Staff Accounts', 'description' => 'Create teachers and result officers with staff codes.', 'href' => route('school.staff.index')],
             ]
             : [

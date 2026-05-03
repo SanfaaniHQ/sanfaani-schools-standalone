@@ -14,7 +14,7 @@ Most operational records include `school_id`. Controllers must scope reads and w
 - `users.staff_code` identifies teachers, result officers, and optionally school admins.
 - `schools.school_code` identifies schools for support, billing, and integrations.
 
-Staff login may accept email or staff code. Student portal login is not implemented for the pilot.
+Staff login may accept email or staff code. Student portal login is not implemented for the production launch.
 
 ## Result Architecture
 

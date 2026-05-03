@@ -1,5 +1,5 @@
 @php
-    $platformName = config('sanfaani.platform_name', 'Sanfaani Schools');
+    $platformName = $platformSettings->platform_name;
 
     $trustBadges = [
         'Built for African schools',
@@ -88,6 +88,9 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ $platformName }} - School Result Management SaaS</title>
         <meta name="description" content="Smart result management and online result checking for modern schools.">
+        @if (! empty($platformFaviconUrl))
+            <link rel="icon" href="{{ $platformFaviconUrl }}">
+        @endif
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-white font-sans text-gray-950 antialiased">
@@ -105,7 +108,7 @@
                             Manage students, upload results, publish securely, and let parents check results online with flexible access options built for real school operations.
                         </p>
                         <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                            <a href="{{ route('landing.demo') }}" class="rounded-2xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-800">
+                            <a href="{{ route('landing.demo') }}" class="rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800">
                                 Request Demo
                             </a>
                             <a href="{{ route('public.results.index') }}" class="rounded-2xl border border-gray-200 px-5 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50">
@@ -214,7 +217,7 @@
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="max-w-3xl">
                         <p class="text-sm font-semibold text-gray-600">Core modules</p>
-                        <h2 class="mt-3 text-3xl font-semibold text-gray-950">Built for pilot launch, ready to grow.</h2>
+                        <h2 class="mt-3 text-3xl font-semibold text-gray-950">Built for production launch, ready to grow.</h2>
                     </div>
                     <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         @foreach ($features as $feature)
@@ -313,7 +316,7 @@
                             @foreach ($pricing as $plan)
                                 <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                                     <h3 class="font-semibold text-gray-950">{{ $plan }}</h3>
-                                    <p class="mt-2 text-sm leading-6 text-gray-600">Flexible onboarding and result operations for pilot schools.</p>
+                                    <p class="mt-2 text-sm leading-6 text-gray-600">Flexible onboarding and result operations for growing schools.</p>
                                 </div>
                             @endforeach
                         </div>

@@ -1,8 +1,8 @@
 # Sanfaani Schools Documentation
 
-This folder collects the launch, product, admin, developer, payment, design, deployment, and testing notes for Sanfaani Schools.
+This folder collects production launch, product, admin, developer, payment, design, deployment, security, notification, marketplace, and testing notes for Sanfaani Schools.
 
-Sanfaani Schools is prepared for a 1 to 5 school pilot on `https://schools.sanfaani.net`. The current focus is school setup, student records, result entry/upload, grading, publishing, scratch-card access, and public result checking.
+Sanfaani Schools is being prepared for production launch at `https://schools.sanfaani.net`. The current focus is school setup, student records, result entry/upload, grading, publishing, scratch-card access, public result checking, email readiness, backup discipline, and deployment safety.
 
 ## Sections
 
@@ -12,8 +12,11 @@ Sanfaani Schools is prepared for a 1 to 5 school pilot on `https://schools.sanfa
 - `developer/` explains architecture, important tables, and future upgrade logic.
 - `design/` describes the UI and UX standards.
 - `payments/` explains manual payment today and Paystack/Flutterwave readiness.
-- `deployment/` contains Namecheap pilot launch instructions.
-- `testing/` contains pilot verification checklists.
+- `notifications/` explains SMTP setup and email notification flow.
+- `deployment/` contains Namecheap production launch and backup instructions.
+- `security/` contains pre-deployment testing and report templates.
+- `marketplace/` contains CodeCanyon readiness and packaging notes.
+- `testing/` contains production verification checklists.
 
 ## Identity Rules
 

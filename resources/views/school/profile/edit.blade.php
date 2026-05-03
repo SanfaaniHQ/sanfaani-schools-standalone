@@ -1,0 +1,109 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-xl font-semibold leading-tight text-gray-900">School Profile</h2>
+                <p class="mt-1 text-sm text-gray-500">Update contact details, language, and the school logo used on results.</p>
+            </div>
+
+            <a href="{{ route('school.dashboard') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Back to Dashboard
+            </a>
+        </div>
+    </x-slot>
+
+    <div class="py-8">
+        <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            @if (session('success'))
+                <div class="mb-6 rounded-xl bg-emerald-50 p-4 text-sm font-medium text-emerald-700">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            <form method="POST"
+                  action="{{ route('school.profile.update') }}"
+                  enctype="multipart/form-data"
+                  data-loading-text="Updating..."
+                  class="space-y-6">
+                @csrf
+                @method('PATCH')
+
+                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div class="flex items-start gap-4">
+                        @if ($school->logoUrl())
+                            <img src="{{ $school->logoUrl() }}" alt="{{ $school->name }}" class="h-16 w-16 rounded-2xl border border-gray-200 object-contain">
+                        @else
+                            <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-700 text-lg font-semibold text-white">
+                                {{ $school->initials() }}
+                            </div>
+                        @endif
+
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">{{ $school->name }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">School name is controlled by the Super Admin to keep billing, subscriptions, and records consistent.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 class="text-base font-semibold text-gray-900">Contact Details</h3>
+
+                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" name="email" value="{{ old('email', $school->email) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
+                            @error('email')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Phone</label>
+                            <input type="text" name="phone" value="{{ old('phone', $school->phone) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
+                            @error('phone')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+
+                    <div class="mt-5">
+                        <label class="block text-sm font-medium text-gray-700">Address</label>
+                        <textarea name="address" rows="4" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">{{ old('address', $school->address) }}</textarea>
+                        @error('address')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 class="text-base font-semibold text-gray-900">Language and Logo</h3>
+
+                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Default Language</label>
+                            <select name="default_language" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
+                                <option value="en" @selected(old('default_language', $school->default_language) === 'en')>English</option>
+                                <option value="fr" @selected(old('default_language', $school->default_language) === 'fr')>French</option>
+                                <option value="ar" @selected(old('default_language', $school->default_language) === 'ar')>Arabic</option>
+                            </select>
+                            @error('default_language')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+
+                        <label class="flex items-center gap-3 rounded-xl border border-gray-200 p-4 text-sm font-medium text-gray-700">
+                            <input type="checkbox" name="supports_rtl" value="1" @checked(old('supports_rtl', $school->supports_rtl)) class="rounded border-gray-300 text-emerald-700 shadow-sm focus:ring-emerald-700">
+                            Supports RTL layout
+                        </label>
+                    </div>
+
+                    <div class="mt-5">
+                        <label class="block text-sm font-medium text-gray-700">School Logo</label>
+                        <input type="file" name="logo_upload" accept=".jpg,.jpeg,.png,.webp" class="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-emerald-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-emerald-800">
+                        <p class="mt-1 text-xs text-gray-500">JPG, PNG, or WebP. Maximum 2MB. Results use initials when no logo is uploaded.</p>
+                        @error('logo_upload')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3">
+                    <a href="{{ route('school.dashboard') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
+                    <button type="submit" data-loading-text="Updating..." class="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800">
+                        Update Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</x-app-layout>

@@ -1,12 +1,12 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="border-b border-gray-100 bg-white">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
+                        <x-platform-logo class="block h-9 w-auto" mark-class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-700 text-xs font-semibold text-white" :show-name="false" />
                     </a>
                 </div>
 
@@ -17,12 +17,22 @@
                     </x-nav-link>
 
                     @if (Auth::user()->hasRole('school_admin'))
+                        <x-nav-link :href="route('school.profile.edit')" :active="request()->routeIs('school.profile.*')">
+                            School Profile
+                        </x-nav-link>
+
                         <x-nav-link :href="route('school.staff.index')" :active="request()->routeIs('school.staff.*')">
                             Staff
                         </x-nav-link>
 
                         <x-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
                             Admission Numbers
+                        </x-nav-link>
+                    @endif
+
+                    @if (Auth::user()->hasRole('super_admin'))
+                        <x-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
+                            Platform Settings
                         </x-nav-link>
                     @endif
                 </div>
@@ -82,12 +92,22 @@
             </x-responsive-nav-link>
 
             @if (Auth::user()->hasRole('school_admin'))
+                <x-responsive-nav-link :href="route('school.profile.edit')" :active="request()->routeIs('school.profile.*')">
+                    School Profile
+                </x-responsive-nav-link>
+
                 <x-responsive-nav-link :href="route('school.staff.index')" :active="request()->routeIs('school.staff.*')">
                     Staff
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
                     Admission Numbers
+                </x-responsive-nav-link>
+            @endif
+
+            @if (Auth::user()->hasRole('super_admin'))
+                <x-responsive-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
+                    Platform Settings
                 </x-responsive-nav-link>
             @endif
         </div>

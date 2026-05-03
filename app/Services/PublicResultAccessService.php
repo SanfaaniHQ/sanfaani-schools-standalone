@@ -34,11 +34,11 @@ class PublicResultAccessService
             return $this->failure(__('public_result.result_checking_unavailable'));
         }
 
-        if (! $this->featureAccess->canAccess($school, 'public_result_checker')) {
+        $policy = $this->activeAccessPolicy($school);
+
+        if (! $this->featureAccess->canAccess($school, 'public_result_checker') && ! $policy) {
             return $this->failure(__('public_result.result_checking_unavailable'));
         }
-
-        $policy = $this->activeAccessPolicy($school);
 
         if (! $policy) {
             return $this->scratchCardRequired();

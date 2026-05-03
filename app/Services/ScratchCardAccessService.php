@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\AcademicSession;
 use App\Models\School;
+use App\Models\SchoolResultAccessPolicy;
+use App\Models\SchoolResultAccessPolicyRule;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardUsage;
 use App\Models\Student;
@@ -21,7 +23,8 @@ class ScratchCardAccessService
         string $resultType,
         string $serialNumber,
         string $pinCode,
-        Request $request
+        Request $request,
+        bool $recordUsage = true
     ): array {
         return DB::transaction(function () use (
             $school,
@@ -31,7 +34,8 @@ class ScratchCardAccessService
             $resultType,
             $serialNumber,
             $pinCode,
-            $request
+            $request,
+            $recordUsage
         ) {
             $card = ScratchCard::where('serial_number', trim($serialNumber))
                 ->lockForUpdate()
@@ -81,6 +85,41 @@ class ScratchCardAccessService
                 return $this->failure(__('public_result.card_used_by_another_student'));
             }
 
+            $rule = $this->matchingRule($school, $academicSession, $term, $resultType);
+
+            if ($rule?->max_access_per_card) {
+                $cardAccesses = ScratchCardUsage::where('scratch_card_id', $card->id)
+                    ->where('academic_session_id', $academicSession->id)
+                    ->where('term_id', $term->id)
+                    ->where('result_type', $resultType)
+                    ->count();
+
+                if ($cardAccesses >= (int) $rule->max_access_per_card) {
+                    return $this->failure(__('public_result.card_usage_limit_reached'));
+                }
+            }
+
+            if ($rule?->max_access_per_student) {
+                $studentAccesses = ScratchCardUsage::where('school_id', $school->id)
+                    ->where('student_id', $student->id)
+                    ->where('academic_session_id', $academicSession->id)
+                    ->where('term_id', $term->id)
+                    ->where('result_type', $resultType)
+                    ->count();
+
+                if ($studentAccesses >= (int) $rule->max_access_per_student) {
+                    return $this->failure(__('public_result.card_usage_limit_reached'));
+                }
+            }
+
+            if (! $recordUsage) {
+                return [
+                    'success' => true,
+                    'message' => null,
+                    'scratchCard' => $card,
+                ];
+            }
+
             $now = now();
             $newUsedCount = (int) $card->used_count + 1;
 
@@ -126,5 +165,59 @@ class ScratchCardAccessService
             'message' => $message,
             'scratchCard' => null,
         ];
+    }
+
+    private function matchingRule(
+        School $school,
+        AcademicSession $academicSession,
+        Term $term,
+        string $resultType
+    ): ?SchoolResultAccessPolicyRule {
+        $policy = SchoolResultAccessPolicy::where('school_id', $school->id)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', now());
+            })
+            ->latest()
+            ->first();
+
+        if (! $policy) {
+            return null;
+        }
+
+        return $policy->rules()
+            ->where('status', 'active')
+            ->where(function ($query) use ($academicSession) {
+                $query->whereNull('academic_session_id')
+                    ->orWhere('academic_session_id', $academicSession->id);
+            })
+            ->where(function ($query) use ($term) {
+                $query->whereNull('term_id')
+                    ->orWhere('term_id', $term->id);
+            })
+            ->where(function ($query) use ($resultType) {
+                $query->whereNull('result_type')
+                    ->orWhere('result_type', $resultType);
+            })
+            ->where(function ($query) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', now());
+            })
+            ->get()
+            ->sortByDesc(function ($rule) use ($academicSession, $term, $resultType) {
+                return (int) ((int) $rule->academic_session_id === (int) $academicSession->id)
+                    + (int) ((int) $rule->term_id === (int) $term->id)
+                    + (int) ($rule->result_type === $resultType);
+            })
+            ->first();
     }
 }

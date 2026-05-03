@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-xl font-semibold leading-tight text-gray-900">School Subscriptions</h2>
-                <p class="mt-1 text-sm text-gray-500">Assign plans to schools for pilot billing and access control.</p>
+                <p class="mt-1 text-sm text-gray-500">Assign plans to schools for production billing and access control.</p>
             </div>
             <a href="{{ route('admin.school-subscriptions.create') }}" class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Assign Plan</a>
         </div>

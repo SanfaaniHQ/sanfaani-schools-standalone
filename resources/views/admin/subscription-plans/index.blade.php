@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-xl font-semibold leading-tight text-gray-900">Subscription Plans</h2>
-                <p class="mt-1 text-sm text-gray-500">Manage pilot plans and feature availability.</p>
+                <p class="mt-1 text-sm text-gray-500">Manage production plans and feature availability.</p>
             </div>
             <a href="{{ route('admin.subscription-plans.create') }}"
                class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">

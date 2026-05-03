@@ -1,11 +1,5 @@
 @php
-    $logoUrl = null;
-
-    if (! empty($school->logo)) {
-        $logoUrl = \Illuminate\Support\Str::startsWith($school->logo, ['http://', 'https://'])
-            ? $school->logo
-            : asset('storage/' . ltrim($school->logo, '/'));
-    }
+    $logoUrl = $school->logoUrl();
 
     $formatScore = fn ($value) => number_format((float) $value, 2);
     $printMode = $printMode ?? false;
@@ -18,6 +12,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <title>{{ __('public_result.result_slip') }} - {{ $school->name }}</title>
+
+        @if (! empty($platformFaviconUrl))
+            <link rel="icon" href="{{ $platformFaviconUrl }}">
+        @endif
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -55,7 +53,7 @@
                                      class="h-16 w-16 rounded-lg border border-gray-200 object-cover">
                             @else
                                 <div class="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-900 text-xl font-semibold text-white">
-                                    {{ strtoupper(mb_substr($school->name, 0, 1)) }}
+                                    {{ $school->initials() }}
                                 </div>
                             @endif
 
