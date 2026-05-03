@@ -14,7 +14,7 @@
         <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <div class="rounded-2xl bg-white p-6 shadow-sm">
 
-                <form method="POST" action="{{ route('school.students.update', $student) }}" class="space-y-6">
+                <form method="POST" action="{{ route('school.students.update', $student) }}" data-loading-text="Updating..." class="space-y-6">
                     @csrf
                     @method('PUT')
 
@@ -23,6 +23,7 @@
                             <label class="block text-sm font-medium text-gray-700">Admission Number</label>
                             <input type="text" name="admission_number" value="{{ old('admission_number', $student->admission_number) }}"
                                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            <p class="mt-1 text-xs text-gray-500">Admission numbers are unique inside this school.</p>
                             @error('admission_number')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror

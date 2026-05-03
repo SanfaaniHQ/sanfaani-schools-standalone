@@ -13,7 +13,7 @@
     <div class="py-8">
         <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <form method="POST" action="{{ route('school.scratch-cards.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('school.scratch-cards.store') }}" data-loading-text="Submitting..." class="space-y-6">
                     @csrf
 
                     <div>

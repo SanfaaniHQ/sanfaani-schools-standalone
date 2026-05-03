@@ -84,12 +84,13 @@
                     </h3>
 
                     <p class="mt-2 text-sm text-gray-600">
-                        Upload the filled CSV using the same class. The selected class will be used as the real class assignment.
+                        Upload the filled CSV using the same class. Blank admission_number cells will be auto-generated for new students.
                     </p>
 
                     <form method="POST"
                           action="{{ route('school.students.upload.store') }}"
                           enctype="multipart/form-data"
+                          data-loading-text="Uploading..."
                           class="mt-6 space-y-5">
                         @csrf
 
@@ -145,6 +146,9 @@
                     <div class="rounded-xl bg-gray-50 p-4">
                         <p class="font-medium text-gray-900">Required columns</p>
                         <p class="mt-2">admission_number, first_name, last_name, gender, status</p>
+                        <p class="mt-2 text-xs text-gray-500">
+                            admission_number may be left blank to let the system generate it.
+                        </p>
                     </div>
 
                     <div class="rounded-xl bg-gray-50 p-4">

@@ -10,6 +10,58 @@
         </div>
     </x-slot>
 
+    @php
+        $isSchoolAdmin = auth()->user()->hasRole('school_admin');
+
+        $schoolSetupModules = $isSchoolAdmin
+            ? [
+                ['title' => 'Classes', 'description' => 'Manage class levels and arms.', 'href' => route('school.classes.index')],
+                ['title' => 'Subjects', 'description' => 'Manage subjects and subject codes.', 'href' => route('school.subjects.index')],
+                ['title' => 'Sessions', 'description' => 'Manage academic sessions.', 'href' => route('school.sessions.index')],
+                ['title' => 'Terms', 'description' => 'Manage terms for each session.', 'href' => route('school.terms.index')],
+                ['title' => 'Grading System', 'description' => 'Set score ranges, grades, and remarks.', 'href' => route('school.grading-scales.index')],
+            ]
+            : [
+                ['title' => 'Grading System', 'description' => 'View active score ranges, grades, and remarks.', 'href' => route('school.grading-scales.index')],
+            ];
+
+        $studentModules = $isSchoolAdmin
+            ? [
+                ['title' => 'Students', 'description' => 'Manage student records.', 'href' => route('school.students.index')],
+                ['title' => 'Student Bulk Upload', 'description' => 'Upload students with CSV.', 'href' => route('school.students.upload.index')],
+                ['title' => 'Student Profiles', 'description' => 'Open Student 360 profiles from the student list.', 'href' => route('school.students.index')],
+            ]
+            : [
+                ['title' => 'Students', 'description' => 'View student records.', 'href' => route('school.students.index')],
+                ['title' => 'Student Profiles', 'description' => 'Open Student 360 profiles from the student list.', 'href' => route('school.students.index')],
+            ];
+
+        $resultModules = [
+            ['title' => 'Manual Result Entry', 'description' => 'Enter and update scores manually.', 'href' => route('school.results.manual.index')],
+            ['title' => 'CSV Result Upload', 'description' => 'Upload class-based result CSV files.', 'href' => route('school.results.upload.index')],
+            ['title' => 'Result Publishing', 'description' => $isSchoolAdmin ? 'Publish or unpublish checked results.' : 'View publishing status and history.', 'href' => route('school.results.publishing.index')],
+        ];
+
+        $accessModules = $isSchoolAdmin
+            ? [
+                ['title' => 'Scratch Cards', 'description' => 'Request cards and download generated batches.', 'href' => route('school.scratch-cards.index')],
+            ]
+            : [];
+
+        $comingSoonModules = [
+            'Result Access Policy',
+            'Plans & Subscription',
+            'Assessment/Test Results',
+            'CBT Results',
+            'PDF Results',
+            'QR Verification',
+            'SMS Units',
+            'Mobile App',
+            'Biometric Attendance',
+            'Website Customization',
+        ];
+    @endphp
+
     <div class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
@@ -25,50 +77,45 @@
 
             <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">School</p>
-                    <p class="mt-3 text-lg font-semibold text-gray-900">{{ $school->name }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">School Users</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSchoolUsers }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Students</p>
                     <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalStudents }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ $totalSchoolUsers }} school users</p>
                 </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Results</p>
                     <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalResults }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ $publishedResults }} published</p>
                 </div>
+
+                @if ($isSchoolAdmin)
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <p class="text-sm font-medium text-gray-500">Scratch Card Requests</p>
+                        <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalScratchCardRequests }}</p>
+                        <p class="mt-1 text-sm text-gray-500">{{ $pendingScratchCardRequests }} pending</p>
+                    </div>
+                @else
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <p class="text-sm font-medium text-gray-500">Reviewed Results</p>
+                        <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $reviewedResults }}</p>
+                        <p class="mt-1 text-sm text-gray-500">Ready for School Admin publishing</p>
+                    </div>
+                @endif
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Classes</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalClasses }}</p>
+                    <p class="text-sm font-medium text-gray-500">Subscription</p>
+                    <p class="mt-3 text-lg font-semibold text-gray-900">{{ ucfirst($school->subscription_status) }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ ucfirst($school->status) }} school</p>
                 </div>
+            </div>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Subjects</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSubjects }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Sessions</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSessions }}</p>
-                </div>
-
+            <div class="mt-6 grid gap-6 lg:grid-cols-3">
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Current Session</p>
                     <p class="mt-3 text-lg font-semibold text-gray-900">
                         {{ $activeSession?->name ?? 'Not set' }}
                     </p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Terms</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalTerms }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ $totalSessions }} sessions</p>
                 </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
@@ -76,140 +123,181 @@
                     <p class="mt-3 text-lg font-semibold text-gray-900">
                         {{ $activeTerm?->name ?? 'Not set' }}
                     </p>
+                    <p class="mt-1 text-sm text-gray-500">{{ $totalTerms }} terms</p>
                 </div>
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Status</p>
-                    <p class="mt-3 text-lg font-semibold text-gray-900">{{ ucfirst($school->status) }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Subscription</p>
-                    <p class="mt-3 text-lg font-semibold text-gray-900">{{ ucfirst($school->subscription_status) }}</p>
+                    <p class="text-sm font-medium text-gray-500">Setup</p>
+                    <p class="mt-3 text-lg font-semibold text-gray-900">
+                        {{ $totalClasses }} classes / {{ $totalSubjects }} subjects
+                    </p>
+                    <p class="mt-1 text-sm text-gray-500">{{ $school->name }}</p>
                 </div>
             </div>
 
-            <div class="mt-8 grid gap-6 lg:grid-cols-3">
-                <a href="{{ route('school.classes.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Classes</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Manage classes for {{ $school->name }}.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+            <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-semibold text-gray-900">Results by Status</h3>
+                        <a href="{{ route('school.results.publishing.index') }}"
+                           class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                            Open
+                        </a>
+                    </div>
 
-                <a href="{{ route('school.subjects.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Subjects</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Manage subjects for {{ $school->name }}.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                    <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-xl bg-gray-50 p-4">
+                            <p class="text-sm font-medium text-gray-500">Draft</p>
+                            <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $draftResults }}</p>
+                        </div>
 
-                <a href="{{ route('school.grading-scales.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Grading System</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Set custom score ranges, grades, and remarks for this school.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                        <div class="rounded-xl bg-gray-50 p-4">
+                            <p class="text-sm font-medium text-gray-500">Reviewed</p>
+                            <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $reviewedResults }}</p>
+                        </div>
 
-                <a href="{{ route('school.sessions.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Academic Sessions</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Manage academic sessions for {{ $school->name }}.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                        <div class="rounded-xl bg-gray-50 p-4">
+                            <p class="text-sm font-medium text-gray-500">Published</p>
+                            <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $publishedResults }}</p>
+                        </div>
+                    </div>
+                </div>
 
-                <a href="{{ route('school.terms.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Terms</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Manage academic terms for {{ $school->name }}.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                @if ($isSchoolAdmin)
+                    <div class="rounded-2xl bg-white p-6 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-semibold text-gray-900">Scratch Cards</h3>
+                            <a href="{{ route('school.scratch-cards.index') }}"
+                               class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                Open
+                            </a>
+                        </div>
 
-                <a href="{{ route('school.students.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Students</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Manage student records for {{ $school->name }}.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                        <div class="mt-5 grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-xl bg-gray-50 p-4">
+                                <p class="text-sm font-medium text-gray-500">Generated</p>
+                                <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $generatedScratchCardRequests }}</p>
+                                <p class="mt-1 text-xs text-gray-500">{{ $unusedScratchCards }} unused cards</p>
+                            </div>
 
-                <a href="{{ route('school.students.upload.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Student Bulk Upload</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Upload many students into a selected class using CSV.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                            <div class="rounded-xl bg-gray-50 p-4">
+                                <p class="text-sm font-medium text-gray-500">Used</p>
+                                <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $usedScratchCards }}</p>
+                                <p class="mt-1 text-xs text-gray-500">Cards consumed</p>
+                            </div>
 
-                <a href="{{ route('school.results.manual.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Manual Result Entry</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Enter and update student scores manually.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                            <div class="rounded-xl bg-gray-50 p-4">
+                                <p class="text-sm font-medium text-gray-500">Revoked</p>
+                                <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $revokedScratchCardRequests }}</p>
+                                <p class="mt-1 text-xs text-gray-500">{{ $revokedScratchCards }} cards</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            </div>
 
-                <a href="{{ route('school.results.publishing.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Result Publishing</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Publish or revoke class, subject, or student results.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+            <div class="mt-10 space-y-8">
+                <section>
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">School Setup</h3>
+                        <p class="mt-1 text-sm text-gray-500">Core records used across students and results.</p>
+                    </div>
 
-                <a href="{{ route('school.scratch-cards.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">Scratch Cards</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Request result access scratch cards and download generated batches.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($schoolSetupModules as $module)
+                            <a href="{{ $module['href'] }}"
+                               class="block rounded-2xl bg-white p-5 shadow-sm hover:shadow-md">
+                                <h4 class="text-base font-semibold text-gray-900">{{ $module['title'] }}</h4>
+                                <p class="mt-2 text-sm text-gray-600">{{ $module['description'] }}</p>
+                                <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
 
-                <a href="{{ route('school.results.upload.index') }}"
-                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
-                    <h4 class="text-base font-semibold text-gray-900">CSV Result Upload</h4>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Upload student results in bulk using a CSV file from Excel.
-                    </p>
-                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Open module
-                    </p>
-                </a>
+                <section>
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Students</h3>
+                        <p class="mt-1 text-sm text-gray-500">Student records, uploads, and profiles.</p>
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($studentModules as $module)
+                            <a href="{{ $module['href'] }}"
+                               class="block rounded-2xl bg-white p-5 shadow-sm hover:shadow-md">
+                                <h4 class="text-base font-semibold text-gray-900">{{ $module['title'] }}</h4>
+                                <p class="mt-2 text-sm text-gray-600">{{ $module['description'] }}</p>
+                                <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+
+                <section>
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Results</h3>
+                        <p class="mt-1 text-sm text-gray-500">Entry, upload, review, and publishing.</p>
+                    </div>
+
+                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($resultModules as $module)
+                            <a href="{{ $module['href'] }}"
+                               class="block rounded-2xl bg-white p-5 shadow-sm hover:shadow-md">
+                                <h4 class="text-base font-semibold text-gray-900">{{ $module['title'] }}</h4>
+                                <p class="mt-2 text-sm text-gray-600">{{ $module['description'] }}</p>
+                                <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+
+                @if ($isSchoolAdmin)
+                    <section>
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Access & Payments</h3>
+                            <p class="mt-1 text-sm text-gray-500">Result access, scratch cards, and billing preparation.</p>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            @foreach ($accessModules as $module)
+                                <a href="{{ $module['href'] }}"
+                                   class="block rounded-2xl bg-white p-5 shadow-sm hover:shadow-md">
+                                    <h4 class="text-base font-semibold text-gray-900">{{ $module['title'] }}</h4>
+                                    <p class="mt-2 text-sm text-gray-600">{{ $module['description'] }}</p>
+                                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                                </a>
+                            @endforeach
+
+                            <div class="rounded-2xl bg-white p-5 opacity-75 shadow-sm">
+                                <h4 class="text-base font-semibold text-gray-900">Result Access Policy</h4>
+                                <p class="mt-2 text-sm text-gray-600">Coming Soon</p>
+                                <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Not available yet</p>
+                            </div>
+
+                            <div class="rounded-2xl bg-white p-5 opacity-75 shadow-sm">
+                                <h4 class="text-base font-semibold text-gray-900">Plans & Subscription</h4>
+                                <p class="mt-2 text-sm text-gray-600">Coming Soon</p>
+                                <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Not available yet</p>
+                            </div>
+                        </div>
+                    </section>
+                @endif
+
+                <section>
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Coming Soon</h3>
+                        <p class="mt-1 text-sm text-gray-500">Planned modules shown as disabled placeholders.</p>
+                    </div>
+
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        @foreach ($comingSoonModules as $module)
+                            <div class="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
+                                <p class="text-sm font-semibold text-gray-900">{{ $module }}</p>
+                                <p class="mt-2 text-xs font-medium uppercase tracking-wide text-gray-400">Coming Soon</p>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
             </div>
 
         </div>

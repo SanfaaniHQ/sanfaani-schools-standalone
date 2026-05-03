@@ -10,6 +10,7 @@ use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Services\ResultGradingService;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -71,7 +72,16 @@ class ManualResultController extends Controller
 
         $data = $this->calculateResult($school, $data);
 
-        StudentResult::create($data);
+        $result = StudentResult::create($data);
+
+        app(AuditLogService::class)->log('result_created', $result, $school, newValues: $result->only([
+            'student_id',
+            'subject_id',
+            'academic_session_id',
+            'term_id',
+            'result_type',
+            'status',
+        ]), request: $request);
 
         return redirect()
             ->route('school.results.manual.index')
@@ -109,11 +119,43 @@ class ManualResultController extends Controller
         $data['school_class_id'] = $student->school_class_id;
         $data = $this->calculateResult($school, $data);
 
+        $oldValues = $studentResult->only(['ca_score', 'exam_score', 'total_score', 'grade', 'remark', 'teacher_remark', 'status']);
         $studentResult->update($data);
+
+        app(AuditLogService::class)->log('result_updated', $studentResult, $school, $oldValues, $studentResult->only([
+            'ca_score',
+            'exam_score',
+            'total_score',
+            'grade',
+            'remark',
+            'teacher_remark',
+            'status',
+        ]), request: $request);
 
         return redirect()
             ->route('school.results.manual.index')
             ->with('success', 'Result updated successfully.');
+    }
+
+    public function destroy(Request $request, StudentResult $studentResult)
+    {
+        $school = $this->currentSchoolOrFail();
+        $this->authorizeResult($studentResult, $school);
+
+        if ($studentResult->status === 'published') {
+            return back()->with('error', 'Published results must be unpublished before deletion.');
+        }
+
+        $studentResult->delete();
+
+        app(AuditLogService::class)->log('result_deleted', $studentResult, $school, metadata: [
+            'status' => $studentResult->status,
+            'result_type' => $studentResult->result_type,
+        ], request: $request);
+
+        return redirect()
+            ->route('school.results.manual.index')
+            ->with('success', 'Result deleted safely.');
     }
 
     private function validateResult(Request $request, School $school, ?int $ignoreId = null): array
@@ -127,6 +169,7 @@ class ManualResultController extends Controller
                     ->where('subject_id', $request->input('subject_id'))
                     ->where('academic_session_id', $request->input('academic_session_id'))
                     ->where('term_id', $request->input('term_id'))
+                    ->where('result_type', 'term_result')
                     ->ignore($ignoreId),
             ],
             'subject_id' => [
@@ -139,13 +182,15 @@ class ManualResultController extends Controller
             ],
             'term_id' => [
                 'required',
-                Rule::exists('terms', 'id')->where('school_id', $school->id),
+                Rule::exists('terms', 'id')
+                    ->where('school_id', $school->id)
+                    ->where('academic_session_id', $request->input('academic_session_id')),
             ],
             'ca_score' => ['required', 'numeric', 'min:0', 'max:40'],
             'exam_score' => ['required', 'numeric', 'min:0', 'max:60'],
             'teacher_remark' => ['nullable', 'string', 'max:500'],
             'status' => ['required', Rule::in(['draft', 'reviewed'])],
-        ]);
+        ]) + ['result_type' => 'term_result'];
     }
 
     private function calculateResult(School $school, array $data): array

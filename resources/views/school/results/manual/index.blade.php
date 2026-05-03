@@ -1,4 +1,7 @@
 <x-app-layout>
+    @php
+        $canDeleteResults = auth()->user()->hasRole('school_admin');
+    @endphp
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
@@ -23,6 +26,12 @@
             @if (session('success'))
                 <div class="mb-6 rounded-xl bg-green-50 p-4 text-sm text-green-700">
                     {{ session('success') }}
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+                    {{ session('error') }}
                 </div>
             @endif
 
@@ -114,16 +123,29 @@
                                     </td>
 
                                     <td class="px-6 py-4">
-                                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                            {{ ucfirst($result->status) }}
-                                        </span>
+                                        <x-status-badge :status="$result->status" />
                                     </td>
 
                                     <td class="px-6 py-4 text-right">
-                                        <a href="{{ route('school.results.manual.edit', $result) }}"
-                                           class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                                            Edit
-                                        </a>
+                                        <div class="flex justify-end gap-3">
+                                            <a href="{{ route('school.results.manual.edit', $result) }}"
+                                               class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                Edit
+                                            </a>
+
+                                            @if ($canDeleteResults && $result->status !== 'published')
+                                                <form method="POST"
+                                                      action="{{ route('school.results.manual.destroy', $result) }}"
+                                                      data-confirm="Delete this draft/reviewed result?"
+                                                      data-loading-text="Deleting...">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-sm font-medium text-red-700 hover:text-red-500">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

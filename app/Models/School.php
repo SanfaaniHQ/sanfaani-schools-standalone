@@ -5,20 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class School extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
         'slug',
+        'school_code',
         'email',
         'phone',
         'address',
         'logo',
         'status',
         'subscription_status',
+        'default_language',
+        'supports_rtl',
+    ];
+
+    protected $casts = [
+        'supports_rtl' => 'boolean',
     ];
 
     public function users(): HasMany
@@ -49,6 +59,11 @@ class School extends Model
     public function students(): HasMany
     {
         return $this->hasMany(Student::class);
+    }
+
+    public function admissionNumberSetting(): HasOne
+    {
+        return $this->hasOne(AdmissionNumberSetting::class);
     }
 
     public function studentResults(): HasMany
@@ -99,5 +114,10 @@ class School extends Model
     public function scratchCardUsages(): HasMany
     {
         return $this->hasMany(ScratchCardUsage::class);
+    }
+
+    public function resultVerifications(): HasMany
+    {
+        return $this->hasMany(ResultVerification::class);
     }
 }

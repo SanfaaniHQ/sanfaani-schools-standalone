@@ -138,6 +138,8 @@
 
                         <form method="POST"
                               action="{{ route('admin.scratch-card-requests.confirm-payment', $batch) }}"
+                              data-confirm="Confirm payment for this scratch card request?"
+                              data-loading-text="Confirming..."
                               class="mt-4 space-y-4">
                             @csrf
 
@@ -219,6 +221,8 @@
                         @else
                             <form method="POST"
                                   action="{{ route('admin.scratch-card-requests.generate', $batch) }}"
+                                  data-confirm="Generate scratch cards for this request? This cannot be repeated."
+                                  data-loading-text="Generating..."
                                   class="mt-4 space-y-4">
                                 @csrf
 
@@ -254,6 +258,8 @@
 
                     <form method="POST"
                           action="{{ route('admin.scratch-card-requests.revoke', $batch) }}"
+                          data-confirm="Revoke this batch and all cards in it?"
+                          data-loading-text="Revoking..."
                           class="mt-4 flex gap-3">
                         @csrf
 
@@ -336,6 +342,8 @@
                                         @if ($card->status !== 'revoked')
                                             <form method="POST"
                                                   action="{{ route('admin.scratch-cards.revoke', $card) }}"
+                                                  data-confirm="Revoke this scratch card?"
+                                                  data-loading-text="Revoking..."
                                                   class="flex justify-end gap-2">
                                                 @csrf
 

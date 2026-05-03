@@ -1,4 +1,8 @@
 <x-app-layout>
+    @php
+        $isSchoolAdmin = auth()->user()->hasRole('school_admin');
+    @endphp
+
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
@@ -6,14 +10,16 @@
                     Grading System
                 </h2>
                 <p class="mt-1 text-sm text-gray-500">
-                    Manage grading rules for {{ $school->name }}.
+                    {{ $isSchoolAdmin ? 'Manage' : 'View' }} grading rules for {{ $school->name }}.
                 </p>
             </div>
 
-            <a href="{{ route('school.grading-scales.create') }}"
-               class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
-                Add Grading Rule
-            </a>
+            @if ($isSchoolAdmin)
+                <a href="{{ route('school.grading-scales.create') }}"
+                   class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                    Add Grading Rule
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -55,9 +61,11 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                                     Status
                                 </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">
-                                    Action
-                                </th>
+                                @if ($isSchoolAdmin)
+                                    <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        Action
+                                    </th>
+                                @endif
                             </tr>
                         </thead>
 
@@ -96,16 +104,18 @@
                                         </span>
                                     </td>
 
-                                    <td class="px-6 py-4 text-right">
-                                        <a href="{{ route('school.grading-scales.edit', $scale) }}"
-                                           class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                                            Edit
-                                        </a>
-                                    </td>
+                                    @if ($isSchoolAdmin)
+                                        <td class="px-6 py-4 text-right">
+                                            <a href="{{ route('school.grading-scales.edit', $scale) }}"
+                                               class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                Edit
+                                            </a>
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center">
+                                    <td colspan="{{ $isSchoolAdmin ? 6 : 5 }}" class="px-6 py-12 text-center">
                                         <p class="text-sm font-medium text-gray-900">
                                             No grading rules yet.
                                         </p>

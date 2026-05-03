@@ -54,6 +54,9 @@
                                     <td class="px-6 py-4">
                                         <div class="font-medium text-gray-900">{{ $school->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $school->slug }}</div>
+                                        <div class="mt-1 text-xs font-medium text-gray-500">
+                                            Code: {{ $school->school_code ?? 'Not set' }}
+                                        </div>
                                     </td>
 
                                     <td class="px-6 py-4">
@@ -63,21 +66,43 @@
 
                                     <td class="px-6 py-4">
                                         <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                            {{ ucfirst($school->status) }}
+                                            <x-status-badge :status="$school->trashed() ? 'archived' : $school->status" />
                                         </span>
                                     </td>
 
                                     <td class="px-6 py-4">
-                                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                            {{ ucfirst($school->subscription_status) }}
-                                        </span>
+                                        <x-status-badge :status="$school->subscription_status" />
                                     </td>
 
-                                    <td class="px-6 py-4 text-right">
-                                        <a href="{{ route('admin.schools.edit', $school) }}"
-                                           class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                                            Edit
-                                        </a>
+                                    <td class="px-6 py-4">
+                                        <div class="flex justify-end gap-3">
+                                            @if (! $school->trashed())
+                                                <a href="{{ route('admin.schools.edit', $school) }}"
+                                                   class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                    Edit
+                                                </a>
+
+                                                <form method="POST"
+                                                      action="{{ route('admin.schools.archive', $school) }}"
+                                                      data-confirm="Archive this school? School users will lose access."
+                                                      data-loading-text="Archiving...">
+                                                    @csrf
+                                                    <button type="submit" class="text-sm font-medium text-red-700 hover:text-red-500">
+                                                        Archive
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <form method="POST"
+                                                      action="{{ route('admin.schools.restore', $school->id) }}"
+                                                      data-confirm="Restore this school?"
+                                                      data-loading-text="Restoring...">
+                                                    @csrf
+                                                    <button type="submit" class="text-sm font-medium text-green-700 hover:text-green-500">
+                                                        Restore
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

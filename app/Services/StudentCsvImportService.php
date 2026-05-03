@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use Illuminate\Support\Facades\DB;
 
 class StudentCsvImportService
 {
@@ -98,11 +99,6 @@ class StudentCsvImportService
             return;
         }
 
-        if (! $admissionNumber) {
-            $this->errors[] = "Row {$rowNumber}: admission_number is required.";
-            return;
-        }
-
         if (! $firstName) {
             $this->errors[] = "Row {$rowNumber}: first_name is required.";
             return;
@@ -133,12 +129,16 @@ class StudentCsvImportService
             return;
         }
 
-        $student = Student::updateOrCreate(
-            [
-                'school_id' => $this->school->id,
-                'admission_number' => $admissionNumber,
-            ],
-            [
+        $student = DB::transaction(function () use ($admissionNumber, $firstName, $middleName, $lastName, $gender, $dateOfBirth, $guardianName, $guardianPhone, $guardianEmail, $address, $status) {
+            $admissionNumber = $admissionNumber ?: app(AdmissionNumberGeneratorService::class)
+                ->generateForSchool($this->school);
+
+            return Student::updateOrCreate(
+                [
+                    'school_id' => $this->school->id,
+                    'admission_number' => $admissionNumber,
+                ],
+                [
                 'school_class_id' => $this->schoolClass->id,
                 'first_name' => $firstName,
                 'middle_name' => $middleName,
@@ -150,8 +150,9 @@ class StudentCsvImportService
                 'guardian_email' => $guardianEmail,
                 'address' => $address,
                 'status' => $status,
-            ]
-        );
+                ]
+            );
+        });
 
         if ($student->wasRecentlyCreated) {
             $this->createdCount++;

@@ -1,4 +1,8 @@
 <x-app-layout>
+    @php
+        $canManageStudents = auth()->user()->hasRole('school_admin');
+    @endphp
+
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
@@ -10,17 +14,19 @@
                 </p>
             </div>
 
-            <div class="flex items-center gap-3">
-                <a href="{{ route('school.students.upload.index') }}"
-                   class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Bulk Upload
-                </a>
+            @if ($canManageStudents)
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('school.students.upload.index') }}"
+                       class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Bulk Upload
+                    </a>
 
-                <a href="{{ route('school.students.create') }}"
-                   class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
-                    Add Student
-                </a>
-            </div>
+                    <a href="{{ route('school.students.create') }}"
+                       class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                        Add Student
+                    </a>
+                </div>
+            @endif
         </div>
     </x-slot>
 
@@ -40,6 +46,13 @@
                            value="{{ $search }}"
                            placeholder="Search by name, admission number, or guardian phone"
                            class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+
+                    @if ($canManageStudents)
+                        <label class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700">
+                            <input type="checkbox" name="include_archived" value="1" @checked($includeArchived) class="rounded border-gray-300 text-gray-900">
+                            Archived
+                        </label>
+                    @endif
 
                     <button type="submit"
                             class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
@@ -115,16 +128,48 @@
                                     </td>
 
                                     <td class="px-6 py-4">
-                                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                            {{ ucfirst($student->status) }}
-                                        </span>
+                                        <x-status-badge :status="$student->trashed() ? 'archived' : $student->status" />
                                     </td>
 
                                     <td class="px-6 py-4 text-right">
-                                        <a href="{{ route('school.students.edit', $student) }}"
-                                           class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                                            Edit
-                                        </a>
+                                        <div class="flex justify-end gap-3">
+                                            @if (! $student->trashed())
+                                                <a href="{{ route('school.students.show', $student) }}"
+                                                   class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                    View
+                                                </a>
+                                            @endif
+
+                                            @if ($canManageStudents)
+                                                @if ($student->trashed())
+                                                    <form method="POST"
+                                                          action="{{ route('school.students.restore', $student->id) }}"
+                                                          data-confirm="Restore this student?"
+                                                          data-loading-text="Restoring...">
+                                                        @csrf
+                                                        <button type="submit" class="text-sm font-medium text-green-700 hover:text-green-500">
+                                                            Restore
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <a href="{{ route('school.students.edit', $student) }}"
+                                                       class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                        Edit
+                                                    </a>
+
+                                                    <form method="POST"
+                                                          action="{{ route('school.students.destroy', $student) }}"
+                                                          data-confirm="Archive this student? Results will be preserved."
+                                                          data-loading-text="Archiving...">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-sm font-medium text-red-700 hover:text-red-500">
+                                                            Archive
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty

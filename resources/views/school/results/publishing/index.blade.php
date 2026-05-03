@@ -1,11 +1,15 @@
 <x-app-layout>
+    @php
+        $canPublishResults = auth()->user()->hasRole('school_admin');
+    @endphp
+
     <x-slot name="header">
         <div>
             <h2 class="text-xl font-semibold leading-tight text-gray-900">
                 Result Publishing
             </h2>
             <p class="mt-1 text-sm text-gray-500">
-                Publish or revoke results for {{ $school->name }}.
+                {{ $canPublishResults ? 'Publish or revoke' : 'View publishing status for' }} results for {{ $school->name }}.
             </p>
         </div>
     </x-slot>
@@ -25,7 +29,8 @@
                 </div>
             @endif
 
-            <div class="grid gap-6 lg:grid-cols-2">
+            @if ($canPublishResults)
+                <div class="grid gap-6 lg:grid-cols-2">
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">
                         Publish Results Now
@@ -37,6 +42,8 @@
 
                     <form method="POST"
                           action="{{ route('school.results.publishing.publish') }}"
+                          data-confirm="Publish these results now?"
+                          data-loading-text="Publishing..."
                           class="mt-6 space-y-5">
                         @csrf
 
@@ -173,6 +180,8 @@
 
                     <form method="POST"
                           action="{{ route('school.results.publishing.unpublish') }}"
+                          data-confirm="Unpublish these results? They will no longer show in the public result checker."
+                          data-loading-text="Unpublishing..."
                           class="mt-6 space-y-5">
                         @csrf
 
@@ -301,7 +310,18 @@
                         </button>
                     </form>
                 </div>
-            </div>
+                </div>
+            @else
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <h3 class="text-base font-semibold text-gray-900">
+                        Publishing Access
+                    </h3>
+
+                    <p class="mt-2 text-sm text-gray-600">
+                        Result Officers can review publishing status and history, but publishing and unpublishing are reserved for School Admins.
+                    </p>
+                </div>
+            @endif
 
             <div class="mt-6 rounded-2xl bg-white p-6 shadow-sm">
                 <h3 class="text-base font-semibold text-gray-900">

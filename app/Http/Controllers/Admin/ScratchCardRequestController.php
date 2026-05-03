@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PaymentTransaction;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardBatch;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -90,6 +92,29 @@ class ScratchCardRequestController extends Controller
             'payment_confirmed_by' => auth()->id(),
         ]);
 
+        PaymentTransaction::updateOrCreate(
+            [
+                'payable_type' => ScratchCardBatch::class,
+                'payable_id' => $batch->id,
+            ],
+            [
+                'school_id' => $batch->school_id,
+                'amount' => $data['amount'],
+                'currency' => strtoupper($data['currency']),
+                'payment_method' => $data['payment_method'],
+                'payment_reference' => $data['payment_reference'] ?? null,
+                'status' => 'paid',
+                'paid_at' => now(),
+                'confirmed_at' => now(),
+                'confirmed_by' => auth()->id(),
+                'metadata' => [
+                    'source' => 'scratch_card_batch_confirmation',
+                ],
+            ]
+        );
+
+        app(AuditLogService::class)->log('scratch_card_payment_confirmed', $batch, $batch->school, request: $request);
+
         return back()->with('success', 'Payment confirmed successfully.');
     }
 
@@ -151,6 +176,11 @@ class ScratchCardRequestController extends Controller
                 'status' => 'generated',
                 'generated_by' => auth()->id(),
             ]);
+
+            app(AuditLogService::class)->log('scratch_card_batch_generated', $lockedBatch, $lockedBatch->school, metadata: [
+                'quantity' => $lockedBatch->quantity,
+                'max_uses' => $data['max_uses'],
+            ], request: request());
         });
 
         return back()->with('success', 'Scratch cards generated successfully.');
@@ -235,6 +265,10 @@ class ScratchCardRequestController extends Controller
                 'revoked_by' => auth()->id(),
                 'revoke_reason' => $data['revoke_reason'],
             ]);
+
+            app(AuditLogService::class)->log('scratch_card_batch_revoked', $lockedBatch, $lockedBatch->school, metadata: [
+                'reason' => $data['revoke_reason'],
+            ], request: request());
         });
 
         return back()->with('success', 'Scratch card batch revoked successfully.');
@@ -252,6 +286,10 @@ class ScratchCardRequestController extends Controller
             'revoked_by' => auth()->id(),
             'revoke_reason' => $data['revoke_reason'],
         ]);
+
+        app(AuditLogService::class)->log('scratch_card_revoked', $card, $card->school, metadata: [
+            'reason' => $data['revoke_reason'],
+        ], request: $request);
 
         return back()->with('success', 'Scratch card revoked successfully.');
     }

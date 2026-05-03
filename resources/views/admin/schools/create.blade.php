@@ -14,7 +14,7 @@
         <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
             <div class="rounded-2xl bg-white p-6 shadow-sm">
 
-                <form method="POST" action="{{ route('admin.schools.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('admin.schools.store') }}" data-loading-text="Saving..." class="space-y-6">
                     @csrf
 
                     <div>
@@ -22,6 +22,17 @@
                         <input type="text" name="name" value="{{ old('name') }}"
                                class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                         @error('name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">School Code</label>
+                        <input type="text" name="school_code" value="{{ old('school_code') }}"
+                               placeholder="Leave blank to auto-generate"
+                               class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                        <p class="mt-1 text-xs text-gray-500">Used later for support, billing, result checker identity, and school lookup.</p>
+                        @error('school_code')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -63,6 +74,30 @@
                         @error('logo')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
+                    </div>
+
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Default Language</label>
+                            <select name="default_language"
+                                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                <option value="en" @selected(old('default_language', 'en') === 'en')>English</option>
+                                <option value="fr" @selected(old('default_language') === 'fr')>French</option>
+                                <option value="ar" @selected(old('default_language') === 'ar')>Arabic</option>
+                            </select>
+                            @error('default_language')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <label class="flex items-center gap-3 rounded-xl border border-gray-200 p-4 text-sm font-medium text-gray-700">
+                            <input type="checkbox"
+                                   name="supports_rtl"
+                                   value="1"
+                                   @checked(old('supports_rtl'))
+                                   class="rounded border-gray-300 text-gray-900 shadow-sm focus:ring-gray-900">
+                            Supports RTL layout
+                        </label>
                     </div>
 
                     <div class="grid gap-6 sm:grid-cols-2">

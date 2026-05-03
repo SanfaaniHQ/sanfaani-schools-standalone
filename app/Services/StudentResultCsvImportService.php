@@ -26,7 +26,8 @@ class StudentResultCsvImportService
         private SchoolClass $schoolClass,
         private AcademicSession $academicSession,
         private Term $term,
-        private User $user
+        private User $user,
+        private string $resultType = 'term_result'
     ) {}
 
     public function import(string $filePath): void
@@ -176,9 +177,11 @@ class StudentResultCsvImportService
                 'subject_id' => $subject->id,
                 'academic_session_id' => $this->academicSession->id,
                 'term_id' => $this->term->id,
+                'result_type' => $this->resultType,
             ],
             [
                 'school_class_id' => $this->schoolClass->id,
+                'result_type' => $this->resultType,
                 'ca_score' => $caScore,
                 'exam_score' => $examScore,
                 'total_score' => $totalScore,

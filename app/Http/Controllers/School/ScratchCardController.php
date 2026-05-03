@@ -8,6 +8,7 @@ use App\Models\ScratchCardBatch;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Term;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -93,7 +94,7 @@ class ScratchCardController extends Controller
             ]);
         }
 
-        ScratchCardBatch::create([
+        $batch = ScratchCardBatch::create([
             'school_id' => $school->id,
             'school_class_id' => $data['school_class_id'] ?? null,
             'academic_session_id' => $data['academic_session_id'],
@@ -118,6 +119,11 @@ class ScratchCardController extends Controller
                 'requested_at' => now()->toDateTimeString(),
             ],
         ]);
+
+        app(AuditLogService::class)->log('scratch_card_request_created', $batch, $school, metadata: [
+            'quantity' => $batch->quantity,
+            'payment_method' => $batch->payment_method,
+        ], request: $request);
 
         return redirect()
             ->route('school.scratch-cards.index')

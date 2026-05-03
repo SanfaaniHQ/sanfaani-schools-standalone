@@ -14,6 +14,7 @@ use App\Models\Term;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Services\AuditLogService;
 
 class ResultPublishingController extends Controller
 {
@@ -94,6 +95,15 @@ class ResultPublishingController extends Controller
             ]);
         });
 
+        app(AuditLogService::class)->log('result_published', null, $school, metadata: [
+            'scope_type' => $data['scope_type'],
+            'school_class_id' => $data['school_class_id'],
+            'academic_session_id' => $data['academic_session_id'],
+            'term_id' => $data['term_id'],
+            'result_type' => $data['result_type'],
+            'records' => $totalResults,
+        ], request: $request);
+
         return back()->with('success', "Results published successfully. Total records affected: {$totalResults}.");
     }
 
@@ -143,6 +153,16 @@ class ResultPublishingController extends Controller
                 'created_by' => auth()->id(),
             ]);
         });
+
+        app(AuditLogService::class)->log('result_unpublished', null, $school, metadata: [
+            'scope_type' => $data['scope_type'],
+            'school_class_id' => $data['school_class_id'],
+            'academic_session_id' => $data['academic_session_id'],
+            'term_id' => $data['term_id'],
+            'result_type' => $data['result_type'],
+            'records' => $totalResults,
+            'reason' => $data['unpublish_reason'],
+        ], request: $request);
 
         return back()->with('success', "Results unpublished successfully. Total records affected: {$totalResults}.");
     }
@@ -197,7 +217,8 @@ class ResultPublishingController extends Controller
         $query = StudentResult::where('school_id', $school->id)
             ->where('school_class_id', $data['school_class_id'])
             ->where('academic_session_id', $data['academic_session_id'])
-            ->where('term_id', $data['term_id']);
+            ->where('term_id', $data['term_id'])
+            ->where('result_type', $data['result_type']);
 
         if ($data['scope_type'] === 'subject') {
             $query->where('subject_id', $data['subject_id']);

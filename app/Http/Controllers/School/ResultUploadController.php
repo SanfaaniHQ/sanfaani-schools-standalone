@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Services\StudentResultCsvImportService;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Throwable;
@@ -57,7 +58,7 @@ class ResultUploadController extends Controller
             . str($term->name)->slug()
             . '.csv';
 
-        return response()->streamDownload(function () use ($students, $subjects, $schoolClass, $academicSession, $term) {
+        return response()->streamDownload(function () use ($students, $subjects, $schoolClass, $academicSession, $term, $data) {
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
@@ -81,7 +82,7 @@ class ResultUploadController extends Controller
                         trim($schoolClass->name . ' ' . $schoolClass->section),
                         $academicSession->name,
                         $term->name,
-                        'Term Result',
+                        $data['result_type'],
                         $student->admission_number,
                         $student->fullName(),
                         $subject->code ?: $subject->name,
@@ -132,7 +133,8 @@ class ResultUploadController extends Controller
             $schoolClass,
             $academicSession,
             $term,
-            auth()->user()
+            auth()->user(),
+            $data['result_type']
         );
 
         try {
@@ -142,6 +144,17 @@ class ResultUploadController extends Controller
                 ->withInput()
                 ->with('upload_error', 'Upload failed. Please check the CSV file format and try again.');
         }
+
+        app(AuditLogService::class)->log('result_csv_uploaded', null, $school, metadata: [
+            'school_class_id' => $schoolClass->id,
+            'academic_session_id' => $academicSession->id,
+            'term_id' => $term->id,
+            'result_type' => $data['result_type'],
+            'created' => $import->createdCount,
+            'updated' => $import->updatedCount,
+            'skipped' => $import->skippedCount,
+            'errors' => count($import->errors),
+        ], request: $request);
 
         return back()
             ->with('success', "Upload completed. Created: {$import->createdCount}. Updated: {$import->updatedCount}. Skipped: {$import->skippedCount}.")
@@ -210,8 +223,8 @@ class ResultUploadController extends Controller
     {
         return [
             'term_result' => 'Term Result',
-            'assessment_result' => 'Assessment / Test Result — Coming later',
-            'cbt_result' => 'CBT Result — Coming later',
+            'assessment_result' => 'Assessment / Test Result - Coming later',
+            'cbt_result' => 'CBT Result - Coming later',
         ];
     }
 

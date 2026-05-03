@@ -126,6 +126,7 @@
                     <form method="POST"
                           action="{{ route('school.results.upload.store') }}"
                           enctype="multipart/form-data"
+                          data-loading-text="Uploading..."
                           class="mt-6 space-y-5">
                         @csrf
 

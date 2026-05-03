@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StudentResult extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'school_id',
@@ -17,6 +19,7 @@ class StudentResult extends Model
         'subject_id',
         'academic_session_id',
         'term_id',
+        'result_type',
         'ca_score',
         'exam_score',
         'total_score',

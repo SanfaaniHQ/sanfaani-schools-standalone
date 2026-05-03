@@ -14,7 +14,7 @@
         <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <div class="rounded-2xl bg-white p-6 shadow-sm">
 
-                <form method="POST" action="{{ route('school.students.store') }}" class="space-y-6">
+                <form method="POST" action="{{ route('school.students.store') }}" data-loading-text="Saving..." class="space-y-6">
                     @csrf
 
                     <div class="grid gap-6 sm:grid-cols-2">
@@ -23,6 +23,16 @@
                             <input type="text" name="admission_number" value="{{ old('admission_number') }}"
                                    placeholder="Example: DAIA/2025/001"
                                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            <label class="mt-3 flex items-start gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                                <input type="checkbox"
+                                       name="auto_generate_admission_number"
+                                       value="1"
+                                       @checked(old('auto_generate_admission_number', true))
+                                       class="mt-0.5 rounded border-gray-300 text-gray-900 shadow-sm focus:ring-gray-900">
+                                <span>
+                                    Auto-generate if blank. Uncheck this if you want to type a school-specific admission number manually.
+                                </span>
+                            </label>
                             @error('admission_number')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror

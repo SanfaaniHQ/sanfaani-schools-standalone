@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Student extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'school_id',
@@ -59,6 +61,11 @@ class Student extends Model
     public function scratchCardUsages(): HasMany
     {
         return $this->hasMany(ScratchCardUsage::class);
+    }
+
+    public function resultVerifications(): HasMany
+    {
+        return $this->hasMany(ResultVerification::class);
     }
 
     public function fullName(): string
