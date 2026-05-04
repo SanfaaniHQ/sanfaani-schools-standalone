@@ -21,7 +21,10 @@
                                 <td class="px-6 py-4 text-sm">{{ ucfirst(str_replace('_', ' ', $policy->access_mode)) }}</td>
                                 <td class="px-6 py-4 text-sm">{{ $policy->rules->count() }}</td>
                                 <td class="px-6 py-4"><x-status-badge :status="$policy->status" /></td>
-                                <td class="px-6 py-4 text-right"><a class="text-sm font-medium text-gray-900" href="{{ route('admin.result-access-policies.edit', $policy) }}">Edit</a></td>
+                                <td class="px-6 py-4 text-right">
+                                    <a class="mr-3 text-sm font-medium text-gray-700" href="{{ route('admin.result-access-policies.show', $policy) }}">View</a>
+                                    <a class="text-sm font-medium text-gray-900" href="{{ route('admin.result-access-policies.edit', $policy) }}">Edit</a>
+                                </td>
                             </tr>
                         @empty
                             <tr><td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">No policies yet. Default is scratch-card access.</td></tr>

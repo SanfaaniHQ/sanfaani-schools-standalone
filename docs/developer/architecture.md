@@ -8,6 +8,8 @@ Sanfaani Schools is a Laravel application using Blade, Tailwind CSS, Vite, Larav
 
 Most operational records include `school_id`. Controllers must scope reads and writes to the authenticated user's school unless the user is a Super Admin. Avoid global queries for school-owned records.
 
+New school creation must not copy another school's operational data. Automatic setup may create only safe defaults when explicitly implemented. Super Admin support access resolves the current school from session keys and logs support start/stop actions.
+
 ## Identity Architecture
 
 - `students.admission_number` identifies students inside a school.
@@ -44,4 +46,8 @@ Manual payment is active. `PaymentTransaction` supports `payment_gateway`, `gate
 
 ## Public Result Checker Architecture
 
-Public result checking validates school, admission number, result context, and scratch card access before rendering a result view. Error messages should remain parent-friendly and avoid exposing internal details.
+Public result checking does not expose a public school list. Scratch card serial/PIN validation privately identifies `school_id`, then admission number is matched only inside that school. The checker stores a short-lived session context and shows school-specific academic sessions/terms only after that context is verified. Scratch card usage is recorded only after the selected result is confirmed as published and the final result token is issued. Published result queries must require `status = published`, `published_at` not null, and `unpublished_at` null.
+
+## System Update and Maintenance Architecture
+
+System update packages are uploaded to private storage and logged in `system_update_logs`. They are not extracted or applied automatically. System Maintenance exposes fixed Artisan cache/storage actions to Super Admin users only; it does not accept arbitrary command input.

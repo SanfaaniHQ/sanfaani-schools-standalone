@@ -16,13 +16,20 @@ class LeadRequest extends Model
         'email',
         'phone',
         'role',
+        'number_of_students',
+        'school_type',
+        'preferred_demo_time',
         'message',
         'source',
         'status',
+        'assigned_to',
+        'contacted_at',
+        'notes',
         'metadata',
     ];
 
     protected $casts = [
+        'contacted_at' => 'datetime',
         'metadata' => 'array',
     ];
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LeadRequest;
 use App\Models\PaymentTransaction;
 use App\Models\School;
 use App\Models\ScratchCard;
@@ -30,6 +31,8 @@ class SuperAdminDashboardController extends Controller
             'pendingPayments' => PaymentTransaction::whereIn('status', ['pending', 'manual_pending'])->count(),
             'publishedResults' => StudentResult::where('status', 'published')->count(),
             'revokedScratchCards' => ScratchCard::where('status', 'revoked')->count(),
+            'newDemoRequests' => LeadRequest::where('type', 'demo')->where('status', 'new')->count(),
+            'newContactRequests' => LeadRequest::where('type', 'contact')->where('status', 'new')->count(),
         ]);
     }
 }

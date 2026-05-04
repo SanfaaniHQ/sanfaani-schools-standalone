@@ -65,6 +65,8 @@
                     'Pending Payments' => $pendingPayments,
                     'Published Results' => $publishedResults,
                     'Revoked Cards' => $revokedScratchCards,
+                    'New Demo Requests' => $newDemoRequests,
+                    'New Contact Requests' => $newContactRequests,
                 ] as $label => $value)
                     <div class="rounded-2xl bg-white p-5 shadow-sm">
                         <p class="text-sm font-medium text-gray-500">{{ $label }}</p>
@@ -96,15 +98,16 @@
                     </p>
                 </a>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <a href="{{ route('admin.result-system.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Result System</h4>
                     <p class="mt-2 text-sm text-gray-600">
-                        Manage result entry, publishing, PDFs, and verification.
+                        Manage result access policies, scratch cards, and result operations.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming later
+                        Open module
                     </p>
-                </div>
+                </a>
 
                 <a href="{{ route('admin.scratch-card-requests.index') }}"
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
@@ -149,6 +152,27 @@
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Audit Logs</h4>
                     <p class="mt-2 text-sm text-gray-600">Read-only action history for support and security review.</p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                </a>
+
+                <a href="{{ route('admin.lead-requests.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Lead Requests</h4>
+                    <p class="mt-2 text-sm text-gray-600">Review demo and contact requests from public pages.</p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                </a>
+
+                <a href="{{ route('admin.system-updates.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">System Updates</h4>
+                    <p class="mt-2 text-sm text-gray-600">Track product version and safe update packages.</p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                </a>
+
+                <a href="{{ route('admin.system-maintenance.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">System Maintenance</h4>
+                    <p class="mt-2 text-sm text-gray-600">Clear caches, optimize Laravel, and repair storage links.</p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                 </a>
             </div>

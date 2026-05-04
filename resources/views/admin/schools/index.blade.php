@@ -83,6 +83,16 @@
                                                 </a>
 
                                                 <form method="POST"
+                                                      action="{{ route('admin.schools.support-access.start', $school) }}"
+                                                      data-confirm="Start Super Admin support access for this school?"
+                                                      data-loading-text="Opening...">
+                                                    @csrf
+                                                    <button type="submit" class="text-sm font-medium text-emerald-700 hover:text-emerald-600">
+                                                        Support Access
+                                                    </button>
+                                                </form>
+
+                                                <form method="POST"
                                                       action="{{ route('admin.schools.archive', $school) }}"
                                                       data-confirm="Archive this school? School users will lose access."
                                                       data-loading-text="Archiving...">

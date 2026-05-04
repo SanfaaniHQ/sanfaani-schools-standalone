@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
+use App\Services\CurrentSchoolService;
 
 class SchoolAdminDashboardController extends Controller
 {
-    public function index()
+    public function index(CurrentSchoolService $currentSchool)
     {
         $user = auth()->user();
-        $school = $user->school;
+        $school = $currentSchool->get($user);
 
         if (! $school) {
             return view('school.dashboard-not-assigned');

@@ -19,7 +19,7 @@
             'name' => 'Premium',
             'price' => 'Per student / term',
             'note' => 'For schools that want priority setup',
-            'features' => ['Everything in Standard', 'PDF result coming soon', 'QR verification coming soon', 'Advanced access policy coming soon', 'Priority setup support'],
+        'features' => ['Everything in Standard', 'PDF result coming soon', 'QR verification coming soon', 'Advanced result access policy', 'Priority setup support'],
         ],
         [
             'name' => 'Custom School Plan',
@@ -57,13 +57,29 @@
                         <p class="mt-5 text-lg leading-8 text-gray-600">
                             Final pricing can be customized based on school size, modules, and support needs.
                         </p>
+                        <div class="mt-8 inline-flex flex-wrap justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 p-2 text-sm font-semibold text-gray-700">
+                            <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2 shadow-sm">
+                                <input type="radio" name="pricing_period" value="term" data-pricing-toggle class="text-emerald-700" checked>
+                                Term
+                            </label>
+                            <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2 shadow-sm">
+                                <input type="radio" name="pricing_period" value="session" data-pricing-toggle class="text-emerald-700">
+                                Session
+                            </label>
+                            <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-white px-4 py-2 shadow-sm">
+                                <input type="radio" name="pricing_period" value="year" data-pricing-toggle class="text-emerald-700">
+                                Year
+                            </label>
+                        </div>
                     </div>
 
                     <div class="mt-12 grid gap-6 lg:grid-cols-4">
                         @foreach ($plans as $plan)
                             <article class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                                 <h2 class="text-xl font-semibold text-gray-950">{{ $plan['name'] }}</h2>
-                                <p class="mt-4 text-3xl font-semibold text-gray-950">{{ $plan['price'] }}</p>
+                                <p class="mt-4 text-3xl font-semibold text-gray-950" data-price-period="term">{{ $plan['price'] }}</p>
+                                <p class="mt-4 text-3xl font-semibold text-gray-950" data-price-period="session" hidden>{{ $plan['name'] === 'Custom School Plan' ? 'Custom session plan' : 'Session agreement' }}</p>
+                                <p class="mt-4 text-3xl font-semibold text-gray-950" data-price-period="year" hidden>{{ $plan['name'] === 'Custom School Plan' ? 'Custom yearly plan' : 'Annual agreement' }}</p>
                                 <p class="mt-2 text-sm text-gray-500">{{ $plan['note'] }}</p>
                                 <ul class="mt-6 space-y-3 text-sm text-gray-700">
                                     @foreach ($plan['features'] as $feature)

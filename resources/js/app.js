@@ -69,3 +69,75 @@ document.addEventListener('submit', (event) => {
         </span>
     `;
 });
+
+document.addEventListener('click', (event) => {
+    const anchor = event.target.closest('a[href^="#"]');
+
+    if (!anchor || anchor.hash.length <= 1) {
+        return;
+    }
+
+    const target = document.querySelector(anchor.hash);
+
+    if (!target) {
+        return;
+    }
+
+    event.preventDefault();
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+document.querySelectorAll('[data-faq-toggle]').forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+        const panel = document.querySelector(toggle.dataset.faqToggle);
+
+        if (!panel) {
+            return;
+        }
+
+        const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!isOpen));
+        panel.hidden = isOpen;
+    });
+});
+
+document.querySelectorAll('[data-pricing-toggle]').forEach((toggle) => {
+    toggle.addEventListener('change', () => {
+        const period = toggle.value;
+
+        document.querySelectorAll('[data-price-period]').forEach((price) => {
+            price.hidden = price.dataset.pricePeriod !== period;
+        });
+    });
+});
+
+const syncTermDropdown = (sessionSelect) => {
+    const targetSelector = sessionSelect.dataset.termTarget;
+    const termSelect = targetSelector ? document.querySelector(targetSelector) : null;
+
+    if (!(termSelect instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    const sessionId = sessionSelect.value;
+    let selectedOptionStillVisible = false;
+
+    termSelect.querySelectorAll('option[data-session-id]').forEach((option) => {
+        const matches = !sessionId || option.dataset.sessionId === sessionId;
+        option.hidden = !matches;
+        option.disabled = !matches;
+
+        if (matches && option.selected) {
+            selectedOptionStillVisible = true;
+        }
+    });
+
+    if (!selectedOptionStillVisible) {
+        termSelect.value = '';
+    }
+};
+
+document.querySelectorAll('[data-session-term-source]').forEach((sessionSelect) => {
+    syncTermDropdown(sessionSelect);
+    sessionSelect.addEventListener('change', () => syncTermDropdown(sessionSelect));
+});

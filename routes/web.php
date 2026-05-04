@@ -1,15 +1,21 @@
 <?php
 
-use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\LeadRequestController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
+use App\Http\Controllers\Admin\ResultSystemController as AdminResultSystemController;
 use App\Http\Controllers\Admin\ScratchCardRequestController;
+use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
 use App\Http\Controllers\Admin\SchoolSubscriptionController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
+use App\Http\Controllers\Admin\SystemMaintenanceController;
+use App\Http\Controllers\Admin\SystemUpdateController;
+use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\LandingPageController;
 use App\Http\Controllers\Public\ResultCheckerController;
@@ -18,7 +24,9 @@ use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ManualResultController;
+use App\Http\Controllers\School\ResultAccessPolicyController as SchoolResultAccessPolicyController;
 use App\Http\Controllers\School\ResultPublishingController;
+use App\Http\Controllers\School\ResultSystemController as SchoolResultSystemController;
 use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\ReportCardSettingController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
@@ -29,6 +37,7 @@ use App\Http\Controllers\School\StaffUserController;
 use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
 use App\Http\Controllers\School\StudentPromotionController;
+use App\Http\Controllers\School\SubscriptionController as SchoolPlanController;
 use App\Http\Controllers\School\SubjectController;
 use App\Http\Controllers\School\TermController;
 use Illuminate\Support\Facades\Route;
@@ -56,6 +65,14 @@ Route::post('/demo', [LandingPageController::class, 'submitDemo'])
     ->middleware('throttle:5,1')
     ->name('landing.demo.submit');
 
+Route::get('/admin/login', [AdminAuthenticatedSessionController::class, 'create'])
+    ->middleware('guest')
+    ->name('admin.login');
+
+Route::post('/admin/login', [AdminAuthenticatedSessionController::class, 'store'])
+    ->middleware('guest')
+    ->name('admin.login.store');
+
 Route::view('/privacy-policy', 'public.legal.privacy')
     ->name('legal.privacy');
 
@@ -64,6 +81,10 @@ Route::view('/terms', 'public.legal.terms')
 
 Route::get('/result-checker', [ResultCheckerController::class, 'index'])
     ->name('public.results.index');
+
+Route::post('/result-checker/identify', [ResultCheckerController::class, 'identify'])
+    ->middleware('throttle:10,1')
+    ->name('public.results.identify');
 
 Route::post('/result-checker/check', [ResultCheckerController::class, 'check'])
     ->middleware('throttle:10,1')
@@ -81,21 +102,17 @@ Route::get('/verify-result/{verificationCode}', [ResultVerificationController::c
 Route::get('/s/{school:slug}/result-checker', [ResultCheckerController::class, 'index'])
     ->name('public.school.results.index');
 
+Route::post('/s/{school:slug}/result-checker/identify', [ResultCheckerController::class, 'identify'])
+    ->middleware('throttle:10,1')
+    ->name('public.school.results.identify');
+
 Route::post('/s/{school:slug}/result-checker/check', [ResultCheckerController::class, 'check'])
     ->middleware('throttle:10,1')
     ->name('public.school.results.check');
 
-Route::get('/dashboard', function () {
-    if (auth()->user()->hasRole('super_admin')) {
-        return redirect()->route('admin.dashboard');
-    }
-
-    if (auth()->user()->hasAnyRole(['school_admin', 'result_officer'])) {
-        return redirect()->route('school.dashboard');
-    }
-
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware(['auth', 'role:super_admin'])
     ->prefix('admin')
@@ -112,6 +129,12 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::resource('schools', SchoolController::class)
             ->except(['show', 'destroy']);
+
+        Route::post('/schools/{school}/support-access/start', [SchoolController::class, 'startSupportAccess'])
+            ->name('schools.support-access.start');
+
+        Route::post('/support-access/stop', [SchoolController::class, 'stopSupportAccess'])
+            ->name('support-access.stop');
 
         Route::post('/schools/{school}/archive', [SchoolController::class, 'archive'])
             ->name('schools.archive');
@@ -138,7 +161,43 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('feature-overrides.store');
 
         Route::resource('result-access-policies', ResultAccessPolicyController::class)
-            ->except(['show', 'destroy']);
+            ->except(['destroy']);
+
+        Route::get('/result-system', [AdminResultSystemController::class, 'index'])
+            ->name('result-system.index');
+
+        Route::resource('lead-requests', LeadRequestController::class)
+            ->only(['index', 'show', 'update']);
+
+        Route::get('/system-updates', [SystemUpdateController::class, 'index'])
+            ->name('system-updates.index');
+
+        Route::post('/system-updates/upload', [SystemUpdateController::class, 'upload'])
+            ->name('system-updates.upload');
+
+        Route::get('/system-maintenance', [SystemMaintenanceController::class, 'index'])
+            ->name('system-maintenance.index');
+
+        Route::post('/system-maintenance/clear-all-cache', [SystemMaintenanceController::class, 'clearAllCache'])
+            ->name('system-maintenance.clear-all-cache');
+
+        Route::post('/system-maintenance/clear-config-cache', [SystemMaintenanceController::class, 'clearConfigCache'])
+            ->name('system-maintenance.clear-config-cache');
+
+        Route::post('/system-maintenance/clear-route-cache', [SystemMaintenanceController::class, 'clearRouteCache'])
+            ->name('system-maintenance.clear-route-cache');
+
+        Route::post('/system-maintenance/clear-view-cache', [SystemMaintenanceController::class, 'clearViewCache'])
+            ->name('system-maintenance.clear-view-cache');
+
+        Route::post('/system-maintenance/clear-app-cache', [SystemMaintenanceController::class, 'clearAppCache'])
+            ->name('system-maintenance.clear-app-cache');
+
+        Route::post('/system-maintenance/optimize', [SystemMaintenanceController::class, 'optimize'])
+            ->name('system-maintenance.optimize');
+
+        Route::post('/system-maintenance/storage-link', [SystemMaintenanceController::class, 'storageLink'])
+            ->name('system-maintenance.storage-link');
 
         Route::get('/payments', [PaymentController::class, 'index'])
             ->name('payments.index');
@@ -179,7 +238,7 @@ Route::middleware(['auth'])
     ->prefix('school')
     ->name('school.')
     ->group(function () {
-        Route::middleware('role:school_admin|result_officer')
+        Route::middleware('role:school_admin|result_officer|super_admin')
             ->group(function () {
                 Route::get('/dashboard', [SchoolAdminDashboardController::class, 'index'])
                     ->name('dashboard');
@@ -223,11 +282,17 @@ Route::middleware(['auth'])
                             ->name('upload.template');
                     });
 
+                Route::get('/result-system', [SchoolResultSystemController::class, 'index'])
+                    ->name('result-system.index');
+
+                Route::get('/result-access-policy', [SchoolResultAccessPolicyController::class, 'show'])
+                    ->name('result-access-policy.show');
+
                 Route::get('/report-card-settings/preview', [ReportCardSettingController::class, 'preview'])
                     ->name('report-card-settings.preview');
             });
 
-        Route::middleware('role:school_admin')
+        Route::middleware('role:school_admin|super_admin')
             ->group(function () {
                 Route::resource('classes', SchoolClassController::class)
                     ->parameters(['classes' => 'class'])
@@ -261,6 +326,9 @@ Route::middleware(['auth'])
 
                 Route::patch('/profile', [SchoolProfileController::class, 'update'])
                     ->name('profile.update');
+
+                Route::get('/subscription', [SchoolPlanController::class, 'show'])
+                    ->name('subscription.show');
 
                 Route::get('/student-promotions', [StudentPromotionController::class, 'index'])
                     ->name('student-promotions.index');
@@ -326,7 +394,7 @@ Route::middleware(['auth'])
                     });
             });
 
-        Route::middleware('role:school_admin|result_officer')
+        Route::middleware('role:school_admin|result_officer|super_admin')
             ->get('/students/{student}', [StudentController::class, 'show'])
             ->name('students.show');
     });

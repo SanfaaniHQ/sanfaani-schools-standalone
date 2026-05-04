@@ -49,8 +49,12 @@
 
 ## Leads and Audit
 
-- `lead_requests`: landing page contact and demo requests.
+- `lead_requests`: landing page contact and demo requests, status, notes, and follow-up metadata.
 - `audit_logs`: important administrative and security events.
+
+## System Operations
+
+- `system_update_logs`: safe record of uploaded update packages and manual update status.
 
 ## Safety Notes
 

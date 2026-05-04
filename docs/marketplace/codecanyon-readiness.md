@@ -4,7 +4,7 @@ Sanfaani Schools may be prepared for a future CodeCanyon marketplace release aft
 
 ## Item Overview
 
-Laravel school management and result access platform with role-based dashboards, student records, academic setup, result entry, CSV uploads, result publishing, scratch card requests, public result checking, platform branding, and multilingual foundation.
+Laravel school management and result access platform with separate Super Admin login, role-based dashboards, student records, student promotion, academic setup, result entry, CSV uploads, result publishing, result access policies, subscriptions/features, scratch card requests, private-card public result checking, platform branding, report card settings, lead requests, system maintenance, safe update logging, and multilingual foundation.
 
 ## Requirements
 
@@ -51,10 +51,16 @@ Do not package:
 - Landing page
 - Login
 - Super Admin dashboard
+- Admin login
 - Platform settings
 - School management
+- Plans, subscriptions, and result access policy
+- Lead request inbox
+- System maintenance and update log
 - School Admin dashboard
+- Result System
 - Student list and Student 360 profile
+- Student promotion
 - Manual result entry
 - CSV upload
 - Result publishing
@@ -68,7 +74,7 @@ Define supported installation environments, response windows, excluded customiza
 
 ## Versioning and Updates
 
-Use semantic versioning. Include database migration notes and update steps with every release.
+Use semantic versioning through `APP_VERSION`. Include database migration notes and update steps with every release. Update packages should preserve `.env`, storage uploads, database data, school/student/result records, scratch cards, payments, leads, and audit logs.
 
 ## Future Installer Plan
 

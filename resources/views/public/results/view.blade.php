@@ -94,7 +94,7 @@
                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                 {{ __('public_result.download_pdf') }}
                             </a>
-                            <a href="{{ route('public.results.index', ['lang' => $locale]) }}"
+                            <a href="{{ route('public.results.index', ['lang' => $locale, 'reset' => 1]) }}"
                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                 {{ __('public_result.check_another_result') }}
                             </a>

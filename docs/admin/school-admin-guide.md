@@ -39,9 +39,23 @@ Open Report Card Settings to control how result slips are displayed. These setti
 
 Use the preview page before relying on a new layout in production. Advanced PDF, QR, and full report designer features remain future upgrades unless enabled later.
 
+## Result System
+
+Use the Result System page as the main result workspace. It links grading scales, manual result entry, CSV upload, result publishing, report-card settings, result access policy, public result checker, and scratch cards.
+
+## Result Access Policy and Subscription
+
+School Admin users can view the active result access policy and current subscription details. Super Admin controls policy and plan changes. Use the displayed request/change contact path when a school needs an upgrade.
+
+## Uploaded Images
+
+School logos and report-card signatures are stored on the public disk. If an upload succeeds but does not display, ask Super Admin to run System Maintenance > Storage Link and Clear All Cache, then confirm `APP_URL` and file permissions on hosting.
+
 ## Scratch Cards
 
 Request scratch cards from the school portal. Cards become available after Super Admin approval and generation.
+
+The public result checker now verifies admission number plus card serial/PIN first, then shows the verified school's sessions and terms. Card usage should only increase after a published result opens successfully.
 
 ## Student 360 Profile
 

@@ -35,6 +35,8 @@ Use badges for paid, pending, generated, revoked, published, unpublished, active
 
 The landing page should show the actual product value immediately: result management, publishing control, scratch cards, and public result checking.
 
+The public result checker should feel simple and private. Step 1 verifies admission number plus card details only. Step 2 shows the identified school context and school-scoped session/term choices.
+
 ## Dashboard Pages
 
 Dashboard pages should group modules by workflow: setup, students, results, publishing, scratch cards, payments, and settings.
@@ -50,3 +52,5 @@ Report-card settings should be grouped by Branding, Header Layout, Student Infor
 ## Loading and Confirmation
 
 Global JavaScript prevents double submits, disables submit buttons, applies loading text, and respects confirmation prompts.
+
+Lightweight JavaScript supports smooth scrolling, mobile navigation, FAQ toggles, pricing toggles, and dependent session-to-term dropdowns. Forms must remain valid server-side if JavaScript is unavailable.

@@ -11,7 +11,8 @@
     </x-slot>
 
     @php
-        $isSchoolAdmin = auth()->user()->hasRole('school_admin');
+        $isSupportMode = auth()->user()->hasRole('super_admin') && session('support_school_id');
+        $isSchoolAdmin = auth()->user()->hasRole('school_admin') || $isSupportMode;
 
         $schoolSetupModules = $isSchoolAdmin
             ? [
@@ -44,6 +45,7 @@
             ['title' => 'Manual Result Entry', 'description' => 'Enter and update scores manually.', 'href' => route('school.results.manual.index')],
             ['title' => 'CSV Result Upload', 'description' => 'Upload class-based result CSV files.', 'href' => route('school.results.upload.index')],
             ['title' => 'Result Publishing', 'description' => $isSchoolAdmin ? 'Publish or unpublish checked results.' : 'View publishing status and history.', 'href' => route('school.results.publishing.index')],
+            ['title' => 'Result System', 'description' => 'Open result settings and access modules.', 'href' => route('school.result-system.index')],
         ];
 
         if ($isSchoolAdmin) {
@@ -53,12 +55,12 @@
         $accessModules = $isSchoolAdmin
             ? [
                 ['title' => 'Scratch Cards', 'description' => 'Request cards and download generated batches.', 'href' => route('school.scratch-cards.index')],
+                ['title' => 'Result Access Policy', 'description' => 'View active public result access rules.', 'href' => route('school.result-access-policy.show')],
+                ['title' => 'Plans & Subscription', 'description' => 'Review the current plan and feature access.', 'href' => route('school.subscription.show')],
             ]
             : [];
 
         $comingSoonModules = [
-            'Result Access Policy',
-            'Plans & Subscription',
             'Assessment/Test Results',
             'CBT Results',
             'PDF Results',
@@ -276,17 +278,6 @@
                                 </a>
                             @endforeach
 
-                            <div class="rounded-2xl bg-white p-5 opacity-75 shadow-sm">
-                                <h4 class="text-base font-semibold text-gray-900">Result Access Policy</h4>
-                                <p class="mt-2 text-sm text-gray-600">Coming Soon</p>
-                                <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Not available yet</p>
-                            </div>
-
-                            <div class="rounded-2xl bg-white p-5 opacity-75 shadow-sm">
-                                <h4 class="text-base font-semibold text-gray-900">Plans & Subscription</h4>
-                                <p class="mt-2 text-sm text-gray-600">Coming Soon</p>
-                                <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Not available yet</p>
-                            </div>
                         </div>
                     </section>
                 @endif

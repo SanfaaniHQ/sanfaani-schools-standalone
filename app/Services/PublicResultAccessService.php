@@ -36,7 +36,7 @@ class PublicResultAccessService
 
         $policy = $this->activeAccessPolicy($school);
 
-        if (! $this->featureAccess->canAccess($school, 'public_result_checker') && ! $policy) {
+        if ($this->featureAccess->isExplicitlyDisabled($school, 'public_result_checker')) {
             return $this->failure(__('public_result.result_checking_unavailable'));
         }
 

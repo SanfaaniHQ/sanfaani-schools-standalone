@@ -33,7 +33,7 @@ class SchoolSubscriptionController extends Controller
         $data = $request->validate([
             'school_id' => ['required', Rule::exists('schools', 'id')],
             'subscription_plan_id' => ['required', Rule::exists('subscription_plans', 'id')],
-            'status' => ['required', Rule::in(['trial', 'active', 'grace', 'expired', 'superseded'])],
+            'status' => ['required', Rule::in(['trial', 'active', 'grace', 'expired', 'cancelled', 'superseded'])],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
             'trial_ends_at' => ['nullable', 'date'],

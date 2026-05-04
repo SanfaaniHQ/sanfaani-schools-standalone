@@ -5,6 +5,8 @@ Use this checklist for authorized local or pre-production testing only. Do not r
 ## 1. Authentication
 
 - Login requires valid email or staff code and password.
+- `/admin/login` is separate and accepts Super Admin users only.
+- Non-Super Admin users cannot authenticate through `/admin/login`.
 - Rate limiting works on failed login attempts.
 - Password reset does not disclose whether an account exists.
 
@@ -15,6 +17,8 @@ Use this checklist for authorized local or pre-production testing only. Do not r
 - Result Officer users cannot publish or unpublish results.
 - School Admin users cannot access another school's students.
 - School Admin users cannot download another school's scratch cards.
+- Super Admin support access requires explicit school selection and shows a support banner.
+- Support access start/stop is logged.
 
 ## 3. Session Management
 
@@ -71,6 +75,12 @@ Use this checklist for authorized local or pre-production testing only. Do not r
 ## 12. Public Result Checker Security
 
 - Unpublished results are not exposed.
+- Public result checker does not show a school dropdown or public school list.
+- The scratch card serial/PIN privately identifies the school before student lookup.
+- Step 1 asks only for admission number, scratch card serial number, and PIN.
+- Academic session and term options appear only after the access context is verified.
+- Session and term options are scoped to the privately identified school.
+- Scratch card usage does not increment during Step 1 and increments only after a published result opens.
 - Wrong scratch card PIN fails.
 - Revoked card fails.
 - Expired card fails.
@@ -101,6 +111,7 @@ Use this checklist for authorized local or pre-production testing only. Do not r
 - `storage` and `bootstrap/cache` are writable.
 - Whole project is not world-writable.
 - `config:cache`, `route:cache`, and `view:cache` work.
+- Super Admin System Maintenance actions are POST-only, CSRF protected, and run fixed Artisan commands only.
 
 ## Safe Local Checks
 

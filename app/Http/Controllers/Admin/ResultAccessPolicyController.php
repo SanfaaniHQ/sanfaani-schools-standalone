@@ -31,7 +31,7 @@ class ResultAccessPolicyController extends Controller
     public function store(Request $request)
     {
         $data = $this->validatePolicy($request);
-        $ruleData = $this->validateRule($request);
+        $ruleData = $this->validateRule($request, (int) $data['school_id']);
 
         $policy = SchoolResultAccessPolicy::create($data + ['created_by' => auth()->id()]);
         SchoolResultAccessPolicyRule::create($ruleData + ['school_result_access_policy_id' => $policy->id]);
@@ -46,12 +46,19 @@ class ResultAccessPolicyController extends Controller
         return view('admin.result-access-policies.form', $this->formData($resultAccessPolicy->load('rules')));
     }
 
+    public function show(SchoolResultAccessPolicy $resultAccessPolicy)
+    {
+        return view('admin.result-access-policies.show', [
+            'policy' => $resultAccessPolicy->load(['school', 'rules.academicSession', 'rules.term', 'createdBy']),
+        ]);
+    }
+
     public function update(Request $request, SchoolResultAccessPolicy $resultAccessPolicy)
     {
         $resultAccessPolicy->update($this->validatePolicy($request));
 
         $rule = $resultAccessPolicy->rules()->first();
-        $ruleData = $this->validateRule($request);
+        $ruleData = $this->validateRule($request, (int) $resultAccessPolicy->school_id);
 
         if ($rule) {
             $rule->update($ruleData);
@@ -90,14 +97,15 @@ class ResultAccessPolicyController extends Controller
             'status' => ['required', Rule::in(['active', 'inactive', 'archived'])],
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'notes' => ['nullable', 'string', 'max:5000'],
         ]);
     }
 
-    private function validateRule(Request $request): array
+    private function validateRule(Request $request, int $schoolId): array
     {
         $data = $request->validate([
-            'academic_session_id' => ['nullable', Rule::exists('academic_sessions', 'id')],
-            'term_id' => ['nullable', Rule::exists('terms', 'id')],
+            'academic_session_id' => ['nullable', Rule::exists('academic_sessions', 'id')->where('school_id', $schoolId)],
+            'term_id' => ['nullable', Rule::exists('terms', 'id')->where('school_id', $schoolId)],
             'result_type' => ['required', Rule::in(['term_result'])],
             'access_scope' => ['required', Rule::in(['term', 'session', 'year', 'custom'])],
             'max_access_per_student' => ['nullable', 'integer', 'min:1'],

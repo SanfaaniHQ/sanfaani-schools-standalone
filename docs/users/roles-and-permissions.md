@@ -4,6 +4,8 @@
 
 Super Admin users operate the platform across schools. They can create and archive schools, manage subscriptions and feature overrides, define access policies, confirm manual payments, approve and generate scratch cards, revoke cards, and inspect audit logs.
 
+Super Admin users sign in through `/admin/login`. The standard `/login` page is for school-level users. Super Admin support access to a school is session-based, visible through a banner, and logged.
+
 ## School Admin
 
 School Admin users operate one school. They can set up classes, subjects, sessions, terms, grading scales, students, admission number settings, staff users, results, publishing, and scratch card requests.
@@ -18,7 +20,7 @@ Teachers should be created as staff users with email or `staff_code`. A future t
 
 ## Parent Future Role
 
-Parents do not need portal accounts for the production launch. They currently use the public result checker with student admission number and scratch card access.
+Parents do not need portal accounts for the production launch. They currently use the public result checker with student admission number, academic session, term, and scratch card access. The public checker does not list schools.
 
 ## Student Future Role
 

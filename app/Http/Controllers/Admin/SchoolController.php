@@ -129,6 +129,47 @@ class SchoolController extends Controller
             ->with('success', 'School updated successfully.');
     }
 
+    public function startSupportAccess(School $school, AuditLogService $auditLog, Request $request)
+    {
+        if ($school->status !== 'active') {
+            return back()->with('error', 'Support access is available only for active schools.');
+        }
+
+        session([
+            'support_school_id' => $school->id,
+            'support_access_started_by' => auth()->id(),
+            'support_access_started_at' => now()->toDateTimeString(),
+        ]);
+
+        $auditLog->log('support_access_started', $school, $school, metadata: [
+            'support_school_id' => $school->id,
+        ], request: $request);
+
+        return redirect()
+            ->route('school.dashboard')
+            ->with('success', 'Support access started for '.$school->name.'.');
+    }
+
+    public function stopSupportAccess(AuditLogService $auditLog, Request $request)
+    {
+        $school = session('support_school_id') ? School::find(session('support_school_id')) : null;
+
+        $auditLog->log('support_access_stopped', $school, $school, metadata: [
+            'support_school_id' => session('support_school_id'),
+            'started_at' => session('support_access_started_at'),
+        ], request: $request);
+
+        session()->forget([
+            'support_school_id',
+            'support_access_started_by',
+            'support_access_started_at',
+        ]);
+
+        return redirect()
+            ->route('admin.schools.index')
+            ->with('success', 'Support access ended.');
+    }
+
     public function archive(School $school, AuditLogService $auditLog, Request $request)
     {
         $oldValues = $school->only(['status']);

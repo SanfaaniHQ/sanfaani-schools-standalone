@@ -19,6 +19,7 @@ class SchoolResultAccessPolicy extends Model
         'status',
         'starts_at',
         'ends_at',
+        'notes',
         'created_by',
         'metadata',
     ];

@@ -77,12 +77,11 @@ class LandingPageController extends Controller
             'phone' => $data['phone'],
             'email' => $data['email'] ?? null,
             'role' => null,
-            'message' => $data['message'] ?? null,
-        ], 'landing_demo', [
             'number_of_students' => $data['number_of_students'] ?? null,
             'school_type' => $data['school_type'] ?? null,
             'preferred_demo_time' => $data['preferred_demo_time'] ?? null,
-        ]);
+            'message' => $data['message'] ?? null,
+        ], 'landing_demo');
 
         return back()->with('success', self::SUCCESS_MESSAGE);
     }
@@ -100,6 +99,9 @@ class LandingPageController extends Controller
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
             'role' => $data['role'] ?? null,
+            'number_of_students' => $data['number_of_students'] ?? null,
+            'school_type' => $data['school_type'] ?? null,
+            'preferred_demo_time' => $data['preferred_demo_time'] ?? null,
             'message' => $data['message'] ?? null,
             'source' => $source,
             'status' => 'new',

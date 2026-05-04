@@ -5,18 +5,23 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
+use App\Models\ScratchCard;
 use App\Models\Student;
 use App\Models\Term;
+use App\Services\AuditLogService;
 use App\Services\PublicResultAccessService;
 use App\Services\ReportCardService;
 use App\Services\ResultGradingService;
 use App\Services\ScratchCardAccessService;
-use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ResultCheckerController extends Controller
 {
+    private const CONTEXT_KEY = 'result_checker_context';
+
+    private const CONTEXT_TTL_MINUTES = 15;
+
     public function __construct(
         private PublicResultAccessService $resultAccess,
         private ScratchCardAccessService $scratchCardAccess,
@@ -29,29 +34,90 @@ class ResultCheckerController extends Controller
             abort(404);
         }
 
-        [$locale, $rtl] = $this->setPublicLocale($request, $school);
-
-        $selectedSchool = $school;
-
-        if (! $selectedSchool && $request->filled('school_id')) {
-            $selectedSchool = School::where('status', 'active')
-                ->find($request->integer('school_id'));
+        if ($request->boolean('reset')) {
+            $request->session()->forget(self::CONTEXT_KEY);
         }
 
-        return view('public.results.check', [
+        [$locale, $rtl] = $this->setPublicLocale($request, $school);
+
+        $viewData = [
+            'step' => 1,
             'locale' => $locale,
             'rtl' => $rtl,
             'languages' => $this->languages(),
-            'schools' => School::where('status', 'active')->orderBy('name')->get(),
-            'selectedSchool' => $selectedSchool,
-            'academicSessions' => $selectedSchool
-                ? $selectedSchool->academicSessions()->where('status', 'active')->latest()->get()
-                : collect(),
-            'terms' => $selectedSchool
-                ? $selectedSchool->terms()->with('academicSession')->where('status', 'active')->latest()->get()
-                : collect(),
+            'selectedSchool' => $school,
             'isBrandedSchoolRoute' => (bool) $school,
+            'contextSchool' => null,
+            'contextStudent' => null,
+            'scratchCard' => null,
+            'academicSessions' => collect(),
+            'terms' => collect(),
+            'lockedAcademicSession' => null,
+            'lockedTerm' => null,
+            'lockedResultType' => null,
+            'selectedAcademicSessionId' => null,
+            'selectedTermId' => null,
+            'selectedResultType' => 'term_result',
+        ];
+
+        if ($context = $this->resultCheckerContext($request, $school)) {
+            $viewData = array_merge($viewData, $this->contextViewData($request, $context));
+        }
+
+        return view('public.results.check', $viewData);
+    }
+
+    public function identify(Request $request, ?School $school = null)
+    {
+        if ($school && $school->status !== 'active') {
+            abort(404);
+        }
+
+        [$locale] = $this->setPublicLocale($request, $school);
+
+        $data = $request->validate([
+            'admission_number' => ['required', 'string', 'max:100'],
+            'scratch_card_serial' => ['required', 'string', 'max:100'],
+            'scratch_card_pin' => ['required', 'string', 'max:100'],
+            'lang' => ['nullable', Rule::in(array_keys($this->languages()))],
         ]);
+
+        $cardCheck = $this->scratchCardAccess->verifyCardCredentials(
+            $data['scratch_card_serial'],
+            $data['scratch_card_pin']
+        );
+
+        if (! $cardCheck['success']) {
+            return $this->redirectToChecker($locale, $school, $cardCheck['message'], true, $request);
+        }
+
+        $card = $cardCheck['scratchCard'];
+        $identifiedSchool = School::where('status', 'active')->find($card->school_id);
+
+        if (! $identifiedSchool || ($school && (int) $school->id !== (int) $identifiedSchool->id)) {
+            return $this->redirectToChecker($locale, $school, __('public_result.invalid_access_details'), true, $request);
+        }
+
+        $student = Student::where('school_id', $identifiedSchool->id)
+            ->where('admission_number', trim($data['admission_number']))
+            ->first();
+
+        if (! $student) {
+            return $this->redirectToChecker($locale, $school, __('public_result.invalid_access_details'), true, $request);
+        }
+
+        $request->session()->put(self::CONTEXT_KEY, [
+            'school_id' => $identifiedSchool->id,
+            'student_id' => $student->id,
+            'scratch_card_id' => $card->id,
+            'admission_number' => $student->admission_number,
+            'created_at' => now()->timestamp,
+        ]);
+
+        return redirect()->route(
+            $school ? 'public.school.results.index' : 'public.results.index',
+            $this->checkerRouteParameters($locale, $school)
+        );
     }
 
     public function check(Request $request, ?School $school = null)
@@ -60,97 +126,87 @@ class ResultCheckerController extends Controller
             abort(404);
         }
 
+        $routeSchool = $school;
         [$locale] = $this->setPublicLocale($request, $school);
-        $schoolId = $school?->id ?? $request->input('school_id');
+
+        $context = $this->resultCheckerContext($request, $school);
+
+        if (! $context) {
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.context_expired'));
+        }
+
+        $models = $this->loadContextModels($context);
+
+        if (! $models) {
+            $request->session()->forget(self::CONTEXT_KEY);
+
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.context_expired'));
+        }
+
+        $contextSchool = $models['school'];
+        $student = $models['student'];
+        $card = $models['scratchCard'];
 
         $data = $request->validate([
-            'school_id' => [
-                Rule::requiredIf(! $school),
-                Rule::exists('schools', 'id')->where('status', 'active'),
-            ],
-            'admission_number' => ['required', 'string', 'max:100'],
-            'academic_session_id' => [
-                'required',
-                Rule::exists('academic_sessions', 'id')->where('school_id', $schoolId),
-            ],
-            'term_id' => [
-                'required',
-                Rule::exists('terms', 'id')
-                    ->where('school_id', $schoolId)
-                    ->where('academic_session_id', $request->input('academic_session_id')),
-            ],
+            'academic_session_id' => ['required', 'integer'],
+            'term_id' => ['required', 'integer'],
             'result_type' => ['required', Rule::in(['term_result'])],
-            'scratch_card_serial' => ['required', 'string', 'max:100'],
-            'scratch_card_pin' => ['required', 'string', 'max:100'],
             'lang' => ['nullable', Rule::in(array_keys($this->languages()))],
-        ], [
-            'school_id.required' => __('public_result.select_school'),
-            'scratch_card_serial.required' => __('public_result.scratch_card_serial_number'),
-            'scratch_card_pin.required' => __('public_result.scratch_card_pin'),
         ]);
 
-        $school = School::where('status', 'active')->find($schoolId);
-        $academicSession = AcademicSession::where('school_id', $schoolId)->find($data['academic_session_id']);
-        $term = Term::where('school_id', $schoolId)
-            ->where('academic_session_id', $data['academic_session_id'])
-            ->find($data['term_id']);
+        $academicSession = AcademicSession::where('school_id', $contextSchool->id)
+            ->find($data['academic_session_id']);
 
-        if (! $school || ! $academicSession || ! $term) {
-            return $this->backWithSafeError($request, __('public_result.check_details'));
+        $term = $academicSession
+            ? Term::where('school_id', $contextSchool->id)
+                ->where('academic_session_id', $academicSession->id)
+                ->find($data['term_id'])
+            : null;
+
+        if (! $academicSession || ! $term) {
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.card_not_valid_for_result'));
         }
 
-        $student = Student::where('school_id', $school->id)
-            ->where('admission_number', trim($data['admission_number']))
-            ->first();
-
-        if (! $student) {
-            return $this->backWithSafeError($request, __('public_result.check_details'));
-        }
-
-        $access = $this->resultAccess->evaluateAccess($school, $academicSession, $term, $data['result_type']);
+        $access = $this->resultAccess->evaluateAccess($contextSchool, $academicSession, $term, $data['result_type']);
 
         if (! $access['success']) {
-            return $this->backWithSafeError($request, $access['message']);
+            return $this->redirectToChecker($locale, $routeSchool, $access['message']);
         }
 
-        $scratchCardAccess = $this->scratchCardAccess->validateAndRecord(
-            $school,
+        $scratchCardAccess = $this->scratchCardAccess->validateCardForResult(
+            $card,
+            $contextSchool,
             $student,
             $academicSession,
             $term,
-            $data['result_type'],
-            $data['scratch_card_serial'],
-            $data['scratch_card_pin'],
-            $request,
-            false
+            $data['result_type']
         );
 
         if (! $scratchCardAccess['success']) {
-            return $this->backWithSafeError($request, $scratchCardAccess['message']);
+            return $this->redirectToChecker($locale, $routeSchool, $scratchCardAccess['message']);
         }
 
-        if (! $this->resultAccess->hasPublishedResults($school, $student, $academicSession, $term, $data['result_type'])) {
-            return $this->backWithSafeError($request, __('public_result.result_not_available'));
+        if (! $this->resultAccess->hasPublishedResults($contextSchool, $student, $academicSession, $term, $data['result_type'])) {
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.result_not_available'));
         }
 
-        $scratchCardAccess = $this->scratchCardAccess->validateAndRecord(
-            $school,
+        $scratchCardAccess = $this->scratchCardAccess->recordSuccessfulUsage(
+            $card,
+            $contextSchool,
             $student,
             $academicSession,
             $term,
             $data['result_type'],
-            $data['scratch_card_serial'],
-            $data['scratch_card_pin'],
             $request
         );
 
         if (! $scratchCardAccess['success']) {
-            return $this->backWithSafeError($request, $scratchCardAccess['message']);
+            return $this->redirectToChecker($locale, $routeSchool, $scratchCardAccess['message']);
         }
 
         $token = $this->resultAccess->createToken(
             $request,
-            $school,
+            $contextSchool,
             $student,
             $academicSession,
             $term,
@@ -158,12 +214,14 @@ class ResultCheckerController extends Controller
             $locale
         );
 
-        $this->auditLog->log('public_result_checked', $student, $school, metadata: [
+        $this->auditLog->log('public_result_checked', $student, $contextSchool, metadata: [
             'academic_session_id' => $academicSession->id,
             'term_id' => $term->id,
             'result_type' => $data['result_type'],
             'scratch_card_id' => $scratchCardAccess['scratchCard']?->id,
         ], request: $request);
+
+        $request->session()->forget(self::CONTEXT_KEY);
 
         return redirect()->route('public.results.view', ['token' => $token, 'lang' => $locale]);
     }
@@ -280,10 +338,129 @@ class ResultCheckerController extends Controller
         ];
     }
 
-    private function backWithSafeError(Request $request, string $message)
+    private function contextViewData(Request $request, array $context): array
     {
-        return back()
-            ->withInput($request->except('scratch_card_pin'))
+        $models = $this->loadContextModels($context);
+
+        if (! $models) {
+            $request->session()->forget(self::CONTEXT_KEY);
+
+            return ['step' => 1];
+        }
+
+        $school = $models['school'];
+        $card = $models['scratchCard'];
+        $student = $models['student'];
+        $lockedAcademicSession = $card->academic_session_id
+            ? AcademicSession::where('school_id', $school->id)->find($card->academic_session_id)
+            : null;
+        $lockedTerm = $card->term_id
+            ? Term::where('school_id', $school->id)->find($card->term_id)
+            : null;
+
+        $selectedAcademicSessionId = (int) old(
+            'academic_session_id',
+            $lockedAcademicSession?->id ?: $lockedTerm?->academic_session_id
+        );
+        $selectedTermId = (int) old('term_id', $lockedTerm?->id);
+
+        return [
+            'step' => 2,
+            'contextSchool' => $school,
+            'contextStudent' => $student,
+            'scratchCard' => $card,
+            'academicSessions' => AcademicSession::where('school_id', $school->id)
+                ->orderByDesc('starts_at')
+                ->orderByDesc('id')
+                ->get(),
+            'terms' => Term::where('school_id', $school->id)
+                ->orderBy('academic_session_id')
+                ->orderBy('starts_at')
+                ->orderBy('id')
+                ->get(),
+            'lockedAcademicSession' => $lockedAcademicSession,
+            'lockedTerm' => $lockedTerm,
+            'lockedResultType' => $card->result_type,
+            'selectedAcademicSessionId' => $selectedAcademicSessionId ?: null,
+            'selectedTermId' => $selectedTermId ?: null,
+            'selectedResultType' => old('result_type', $card->result_type ?: 'term_result'),
+        ];
+    }
+
+    private function resultCheckerContext(Request $request, ?School $school = null): ?array
+    {
+        $context = $request->session()->get(self::CONTEXT_KEY);
+
+        if (! is_array($context) || ! isset($context['school_id'], $context['student_id'], $context['scratch_card_id'], $context['created_at'])) {
+            return null;
+        }
+
+        if ((int) $context['created_at'] < now()->subMinutes(self::CONTEXT_TTL_MINUTES)->timestamp) {
+            $request->session()->forget(self::CONTEXT_KEY);
+
+            return null;
+        }
+
+        if ($school && (int) $context['school_id'] !== (int) $school->id) {
+            $request->session()->forget(self::CONTEXT_KEY);
+
+            return null;
+        }
+
+        return $context;
+    }
+
+    private function loadContextModels(array $context): ?array
+    {
+        $school = School::where('status', 'active')->find($context['school_id'] ?? null);
+
+        if (! $school) {
+            return null;
+        }
+
+        $student = Student::where('school_id', $school->id)->find($context['student_id'] ?? null);
+        $scratchCard = ScratchCard::where('school_id', $school->id)->find($context['scratch_card_id'] ?? null);
+
+        if (! $student || ! $scratchCard) {
+            return null;
+        }
+
+        return [
+            'school' => $school,
+            'student' => $student,
+            'scratchCard' => $scratchCard,
+        ];
+    }
+
+    private function redirectToChecker(
+        string $locale,
+        ?School $school,
+        string $message,
+        bool $withInput = false,
+        ?Request $request = null
+    ) {
+        $redirect = redirect()
+            ->route(
+                $school ? 'public.school.results.index' : 'public.results.index',
+                $this->checkerRouteParameters($locale, $school)
+            )
             ->with('error', $message);
+
+        if ($withInput && $request) {
+            $redirect->withInput($request->except('scratch_card_pin'));
+        }
+
+        return $redirect;
+    }
+
+    private function checkerRouteParameters(string $locale, ?School $school = null): array
+    {
+        $parameters = ['lang' => $locale];
+
+        if ($school) {
+            return array_merge(['school' => $school->slug ?: $school->getKey()], $parameters);
+        }
+
+        return $parameters;
     }
 }

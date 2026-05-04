@@ -4,9 +4,11 @@
 
 Authentication is Laravel-based. Roles separate Super Admin, School Admin, and Result Officer access. Teachers are prepared as a future staff identity. Staff should use email or `staff_code`, never student admission numbers.
 
+Super Admin login is separated at `/admin/login`. School-level users continue to use `/login`.
+
 ## Super Admin Dashboard
 
-Super Admin users manage schools, plans, subscriptions, feature overrides, result access policies, manual payment confirmations, audit logs, and scratch card approval/generation.
+Super Admin users manage schools, plans, subscriptions, feature overrides, result access policies, manual payment confirmations, lead requests, system maintenance, system updates, audit logs, and scratch card approval/generation.
 
 ## School Management
 
@@ -54,7 +56,7 @@ School Admin users request scratch card batches. Super Admin users confirm payme
 
 ## Public Result Checker
 
-Parents check results using school, admission number, session, term, scratch card serial number, and PIN. Errors are intentionally simple and safe.
+Parents check results in two steps. First they enter admission number, scratch card serial number, and PIN. The system identifies the school privately from the scratch card and does not expose a public school dropdown. Only after the access context is verified can the parent select the academic session, term, and term result type. Scratch card usage is recorded only after a published result is confirmed and opened. Errors are intentionally simple and safe.
 
 ## Payments and Plans
 

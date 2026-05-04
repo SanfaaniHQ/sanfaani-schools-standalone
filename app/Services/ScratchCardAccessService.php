@@ -9,133 +9,141 @@ use App\Models\SchoolResultAccessPolicyRule;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardUsage;
 use App\Models\Student;
+use App\Models\StudentResult;
 use App\Models\Term;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ScratchCardAccessService
 {
-    public function validateAndRecord(
+    public function verifyCardCredentials(string $serialNumber, string $pinCode): array
+    {
+        $card = ScratchCard::where('serial_number', trim($serialNumber))->first();
+
+        if (! $card || ! $card->pin_hash || ! hash_equals($card->pin_hash, hash('sha256', trim($pinCode)))) {
+            return $this->failure(__('public_result.invalid_access_details'));
+        }
+
+        return $this->basicCardStatus($card);
+    }
+
+    public function cardForCredentials(string $serialNumber, string $pinCode): array
+    {
+        return $this->verifyCardCredentials($serialNumber, $pinCode);
+    }
+
+    public function validateCardForResult(
+        ScratchCard $card,
+        School $school,
+        Student $student,
+        AcademicSession $academicSession,
+        Term $term,
+        string $resultType
+    ): array {
+        if ((int) $card->school_id !== (int) $school->id) {
+            return $this->failure(__('public_result.invalid_access_details'));
+        }
+
+        $status = $this->basicCardStatus($card);
+
+        if (! $status['success']) {
+            return $status;
+        }
+
+        if ($card->academic_session_id && (int) $card->academic_session_id !== (int) $academicSession->id) {
+            return $this->failure(__('public_result.card_not_valid_for_result'));
+        }
+
+        if ($card->term_id && (int) $card->term_id !== (int) $term->id) {
+            return $this->failure(__('public_result.card_not_valid_for_result'));
+        }
+
+        if ($card->result_type && $card->result_type !== $resultType) {
+            return $this->failure(__('public_result.card_not_valid_for_result'));
+        }
+
+        if ($card->school_class_id && ! $this->publishedResultExistsForCardClass($school, $student, $academicSession, $term, $resultType, (int) $card->school_class_id)) {
+            return $this->failure(__('public_result.card_not_valid_for_result'));
+        }
+
+        if ($card->used_by_student_id && (int) $card->used_by_student_id !== (int) $student->id) {
+            return $this->failure(__('public_result.card_used_by_another_student'));
+        }
+
+        $rule = $this->matchingRule($school, $academicSession, $term, $resultType);
+
+        if ($rule?->max_access_per_card) {
+            $cardAccesses = ScratchCardUsage::where('scratch_card_id', $card->id)
+                ->where('academic_session_id', $academicSession->id)
+                ->where('term_id', $term->id)
+                ->where('result_type', $resultType)
+                ->count();
+
+            if ($cardAccesses >= (int) $rule->max_access_per_card) {
+                return $this->failure(__('public_result.card_usage_limit_reached'));
+            }
+        }
+
+        if ($rule?->max_access_per_student) {
+            $studentAccesses = ScratchCardUsage::where('school_id', $school->id)
+                ->where('student_id', $student->id)
+                ->where('academic_session_id', $academicSession->id)
+                ->where('term_id', $term->id)
+                ->where('result_type', $resultType)
+                ->count();
+
+            if ($studentAccesses >= (int) $rule->max_access_per_student) {
+                return $this->failure(__('public_result.card_usage_limit_reached'));
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => null,
+            'scratchCard' => $card,
+        ];
+    }
+
+    public function recordSuccessfulUsage(
+        ScratchCard $card,
         School $school,
         Student $student,
         AcademicSession $academicSession,
         Term $term,
         string $resultType,
-        string $serialNumber,
-        string $pinCode,
-        Request $request,
-        bool $recordUsage = true
+        Request $request
     ): array {
-        return DB::transaction(function () use (
-            $school,
-            $student,
-            $academicSession,
-            $term,
-            $resultType,
-            $serialNumber,
-            $pinCode,
-            $request,
-            $recordUsage
-        ) {
-            $card = ScratchCard::where('serial_number', trim($serialNumber))
+        return DB::transaction(function () use ($card, $school, $student, $academicSession, $term, $resultType, $request) {
+            $lockedCard = ScratchCard::whereKey($card->id)
                 ->lockForUpdate()
                 ->first();
 
-            if (! $card || ! $card->pin_hash || ! hash_equals($card->pin_hash, hash('sha256', trim($pinCode)))) {
-                return $this->failure(__('public_result.invalid_scratch_card'));
+            if (! $lockedCard) {
+                return $this->failure(__('public_result.invalid_access_details'));
             }
 
-            if ((int) $card->school_id !== (int) $school->id) {
-                return $this->failure(__('public_result.invalid_scratch_card'));
-            }
+            $validation = $this->validateCardForResult($lockedCard, $school, $student, $academicSession, $term, $resultType);
 
-            if ($card->status === 'revoked' || $card->revoked_at) {
-                return $this->failure(__('public_result.card_revoked'));
-            }
-
-            if ($card->status === 'expired') {
-                return $this->failure(__('public_result.card_expired'));
-            }
-
-            if ($card->expires_at && $card->expires_at->isPast()) {
-                return $this->failure(__('public_result.card_expired'));
-            }
-
-            if ((int) $card->used_count >= (int) $card->max_uses) {
-                return $this->failure(__('public_result.card_usage_limit_reached'));
-            }
-
-            if ($card->academic_session_id && (int) $card->academic_session_id !== (int) $academicSession->id) {
-                return $this->failure(__('public_result.card_not_valid_for_result'));
-            }
-
-            if ($card->term_id && (int) $card->term_id !== (int) $term->id) {
-                return $this->failure(__('public_result.card_not_valid_for_result'));
-            }
-
-            if ($card->result_type && $card->result_type !== $resultType) {
-                return $this->failure(__('public_result.card_not_valid_for_result'));
-            }
-
-            if ($card->school_class_id && (int) $card->school_class_id !== (int) $student->school_class_id) {
-                return $this->failure(__('public_result.card_not_valid_for_result'));
-            }
-
-            if ($card->used_by_student_id && (int) $card->used_by_student_id !== (int) $student->id) {
-                return $this->failure(__('public_result.card_used_by_another_student'));
-            }
-
-            $rule = $this->matchingRule($school, $academicSession, $term, $resultType);
-
-            if ($rule?->max_access_per_card) {
-                $cardAccesses = ScratchCardUsage::where('scratch_card_id', $card->id)
-                    ->where('academic_session_id', $academicSession->id)
-                    ->where('term_id', $term->id)
-                    ->where('result_type', $resultType)
-                    ->count();
-
-                if ($cardAccesses >= (int) $rule->max_access_per_card) {
-                    return $this->failure(__('public_result.card_usage_limit_reached'));
-                }
-            }
-
-            if ($rule?->max_access_per_student) {
-                $studentAccesses = ScratchCardUsage::where('school_id', $school->id)
-                    ->where('student_id', $student->id)
-                    ->where('academic_session_id', $academicSession->id)
-                    ->where('term_id', $term->id)
-                    ->where('result_type', $resultType)
-                    ->count();
-
-                if ($studentAccesses >= (int) $rule->max_access_per_student) {
-                    return $this->failure(__('public_result.card_usage_limit_reached'));
-                }
-            }
-
-            if (! $recordUsage) {
-                return [
-                    'success' => true,
-                    'message' => null,
-                    'scratchCard' => $card,
-                ];
+            if (! $validation['success']) {
+                return $validation;
             }
 
             $now = now();
-            $newUsedCount = (int) $card->used_count + 1;
+            $newUsedCount = (int) $lockedCard->used_count + 1;
 
-            $card->used_count = $newUsedCount;
-            $card->used_by_student_id = $card->used_by_student_id ?: $student->id;
-            $card->first_used_at = $card->first_used_at ?: $now;
-            $card->last_used_at = $now;
+            $lockedCard->used_count = $newUsedCount;
+            $lockedCard->used_by_student_id = $lockedCard->used_by_student_id ?: $student->id;
+            $lockedCard->first_used_at = $lockedCard->first_used_at ?: $now;
+            $lockedCard->last_used_at = $now;
 
-            if ($newUsedCount >= (int) $card->max_uses) {
-                $card->status = 'used';
+            if ($newUsedCount >= (int) $lockedCard->max_uses) {
+                $lockedCard->status = 'used';
             }
 
-            $card->save();
+            $lockedCard->save();
 
             ScratchCardUsage::create([
-                'scratch_card_id' => $card->id,
+                'scratch_card_id' => $lockedCard->id,
                 'school_id' => $school->id,
                 'student_id' => $student->id,
                 'academic_session_id' => $academicSession->id,
@@ -153,9 +161,71 @@ class ScratchCardAccessService
             return [
                 'success' => true,
                 'message' => null,
-                'scratchCard' => $card->fresh(),
+                'scratchCard' => $lockedCard->fresh(),
             ];
         });
+    }
+
+    public function validateAndRecord(
+        School $school,
+        Student $student,
+        AcademicSession $academicSession,
+        Term $term,
+        string $resultType,
+        string $serialNumber,
+        string $pinCode,
+        Request $request,
+        bool $recordUsage = true
+    ): array {
+        $cardCheck = $this->verifyCardCredentials($serialNumber, $pinCode);
+
+        if (! $cardCheck['success']) {
+            return $cardCheck;
+        }
+
+        $validation = $this->validateCardForResult(
+            $cardCheck['scratchCard'],
+            $school,
+            $student,
+            $academicSession,
+            $term,
+            $resultType
+        );
+
+        if (! $validation['success'] || ! $recordUsage) {
+            return $validation;
+        }
+
+        return $this->recordSuccessfulUsage(
+            $cardCheck['scratchCard'],
+            $school,
+            $student,
+            $academicSession,
+            $term,
+            $resultType,
+            $request
+        );
+    }
+
+    private function basicCardStatus(ScratchCard $card): array
+    {
+        if ($card->status === 'revoked' || $card->revoked_at) {
+            return $this->failure(__('public_result.card_revoked'));
+        }
+
+        if ($card->status === 'expired' || ($card->expires_at && $card->expires_at->isPast())) {
+            return $this->failure(__('public_result.card_expired'));
+        }
+
+        if ((int) $card->used_count >= (int) $card->max_uses) {
+            return $this->failure(__('public_result.card_usage_limit_reached'));
+        }
+
+        return [
+            'success' => true,
+            'message' => null,
+            'scratchCard' => $card,
+        ];
     }
 
     private function failure(string $message): array
@@ -165,6 +235,26 @@ class ScratchCardAccessService
             'message' => $message,
             'scratchCard' => null,
         ];
+    }
+
+    private function publishedResultExistsForCardClass(
+        School $school,
+        Student $student,
+        AcademicSession $academicSession,
+        Term $term,
+        string $resultType,
+        int $schoolClassId
+    ): bool {
+        return StudentResult::where('school_id', $school->id)
+            ->where('student_id', $student->id)
+            ->where('school_class_id', $schoolClassId)
+            ->where('academic_session_id', $academicSession->id)
+            ->where('term_id', $term->id)
+            ->where('result_type', $resultType)
+            ->where('status', 'published')
+            ->whereNotNull('published_at')
+            ->whereNull('unpublished_at')
+            ->exists();
     }
 
     private function matchingRule(

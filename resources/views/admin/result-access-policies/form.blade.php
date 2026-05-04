@@ -13,6 +13,7 @@
                     <div><label class="block text-sm font-medium text-gray-700">Starts At</label><input type="date" name="starts_at" value="{{ old('starts_at', $policy->starts_at?->format('Y-m-d')) }}" class="mt-1 block w-full rounded-xl border-gray-300"></div>
                     <div><label class="block text-sm font-medium text-gray-700">Ends At</label><input type="date" name="ends_at" value="{{ old('ends_at', $policy->ends_at?->format('Y-m-d')) }}" class="mt-1 block w-full rounded-xl border-gray-300"></div>
                 </div>
+                <div><label class="block text-sm font-medium text-gray-700">Notes</label><textarea name="notes" rows="3" class="mt-1 block w-full rounded-xl border-gray-300">{{ old('notes', $policy->notes) }}</textarea></div>
 
                 <div class="rounded-2xl bg-gray-50 p-4">
                     <h3 class="text-base font-semibold text-gray-900">Default Rule</h3>

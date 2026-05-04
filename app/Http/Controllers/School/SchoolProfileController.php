@@ -48,7 +48,7 @@ class SchoolProfileController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = auth()->user()->school;
+        $school = app(\App\Services\CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

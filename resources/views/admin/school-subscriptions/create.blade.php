@@ -25,7 +25,7 @@
                     </div>
                 </div>
                 <div class="grid gap-6 md:grid-cols-4">
-                    <div><label class="block text-sm font-medium text-gray-700">Status</label><select name="status" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm"><option value="trial">Trial</option><option value="active">Active</option><option value="grace">Grace</option><option value="expired">Expired</option></select></div>
+                    <div><label class="block text-sm font-medium text-gray-700">Status</label><select name="status" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm"><option value="trial">Trial</option><option value="active">Active</option><option value="grace">Grace</option><option value="expired">Expired</option><option value="cancelled">Cancelled</option></select></div>
                     <div><label class="block text-sm font-medium text-gray-700">Starts At</label><input type="date" name="starts_at" value="{{ old('starts_at') }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm"></div>
                     <div><label class="block text-sm font-medium text-gray-700">Ends At</label><input type="date" name="ends_at" value="{{ old('ends_at') }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm"></div>
                     <div><label class="block text-sm font-medium text-gray-700">Trial Ends</label><input type="date" name="trial_ends_at" value="{{ old('trial_ends_at') }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm"></div>

@@ -1,4 +1,4 @@
-<nav x-data="{ open: false }" class="border-b border-gray-100 bg-white">
+<nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -33,6 +33,12 @@
                     @if (Auth::user()->hasRole('super_admin'))
                         <x-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
                             Platform Settings
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.result-system.index')" :active="request()->routeIs('admin.result-system.*')">
+                            Result System
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
+                            Maintenance
                         </x-nav-link>
                     @endif
                 </div>
@@ -108,6 +114,12 @@
             @if (Auth::user()->hasRole('super_admin'))
                 <x-responsive-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
                     Platform Settings
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.result-system.index')" :active="request()->routeIs('admin.result-system.*')">
+                    Result System
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
+                    Maintenance
                 </x-responsive-nav-link>
             @endif
         </div>

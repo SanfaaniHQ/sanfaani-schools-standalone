@@ -20,7 +20,7 @@
         [
             'title' => 'Access & Payments',
             'body' => 'Start with scratch card access and grow into flexible payment models.',
-            'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'School-paid access - Coming Soon', 'Parent-paid access - Coming Soon'],
+        'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'Hybrid scratch-card access', 'Parent-paid access - Coming Soon'],
         ],
         [
             'title' => 'Future Modules',

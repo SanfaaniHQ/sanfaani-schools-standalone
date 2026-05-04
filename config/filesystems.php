@@ -47,6 +47,14 @@ return [
             'report' => false,
         ],
 
+        'updates' => [
+            'driver' => 'local',
+            'root' => storage_path('app/updates'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

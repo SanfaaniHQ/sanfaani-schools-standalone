@@ -55,6 +55,8 @@ Set:
 APP_ENV=production
 APP_DEBUG=false
 APP_URL=https://schools.sanfaani.net
+APP_VERSION=1.0.0
+FILESYSTEM_DISK=public
 MAIL_MAILER=smtp
 ```
 
@@ -79,6 +81,7 @@ Do not make the whole project world-writable.
 - Platform logo upload renders in navigation/login/public pages.
 - School creation and edit work.
 - School logo upload renders on public result print.
+- If uploaded images do not display, run `php artisan storage:link`, confirm `APP_URL=https://schools.sanfaani.net`, confirm `FILESYSTEM_DISK=public`, check file permissions, then clear config/view cache.
 - School Admin dashboard loads.
 - Result checker rejects invalid details safely.
 - Valid published result plus valid scratch card shows the result.
@@ -93,3 +96,5 @@ Do not make the whole project world-writable.
 - Record deployed commit hash.
 - Review `storage/logs` privately for errors.
 - Monitor result checker, login, scratch cards, and mail delivery.
+- In Super Admin, use System Maintenance > Clear All Cache > Optimize Application after deployment or updates.
+- Use System Updates only as a safe package log until a reviewed installer exists.

@@ -63,9 +63,9 @@
 
     $accessModels = [
         'Scratch card access',
-        'School-paid access - Coming Soon',
-        'Parent-paid access - Coming Soon',
-        'Hybrid access - Coming Soon',
+                'School-paid policy controls',
+                'Parent-paid access - Coming Soon',
+                'Hybrid scratch-card access',
     ];
 
     $schoolTypes = [
