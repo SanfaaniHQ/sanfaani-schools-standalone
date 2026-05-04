@@ -36,10 +36,13 @@ Use `MAIL_MAILER=log` locally unless you are testing a real SMTP provider. Do no
 
 Production should run with `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://schools.sanfaani.net`, a secure `.env`, and a writable `storage` and `bootstrap/cache` directory. Run `php artisan storage:link` so uploaded platform and school logos can render.
 
+Before the final Namecheap push, run migrations, clear caches, build assets, list routes, confirm `.env` and private files are not staged, then use the final deployment checklist.
+
 See:
 
 - `docs/deployment/namecheap-production-deployment.md`
 - `docs/deployment/backup-and-restore.md`
+- `docs/testing/final-deployment-test-checklist.md`
 - `docs/notifications/smtp-mail-setup.md`
 - `docs/security/pre-deployment-security-checklist.md`
 - `docs/marketplace/codecanyon-readiness.md`

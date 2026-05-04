@@ -165,7 +165,7 @@
                     <div class="mt-6 space-y-4 text-sm text-gray-600">
                         <div class="rounded-xl bg-gray-50 p-4">
                             <p class="font-medium text-gray-900">Examples</p>
-                            <p class="mt-2">DAIA/2026/001</p>
+                            <p class="mt-2">SCH/2026/001</p>
                             <p>SANF/2026/0001</p>
                             <p>MAD/1447/025</p>
                             <p>SCH-2026-001</p>

@@ -9,10 +9,10 @@
     @php
         $actions = [
             ['title' => 'Clear All Cache', 'description' => 'Runs optimize:clear and clears compiled Laravel bootstrap cache.', 'route' => route('admin.system-maintenance.clear-all-cache'), 'confirm' => 'Clear all Laravel cache now?'],
-            ['title' => 'Clear Config Cache', 'description' => 'Use after .env, app URL, mail, payment, or filesystem setting changes.', 'route' => route('admin.system-maintenance.clear-config-cache'), 'confirm' => null],
-            ['title' => 'Clear Route Cache', 'description' => 'Use after route or controller changes.', 'route' => route('admin.system-maintenance.clear-route-cache'), 'confirm' => null],
-            ['title' => 'Clear View Cache', 'description' => 'Use after Blade view updates or stale UI display.', 'route' => route('admin.system-maintenance.clear-view-cache'), 'confirm' => null],
-            ['title' => 'Clear App Cache', 'description' => 'Clears application cache entries.', 'route' => route('admin.system-maintenance.clear-app-cache'), 'confirm' => null],
+            ['title' => 'Clear Config Cache', 'description' => 'Use after .env, app URL, mail, payment, or filesystem setting changes.', 'route' => route('admin.system-maintenance.clear-config-cache'), 'confirm' => 'Clear the configuration cache now?'],
+            ['title' => 'Clear Route Cache', 'description' => 'Use after route or controller changes.', 'route' => route('admin.system-maintenance.clear-route-cache'), 'confirm' => 'Clear the route cache now?'],
+            ['title' => 'Clear View Cache', 'description' => 'Use after Blade view updates or stale UI display.', 'route' => route('admin.system-maintenance.clear-view-cache'), 'confirm' => 'Clear the view cache now?'],
+            ['title' => 'Clear App Cache', 'description' => 'Clears application cache entries.', 'route' => route('admin.system-maintenance.clear-app-cache'), 'confirm' => 'Clear the application cache now?'],
             ['title' => 'Optimize Application', 'description' => 'Clears cache, then rebuilds config, route, and view cache for production.', 'route' => route('admin.system-maintenance.optimize'), 'confirm' => 'Optimize the application cache now?'],
             ['title' => 'Create Storage Link', 'description' => 'Repairs public access to uploaded logos, signatures, and images.', 'route' => route('admin.system-maintenance.storage-link'), 'confirm' => 'Create or confirm the public storage link now?'],
         ];

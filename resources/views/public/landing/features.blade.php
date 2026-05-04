@@ -20,12 +20,12 @@
         [
             'title' => 'Access & Payments',
             'body' => 'Start with scratch card access and grow into flexible payment models.',
-        'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'Hybrid scratch-card access', 'Parent-paid access - Coming Soon'],
+        'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'Hybrid scratch-card access', 'Parent-paid access - Available on selected plans'],
         ],
         [
             'title' => 'Future Modules',
             'body' => 'The foundation is ready for broader school operations.',
-            'items' => ['PDF result - Coming Soon', 'QR verification - Coming Soon', 'CBT - Coming Soon', 'Assessment/Test results - Coming Soon', 'SMS - Coming Soon', 'Mobile app - Coming Soon', 'Biometric attendance - Coming Soon'],
+            'items' => ['PDF result - Available on selected plans', 'QR verification - Available on selected plans', 'CBT - Available on selected plans', 'Assessment/Test results - Available on selected plans', 'SMS - Available on selected plans', 'Mobile app - Available on selected plans', 'Biometric attendance - Available on selected plans'],
         ],
     ];
 @endphp

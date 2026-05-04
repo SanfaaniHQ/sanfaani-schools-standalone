@@ -8,7 +8,12 @@
 
     <div class="py-8">
         <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
-            <form method="POST" action="{{ route('admin.system-updates.upload') }}" enctype="multipart/form-data" class="rounded-2xl bg-white p-6 shadow-sm">
+            <form method="POST"
+                  action="{{ route('admin.system-updates.upload') }}"
+                  enctype="multipart/form-data"
+                  data-confirm="Upload this update package for review? It will be stored privately and will not be applied automatically."
+                  data-loading-text="Uploading..."
+                  class="rounded-2xl bg-white p-6 shadow-sm">
                 @csrf
                 <h3 class="text-base font-semibold text-gray-900">Upload Update Package</h3>
                 <p class="mt-2 text-sm text-gray-600">Packages are stored privately in storage/app/updates. They are not extracted or applied automatically.</p>

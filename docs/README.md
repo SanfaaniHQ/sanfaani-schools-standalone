@@ -18,6 +18,8 @@ Sanfaani Schools is being prepared for production launch at `https://schools.san
 - `marketplace/` contains CodeCanyon readiness and packaging notes.
 - `testing/` contains production verification checklists.
 
+For the final Namecheap deployment pass, use `testing/final-deployment-test-checklist.md` together with `deployment/namecheap-production-deployment.md`.
+
 ## Identity Rules
 
 - Students and parents use `admission_number` for result checking.

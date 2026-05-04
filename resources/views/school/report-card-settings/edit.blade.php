@@ -137,7 +137,7 @@
                                 Auto head teacher comment
                             </label>
                         </div>
-                        <p class="mt-3 text-sm text-gray-500">Comment rules can be expanded later. PDF, QR, and full designer tools remain Coming Soon.</p>
+                        <p class="mt-3 text-sm text-gray-500">Comment rules can be expanded later. PDF, QR, and full designer tools are available on selected plans.</p>
                     </section>
 
                     <div class="flex justify-end gap-3">

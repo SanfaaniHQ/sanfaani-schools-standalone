@@ -51,8 +51,10 @@ php artisan tinker
 Then:
 
 ```php
+$school = App\Models\School::where('status', 'active')->latest()->firstOrFail();
+
 Illuminate\Support\Facades\Notification::route('mail', 'sanfaanisaas@gmail.com')
-    ->notify(new App\Notifications\SchoolCreatedNotification(App\Models\School::first()));
+    ->notify(new App\Notifications\SchoolCreatedNotification($school));
 ```
 
 Use a safe test school record. Do not send student data to external addresses during testing.

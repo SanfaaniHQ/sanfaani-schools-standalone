@@ -47,9 +47,9 @@
         'Public Result Checker',
         'Student 360 Profile',
         'Multilingual Foundation',
-        'PDF Result - Coming Soon',
-        'QR Verification - Coming Soon',
-        'CBT and Assessment Results - Coming Soon',
+        'PDF Result - Available on selected plans',
+        'QR Verification - Available on selected plans',
+        'CBT and Assessment Results - Available on selected plans',
     ];
 
     $steps = [
@@ -64,7 +64,7 @@
     $accessModels = [
         'Scratch card access',
                 'School-paid policy controls',
-                'Parent-paid access - Coming Soon',
+                'Parent-paid access - Available on selected plans',
                 'Hybrid scratch-card access',
     ];
 

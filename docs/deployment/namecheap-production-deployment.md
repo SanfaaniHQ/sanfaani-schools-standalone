@@ -7,8 +7,11 @@ This guide is for production launch preparation on Namecheap/cPanel shared hosti
 ## Pre-Deployment
 
 - Back up the current database and files.
+- Back up before running migrations or replacing files.
 - Confirm `composer.lock` and `package-lock.json` are committed.
 - Confirm `.env`, logs, backups, `vendor`, and `node_modules` are not committed.
+- Confirm no payment keys, SMTP passwords, storage logs, private uploads, or real database dumps are in Git.
+- Confirm the deployment branch is `dev` unless a release branch has been selected.
 - Build frontend assets locally if the server cannot run npm.
 - Confirm production support contact:
   - Email: sanfaanisaas@gmail.com
@@ -64,6 +67,8 @@ Use `MAIL_MAILER=log` only for temporary testing. SMTP credentials must stay in 
 
 Payment gateway public keys may be used where required by the frontend, but secret keys and webhook secrets must remain server-side only in `.env`.
 
+Manual payment remains active by default. Keep `PAYSTACK_ENABLED=false` and `FLUTTERWAVE_ENABLED=false` until live callback and webhook handling are reviewed.
+
 ## Permissions
 
 Make these writable by the PHP user:
@@ -79,12 +84,15 @@ Do not make the whole project world-writable.
 - Super Admin dashboard loads.
 - Platform settings can update text details.
 - Platform logo upload renders in navigation/login/public pages.
+- Login background and favicon uploads render where configured.
 - School creation and edit work.
 - School logo upload renders on public result print.
 - If uploaded images do not display, run `php artisan storage:link`, confirm `APP_URL=https://schools.sanfaani.net`, confirm `FILESYSTEM_DISK=public`, check file permissions, then clear config/view cache.
 - School Admin dashboard loads.
 - Result checker rejects invalid details safely.
 - Valid published result plus valid scratch card shows the result.
+- Scratch card usage increments only after the published result opens.
+- Demo and contact requests appear in Super Admin > Lead Requests even if email is not configured.
 - SMTP or log mail test succeeds.
 - `APP_DEBUG=false` in production.
 - `.env` is not publicly accessible.

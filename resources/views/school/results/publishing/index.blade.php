@@ -86,7 +86,7 @@
                                 <option value="">Select term</option>
                                 @foreach ($terms as $term)
                                     <option value="{{ $term->id }}" @selected(old('term_id') == $term->id)>
-                                        {{ $term->name }} — {{ $term->academicSession->name ?? 'No session' }}
+                                        {{ $term->name }} - {{ $term->academicSession->name ?? 'No session' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -100,8 +100,8 @@
                             <select name="result_type"
                                     class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                 <option value="term_result">Term Result</option>
-                                <option value="assessment_result" disabled>Assessment / Test Result — Coming Soon</option>
-                                <option value="cbt_result" disabled>CBT Result — Coming Soon</option>
+                                <option value="assessment_result" disabled>Assessment / Test Result - Available on selected plans</option>
+                                <option value="cbt_result" disabled>CBT Result - Available on selected plans</option>
                             </select>
                             @error('result_type')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -115,8 +115,8 @@
                                 <option value="class">Whole Class</option>
                                 <option value="subject">One Subject</option>
                                 <option value="student">One Student</option>
-                                <option value="selected_students" disabled>Selected Students — Coming Soon</option>
-                                <option value="selected_subjects" disabled>Selected Subjects — Coming Soon</option>
+                                <option value="selected_students" disabled>Selected Students - Available on selected plans</option>
+                                <option value="selected_subjects" disabled>Selected Subjects - Available on selected plans</option>
                             </select>
                             <p class="mt-1 text-xs text-gray-500">
                                 If you choose One Subject or One Student, select the matching field below.
@@ -133,7 +133,7 @@
                                 <option value="">Only required when scope is One Subject</option>
                                 @foreach ($subjects as $subject)
                                     <option value="{{ $subject->id }}" @selected(old('subject_id') == $subject->id)>
-                                        {{ $subject->name }} {{ $subject->code ? '— ' . $subject->code : '' }}
+                                        {{ $subject->name }} {{ $subject->code ? '- ' . $subject->code : '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -149,7 +149,7 @@
                                 <option value="">Only required when scope is One Student</option>
                                 @foreach ($students as $student)
                                     <option value="{{ $student->id }}" @selected(old('student_id') == $student->id)>
-                                        {{ $student->fullName() }} — {{ $student->admission_number }} — {{ $student->schoolClass->name ?? 'No class' }} {{ $student->schoolClass->section ?? '' }}
+                                        {{ $student->fullName() }} - {{ $student->admission_number }} - {{ $student->schoolClass->name ?? 'No class' }} {{ $student->schoolClass->section ?? '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -159,7 +159,7 @@
                         </div>
 
                         <div class="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
-                            Schedule release is coming soon. For now, this action publishes immediately.
+                            Scheduled release is available on selected plans. This action publishes immediately.
                         </div>
 
                         <button type="submit"
@@ -224,7 +224,7 @@
                                 <option value="">Select term</option>
                                 @foreach ($terms as $term)
                                     <option value="{{ $term->id }}" @selected(old('term_id') == $term->id)>
-                                        {{ $term->name }} — {{ $term->academicSession->name ?? 'No session' }}
+                                        {{ $term->name }} - {{ $term->academicSession->name ?? 'No session' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -238,8 +238,8 @@
                             <select name="result_type"
                                     class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                 <option value="term_result">Term Result</option>
-                                <option value="assessment_result" disabled>Assessment / Test Result — Coming Soon</option>
-                                <option value="cbt_result" disabled>CBT Result — Coming Soon</option>
+                                <option value="assessment_result" disabled>Assessment / Test Result - Available on selected plans</option>
+                                <option value="cbt_result" disabled>CBT Result - Available on selected plans</option>
                             </select>
                             @error('result_type')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -253,8 +253,8 @@
                                 <option value="class">Whole Class</option>
                                 <option value="subject">One Subject</option>
                                 <option value="student">One Student</option>
-                                <option value="selected_students" disabled>Selected Students — Coming Soon</option>
-                                <option value="selected_subjects" disabled>Selected Subjects — Coming Soon</option>
+                                <option value="selected_students" disabled>Selected Students - Available on selected plans</option>
+                                <option value="selected_subjects" disabled>Selected Subjects - Available on selected plans</option>
                             </select>
                             @error('scope_type')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -268,7 +268,7 @@
                                 <option value="">Only required when scope is One Subject</option>
                                 @foreach ($subjects as $subject)
                                     <option value="{{ $subject->id }}" @selected(old('subject_id') == $subject->id)>
-                                        {{ $subject->name }} {{ $subject->code ? '— ' . $subject->code : '' }}
+                                        {{ $subject->name }} {{ $subject->code ? '- ' . $subject->code : '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -284,7 +284,7 @@
                                 <option value="">Only required when scope is One Student</option>
                                 @foreach ($students as $student)
                                     <option value="{{ $student->id }}" @selected(old('student_id') == $student->id)>
-                                        {{ $student->fullName() }} — {{ $student->admission_number }} — {{ $student->schoolClass->name ?? 'No class' }} {{ $student->schoolClass->section ?? '' }}
+                                        {{ $student->fullName() }} - {{ $student->admission_number }} - {{ $student->schoolClass->name ?? 'No class' }} {{ $student->schoolClass->section ?? '' }}
                                     </option>
                                 @endforeach
                             </select>

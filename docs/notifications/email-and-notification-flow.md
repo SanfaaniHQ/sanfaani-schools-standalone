@@ -28,10 +28,10 @@ The `notification_preferences` table supports:
 
 Email defaults to enabled. SMS and WhatsApp are placeholders for future provider integration and are disabled unless explicitly implemented.
 
-## Coming Soon
+## Available on Selected Plans
 
-- SMS Coming Soon
-- WhatsApp Coming Soon
+- SMS notifications
+- WhatsApp notifications
 - In-app notification inbox
 - Queued mail delivery for higher volume production use
 

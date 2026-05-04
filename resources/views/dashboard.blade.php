@@ -58,7 +58,7 @@
                         Add, edit, activate, and manage schools.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming in Step 7
+                        Open from Super Admin dashboard
                     </p>
                 </div>
 
@@ -68,7 +68,7 @@
                         Manage result entry, publishing, PDFs, and verification.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming later
+                        Available from Result System
                     </p>
                 </div>
 
@@ -78,7 +78,7 @@
                         Generate PINs and serial numbers for public result checking.
                     </p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Coming later
+                        Available from Scratch Cards
                     </p>
                 </div>
             </div>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-04
+
+- Finalized deployment audit checks for Namecheap launch on `https://schools.sanfaani.net`.
+- Added global production form loading/confirmation coverage, safer result-checker context locking, cache-action confirmations, public copy cleanup, and school-slug notification links.
+- Updated final deployment, security, payment, notification, and testing documentation for launch readiness.
+
 ## 2026-05-03
 
 - Added production platform settings with logo, favicon, login background, support contacts, URLs, defaults, and storage-backed uploads.

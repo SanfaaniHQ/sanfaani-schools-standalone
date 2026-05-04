@@ -18,6 +18,9 @@ class StudentCreatedGuardianNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $student = $this->student->loadMissing('school');
+        $checkerUrl = $student->school?->slug
+            ? route('public.school.results.index', ['school' => $student->school->slug])
+            : route('public.results.index');
 
         return (new MailMessage)
             ->subject($student->fullName().' has been registered')
@@ -25,6 +28,6 @@ class StudentCreatedGuardianNotification extends Notification
             ->line($student->fullName().' has been registered on Sanfaani Schools for '.$student->school->name.'.')
             ->line('Admission Number: '.$student->admission_number)
             ->line('Published results can be checked through the result checker. Result access may require a scratch card or PIN when results are published.')
-            ->action('Open Result Checker', route('public.results.index', ['school_id' => $student->school_id]));
+            ->action('Open Result Checker', $checkerUrl);
     }
 }

@@ -178,10 +178,10 @@
                                         <option value="term_result" @selected($selectedResultType === 'term_result')>
                                             {{ __('public_result.term_result') }}
                                         </option>
-                                        <option disabled>{{ __('public_result.assessment_result') }} - {{ __('public_result.coming_soon') }}</option>
-                                        <option disabled>{{ __('public_result.cbt_result') }} - {{ __('public_result.coming_soon') }}</option>
-                                        <option disabled>{{ __('public_result.mock_result') }} - {{ __('public_result.coming_soon') }}</option>
-                                        <option disabled>{{ __('public_result.weekly_result') }} - {{ __('public_result.coming_soon') }}</option>
+                                        <option disabled>{{ __('public_result.assessment_result') }} - Available on selected plans</option>
+                                        <option disabled>{{ __('public_result.cbt_result') }} - Available on selected plans</option>
+                                        <option disabled>{{ __('public_result.mock_result') }} - Available on selected plans</option>
+                                        <option disabled>{{ __('public_result.weekly_result') }} - Available on selected plans</option>
                                     </select>
                                 @endif
                             </div>

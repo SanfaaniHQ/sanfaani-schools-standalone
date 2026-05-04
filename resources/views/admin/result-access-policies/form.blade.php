@@ -20,7 +20,7 @@
                     <div class="mt-4 grid gap-4 md:grid-cols-3">
                         <select name="academic_session_id" class="rounded-xl border-gray-300"><option value="">Any session</option>@foreach($sessions as $session)<option value="{{ $session->id }}" @selected(old('academic_session_id', $rule->academic_session_id) == $session->id)>{{ $session->name }}</option>@endforeach</select>
                         <select name="term_id" class="rounded-xl border-gray-300"><option value="">Any term</option>@foreach($terms as $term)<option value="{{ $term->id }}" @selected(old('term_id', $rule->term_id) == $term->id)>{{ $term->name }}</option>@endforeach</select>
-                        <select name="result_type" class="rounded-xl border-gray-300"><option value="term_result">Term Result</option><option disabled>Assessment/Test - Coming Soon</option><option disabled>CBT - Coming Soon</option></select>
+                        <select name="result_type" class="rounded-xl border-gray-300"><option value="term_result">Term Result</option><option disabled>Assessment/Test - Available on selected plans</option><option disabled>CBT - Available on selected plans</option></select>
                         <select name="access_scope" class="rounded-xl border-gray-300"><option value="term" @selected(old('access_scope', $rule->access_scope) === 'term')>Term</option><option value="session" @selected(old('access_scope', $rule->access_scope) === 'session')>Session</option><option value="year" @selected(old('access_scope', $rule->access_scope) === 'year')>Year</option><option value="custom" @selected(old('access_scope', $rule->access_scope) === 'custom')>Custom</option></select>
                         <input type="number" name="max_access_per_student" value="{{ old('max_access_per_student', $rule->max_access_per_student) }}" placeholder="Max access/student" class="rounded-xl border-gray-300">
                         <input type="number" name="max_access_per_card" value="{{ old('max_access_per_card', $rule->max_access_per_card) }}" placeholder="Max access/card" class="rounded-xl border-gray-300">
@@ -33,7 +33,7 @@
                     </div>
                 </div>
                 @if ($errors->any()) <div class="rounded-xl bg-red-50 p-4 text-sm text-red-700">Please fix the highlighted fields.</div> @endif
-                <div class="flex justify-end gap-3"><a href="{{ route('admin.result-access-policies.index') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm">Cancel</a><button class="rounded-xl bg-gray-900 px-4 py-2 text-sm text-white">Save Policy</button></div>
+                <div class="flex justify-end gap-3"><a href="{{ route('admin.result-access-policies.index') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm">Cancel</a><button data-loading-text="Saving..." class="rounded-xl bg-gray-900 px-4 py-2 text-sm text-white">Save Policy</button></div>
             </form>
         </div>
     </div>

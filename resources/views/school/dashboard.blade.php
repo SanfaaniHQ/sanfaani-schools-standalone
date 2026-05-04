@@ -284,15 +284,15 @@
 
                 <section>
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Coming Soon</h3>
-                        <p class="mt-1 text-sm text-gray-500">Planned modules shown as disabled placeholders.</p>
+                        <h3 class="text-lg font-semibold text-gray-900">Available on Selected Plans</h3>
+                        <p class="mt-1 text-sm text-gray-500">Additional modules can be enabled through plan upgrades or future product updates.</p>
                     </div>
 
                     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         @foreach ($comingSoonModules as $module)
                             <div class="rounded-2xl bg-white p-4 opacity-70 shadow-sm">
                                 <p class="text-sm font-semibold text-gray-900">{{ $module }}</p>
-                                <p class="mt-2 text-xs font-medium uppercase tracking-wide text-gray-400">Coming Soon</p>
+                                <p class="mt-2 text-xs font-medium uppercase tracking-wide text-gray-400">Request upgrade</p>
                             </div>
                         @endforeach
                     </div>

@@ -223,8 +223,8 @@ class ResultUploadController extends Controller
     {
         return [
             'term_result' => 'Term Result',
-            'assessment_result' => 'Assessment / Test Result - Coming later',
-            'cbt_result' => 'CBT Result - Coming later',
+            'assessment_result' => 'Assessment / Test Result - Available on selected plans',
+            'cbt_result' => 'CBT Result - Available on selected plans',
         ];
     }
 

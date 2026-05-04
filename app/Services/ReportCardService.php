@@ -90,7 +90,11 @@ class ReportCardService
     ): array {
         $settings = $this->settingsFor($school);
         $safeResults = $publicOnly
-            ? $results->filter(fn ($result) => $result->status === 'published' && filled($result->published_at))->values()
+            ? $results
+                ->filter(fn ($result) => $result->status === 'published'
+                    && filled($result->published_at)
+                    && blank($result->unpublished_at ?? null))
+                ->values()
             : $results;
         $total = $this->calculateTotalScore($safeResults);
         $average = $this->calculateAverageScore($safeResults);

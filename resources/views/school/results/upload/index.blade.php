@@ -47,7 +47,7 @@
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">
-                        Step 1 — Download Prepared Template
+                        Step 1 - Download Prepared Template
                     </h3>
 
                     <p class="mt-2 text-sm text-gray-600">
@@ -56,6 +56,7 @@
 
                     <form method="GET"
                           action="{{ route('school.results.upload.template') }}"
+                          data-loading-text="Preparing template..."
                           class="mt-6 space-y-5">
 
                         <div>
@@ -91,7 +92,7 @@
                                 <option value="">Select term</option>
                                 @foreach ($terms as $term)
                                     <option value="{{ $term->id }}" @selected(request('term_id') == $term->id)>
-                                        {{ $term->name }} — {{ $term->academicSession->name ?? 'No session' }}
+                                        {{ $term->name }} - {{ $term->academicSession->name ?? 'No session' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -102,12 +103,13 @@
                             <select name="result_type"
                                     class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                 <option value="term_result">Term Result</option>
-                                <option value="assessment_result" disabled>Assessment / Test Result — Coming later</option>
-                                <option value="cbt_result" disabled>CBT Result — Coming later</option>
+                                <option value="assessment_result" disabled>Assessment / Test Result - Available on selected plans</option>
+                                <option value="cbt_result" disabled>CBT Result - Available on selected plans</option>
                             </select>
                         </div>
 
                         <button type="submit"
+                                data-loading-text="Preparing template..."
                                 class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
                             Download Prepared CSV Template
                         </button>
@@ -116,7 +118,7 @@
 
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">
-                        Step 2 — Upload Filled CSV
+                        Step 2 - Upload Filled CSV
                     </h3>
 
                     <p class="mt-2 text-sm text-gray-600">
@@ -169,7 +171,7 @@
                                 <option value="">Select term</option>
                                 @foreach ($terms as $term)
                                     <option value="{{ $term->id }}" @selected(old('term_id') == $term->id)>
-                                        {{ $term->name }} — {{ $term->academicSession->name ?? 'No session' }}
+                                        {{ $term->name }} - {{ $term->academicSession->name ?? 'No session' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -183,8 +185,8 @@
                             <select name="result_type"
                                     class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                 <option value="term_result" @selected(old('result_type') === 'term_result')>Term Result</option>
-                                <option value="assessment_result" disabled>Assessment / Test Result — Coming later</option>
-                                <option value="cbt_result" disabled>CBT Result — Coming later</option>
+                                <option value="assessment_result" disabled>Assessment / Test Result - Available on selected plans</option>
+                                <option value="cbt_result" disabled>CBT Result - Available on selected plans</option>
                             </select>
                             @error('result_type')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -203,6 +205,7 @@
                         </div>
 
                         <button type="submit"
+                                data-loading-text="Uploading..."
                                 class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
                             Upload Results
                         </button>
@@ -236,7 +239,7 @@
 
                     <div class="rounded-xl bg-gray-50 p-4">
                         <p class="font-medium text-gray-900">Score limits</p>
-                        <p class="mt-2">CA score: 0–40. Exam score: 0–60.</p>
+                        <p class="mt-2">CA score: 0-40. Exam score: 0-60.</p>
                     </div>
 
                     <div class="rounded-xl bg-gray-50 p-4">

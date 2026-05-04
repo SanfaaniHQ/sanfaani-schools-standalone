@@ -70,8 +70,8 @@
 ## Payment Placeholder Test
 
 - Manual payment remains active.
-- Paystack shows Coming Soon or Not enabled unless enabled in `.env`.
-- Flutterwave shows Coming Soon or Not enabled unless enabled in `.env`.
+- Paystack shows Available after gateway setup unless enabled in `.env`.
+- Flutterwave shows Available after gateway setup unless enabled in `.env`.
 - No payment secret appears in page source.
 
 ## Mobile and Language Test

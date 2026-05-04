@@ -351,12 +351,16 @@ class ResultCheckerController extends Controller
         $school = $models['school'];
         $card = $models['scratchCard'];
         $student = $models['student'];
-        $lockedAcademicSession = $card->academic_session_id
-            ? AcademicSession::where('school_id', $school->id)->find($card->academic_session_id)
-            : null;
         $lockedTerm = $card->term_id
             ? Term::where('school_id', $school->id)->find($card->term_id)
             : null;
+        $lockedAcademicSession = $card->academic_session_id
+            ? AcademicSession::where('school_id', $school->id)->find($card->academic_session_id)
+            : (
+                $lockedTerm
+                    ? AcademicSession::where('school_id', $school->id)->find($lockedTerm->academic_session_id)
+                    : null
+            );
 
         $selectedAcademicSessionId = (int) old(
             'academic_session_id',

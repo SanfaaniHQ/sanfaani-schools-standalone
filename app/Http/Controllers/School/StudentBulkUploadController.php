@@ -61,7 +61,7 @@ class StudentBulkUploadController extends Controller
 
             fputcsv($handle, [
                 trim($schoolClass->name . ' ' . $schoolClass->section),
-                'DAIA/2025/001',
+                'SCH/2026/001',
                 'Aisha',
                 'Fatimah',
                 'Bello',
@@ -76,7 +76,7 @@ class StudentBulkUploadController extends Controller
 
             fputcsv($handle, [
                 trim($schoolClass->name . ' ' . $schoolClass->section),
-                'DAIA/2025/002',
+                'SCH/2026/002',
                 'Umar',
                 '',
                 'Abdullahi',

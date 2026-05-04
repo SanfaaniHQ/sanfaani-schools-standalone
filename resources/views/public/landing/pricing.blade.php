@@ -19,7 +19,7 @@
             'name' => 'Premium',
             'price' => 'Per student / term',
             'note' => 'For schools that want priority setup',
-        'features' => ['Everything in Standard', 'PDF result coming soon', 'QR verification coming soon', 'Advanced result access policy', 'Priority setup support'],
+        'features' => ['Everything in Standard', 'PDF result available on selected plans', 'QR verification available on selected plans', 'Advanced result access policy', 'Priority setup support'],
         ],
         [
             'name' => 'Custom School Plan',

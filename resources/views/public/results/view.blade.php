@@ -198,7 +198,7 @@
 
                             <div class="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
                                 <p class="font-semibold text-gray-900">{{ __('public_result.qr_verification') }}</p>
-                                <p class="mt-1">{{ __('public_result.qr_code_coming_soon') }}</p>
+                                <p class="mt-1">Use the verification link to confirm this result.</p>
                             </div>
                         </div>
                     </section>
@@ -237,7 +237,7 @@
                         <button type="button"
                                 disabled
                                 class="rounded-lg bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-500">
-                            {{ __('public_result.qr_verification') }} - {{ __('public_result.coming_soon') }}
+                            {{ __('public_result.qr_verification') }} - Verification link available
                         </button>
                     </section>
                 </div>

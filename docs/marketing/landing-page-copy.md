@@ -56,9 +56,9 @@ Trust badges:
 - Scratch Card Request and Approval
 - Public Result Checker
 - Multilingual Foundation
-- PDF Result - Coming Soon
-- QR Verification - Coming Soon
-- CBT and Assessment Results - Coming Soon
+- PDF Result - Available on selected plans
+- QR Verification - Available on selected plans
+- CBT and Assessment Results - Available on selected plans
 
 ## Pricing Copy
 

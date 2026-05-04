@@ -86,6 +86,8 @@ Use this checklist for authorized local or pre-production testing only. Do not r
 - Expired card fails.
 - Used card limit works.
 - Result tokens expire.
+- Published result access requires `status = published`, `published_at` not null, and `unpublished_at` null.
+- Notification links use the generic checker or school slug route, not internal `school_id` query strings.
 
 ## 13. Scratch Card Security
 
@@ -112,6 +114,22 @@ Use this checklist for authorized local or pre-production testing only. Do not r
 - Whole project is not world-writable.
 - `config:cache`, `route:cache`, and `view:cache` work.
 - Super Admin System Maintenance actions are POST-only, CSRF protected, and run fixed Artisan commands only.
+- System Maintenance buttons require confirmation before cache, optimize, or storage-link actions run.
+
+## 17. School Data Isolation
+
+- Creating a new school does not clone another school's students, results, scratch cards, classes, subjects, sessions, terms, users, or uploaded files.
+- School-facing controllers scope reads and writes to the current school through `school_id`.
+- Safe defaults may be created only for settings such as admission numbers, report-card configuration, grading scale, access policy, subscription, or trial status when explicitly implemented.
+- Super Admin support access must be selected deliberately, show a banner, and write audit logs.
+
+## 18. Upload and Storage Security
+
+- `FILESYSTEM_DISK=public` is set for production uploads that need browser display.
+- Uploaded platform logos, favicons, school logos, and signatures are stored as relative public-disk paths.
+- Views render uploaded images through `Storage::url()` or model/service helpers.
+- Run `php artisan storage:link` after deployment and repair the link if uploaded images do not display.
+- Missing images fall back to initials or text and should not break public pages.
 
 ## Safe Local Checks
 

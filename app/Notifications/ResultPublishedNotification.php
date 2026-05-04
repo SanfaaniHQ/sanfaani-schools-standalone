@@ -25,6 +25,9 @@ class ResultPublishedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $student = $this->student->loadMissing('school');
+        $checkerUrl = $student->school?->slug
+            ? route('public.school.results.index', ['school' => $student->school->slug])
+            : route('public.results.index');
 
         return (new MailMessage)
             ->subject('Result published for '.$student->fullName())
@@ -34,7 +37,7 @@ class ResultPublishedNotification extends Notification
             ->line('Admission Number: '.$student->admission_number)
             ->line('Session / Term: '.$this->academicSession->name.' / '.$this->term->name)
             ->line('Use the result checker when you are ready. A valid scratch card or PIN may be required.')
-            ->action('Open Result Checker', route('public.results.index', ['school_id' => $student->school_id]));
+            ->action('Open Result Checker', $checkerUrl);
     }
 
     private function label(string $resultType): string
