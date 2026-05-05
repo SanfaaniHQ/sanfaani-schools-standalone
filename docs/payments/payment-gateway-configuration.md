@@ -12,6 +12,8 @@ Manual payment is active. Admin users can confirm manual payments and preserve t
 
 Payment settings live in `config/payments.php`. The file reads only from `.env`.
 
+V1.1 adds admin dashboard payment settings with encrypted storage and masked key display for supported gateways and modes.
+
 ## Environment Variables
 
 Use `.env.example` as the safe template:

@@ -6,6 +6,8 @@ Sanfaani Schools may be prepared for a future CodeCanyon marketplace release aft
 
 Laravel school management and result access platform with separate Super Admin login, role-based dashboards, student records, student promotion, academic setup, result entry, CSV uploads, result publishing, result access policies, subscriptions/features, scratch card requests, private-card public result checking, platform branding, report card settings, lead requests, system maintenance, safe update logging, and multilingual foundation.
 
+V1.1 includes teacher assignment/result workflow, support threads, dedicated school public pages, and encrypted dashboard-managed payment/mail settings.
+
 ## Requirements
 
 - PHP 8.3+

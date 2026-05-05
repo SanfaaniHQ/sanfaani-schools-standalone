@@ -282,10 +282,10 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::post('/support-threads/{thread}/reply', [AdminSupportThreadController::class, 'reply'])
             ->name('support-threads.reply');
 
-        Route::post('/support-threads/{thread}/status', [AdminSupportThreadController::class, 'status'])
+        Route::patch('/support-threads/{thread}/status', [AdminSupportThreadController::class, 'status'])
             ->name('support-threads.status');
 
-        Route::post('/support-threads/{thread}/assign', [AdminSupportThreadController::class, 'assign'])
+        Route::patch('/support-threads/{thread}/assign', [AdminSupportThreadController::class, 'assign'])
             ->name('support-threads.assign');
 
         Route::prefix('scratch-card-requests')
@@ -377,6 +377,9 @@ Route::middleware(['auth'])
                 Route::get('/teacher-results', [TeacherResultEntryController::class, 'index'])
                     ->name('teacher-results.index');
 
+                Route::get('/teacher-assignments/my', [TeacherAssignmentController::class, 'myAssignments'])
+                    ->name('teacher-assignments.my');
+
                 Route::get('/teacher-results/create', [TeacherResultEntryController::class, 'create'])
                     ->name('teacher-results.create');
 
@@ -410,7 +413,7 @@ Route::middleware(['auth'])
                 Route::post('/support/{thread}/reply', [SchoolSupportThreadController::class, 'reply'])
                     ->name('support.reply');
 
-                Route::post('/support/{thread}/close', [SchoolSupportThreadController::class, 'close'])
+                Route::patch('/support/{thread}/close', [SchoolSupportThreadController::class, 'close'])
                     ->name('support.close');
             });
 

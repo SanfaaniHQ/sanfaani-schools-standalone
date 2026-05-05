@@ -2,6 +2,8 @@
 
 Notifications use Laravel Notifications and respect the notification preference foundation where it is checked.
 
+V1.1 introduces in-app support threads (database-backed timeline). Real-time websocket notifications are intentionally deferred.
+
 ## Implemented Email Events
 
 - Staff account created: sent to the user email for school staff such as result officers and teachers.

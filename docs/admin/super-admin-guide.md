@@ -10,6 +10,8 @@ Use archive/deactivate instead of casual hard deletion. Archived schools should 
 
 Use Support Access only when helping a school. It starts from School Management, is logged, shows a support banner, and can be ended from the banner or admin route. Super Admin actions remain attributed to the Super Admin account.
 
+V1.1 update: Super Admin also has `/admin/support-threads` for school support communication with status/priority handling and assignment controls.
+
 New schools must not inherit another school's students, results, scratch cards, users, classes, subjects, sessions, or terms. Only safe defaults such as report-card defaults, grading defaults, or trial plan setup should be created automatically when explicitly implemented.
 
 ## Admin Login

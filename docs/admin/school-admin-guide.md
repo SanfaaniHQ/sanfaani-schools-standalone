@@ -25,6 +25,8 @@ Students who repeat should use the repeat action and the appropriate target clas
 
 Create staff users for result officers and future teachers. Staff users should use email or `staff_code`, not admission numbers.
 
+V1.1 update: School Admin can assign teachers to class/subject scope and review teacher result submissions before publish.
+
 ## Results
 
 Use manual result entry for smaller batches or corrections. Use result upload for class-based work. Validate uploaded rows before publishing.

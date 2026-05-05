@@ -2,6 +2,13 @@
 
 Last updated: 2026-05-05
 
+## Continuation Note (Cursor Session)
+
+- Support thread workflow is now implemented with admin and school routes/controllers/views.
+- Teacher workspace now includes a dedicated "My Assigned Classes and Subjects" page.
+- Support status/assignment/close endpoints now use PATCH semantics.
+- See `docs/developer/v1-1-completion-audit.md` for the latest full completion matrix.
+
 ## 1. Current Branch
 
 - Branch: `codex/v1-1-architecture-improvements`

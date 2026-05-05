@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-05
+
+- Completed missing V1.1 support thread routes/controllers/views and dashboard entry cards.
+- Added teacher-facing "My Assigned Classes" workflow and route.
+- Switched support status/assignment/close actions to PATCH semantics.
+- Added `docs/developer/v1-1-completion-audit.md` with completion status, risks, and manual test matrix.
+
 ## 2026-05-04
 
 - Finalized deployment audit checks for Namecheap launch on `https://schools.sanfaani.net`.

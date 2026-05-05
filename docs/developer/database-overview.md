@@ -22,6 +22,7 @@
 - `student_promotion_items`: per-student promotion actions and outcomes.
 - `admission_number_settings`: school-specific admission number pattern, next number, and reset cycle.
 - `student_results`: scores, grading, teacher remarks, publication status, result type, session, and term.
+- `teacher_result_submissions`: teacher-owned draft/submitted/returned/approved/published workflow records linked to final published results.
 - `result_publications`: publication batches and tracking.
 - `result_verifications`: verification codes and links for public result authenticity.
 

@@ -2,6 +2,8 @@
 
 Sanfaani Schools uses Laravel mail and notifications. Credentials must live only in `.env`; never hardcode or commit SMTP usernames, passwords, app passwords, API keys, or gateway secrets.
 
+V1.1 adds admin dashboard mail settings with encrypted password storage and masked UI placeholders.
+
 ## Local Testing
 
 Use log mail locally:

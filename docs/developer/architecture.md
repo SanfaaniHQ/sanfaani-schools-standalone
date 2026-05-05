@@ -22,6 +22,8 @@ Staff login may accept email or staff code. Student portal login is not implemen
 
 Student results link to school, class, student, subject, session, term, and result type. Publishing fields control public availability. Result publications and verifications support publication tracking and future verification.
 
+V1.1 integrates teacher result submissions into existing `student_results` publishing flow to avoid parallel/conflicting result systems.
+
 ## Student Enrollment and Promotion Architecture
 
 `students.school_class_id` is a quick current-placement pointer for dashboards and lists. Historical placement belongs in `student_class_enrollments`, keyed by student and academic session. Promotion work creates `student_promotion_batches` and `student_promotion_items` so a school can audit who was promoted, repeated, graduated, transferred, withdrawn, or skipped.

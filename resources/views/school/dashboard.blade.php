@@ -33,6 +33,7 @@
             ]
             : ($isTeacher
                 ? [
+                    ['title' => 'My Assigned Classes', 'description' => 'Review your active class and subject assignments.', 'href' => route('school.teacher-assignments.my')],
                     ['title' => 'My Result Submissions', 'description' => 'Open saved, returned, and submitted teacher results.', 'href' => route('school.teacher-results.index')],
                     ['title' => 'Support', 'description' => 'Open platform support tickets and track responses.', 'href' => route('school.support.index')],
                 ]
@@ -57,6 +58,7 @@
 
         $resultModules = $isTeacher
             ? [
+                ['title' => 'My Assigned Classes', 'description' => 'See assigned classes and subjects before entering results.', 'href' => route('school.teacher-assignments.my')],
                 ['title' => 'Enter Results', 'description' => 'Enter scores only for assigned classes and subjects.', 'href' => route('school.teacher-results.create')],
                 ['title' => 'My Submissions', 'description' => 'Track draft, submitted, returned, approved, and published results.', 'href' => route('school.teacher-results.index')],
             ]

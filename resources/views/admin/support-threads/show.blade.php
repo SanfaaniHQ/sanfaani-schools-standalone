@@ -39,6 +39,7 @@
             <div class="space-y-4">
                 <form method="POST" action="{{ route('admin.support-threads.status', $thread) }}" class="rounded-2xl bg-white p-6 shadow-sm">
                     @csrf
+                    @method('PATCH')
                     <label class="block text-sm font-medium text-gray-700">Status</label>
                     <select name="status" class="mt-1 block w-full rounded-xl border-gray-300">
                         @foreach ($statuses as $status)
@@ -56,6 +57,7 @@
 
                 <form method="POST" action="{{ route('admin.support-threads.assign', $thread) }}" class="rounded-2xl bg-white p-6 shadow-sm">
                     @csrf
+                    @method('PATCH')
                     <label class="block text-sm font-medium text-gray-700">Assign To</label>
                     <select name="assigned_to" class="mt-1 block w-full rounded-xl border-gray-300">
                         <option value="">Unassigned</option>

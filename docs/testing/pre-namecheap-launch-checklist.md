@@ -36,6 +36,8 @@ Run this checklist before deploying or redeploying `https://schools.sanfaani.net
 - Confirm `/login` still works for School Admin and Result Officer.
 - Confirm Super Admin support access starts, shows a banner, and exits safely.
 - Create a new school and confirm students, results, scratch cards, and users are zero unless explicitly created.
+- Confirm teacher can only enter results for assigned class/subject contexts.
+- Confirm support thread list/details are school-scoped for school users.
 
 ## Public Result Checker Privacy
 

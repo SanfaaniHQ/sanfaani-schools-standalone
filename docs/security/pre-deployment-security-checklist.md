@@ -19,6 +19,8 @@ Use this checklist for authorized local or pre-production testing only. Do not r
 - School Admin users cannot download another school's scratch cards.
 - Super Admin support access requires explicit school selection and shows a support banner.
 - Support access start/stop is logged.
+- Support thread pages enforce school scoping so school users cannot read other schools' messages.
+- Teacher result entry is assignment-scoped to allowed class/subject combinations.
 
 ## 3. Session Management
 

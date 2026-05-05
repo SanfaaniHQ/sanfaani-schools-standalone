@@ -18,6 +18,8 @@ Result Officers are staff users. They use email or `staff_code` with password. T
 
 Teachers should be created as staff users with email or `staff_code`. A future teacher workflow can limit access to assigned classes and subjects.
 
+V1.1 update: teacher workflow is now active with assignment-scoped result entry, draft/submit flow, return-for-correction, and publish via School Admin/Result Officer review.
+
 ## Parent Future Role
 
 Parents do not need portal accounts for the production launch. They currently use the public result checker with student admission number, academic session, term, and scratch card access. The public checker does not list schools.

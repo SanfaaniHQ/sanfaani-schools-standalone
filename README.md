@@ -2,6 +2,14 @@
 
 Sanfaani Schools is a Laravel school management and result access platform by Sanfaani Ltd. It supports school onboarding, role-based dashboards, student records, academic setup, result entry, CSV result upload, publishing, scratch card requests, and public result checking.
 
+## V1.1 Usable Workflows
+
+- Teacher assignment and teacher result submission/review/publish workflows are live.
+- In-app support threads are live for school and super admin workspaces.
+- Dedicated school public pages and school-scoped result-checker routes are live.
+- Workspace selection (`active_school_id`, `active_role_context`) supports multi-role users.
+- Payment/mail setting secrets are encrypted at rest and masked in dashboard forms.
+
 ## Production Launch
 
 - Launch URL: https://schools.sanfaani.net

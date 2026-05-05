@@ -4,6 +4,8 @@
 
 Authentication is Laravel-based. Roles separate Super Admin, School Admin, and Result Officer access. Teachers are prepared as a future staff identity. Staff should use email or `staff_code`, never student admission numbers.
 
+V1.1 adds active teacher assignment/result workflows, in-app support threads, and workspace-based role context switching for multi-role users.
+
 Super Admin login is separated at `/admin/login`. School-level users continue to use `/login`.
 
 ## Super Admin Dashboard

@@ -45,6 +45,7 @@
                 @if ($thread->status !== 'closed')
                     <form method="POST" action="{{ route('school.support.close', $thread) }}" class="rounded-2xl bg-white p-6 shadow-sm">
                         @csrf
+                        @method('PATCH')
                         <button class="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700">Close Thread</button>
                     </form>
                 @endif

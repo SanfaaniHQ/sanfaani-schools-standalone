@@ -14,6 +14,31 @@ use Illuminate\Validation\Rule;
 
 class TeacherAssignmentController extends Controller
 {
+    public function myAssignments()
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $classAssignments = TeacherClassAssignment::where('school_id', $school->id)
+            ->where('teacher_user_id', auth()->id())
+            ->where('status', 'active')
+            ->with(['schoolClass', 'academicSession', 'term'])
+            ->latest()
+            ->paginate(12, ['*'], 'class_page');
+
+        $subjectAssignments = TeacherSubjectAssignment::where('school_id', $school->id)
+            ->where('teacher_user_id', auth()->id())
+            ->where('status', 'active')
+            ->with(['subject', 'schoolClass', 'academicSession', 'term'])
+            ->latest()
+            ->paginate(12, ['*'], 'subject_page');
+
+        return view('school.teacher-assignments.my', [
+            'school' => $school,
+            'classAssignments' => $classAssignments,
+            'subjectAssignments' => $subjectAssignments,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $school = $this->currentSchoolOrFail();

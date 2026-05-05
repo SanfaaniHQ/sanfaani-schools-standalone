@@ -32,6 +32,8 @@ Graduation certificate generation can use student identity, final class/session,
 
 Teacher assignment should be a separate session-aware module. A future `teacher_assignments` table can hold `school_id`, `user_id`, nullable `school_class_id`, nullable `subject_id`, `academic_session_id`, nullable `term_id`, `assignment_type`, `status`, and timestamps.
 
+V1.1 note: core teacher class/subject assignment and teacher result submission workflows are implemented; future work is focused on rollover automation and expanded analytics.
+
 Future rollover should copy assignments from the previous session, support class teacher, subject teacher, and result officer assignments, and avoid re-entering teacher details every session.
 
 ## Paystack and Flutterwave
