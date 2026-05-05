@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
 use App\Http\Controllers\Admin\SchoolPublicPageController as AdminSchoolPublicPageController;
 use App\Http\Controllers\Admin\SchoolSubscriptionController;
+use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Admin\SystemMaintenanceController;
@@ -48,6 +49,7 @@ use App\Http\Controllers\School\StudentElectiveSubjectController;
 use App\Http\Controllers\School\StudentPromotionController;
 use App\Http\Controllers\School\SubjectAssignmentController;
 use App\Http\Controllers\School\SubscriptionController as SchoolPlanController;
+use App\Http\Controllers\School\SupportThreadController as SchoolSupportThreadController;
 use App\Http\Controllers\School\SubjectController;
 use App\Http\Controllers\School\SubjectUploadController;
 use App\Http\Controllers\School\TeacherAssignmentController;
@@ -271,6 +273,21 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
 
+        Route::get('/support-threads', [AdminSupportThreadController::class, 'index'])
+            ->name('support-threads.index');
+
+        Route::get('/support-threads/{thread}', [AdminSupportThreadController::class, 'show'])
+            ->name('support-threads.show');
+
+        Route::post('/support-threads/{thread}/reply', [AdminSupportThreadController::class, 'reply'])
+            ->name('support-threads.reply');
+
+        Route::post('/support-threads/{thread}/status', [AdminSupportThreadController::class, 'status'])
+            ->name('support-threads.status');
+
+        Route::post('/support-threads/{thread}/assign', [AdminSupportThreadController::class, 'assign'])
+            ->name('support-threads.assign');
+
         Route::prefix('scratch-card-requests')
             ->name('scratch-card-requests.')
             ->group(function () {
@@ -377,6 +394,24 @@ Route::middleware(['auth'])
 
                 Route::post('/teacher-results/{submission}/submit', [TeacherResultEntryController::class, 'submit'])
                     ->name('teacher-results.submit');
+
+                Route::get('/support', [SchoolSupportThreadController::class, 'index'])
+                    ->name('support.index');
+
+                Route::get('/support/create', [SchoolSupportThreadController::class, 'create'])
+                    ->name('support.create');
+
+                Route::post('/support', [SchoolSupportThreadController::class, 'store'])
+                    ->name('support.store');
+
+                Route::get('/support/{thread}', [SchoolSupportThreadController::class, 'show'])
+                    ->name('support.show');
+
+                Route::post('/support/{thread}/reply', [SchoolSupportThreadController::class, 'reply'])
+                    ->name('support.reply');
+
+                Route::post('/support/{thread}/close', [SchoolSupportThreadController::class, 'close'])
+                    ->name('support.close');
             });
 
         Route::middleware('role:school_admin|super_admin')

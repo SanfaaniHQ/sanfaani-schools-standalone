@@ -188,6 +188,13 @@
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                 </a>
 
+                <a href="{{ route('admin.support-threads.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Support Threads</h4>
+                    <p class="mt-2 text-sm text-gray-600">Respond to school support requests and track resolution status.</p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                </a>
+
                 <a href="{{ route('admin.lead-requests.index') }}"
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Lead Requests</h4>

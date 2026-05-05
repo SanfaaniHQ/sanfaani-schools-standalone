@@ -29,13 +29,16 @@
                 ['title' => 'School Profile', 'description' => 'Update contact details, language, and school logo.', 'href' => route('school.profile.edit')],
                 ['title' => 'Public Page', 'description' => 'Configure the dedicated school result checker link.', 'href' => route('school.public-page.edit')],
                 ['title' => 'Staff Accounts', 'description' => 'Create teachers and result officers with staff codes.', 'href' => route('school.staff.index')],
+                ['title' => 'Support', 'description' => 'Open platform support tickets and track responses.', 'href' => route('school.support.index')],
             ]
             : ($isTeacher
                 ? [
                     ['title' => 'My Result Submissions', 'description' => 'Open saved, returned, and submitted teacher results.', 'href' => route('school.teacher-results.index')],
+                    ['title' => 'Support', 'description' => 'Open platform support tickets and track responses.', 'href' => route('school.support.index')],
                 ]
                 : [
                     ['title' => 'Grading System', 'description' => 'View active score ranges, grades, and remarks.', 'href' => route('school.grading-scales.index')],
+                    ['title' => 'Support', 'description' => 'Open platform support tickets and track responses.', 'href' => route('school.support.index')],
                 ]);
 
         $studentModules = $isTeacher
