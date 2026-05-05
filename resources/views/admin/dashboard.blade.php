@@ -23,6 +23,25 @@
                 </p>
             </div>
 
+            @if (! empty($platformOnboardingProgress))
+                <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Platform Onboarding</h3>
+                            <p class="mt-1 text-sm text-gray-600">{{ $platformOnboardingProgress['done'] }} of {{ $platformOnboardingProgress['total'] }} steps completed. Skip for now and continue setup when ready.</p>
+                        </div>
+                        <span class="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">{{ $platformOnboardingProgress['percent'] }}%</span>
+                    </div>
+                    <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        @foreach ($platformOnboardingSteps as $key => $label)
+                            <div class="rounded-xl border border-gray-100 p-3 text-sm {{ in_array($key, $platformOnboardingCompleted, true) ? 'bg-emerald-50 text-emerald-900' : 'bg-gray-50 text-gray-700' }}">
+                                {{ $label }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Total Schools</p>
@@ -145,6 +164,20 @@
                    class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
                     <h4 class="text-base font-semibold text-gray-900">Payments</h4>
                     <p class="mt-2 text-sm text-gray-600">Review manual payments and future gateway placeholders.</p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                </a>
+
+                <a href="{{ route('admin.payment-settings.index') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Payment Settings</h4>
+                    <p class="mt-2 text-sm text-gray-600">Configure Paystack, Flutterwave, test mode, and live mode safely.</p>
+                    <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                </a>
+
+                <a href="{{ route('admin.mail-settings.edit') }}"
+                   class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                    <h4 class="text-base font-semibold text-gray-900">Mail Settings</h4>
+                    <p class="mt-2 text-sm text-gray-600">Configure SMTP or log mail delivery and send test messages.</p>
                     <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                 </a>
 

@@ -23,8 +23,13 @@ class SchoolSubscriptionController extends Controller
     public function create()
     {
         return view('admin.school-subscriptions.create', [
-            'schools' => School::orderBy('name')->get(),
-            'plans' => SubscriptionPlan::where('status', 'active')->orderBy('name')->get(),
+            'schools' => School::with(['subscriptions' => fn ($query) => $query->latest(), 'subscriptions.subscriptionPlan'])
+                ->orderBy('name')
+                ->get(),
+            'plans' => SubscriptionPlan::with('features')
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 

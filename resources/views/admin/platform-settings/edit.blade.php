@@ -122,6 +122,13 @@
                             @error('default_language')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
                     </div>
+
+                    <div class="mt-5">
+                        <label class="block text-sm font-medium text-gray-700">Idle Timeout Minutes</label>
+                        <input type="number" min="5" max="480" name="idle_timeout_minutes" value="{{ old('idle_timeout_minutes', data_get($settings->metadata, 'idle_timeout_minutes', config('sanfaani.idle_timeout_minutes'))) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
+                        <p class="mt-1 text-xs text-gray-500">Logged-in users are signed out after this many idle minutes. Default fallback is SANFAANI_IDLE_TIMEOUT_MINUTES=30.</p>
+                        @error('idle_timeout_minutes')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
                 </div>
 
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

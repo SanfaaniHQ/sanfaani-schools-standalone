@@ -48,6 +48,61 @@ class School extends Model
         return $this->hasMany(Subject::class);
     }
 
+    public function classSubjectAssignments(): HasMany
+    {
+        return $this->hasMany(ClassSubjectAssignment::class);
+    }
+
+    public function studentElectiveSubjects(): HasMany
+    {
+        return $this->hasMany(StudentElectiveSubject::class);
+    }
+
+    public function userSchoolRoles(): HasMany
+    {
+        return $this->hasMany(UserSchoolRole::class);
+    }
+
+    public function languagePreferences(): HasMany
+    {
+        return $this->hasMany(LanguagePreference::class);
+    }
+
+    public function publicPage(): HasOne
+    {
+        return $this->hasOne(SchoolPublicPage::class);
+    }
+
+    public function websiteSetting(): HasOne
+    {
+        return $this->hasOne(SchoolWebsiteSetting::class);
+    }
+
+    public function teacherClassAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherClassAssignment::class);
+    }
+
+    public function teacherSubjectAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherSubjectAssignment::class);
+    }
+
+    public function teacherResultSubmissions(): HasMany
+    {
+        return $this->hasMany(TeacherResultSubmission::class);
+    }
+
+    public function supportThreads(): HasMany
+    {
+        return $this->hasMany(SupportThread::class);
+    }
+
+    public function supportMessages(): HasMany
+    {
+        return $this->hasMany(SupportMessage::class);
+    }
+
     public function academicSessions(): HasMany
     {
         return $this->hasMany(AcademicSession::class);

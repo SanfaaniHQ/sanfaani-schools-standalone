@@ -28,6 +28,16 @@
                     </div>
 
                     <div>
+                        <label class="block text-sm font-medium text-gray-700">Class Code</label>
+                        <input type="text" name="code" value="{{ old('code', $class->code) }}"
+                               class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                        <p class="mt-1 text-xs text-gray-500">Optional code for uploads, filters, and internal reporting.</p>
+                        @error('code')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
                         <label class="block text-sm font-medium text-gray-700">Section</label>
                         <input type="text" name="section" value="{{ old('section', $class->section) }}"
                                class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
@@ -48,7 +58,24 @@
                         @enderror
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Language Preference</label>
+                        <select name="language_code"
+                                class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            <option value="">Use school default</option>
+                            <option value="en" @selected(old('language_code', $languagePreference?->language_code) === 'en')>English</option>
+                            <option value="fr" @selected(old('language_code', $languagePreference?->language_code) === 'fr')>French</option>
+                            <option value="ar" @selected(old('language_code', $languagePreference?->language_code) === 'ar')>Arabic</option>
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500">Optional foundation for class-level multilingual reporting and RTL support.</p>
+                    </div>
+
                     <div class="flex items-center justify-end gap-3">
+                        <a href="{{ route('school.dashboard') }}"
+                           class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Dashboard
+                        </a>
+
                         <a href="{{ route('school.classes.index') }}"
                            class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                             Cancel

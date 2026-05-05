@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Term extends Model
@@ -36,5 +37,25 @@ class Term extends Model
     public function academicSession(): BelongsTo
     {
         return $this->belongsTo(AcademicSession::class);
+    }
+
+    public function classSubjectAssignments(): HasMany
+    {
+        return $this->hasMany(ClassSubjectAssignment::class);
+    }
+
+    public function teacherClassAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherClassAssignment::class);
+    }
+
+    public function teacherSubjectAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherSubjectAssignment::class);
+    }
+
+    public function teacherResultSubmissions(): HasMany
+    {
+        return $this->hasMany(TeacherResultSubmission::class);
     }
 }

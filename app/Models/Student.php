@@ -84,6 +84,11 @@ class Student extends Model
         return $this->hasMany(ResultVerification::class);
     }
 
+    public function electiveSubjects(): HasMany
+    {
+        return $this->hasMany(StudentElectiveSubject::class);
+    }
+
     public function fullName(): string
     {
         return trim($this->first_name . ' ' . $this->middle_name . ' ' . $this->last_name);

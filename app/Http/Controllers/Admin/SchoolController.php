@@ -135,19 +135,46 @@ class SchoolController extends Controller
             return back()->with('error', 'Support access is available only for active schools.');
         }
 
+        $data = $request->validate([
+            'role_context' => ['nullable', Rule::in(['school_admin', 'result_officer', 'teacher'])],
+        ]);
+
         session([
             'support_school_id' => $school->id,
+            'support_role_context' => $data['role_context'] ?? 'school_admin',
             'support_access_started_by' => auth()->id(),
             'support_access_started_at' => now()->toDateTimeString(),
+            'support_access_last_confirmed_at' => now()->toDateTimeString(),
         ]);
 
         $auditLog->log('support_access_started', $school, $school, metadata: [
             'support_school_id' => $school->id,
+            'role_context' => session('support_role_context'),
         ], request: $request);
 
         return redirect()
             ->route('school.dashboard')
             ->with('success', 'Support access started for '.$school->name.'.');
+    }
+
+    public function continueSupportAccess(AuditLogService $auditLog, Request $request)
+    {
+        $school = session('support_school_id') ? School::find(session('support_school_id')) : null;
+
+        if (! $school) {
+            return redirect()
+                ->route('admin.schools.index')
+                ->with('error', 'Support access is no longer active.');
+        }
+
+        session(['support_access_last_confirmed_at' => now()->toDateTimeString()]);
+
+        $auditLog->log('support_access_continued', $school, $school, metadata: [
+            'support_school_id' => $school->id,
+            'role_context' => session('support_role_context', 'school_admin'),
+        ], request: $request);
+
+        return back()->with('success', 'Support access continued. This action is logged for security.');
     }
 
     public function stopSupportAccess(AuditLogService $auditLog, Request $request)
@@ -156,13 +183,17 @@ class SchoolController extends Controller
 
         $auditLog->log('support_access_stopped', $school, $school, metadata: [
             'support_school_id' => session('support_school_id'),
+            'role_context' => session('support_role_context'),
             'started_at' => session('support_access_started_at'),
+            'last_confirmed_at' => session('support_access_last_confirmed_at'),
         ], request: $request);
 
         session()->forget([
             'support_school_id',
+            'support_role_context',
             'support_access_started_by',
             'support_access_started_at',
+            'support_access_last_confirmed_at',
         ]);
 
         return redirect()

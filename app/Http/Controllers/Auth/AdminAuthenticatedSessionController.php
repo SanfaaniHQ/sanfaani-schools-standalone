@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Services\UserWorkspaceService;
 
 class AdminAuthenticatedSessionController extends Controller
 {
@@ -20,7 +21,7 @@ class AdminAuthenticatedSessionController extends Controller
         return view('auth.admin-login');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, UserWorkspaceService $workspaces): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email', 'max:255'],
@@ -44,6 +45,7 @@ class AdminAuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
+        $workspaces->selectByKey($request->user(), 'global:super_admin');
 
         return redirect()->intended(route('admin.dashboard'));
     }

@@ -4,10 +4,11 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Services\CurrentSchoolService;
+use App\Services\OnboardingProgressService;
 
 class SchoolAdminDashboardController extends Controller
 {
-    public function index(CurrentSchoolService $currentSchool)
+    public function index(CurrentSchoolService $currentSchool, OnboardingProgressService $onboarding)
     {
         $user = auth()->user();
         $school = $currentSchool->get($user);
@@ -16,8 +17,12 @@ class SchoolAdminDashboardController extends Controller
             return view('school.dashboard-not-assigned');
         }
 
+        $schoolSteps = $onboarding->schoolSteps();
+        $schoolCompleted = $onboarding->completedKeys('school', $school, $user);
+
         return view('school.dashboard', [
             'school' => $school,
+            'roleContext' => $currentSchool->roleContext($user),
             'totalSchoolUsers' => $school->users()->count(),
             'totalClasses' => $school->schoolClasses()->count(),
             'totalSubjects' => $school->subjects()->count(),
@@ -37,6 +42,9 @@ class SchoolAdminDashboardController extends Controller
             'unusedScratchCards' => $school->scratchCards()->where('status', 'unused')->count(),
             'usedScratchCards' => $school->scratchCards()->where('status', 'used')->count(),
             'revokedScratchCards' => $school->scratchCards()->where('status', 'revoked')->count(),
+            'schoolOnboardingSteps' => $schoolSteps,
+            'schoolOnboardingCompleted' => $schoolCompleted,
+            'schoolOnboardingProgress' => $onboarding->progress($schoolSteps, $schoolCompleted),
         ]);
     }
 }

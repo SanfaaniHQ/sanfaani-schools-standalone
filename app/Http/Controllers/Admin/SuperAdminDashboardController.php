@@ -10,12 +10,16 @@ use App\Models\ScratchCard;
 use App\Models\ScratchCardBatch;
 use App\Models\StudentResult;
 use App\Models\User;
+use App\Services\OnboardingProgressService;
 use Spatie\Permission\Models\Role;
 
 class SuperAdminDashboardController extends Controller
 {
-    public function index()
+    public function index(OnboardingProgressService $onboarding)
     {
+        $platformSteps = $onboarding->platformSteps();
+        $platformCompleted = $onboarding->completedKeys('platform', user: auth()->user());
+
         return view('admin.dashboard', [
             'totalSchools' => School::count(),
             'totalUsers' => User::count(),
@@ -33,6 +37,9 @@ class SuperAdminDashboardController extends Controller
             'revokedScratchCards' => ScratchCard::where('status', 'revoked')->count(),
             'newDemoRequests' => LeadRequest::where('type', 'demo')->where('status', 'new')->count(),
             'newContactRequests' => LeadRequest::where('type', 'contact')->where('status', 'new')->count(),
+            'platformOnboardingSteps' => $platformSteps,
+            'platformOnboardingCompleted' => $platformCompleted,
+            'platformOnboardingProgress' => $onboarding->progress($platformSteps, $platformCompleted),
         ]);
     }
 }

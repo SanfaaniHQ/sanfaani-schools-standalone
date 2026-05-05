@@ -4,8 +4,11 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\Student;
+use App\Models\StudentElectiveSubject;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Services\StudentResultCsvImportService;
@@ -45,7 +48,7 @@ class ResultUploadController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        $subjects = Subject::where('school_id', $school->id)
+        $fallbackSubjects = Subject::where('school_id', $school->id)
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -58,7 +61,7 @@ class ResultUploadController extends Controller
             . str($term->name)->slug()
             . '.csv';
 
-        return response()->streamDownload(function () use ($students, $subjects, $schoolClass, $academicSession, $term, $data) {
+        return response()->streamDownload(function () use ($students, $fallbackSubjects, $school, $schoolClass, $academicSession, $term, $data) {
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
@@ -77,6 +80,8 @@ class ResultUploadController extends Controller
             ]);
 
             foreach ($students as $student) {
+                $subjects = $this->subjectsForStudentTemplate($school, $schoolClass, $student, $academicSession, $term, $fallbackSubjects);
+
                 foreach ($subjects as $subject) {
                     fputcsv($handle, [
                         trim($schoolClass->name . ' ' . $schoolClass->section),
@@ -226,6 +231,60 @@ class ResultUploadController extends Controller
             'assessment_result' => 'Assessment / Test Result - Available on selected plans',
             'cbt_result' => 'CBT Result - Available on selected plans',
         ];
+    }
+
+    private function subjectsForStudentTemplate(
+        School $school,
+        SchoolClass $schoolClass,
+        Student $student,
+        AcademicSession $academicSession,
+        Term $term,
+        $fallbackSubjects
+    ) {
+        $assignedSubjectIds = ClassSubjectAssignment::where('school_id', $school->id)
+            ->where('status', 'active')
+            ->where(function ($query) use ($schoolClass) {
+                $query->whereNull('school_class_id')
+                    ->orWhere('school_class_id', $schoolClass->id);
+            })
+            ->where(function ($query) use ($academicSession) {
+                $query->whereNull('academic_session_id')
+                    ->orWhere('academic_session_id', $academicSession->id);
+            })
+            ->where(function ($query) use ($term) {
+                $query->whereNull('term_id')
+                    ->orWhere('term_id', $term->id);
+            })
+            ->pluck('subject_id');
+
+        $studentElectiveIds = StudentElectiveSubject::where('school_id', $school->id)
+            ->where('student_id', $student->id)
+            ->where('status', 'active')
+            ->where(function ($query) use ($schoolClass) {
+                $query->whereNull('school_class_id')
+                    ->orWhere('school_class_id', $schoolClass->id);
+            })
+            ->where(function ($query) use ($academicSession) {
+                $query->whereNull('academic_session_id')
+                    ->orWhere('academic_session_id', $academicSession->id);
+            })
+            ->where(function ($query) use ($term) {
+                $query->whereNull('term_id')
+                    ->orWhere('term_id', $term->id);
+            })
+            ->pluck('subject_id');
+
+        $subjectIds = $assignedSubjectIds->merge($studentElectiveIds)->unique()->values();
+
+        if ($subjectIds->isEmpty()) {
+            return $fallbackSubjects;
+        }
+
+        return Subject::where('school_id', $school->id)
+            ->whereIn('id', $subjectIds)
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
     }
 
     private function findSchoolClass(School $school, int $id): SchoolClass

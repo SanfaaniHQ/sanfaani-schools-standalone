@@ -42,4 +42,24 @@ class AcademicSession extends Model
     {
         return $this->hasMany(StudentClassEnrollment::class);
     }
+
+    public function classSubjectAssignments(): HasMany
+    {
+        return $this->hasMany(ClassSubjectAssignment::class);
+    }
+
+    public function teacherClassAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherClassAssignment::class);
+    }
+
+    public function teacherSubjectAssignments(): HasMany
+    {
+        return $this->hasMany(TeacherSubjectAssignment::class);
+    }
+
+    public function teacherResultSubmissions(): HasMany
+    {
+        return $this->hasMany(TeacherResultSubmission::class);
+    }
 }

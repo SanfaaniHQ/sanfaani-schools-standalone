@@ -33,6 +33,7 @@ class StudentResult extends Model
         'unpublished_by',
         'unpublish_reason',
         'recorded_by',
+        'teacher_result_submission_id',
     ];
 
     protected $casts = [
@@ -86,5 +87,10 @@ class StudentResult extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function teacherResultSubmission(): BelongsTo
+    {
+        return $this->belongsTo(TeacherResultSubmission::class);
     }
 }

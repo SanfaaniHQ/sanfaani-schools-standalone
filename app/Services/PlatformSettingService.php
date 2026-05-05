@@ -45,6 +45,7 @@ class PlatformSettingService
                     'sanfaani.business_address',
                     'Kehinde Shafi Junction, Islamic Village, along Whitefield Hotel, Ilorin, Kwara State, Nigeria'
                 ),
+                'idle_timeout_minutes' => config('sanfaani.idle_timeout_minutes', 30),
             ],
         ];
     }

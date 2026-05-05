@@ -87,9 +87,16 @@
                                                       data-confirm="Start Super Admin support access for this school?"
                                                       data-loading-text="Opening...">
                                                     @csrf
-                                                    <button type="submit" class="text-sm font-medium text-emerald-700 hover:text-emerald-600">
-                                                        Support Access
-                                                    </button>
+                                                    <div class="flex items-center gap-2">
+                                                        <select name="role_context" class="rounded-lg border-gray-300 py-1 text-xs">
+                                                            <option value="school_admin">School Admin</option>
+                                                            <option value="result_officer">Result Officer</option>
+                                                            <option value="teacher">Teacher</option>
+                                                        </select>
+                                                        <button type="submit" class="text-sm font-medium text-emerald-700 hover:text-emerald-600">
+                                                            Support Access
+                                                        </button>
+                                                    </div>
                                                 </form>
 
                                                 <form method="POST"

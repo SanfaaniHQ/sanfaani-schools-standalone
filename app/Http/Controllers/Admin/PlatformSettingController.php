@@ -34,6 +34,7 @@ class PlatformSettingController extends Controller
             'default_currency' => ['required', 'string', 'max:10'],
             'default_language' => ['required', Rule::in(['en', 'fr', 'ar'])],
             'business_address' => ['nullable', 'string', 'max:1000'],
+            'idle_timeout_minutes' => ['required', 'integer', 'min:5', 'max:480'],
             'logo_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'favicon_upload' => ['nullable', 'file', 'mimes:ico,png,svg', 'max:2048'],
             'login_background_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
@@ -41,9 +42,11 @@ class PlatformSettingController extends Controller
 
         $metadata = $platformSettings->metadata ?? [];
         $metadata['business_address'] = $data['business_address'] ?? null;
+        $metadata['idle_timeout_minutes'] = (int) $data['idle_timeout_minutes'];
 
         unset(
             $data['business_address'],
+            $data['idle_timeout_minutes'],
             $data['logo_upload'],
             $data['favicon_upload'],
             $data['login_background_upload']

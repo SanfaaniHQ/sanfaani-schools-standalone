@@ -5,6 +5,7 @@ namespace App\Http\Controllers\School;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\User;
+use App\Models\UserSchoolRole;
 use App\Notifications\UserAccountCreatedNotification;
 use App\Services\NotificationPreferenceService;
 use App\Services\StaffCodeGeneratorService;
@@ -18,8 +19,15 @@ class StaffUserController extends Controller
     {
         $school = $this->currentSchoolOrFail();
 
-        $staffUsers = $school->users()
-            ->whereHas('roles', fn ($query) => $query->whereIn('name', $this->manageableRoles()))
+        $staffUsers = User::query()
+            ->where(function ($query) use ($school) {
+                $query->where('school_id', $school->id)
+                    ->orWhereHas('activeSchoolRoles', fn ($query) => $query->where('school_id', $school->id));
+            })
+            ->where(function ($query) {
+                $query->whereHas('roles', fn ($query) => $query->whereIn('name', $this->manageableRoles()))
+                    ->orWhereHas('activeSchoolRoles', fn ($query) => $query->whereIn('role_name', $this->manageableRoles()));
+            })
             ->with('roles')
             ->latest()
             ->paginate(10);
@@ -57,7 +65,7 @@ class StaffUserController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email' => ['required', 'email', 'max:255'],
             'role' => ['required', Rule::in($this->manageableRoles())],
             'staff_code' => ['nullable', 'string', 'max:100', Rule::unique('users', 'staff_code')],
             'auto_generate_staff_code' => ['nullable', 'boolean'],
@@ -67,16 +75,37 @@ class StaffUserController extends Controller
 
         $staffCode = $data['staff_code'] ?: $staffCodes->generateForSchool($school, $data['role']);
 
-        $user = User::create([
-            'school_id' => $school->id,
-            'name' => $data['name'],
-            'email' => strtolower($data['email']),
-            'staff_code' => strtoupper(trim($staffCode)),
-            'password' => $data['password'],
-            'must_change_password' => (bool) ($data['must_change_password'] ?? false),
-        ]);
+        $email = strtolower($data['email']);
+        $user = User::where('email', $email)->first();
+        $wasExistingUser = (bool) $user;
 
-        $user->syncRoles([$data['role']]);
+        if (! $user) {
+            $user = User::create([
+                'school_id' => $school->id,
+                'name' => $data['name'],
+                'email' => $email,
+                'staff_code' => strtoupper(trim($staffCode)),
+                'password' => $data['password'],
+                'must_change_password' => (bool) ($data['must_change_password'] ?? false),
+            ]);
+        } else {
+            $user->update([
+                'name' => $user->name ?: $data['name'],
+                'school_id' => $user->school_id ?: $school->id,
+                'staff_code' => $user->staff_code ?: strtoupper(trim($staffCode)),
+            ]);
+        }
+
+        $user->assignRole($data['role']);
+
+        UserSchoolRole::updateOrCreate([
+            'user_id' => $user->id,
+            'school_id' => $school->id,
+            'role_name' => $data['role'],
+        ], [
+            'status' => 'active',
+            'assigned_by' => auth()->id(),
+        ]);
 
         if (app(NotificationPreferenceService::class)->emailEnabled('user_account_created', $school, $user, $data['role'])) {
             try {
@@ -91,7 +120,7 @@ class StaffUserController extends Controller
 
         return redirect()
             ->route('school.staff.index')
-            ->with('success', 'Staff account created successfully.');
+            ->with('success', $wasExistingUser ? 'Existing user was granted access to this school.' : 'Staff account created successfully.');
     }
 
     public function edit(User $staff)
@@ -133,7 +162,21 @@ class StaffUserController extends Controller
         }
 
         $staff->update($update);
-        $staff->syncRoles([$data['role']]);
+        $staff->assignRole($data['role']);
+
+        UserSchoolRole::where('user_id', $staff->id)
+            ->where('school_id', $school->id)
+            ->whereIn('role_name', $this->manageableRoles())
+            ->update(['status' => 'inactive']);
+
+        UserSchoolRole::updateOrCreate([
+            'user_id' => $staff->id,
+            'school_id' => $school->id,
+            'role_name' => $data['role'],
+        ], [
+            'status' => 'active',
+            'assigned_by' => auth()->id(),
+        ]);
 
         return redirect()
             ->route('school.staff.index')
@@ -153,7 +196,12 @@ class StaffUserController extends Controller
 
     private function authorizeStaff(User $staff, School $school): void
     {
-        if ((int) $staff->school_id !== (int) $school->id || ! $staff->hasAnyRole($this->manageableRoles())) {
+        $hasSchoolRole = $staff->activeSchoolRoles()
+            ->where('school_id', $school->id)
+            ->whereIn('role_name', $this->manageableRoles())
+            ->exists();
+
+        if (((int) $staff->school_id !== (int) $school->id && ! $hasSchoolRole) || ! $staff->hasAnyRole($this->manageableRoles())) {
             abort(403, 'You cannot manage this staff account.');
         }
     }

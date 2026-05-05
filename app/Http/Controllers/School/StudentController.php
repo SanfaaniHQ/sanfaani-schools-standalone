@@ -78,7 +78,15 @@ class StudentController extends Controller
 
         $this->authorizeStudent($student, $school);
 
-        $student->load(['schoolClass', 'classEnrollments.academicSession', 'classEnrollments.schoolClass', 'classEnrollments.promotedFrom.schoolClass']);
+        $student->load([
+            'schoolClass',
+            'electiveSubjects.subject',
+            'electiveSubjects.academicSession',
+            'electiveSubjects.term',
+            'classEnrollments.academicSession',
+            'classEnrollments.schoolClass',
+            'classEnrollments.promotedFrom.schoolClass',
+        ]);
 
         $academicSessions = $school->academicSessions()
             ->where('status', 'active')
@@ -123,6 +131,10 @@ class StudentController extends Controller
             'subjects' => $school->subjects()
                 ->where('status', 'active')
                 ->orderBy('name')
+                ->get(),
+            'electiveSubjects' => $student->electiveSubjects()
+                ->with(['subject', 'academicSession', 'term'])
+                ->latest()
                 ->get(),
             'results' => $results,
             'classEnrollments' => $student->classEnrollments

@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\UserWorkspaceService;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
@@ -22,11 +23,21 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, UserWorkspaceService $workspaces): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        $contexts = $workspaces->contextsFor($request->user());
+
+        if ($contexts->count() > 1) {
+            return redirect()->route('workspace.create');
+        }
+
+        if ($contexts->count() === 1) {
+            $workspaces->select($request->user(), $contexts->first());
+        }
 
         if ($request->user()->hasRole('super_admin')) {
             return redirect()->route('admin.dashboard');

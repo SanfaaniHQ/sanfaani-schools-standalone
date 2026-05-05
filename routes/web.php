@@ -2,26 +2,33 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\LeadRequestController;
+use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\PaymentGatewaySettingController;
 use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
 use App\Http\Controllers\Admin\ResultSystemController as AdminResultSystemController;
 use App\Http\Controllers\Admin\ScratchCardRequestController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
+use App\Http\Controllers\Admin\SchoolPublicPageController as AdminSchoolPublicPageController;
 use App\Http\Controllers\Admin\SchoolSubscriptionController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Admin\SystemMaintenanceController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
+use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\LandingPageController;
 use App\Http\Controllers\Public\ResultCheckerController;
+use App\Http\Controllers\Public\ResultCheckerPaymentController;
+use App\Http\Controllers\Public\SchoolPublicPageController as PublicSchoolPublicPageController;
 use App\Http\Controllers\Public\ResultVerificationController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
+use App\Http\Controllers\School\ClassUploadController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ResultAccessPolicyController as SchoolResultAccessPolicyController;
@@ -31,14 +38,21 @@ use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\ReportCardSettingController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
+use App\Http\Controllers\School\SchoolPublicPageController as SchoolSchoolPublicPageController;
 use App\Http\Controllers\School\SchoolProfileController;
 use App\Http\Controllers\School\ScratchCardController;
 use App\Http\Controllers\School\StaffUserController;
 use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
+use App\Http\Controllers\School\StudentElectiveSubjectController;
 use App\Http\Controllers\School\StudentPromotionController;
+use App\Http\Controllers\School\SubjectAssignmentController;
 use App\Http\Controllers\School\SubscriptionController as SchoolPlanController;
 use App\Http\Controllers\School\SubjectController;
+use App\Http\Controllers\School\SubjectUploadController;
+use App\Http\Controllers\School\TeacherAssignmentController;
+use App\Http\Controllers\School\TeacherResultEntryController;
+use App\Http\Controllers\School\TeacherResultReviewController;
 use App\Http\Controllers\School\TermController;
 use Illuminate\Support\Facades\Route;
 
@@ -96,8 +110,18 @@ Route::get('/result-checker/view/{token}', [ResultCheckerController::class, 'vie
 Route::get('/result-checker/view/{token}/print', [ResultCheckerController::class, 'print'])
     ->name('public.results.print');
 
+Route::post('/result-checker/payment/initiate', [ResultCheckerPaymentController::class, 'initiate'])
+    ->middleware('throttle:10,1')
+    ->name('public.results.payment.initiate');
+
+Route::get('/result-checker/payment/callback/{gateway?}', [ResultCheckerPaymentController::class, 'callback'])
+    ->name('public.results.payment.callback');
+
 Route::get('/verify-result/{verificationCode}', [ResultVerificationController::class, 'show'])
     ->name('public.results.verify');
+
+Route::get('/s/{slug}', [PublicSchoolPublicPageController::class, 'show'])
+    ->name('public.school-page.show');
 
 Route::get('/s/{school:slug}/result-checker', [ResultCheckerController::class, 'index'])
     ->name('public.school.results.index');
@@ -110,9 +134,24 @@ Route::post('/s/{school:slug}/result-checker/check', [ResultCheckerController::c
     ->middleware('throttle:10,1')
     ->name('public.school.results.check');
 
+Route::post('/s/{school:slug}/payment/initiate', [ResultCheckerPaymentController::class, 'initiateForSchool'])
+    ->middleware('throttle:10,1')
+    ->name('public.school.payment.initiate');
+
+Route::get('/s/{school:slug}/payment/callback/{gateway?}', [ResultCheckerPaymentController::class, 'callbackForSchool'])
+    ->name('public.school.payment.callback');
+
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/choose-workspace', [ChooseWorkspaceController::class, 'create'])
+        ->name('workspace.create');
+
+    Route::post('/choose-workspace', [ChooseWorkspaceController::class, 'store'])
+        ->name('workspace.store');
+});
 
 Route::middleware(['auth', 'role:super_admin'])
     ->prefix('admin')
@@ -133,8 +172,17 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::post('/schools/{school}/support-access/start', [SchoolController::class, 'startSupportAccess'])
             ->name('schools.support-access.start');
 
+        Route::get('/schools/{school}/public-page', [AdminSchoolPublicPageController::class, 'edit'])
+            ->name('schools.public-page.edit');
+
+        Route::patch('/schools/{school}/public-page', [AdminSchoolPublicPageController::class, 'update'])
+            ->name('schools.public-page.update');
+
         Route::post('/support-access/stop', [SchoolController::class, 'stopSupportAccess'])
             ->name('support-access.stop');
+
+        Route::post('/support-access/continue', [SchoolController::class, 'continueSupportAccess'])
+            ->name('support-access.continue');
 
         Route::post('/schools/{school}/archive', [SchoolController::class, 'archive'])
             ->name('schools.archive');
@@ -205,6 +253,21 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::post('/payments/{payment}/confirm', [PaymentController::class, 'confirm'])
             ->name('payments.confirm');
 
+        Route::get('/payment-settings', [PaymentGatewaySettingController::class, 'index'])
+            ->name('payment-settings.index');
+
+        Route::patch('/payment-settings/{gateway}', [PaymentGatewaySettingController::class, 'update'])
+            ->name('payment-settings.update');
+
+        Route::get('/mail-settings', [MailSettingController::class, 'edit'])
+            ->name('mail-settings.edit');
+
+        Route::patch('/mail-settings', [MailSettingController::class, 'update'])
+            ->name('mail-settings.update');
+
+        Route::post('/mail-settings/test', [MailSettingController::class, 'test'])
+            ->name('mail-settings.test');
+
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
 
@@ -238,7 +301,7 @@ Route::middleware(['auth'])
     ->prefix('school')
     ->name('school.')
     ->group(function () {
-        Route::middleware('role:school_admin|result_officer|super_admin')
+        Route::middleware('role:school_admin|result_officer|teacher|super_admin')
             ->group(function () {
                 Route::get('/dashboard', [SchoolAdminDashboardController::class, 'index'])
                     ->name('dashboard');
@@ -255,51 +318,141 @@ Route::middleware(['auth'])
                             ->name('students.upload.template');
                     });
 
-                Route::resource('students', StudentController::class)
-                    ->only(['index']);
-
-                Route::resource('grading-scales', GradingScaleController::class)
-                    ->parameters(['grading-scales' => 'gradingScale'])
-                    ->only(['index']);
-
-                Route::prefix('results')
-                    ->name('results.')
+                Route::middleware('role:school_admin|result_officer|super_admin')
                     ->group(function () {
-                        Route::resource('manual', ManualResultController::class)
-                            ->parameters(['manual' => 'studentResult'])
-                            ->except(['show', 'destroy']);
+                        Route::resource('students', StudentController::class)
+                            ->only(['index']);
 
-                        Route::get('/publishing', [ResultPublishingController::class, 'index'])
-                            ->name('publishing.index');
+                        Route::resource('grading-scales', GradingScaleController::class)
+                            ->parameters(['grading-scales' => 'gradingScale'])
+                            ->only(['index']);
 
-                        Route::get('/upload', [ResultUploadController::class, 'index'])
-                            ->name('upload.index');
+                        Route::prefix('results')
+                            ->name('results.')
+                            ->group(function () {
+                                Route::resource('manual', ManualResultController::class)
+                                    ->parameters(['manual' => 'studentResult'])
+                                    ->except(['show', 'destroy']);
 
-                        Route::post('/upload', [ResultUploadController::class, 'store'])
-                            ->name('upload.store');
+                                Route::get('/publishing', [ResultPublishingController::class, 'index'])
+                                    ->name('publishing.index');
 
-                        Route::get('/upload/template', [ResultUploadController::class, 'downloadTemplate'])
-                            ->name('upload.template');
+                                Route::get('/upload', [ResultUploadController::class, 'index'])
+                                    ->name('upload.index');
+
+                                Route::post('/upload', [ResultUploadController::class, 'store'])
+                                    ->name('upload.store');
+
+                                Route::get('/upload/template', [ResultUploadController::class, 'downloadTemplate'])
+                                    ->name('upload.template');
+                            });
+
+                        Route::get('/result-system', [SchoolResultSystemController::class, 'index'])
+                            ->name('result-system.index');
+
+                        Route::get('/result-access-policy', [SchoolResultAccessPolicyController::class, 'show'])
+                            ->name('result-access-policy.show');
+
+                        Route::get('/report-card-settings/preview', [ReportCardSettingController::class, 'preview'])
+                            ->name('report-card-settings.preview');
                     });
 
-                Route::get('/result-system', [SchoolResultSystemController::class, 'index'])
-                    ->name('result-system.index');
+                Route::get('/teacher-results', [TeacherResultEntryController::class, 'index'])
+                    ->name('teacher-results.index');
 
-                Route::get('/result-access-policy', [SchoolResultAccessPolicyController::class, 'show'])
-                    ->name('result-access-policy.show');
+                Route::get('/teacher-results/create', [TeacherResultEntryController::class, 'create'])
+                    ->name('teacher-results.create');
 
-                Route::get('/report-card-settings/preview', [ReportCardSettingController::class, 'preview'])
-                    ->name('report-card-settings.preview');
+                Route::post('/teacher-results', [TeacherResultEntryController::class, 'store'])
+                    ->name('teacher-results.store');
+
+                Route::get('/teacher-results/{submission}', [TeacherResultEntryController::class, 'show'])
+                    ->name('teacher-results.show');
+
+                Route::get('/teacher-results/{submission}/edit', [TeacherResultEntryController::class, 'edit'])
+                    ->name('teacher-results.edit');
+
+                Route::patch('/teacher-results/{submission}', [TeacherResultEntryController::class, 'update'])
+                    ->name('teacher-results.update');
+
+                Route::post('/teacher-results/{submission}/submit', [TeacherResultEntryController::class, 'submit'])
+                    ->name('teacher-results.submit');
             });
 
         Route::middleware('role:school_admin|super_admin')
             ->group(function () {
+                Route::get('/teacher-assignments', [TeacherAssignmentController::class, 'index'])
+                    ->name('teacher-assignments.index');
+
+                Route::post('/teacher-assignments', [TeacherAssignmentController::class, 'store'])
+                    ->name('teacher-assignments.store');
+
+                Route::get('/teacher-assignments/create', [TeacherAssignmentController::class, 'create'])
+                    ->name('teacher-assignments.create');
+
+                Route::get('/teacher-assignments/{assignment}/edit', [TeacherAssignmentController::class, 'edit'])
+                    ->name('teacher-assignments.edit');
+
+                Route::patch('/teacher-assignments/{assignment}', [TeacherAssignmentController::class, 'update'])
+                    ->name('teacher-assignments.update');
+
+                Route::post('/teacher-assignments/{assignment}/archive', [TeacherAssignmentController::class, 'archive'])
+                    ->name('teacher-assignments.archive');
+
+                Route::post('/teacher-assignments/{assignment}/restore', [TeacherAssignmentController::class, 'restore'])
+                    ->name('teacher-assignments.restore');
+
+                Route::get('/classes/upload', [ClassUploadController::class, 'index'])
+                    ->name('classes.upload.index');
+
+                Route::post('/classes/upload', [ClassUploadController::class, 'store'])
+                    ->name('classes.upload.store');
+
+                Route::get('/classes/upload/template', [ClassUploadController::class, 'downloadTemplate'])
+                    ->name('classes.upload.template');
+
                 Route::resource('classes', SchoolClassController::class)
                     ->parameters(['classes' => 'class'])
-                    ->except(['show', 'destroy']);
+                    ->except(['show']);
+
+                Route::post('/classes/{class}/restore', [SchoolClassController::class, 'restore'])
+                    ->name('classes.restore');
+
+                Route::get('/subjects/upload', [SubjectUploadController::class, 'index'])
+                    ->name('subjects.upload.index');
+
+                Route::post('/subjects/upload', [SubjectUploadController::class, 'store'])
+                    ->name('subjects.upload.store');
+
+                Route::get('/subjects/upload/template', [SubjectUploadController::class, 'downloadTemplate'])
+                    ->name('subjects.upload.template');
 
                 Route::resource('subjects', SubjectController::class)
-                    ->except(['show', 'destroy']);
+                    ->except(['show']);
+
+                Route::post('/subjects/{subject}/restore', [SubjectController::class, 'restore'])
+                    ->name('subjects.restore');
+
+                Route::get('/subject-assignments', [SubjectAssignmentController::class, 'index'])
+                    ->name('subject-assignments.index');
+
+                Route::post('/subject-assignments', [SubjectAssignmentController::class, 'store'])
+                    ->name('subject-assignments.store');
+
+                Route::get('/subject-assignments/create', [SubjectAssignmentController::class, 'create'])
+                    ->name('subject-assignments.create');
+
+                Route::get('/subject-assignments/{assignment}/edit', [SubjectAssignmentController::class, 'edit'])
+                    ->name('subject-assignments.edit');
+
+                Route::patch('/subject-assignments/{assignment}', [SubjectAssignmentController::class, 'update'])
+                    ->name('subject-assignments.update');
+
+                Route::post('/subject-assignments/{assignment}/archive', [SubjectAssignmentController::class, 'archive'])
+                    ->name('subject-assignments.archive');
+
+                Route::post('/subject-assignments/{assignment}/restore', [SubjectAssignmentController::class, 'restore'])
+                    ->name('subject-assignments.restore');
 
                 Route::resource('sessions', AcademicSessionController::class)
                     ->parameters(['sessions' => 'academicSession'])
@@ -326,6 +479,12 @@ Route::middleware(['auth'])
 
                 Route::patch('/profile', [SchoolProfileController::class, 'update'])
                     ->name('profile.update');
+
+                Route::get('/public-page', [SchoolSchoolPublicPageController::class, 'edit'])
+                    ->name('public-page.edit');
+
+                Route::patch('/public-page', [SchoolSchoolPublicPageController::class, 'update'])
+                    ->name('public-page.update');
 
                 Route::get('/subscription', [SchoolPlanController::class, 'show'])
                     ->name('subscription.show');
@@ -356,6 +515,12 @@ Route::middleware(['auth'])
 
                 Route::post('/students/{student}/restore', [StudentController::class, 'restore'])
                     ->name('students.restore');
+
+                Route::post('/students/{student}/elective-subjects', [StudentElectiveSubjectController::class, 'store'])
+                    ->name('students.elective-subjects.store');
+
+                Route::delete('/students/{student}/elective-subjects/{electiveSubject}', [StudentElectiveSubjectController::class, 'destroy'])
+                    ->name('students.elective-subjects.destroy');
 
                 Route::resource('grading-scales', GradingScaleController::class)
                     ->parameters(['grading-scales' => 'gradingScale'])
@@ -395,6 +560,30 @@ Route::middleware(['auth'])
             });
 
         Route::middleware('role:school_admin|result_officer|super_admin')
+            ->group(function () {
+                Route::get('/result-reviews', [TeacherResultReviewController::class, 'index'])
+                    ->name('result-reviews.index');
+
+                Route::get('/result-reviews/{submission}', [TeacherResultReviewController::class, 'show'])
+                    ->name('result-reviews.show');
+
+                Route::patch('/result-reviews/{submission}', [TeacherResultReviewController::class, 'update'])
+                    ->name('result-reviews.update');
+
+                Route::post('/result-reviews/{submission}/return', [TeacherResultReviewController::class, 'return'])
+                    ->name('result-reviews.return');
+
+                Route::post('/result-reviews/{submission}/approve', [TeacherResultReviewController::class, 'approve'])
+                    ->name('result-reviews.approve');
+
+                Route::post('/result-reviews/{submission}/publish', [TeacherResultReviewController::class, 'publish'])
+                    ->name('result-reviews.publish');
+
+                Route::post('/result-reviews/{submission}/void', [TeacherResultReviewController::class, 'voidSubmission'])
+                    ->name('result-reviews.void');
+            });
+
+        Route::middleware('role:school_admin|result_officer|teacher|super_admin')
             ->get('/students/{student}', [StudentController::class, 'show'])
             ->name('students.show');
     });

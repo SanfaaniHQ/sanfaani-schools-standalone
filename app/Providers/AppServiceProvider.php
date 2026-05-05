@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\PlatformSettingService;
+use App\Services\MailSettingService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 
@@ -14,6 +15,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PlatformSettingService::class);
+        $this->app->singleton(MailSettingService::class);
     }
 
     /**
@@ -21,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        app(MailSettingService::class)->apply();
+
         View::composer('*', function ($view) {
             $service = app(PlatformSettingService::class);
             $settings = $service->get();
