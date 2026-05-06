@@ -42,11 +42,24 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        // Prevent school users from deleting their own accounts
+        if ($user->hasAnyRole(['school_admin', 'result_officer', 'teacher'])) {
+            abort(403, 'You cannot delete your own account. Contact your administrator.');
+        }
+
+        // Prevent last Super Admin from deleting their account
+        if ($user->hasRole('super_admin')) {
+            $superAdminCount = \App\Models\User::role('super_admin')->count();
+            if ($superAdminCount <= 1) {
+                abort(403, 'You cannot delete the last Super Admin account.');
+            }
+        }
+
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
-
-        $user = $request->user();
 
         Auth::logout();
 

@@ -28,7 +28,7 @@ class StaffUserController extends Controller
                 $query->whereHas('roles', fn ($query) => $query->whereIn('name', $this->manageableRoles()))
                     ->orWhereHas('activeSchoolRoles', fn ($query) => $query->whereIn('role_name', $this->manageableRoles()));
             })
-            ->with('roles')
+            ->with(['roles', 'schoolRoles' => fn ($query) => $query->where('school_id', $school->id)])
             ->latest()
             ->paginate(10);
 
@@ -181,6 +181,85 @@ class StaffUserController extends Controller
         return redirect()
             ->route('school.staff.index')
             ->with('success', 'Staff account updated successfully.');
+    }
+
+    public function disable(Request $request, User $staff)
+    {
+        $school = $this->currentSchoolOrFail();
+        $this->authorizeStaff($staff, $school);
+
+        // Prevent disabling Super Admin or School Admin
+        if ($staff->hasAnyRole(['super_admin', 'school_admin'])) {
+            abort(403, 'You cannot disable this user.');
+        }
+
+        // Set user_school_roles to inactive for this school
+        UserSchoolRole::where('user_id', $staff->id)
+            ->where('school_id', $school->id)
+            ->whereIn('role_name', $this->manageableRoles())
+            ->update(['status' => 'inactive']);
+
+        // Check if user has other active school roles
+        $hasOtherActiveRoles = UserSchoolRole::where('user_id', $staff->id)
+            ->where('school_id', '!=', $school->id)
+            ->where('status', 'active')
+            ->exists();
+
+        // Remove global Spatie roles only if no other active contexts exist
+        if (! $hasOtherActiveRoles) {
+            foreach ($this->manageableRoles() as $role) {
+                if ($staff->hasRole($role)) {
+                    $staff->removeRole($role);
+                }
+            }
+        }
+
+        if (class_exists(\App\Services\AuditLogService::class)) {
+            app(\App\Services\AuditLogService::class)->log('staff_access_disabled', $staff, $school, request: $request);
+        }
+
+        return redirect()
+            ->route('school.staff.index')
+            ->with('success', 'Staff access disabled successfully.');
+    }
+
+    public function enable(Request $request, User $staff)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        // Get the staff member's role for this school
+        $schoolRole = UserSchoolRole::where('user_id', $staff->id)
+            ->where('school_id', $school->id)
+            ->whereIn('role_name', $this->manageableRoles())
+            ->first();
+
+        if (! $schoolRole) {
+            abort(403, 'This staff member does not have a role in this school.');
+        }
+
+        // Assign Spatie role if not already assigned
+        if (! $staff->hasRole($schoolRole->role_name)) {
+            $staff->assignRole($schoolRole->role_name);
+        }
+
+        // Set school_id if null or mismatched
+        if (! $staff->school_id || (int) $staff->school_id !== (int) $school->id) {
+            $staff->update(['school_id' => $school->id]);
+        }
+
+        // Update user_school_roles to active
+        $schoolRole->update([
+            'status' => 'active',
+            'assigned_by' => auth()->id(),
+        ]);
+
+        if (class_exists(\App\Services\AuditLogService::class)) {
+            app(\App\Services\AuditLogService::class)->log('staff_access_enabled', $staff, $school, request: $request);
+        }
+
+        return redirect()
+            ->route('school.staff.index')
+            ->with('success', 'Staff access enabled successfully.');
     }
 
     private function currentSchoolOrFail(): School

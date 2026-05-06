@@ -38,6 +38,7 @@ use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultSystemController as SchoolResultSystemController;
 use App\Http\Controllers\School\ResultUploadController;
 use App\Http\Controllers\School\ReportCardSettingController;
+use App\Http\Controllers\School\RoleFeatureSettingController;
 use App\Http\Controllers\School\SchoolAdminDashboardController;
 use App\Http\Controllers\School\SchoolClassController;
 use App\Http\Controllers\School\SchoolPublicPageController as SchoolSchoolPublicPageController;
@@ -531,6 +532,18 @@ Route::middleware(['auth'])
                 Route::resource('staff', StaffUserController::class)
                     ->parameters(['staff' => 'staff'])
                     ->except(['show', 'destroy']);
+
+                Route::post('/staff/{staff}/disable', [StaffUserController::class, 'disable'])
+                    ->name('staff.disable');
+
+                Route::post('/staff/{staff}/enable', [StaffUserController::class, 'enable'])
+                    ->name('staff.enable');
+
+                Route::get('/role-features', [RoleFeatureSettingController::class, 'edit'])
+                    ->name('role-features.edit');
+
+                Route::patch('/role-features', [RoleFeatureSettingController::class, 'update'])
+                    ->name('role-features.update');
 
                 Route::resource('students', StudentController::class)
                     ->except(['index', 'show', 'destroy']);

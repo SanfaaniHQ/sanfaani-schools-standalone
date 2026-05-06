@@ -326,7 +326,7 @@ class StudentController extends Controller
 
     private function authorizeStudent(Student $student, School $school): void
     {
-        if ($student->school_id !== $school->id) {
+        if ((int) $student->school_id !== (int) $school->id) {
             abort(403, 'You cannot access this student.');
         }
     }
