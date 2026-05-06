@@ -121,13 +121,48 @@ class StudentController extends Controller
             ->sortBy(fn ($result) => $result->subject->name ?? '')
             ->values();
 
+        // Scratch card usage data
+        $scratchCardUsages = $student->scratchCardUsages()
+            ->with(['scratchCard', 'academicSession', 'term'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Recent activity timeline (audit logs) - increased to 50 for comprehensive view
+        $recentActivities = \App\Models\AuditLog::where('auditable_type', Student::class)
+            ->where('auditable_id', $student->id)
+            ->where('school_id', $school->id)
+            ->with('user')
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        // Calculate student age if date of birth exists
+        $age = null;
+        if ($student->date_of_birth) {
+            $age = \Carbon\Carbon::parse($student->date_of_birth)->age;
+        }
+
+        // Get promotion history
+        $promotionHistory = $student->promotionItems()
+            ->with(['fromClass', 'toClass', 'academicSession', 'promotedBy'])
+            ->latest()
+            ->get();
+
+        // Get current active session and term
+        $activeSession = $school->academicSessions()->where('is_active', true)->first();
+        $activeTerm = $school->terms()->where('is_active', true)->first();
+
         return view('school.students.show', [
             'school' => $school,
             'student' => $student,
+            'age' => $age,
             'academicSessions' => $academicSessions,
             'terms' => $terms,
             'selectedSession' => $selectedSession,
             'selectedTerm' => $selectedTerm,
+            'activeSession' => $activeSession,
+            'activeTerm' => $activeTerm,
             'subjects' => $school->subjects()
                 ->where('status', 'active')
                 ->orderBy('name')
@@ -140,10 +175,14 @@ class StudentController extends Controller
             'classEnrollments' => $student->classEnrollments
                 ->sortByDesc(fn ($enrollment) => $enrollment->academicSession?->starts_at?->timestamp ?? $enrollment->id)
                 ->values(),
+            'promotionHistory' => $promotionHistory,
             'totalResults' => $student->results()->where('school_id', $school->id)->count(),
             'publishedResults' => $student->results()->where('school_id', $school->id)->where('status', 'published')->count(),
             'reviewedResults' => $student->results()->where('school_id', $school->id)->where('status', 'reviewed')->count(),
             'draftResults' => $student->results()->where('school_id', $school->id)->where('status', 'draft')->count(),
+            'unpublishedResults' => $student->results()->where('school_id', $school->id)->whereIn('status', ['draft', 'submitted', 'returned', 'reviewed'])->count(),
+            'scratchCardUsages' => $scratchCardUsages,
+            'recentActivities' => $recentActivities,
         ]);
     }
 
