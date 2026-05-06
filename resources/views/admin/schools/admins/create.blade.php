@@ -80,7 +80,7 @@
                                    required
                                    minlength="8"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('password') border-red-300 @enderror">
-                            <p class="mt-1 text-sm text-gray-500">Minimum 8 characters</p>
+                            <p class="mt-1 text-sm text-gray-500">Minimum 8 characters. Temporary passwords should be changed immediately after first login.</p>
                             @error('password')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -126,8 +126,8 @@
                                 Cancel
                             </a>
                             <button type="submit"
-                                    class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                                Create School Admin Account
+                                    class="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800">
+                                Create School Admin
                             </button>
                         </div>
                     </form>

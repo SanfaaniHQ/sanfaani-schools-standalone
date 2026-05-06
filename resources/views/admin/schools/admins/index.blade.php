@@ -12,7 +12,7 @@
                 </p>
             </div>
             <a href="{{ route('admin.schools.admins.create', $school) }}"
-               class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+               class="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800">
                 Create School Admin
             </a>
         </div>
@@ -80,7 +80,7 @@
                             </p>
                             <div class="mt-6">
                                 <a href="{{ route('admin.schools.admins.create', $school) }}"
-                                   class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                   class="inline-flex items-center rounded-md bg-gray-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800">
                                     Create School Admin
                                 </a>
                             </div>
@@ -142,45 +142,47 @@
                                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                                 {{ $admin->updated_at->format('M d, Y') }}
                                             </td>
-                                            <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium space-x-2">
-                                                <!-- Reset Password Button (toggles inline form) -->
-                                                <button type="button"
-                                                        onclick="document.getElementById('reset-form-{{ $admin->id }}').classList.toggle('hidden')"
-                                                        class="text-indigo-600 hover:text-indigo-900">
-                                                    Reset Password
-                                                </button>
-
-                                                <!-- Send Reset Link -->
-                                                <form action="{{ route('admin.schools.admins.send-reset-link', [$school, $admin]) }}"
-                                                      method="POST"
-                                                      class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="text-blue-600 hover:text-blue-900">
-                                                        Send Reset Link
+                                            <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                                <div class="flex justify-end gap-2">
+                                                    <!-- Reset Password Button (toggles inline form) -->
+                                                    <button type="button"
+                                                            onclick="document.getElementById('reset-form-{{ $admin->id }}').classList.toggle('hidden')"
+                                                            class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                                                        Reset Password
                                                     </button>
-                                                </form>
 
-                                                <!-- Disable/Enable Access -->
-                                                @if ($accessStatus === 'active')
-                                                    <form action="{{ route('admin.schools.admins.disable', [$school, $admin]) }}"
-                                                          method="POST"
-                                                          class="inline"
-                                                          onsubmit="return confirm('Are you sure you want to disable access for this user?')">
-                                                        @csrf
-                                                        <button type="submit" class="text-red-600 hover:text-red-900">
-                                                            Disable Access
-                                                        </button>
-                                                    </form>
-                                                @else
-                                                    <form action="{{ route('admin.schools.admins.enable', [$school, $admin]) }}"
+                                                    <!-- Send Reset Link -->
+                                                    <form action="{{ route('admin.schools.admins.send-reset-link', [$school, $admin]) }}"
                                                           method="POST"
                                                           class="inline">
                                                         @csrf
-                                                        <button type="submit" class="text-green-600 hover:text-green-900">
-                                                            Enable Access
+                                                        <button type="submit" class="rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100">
+                                                            Send Reset Link
                                                         </button>
                                                     </form>
-                                                @endif
+
+                                                    <!-- Disable/Enable Access -->
+                                                    @if ($accessStatus === 'active')
+                                                        <form action="{{ route('admin.schools.admins.disable', [$school, $admin]) }}"
+                                                              method="POST"
+                                                              class="inline"
+                                                              onsubmit="return confirm('Are you sure you want to disable access for this user?')">
+                                                            @csrf
+                                                            <button type="submit" class="rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100">
+                                                                Disable Access
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <form action="{{ route('admin.schools.admins.enable', [$school, $admin]) }}"
+                                                              method="POST"
+                                                              class="inline">
+                                                            @csrf
+                                                            <button type="submit" class="rounded-md border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100">
+                                                                Enable Access
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                         <!-- Inline Reset Password Form (hidden by default) -->
