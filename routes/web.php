@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
 use App\Http\Controllers\Admin\ResultSystemController as AdminResultSystemController;
 use App\Http\Controllers\Admin\ScratchCardRequestController;
+use App\Http\Controllers\Admin\SchoolAdminUserController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
 use App\Http\Controllers\Admin\SchoolPublicPageController as AdminSchoolPublicPageController;
@@ -191,6 +192,28 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::post('/schools/{school}/restore', [SchoolController::class, 'restore'])
             ->name('schools.restore');
+
+        // School Admin User Management
+        Route::get('/schools/{school}/admins', [SchoolAdminUserController::class, 'index'])
+            ->name('schools.admins.index');
+
+        Route::get('/schools/{school}/admins/create', [SchoolAdminUserController::class, 'create'])
+            ->name('schools.admins.create');
+
+        Route::post('/schools/{school}/admins', [SchoolAdminUserController::class, 'store'])
+            ->name('schools.admins.store');
+
+        Route::post('/schools/{school}/admins/{admin}/reset-password', [SchoolAdminUserController::class, 'resetPassword'])
+            ->name('schools.admins.reset-password');
+
+        Route::post('/schools/{school}/admins/{admin}/send-reset-link', [SchoolAdminUserController::class, 'sendResetLink'])
+            ->name('schools.admins.send-reset-link');
+
+        Route::post('/schools/{school}/admins/{admin}/disable', [SchoolAdminUserController::class, 'disable'])
+            ->name('schools.admins.disable');
+
+        Route::post('/schools/{school}/admins/{admin}/enable', [SchoolAdminUserController::class, 'enable'])
+            ->name('schools.admins.enable');
 
         Route::resource('subscription-plans', SubscriptionPlanController::class)
             ->except(['show', 'destroy']);

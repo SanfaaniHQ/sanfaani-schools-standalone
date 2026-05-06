@@ -82,6 +82,11 @@
                                                     Edit
                                                 </a>
 
+                                                <a href="{{ route('admin.schools.admins.index', $school) }}"
+                                                   class="text-sm font-medium text-indigo-700 hover:text-indigo-600">
+                                                    Manage Admins
+                                                </a>
+
                                                 <form method="POST"
                                                       action="{{ route('admin.schools.support-access.start', $school) }}"
                                                       data-confirm="Start Super Admin support access for this school?"
