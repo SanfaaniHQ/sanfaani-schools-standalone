@@ -234,12 +234,18 @@
                         <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                     </a>
 
-                    <a href="{{ route('school.role-feature-settings.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Role Feature Access</h4>
-                        <p class="mt-2 text-sm text-gray-600">Configure feature access for teachers and result officers.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @if (Route::has('school.role-features.edit'))
+                        <a href="{{ route('school.role-features.edit') }}"
+                           class="block rounded-2xl bg-white p-6 shadow-sm hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Role Feature Access</h4>
+                            <p class="mt-2 text-sm text-gray-600">
+                                Control which tools teachers and result officers can access.
+                            </p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">
+                                Open module
+                            </p>
+                        </a>
+                    @endif
                 </div>
             </section>
 
