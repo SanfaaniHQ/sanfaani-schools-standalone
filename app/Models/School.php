@@ -103,6 +103,11 @@ class School extends Model
         return $this->hasMany(SupportMessage::class);
     }
 
+    public function communicationLogs(): HasMany
+    {
+        return $this->hasMany(CommunicationLog::class);
+    }
+
     public function academicSessions(): HasMany
     {
         return $this->hasMany(AcademicSession::class);

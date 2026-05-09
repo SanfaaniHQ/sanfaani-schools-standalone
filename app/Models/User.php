@@ -60,6 +60,11 @@ class User extends Authenticatable
         return $this->hasMany(SupportMessage::class, 'sender_id');
     }
 
+    public function communicationLogs(): HasMany
+    {
+        return $this->hasMany(CommunicationLog::class, 'sender_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *

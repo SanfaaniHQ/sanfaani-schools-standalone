@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\LeadRequestController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
 use App\Http\Controllers\Admin\PaymentGatewaySettingController;
 use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
@@ -33,6 +34,8 @@ use App\Http\Controllers\School\AdmissionNumberSettingController;
 use App\Http\Controllers\School\ClassUploadController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ManualResultController;
+use App\Http\Controllers\School\MailSettingController as SchoolMailSettingController;
+use App\Http\Controllers\School\CommunicationController as SchoolCommunicationController;
 use App\Http\Controllers\School\ResultAccessPolicyController as SchoolResultAccessPolicyController;
 use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultSystemController as SchoolResultSystemController;
@@ -297,6 +300,17 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
 
+        Route::get('/communications', [AdminCommunicationController::class, 'index'])
+            ->name('communications.index');
+        Route::post('/communications/send', [AdminCommunicationController::class, 'send'])
+            ->name('communications.send');
+        Route::post('/communications/{communicationLog}/resend', [AdminCommunicationController::class, 'resend'])
+            ->name('communications.resend');
+        Route::post('/communications/retry-failed', [AdminCommunicationController::class, 'retryFailed'])
+            ->name('communications.retry-failed');
+        Route::get('/communications/export', [AdminCommunicationController::class, 'export'])
+            ->name('communications.export');
+
         Route::get('/support-threads', [AdminSupportThreadController::class, 'index'])
             ->name('support-threads.index');
 
@@ -357,6 +371,15 @@ Route::middleware(['auth'])
 
                         Route::get('/students/upload/template', [StudentBulkUploadController::class, 'downloadTemplate'])
                             ->name('students.upload.template');
+
+                        Route::get('/mail-settings', [SchoolMailSettingController::class, 'edit'])
+                            ->name('mail-settings.edit');
+
+                        Route::patch('/mail-settings', [SchoolMailSettingController::class, 'update'])
+                            ->name('mail-settings.update');
+
+                        Route::post('/mail-settings/test', [SchoolMailSettingController::class, 'test'])
+                            ->name('mail-settings.test');
                     });
 
                 Route::middleware('role:school_admin|result_officer|super_admin')
@@ -655,6 +678,29 @@ Route::middleware(['auth'])
 
                 Route::post('/result-reviews/{submission}/void', [TeacherResultReviewController::class, 'voidSubmission'])
                     ->name('result-reviews.void');
+            });
+
+        Route::middleware(['role:school_admin|result_officer|teacher|super_admin', 'feature.communication:communication.send'])
+            ->group(function () {
+                Route::post('/students/{student}/communication/send', [SchoolCommunicationController::class, 'sendStudentMessage'])
+                    ->name('communications.students.send');
+                Route::get('/communications/history', [SchoolCommunicationController::class, 'history'])
+                    ->name('communications.history');
+                Route::get('/communications/failed', [SchoolCommunicationController::class, 'failed'])
+                    ->name('communications.failed');
+                Route::post('/communications/{communicationLog}/resend', [SchoolCommunicationController::class, 'resend'])
+                    ->name('communications.resend');
+                Route::post('/communications/retry-failed', [SchoolCommunicationController::class, 'retryFailed'])
+                    ->name('communications.retry-failed');
+                Route::get('/communications/export', [SchoolCommunicationController::class, 'export'])
+                    ->name('communications.export');
+            });
+        Route::middleware(['role:school_admin|result_officer|teacher|super_admin', 'feature.communication:communication.bulk'])
+            ->group(function () {
+                Route::get('/communications/bulk', [SchoolCommunicationController::class, 'bulkForm'])
+                    ->name('communications.bulk');
+                Route::post('/communications/bulk/send', [SchoolCommunicationController::class, 'sendBulk'])
+                    ->name('communications.bulk.send');
             });
 
         Route::middleware('role:school_admin|result_officer|teacher|super_admin')
