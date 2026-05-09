@@ -6,15 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\CommunicationLog;
 use App\Models\Term;
-use App\Notifications\StudentCreatedGuardianNotification;
 use App\Services\AuditLogService;
 use App\Services\AdmissionNumberGeneratorService;
+use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
@@ -137,6 +136,15 @@ class StudentController extends Controller
             ->limit(50)
             ->get();
 
+        $recentCommunications = CommunicationLog::where('school_id', $school->id)
+            ->where(function ($query) use ($student) {
+                $query->where('recipient', $student->guardian_email)
+                    ->orWhere('metadata->student_id', $student->id);
+            })
+            ->latest()
+            ->limit(8)
+            ->get();
+
         // Calculate student age if date of birth exists
         $age = null;
         if ($student->date_of_birth) {
@@ -183,6 +191,7 @@ class StudentController extends Controller
             'unpublishedResults' => $student->results()->where('school_id', $school->id)->whereIn('status', ['draft', 'submitted', 'returned', 'reviewed'])->count(),
             'scratchCardUsages' => $scratchCardUsages,
             'recentActivities' => $recentActivities,
+            'recentCommunications' => $recentCommunications,
         ]);
     }
 
@@ -234,19 +243,17 @@ class StudentController extends Controller
             return Student::create($data);
         });
 
-        if (
-            filled($student->guardian_email)
-            && app(NotificationPreferenceService::class)->emailEnabled('student_created_guardian', $school)
-        ) {
-            try {
-                Notification::route('mail', $student->guardian_email)
-                    ->notify(new StudentCreatedGuardianNotification($student));
-            } catch (\Throwable $exception) {
-                Log::warning('Student guardian notification failed.', [
-                    'student_id' => $student->id,
-                    'message' => $exception->getMessage(),
-                ]);
-            }
+        if (filled($student->guardian_email) && app(NotificationPreferenceService::class)->emailEnabled('student_created_guardian', $school)) {
+            app(CommunicationService::class)->sendSchoolEmail(
+                $school,
+                $student->guardian_email,
+                $student->fullName().' has been registered',
+                'Student onboarding update',
+                'A student account has been created for '.$student->fullName().' (Admission: '.$student->admission_number.').',
+                'student_created',
+                ['student_id' => $student->id],
+                'student_transactional'
+            );
         }
 
         return redirect()

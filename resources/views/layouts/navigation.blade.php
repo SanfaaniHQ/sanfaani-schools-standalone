@@ -28,6 +28,10 @@
                         <x-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
                             Admission Numbers
                         </x-nav-link>
+
+                        <x-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
+                            Communication
+                        </x-nav-link>
                     @endif
 
                     @if (Auth::user()->hasRole('super_admin'))
@@ -39,6 +43,9 @@
                         </x-nav-link>
                         <x-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
                             Maintenance
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.communications.index')" :active="request()->routeIs('admin.communications.*')">
+                            Communications
                         </x-nav-link>
                     @endif
                 </div>
@@ -109,6 +116,9 @@
                 <x-responsive-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
                     Admission Numbers
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
+                    Communication
+                </x-responsive-nav-link>
             @endif
 
             @if (Auth::user()->hasRole('super_admin'))
@@ -120,6 +130,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
                     Maintenance
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.communications.index')" :active="request()->routeIs('admin.communications.*')">
+                    Communications
                 </x-responsive-nav-link>
             @endif
         </div>

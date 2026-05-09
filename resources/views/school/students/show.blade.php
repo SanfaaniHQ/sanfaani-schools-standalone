@@ -147,6 +147,11 @@
                     Activity
                 </a>
 
+                <a href="#communication-center"
+                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                    Communication
+                </a>
+
                 <a href="#documents"
                    class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
                     Documents
@@ -695,6 +700,59 @@
                                         </div>
                                     </td>
                                 </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="communication-center" class="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm">
+                <div class="border-b border-gray-100 px-6 py-4">
+                    <h3 class="text-base font-semibold text-gray-900">Communication</h3>
+                    <p class="mt-1 text-sm text-gray-500">Send school-scoped email updates to the guardian and review recent communication.</p>
+                </div>
+
+                <div class="grid gap-6 border-b border-gray-100 px-6 py-6 lg:grid-cols-2">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Recipient</p>
+                        <p class="mt-1 text-sm text-gray-600">{{ $student->guardian_email ?: 'No guardian email available' }}</p>
+                    </div>
+                    <form method="POST" action="{{ route('school.communications.students.send', $student) }}" class="space-y-3">
+                        @csrf
+                        <select name="type" class="w-full rounded-xl border-gray-300 text-sm">
+                            <option value="result_notification">Result Notification</option>
+                            <option value="report_card">Report Card</option>
+                            <option value="scratch_card">Scratch Card Details</option>
+                            <option value="payment_reminder">Payment Reminder</option>
+                            <option value="attendance_warning">Attendance Warning</option>
+                            <option value="custom_message">Custom Message</option>
+                        </select>
+                        <input name="subject" placeholder="Email subject" class="w-full rounded-xl border-gray-300 text-sm">
+                        <textarea name="message" rows="4" placeholder="Write message..." class="w-full rounded-xl border-gray-300 text-sm"></textarea>
+                        <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Send Email</button>
+                    </form>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Subject</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            @forelse ($recentCommunications as $entry)
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $entry->subject }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $entry->type }}</td>
+                                    <td class="px-6 py-4"><x-status-badge :status="$entry->status" /></td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $entry->created_at?->format('d M Y, h:i A') }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No communication history for this student.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

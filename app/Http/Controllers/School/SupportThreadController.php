@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\SupportMessage;
 use App\Models\SupportThread;
+use App\Models\User;
 use App\Services\AuditLogService;
+use App\Services\CommunicationService;
 use App\Services\CurrentSchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -84,6 +86,19 @@ class SupportThreadController extends Controller
             'priority' => $thread->priority,
         ], request: $request);
 
+        User::role('super_admin')->whereNotNull('email')->select('id', 'email')->chunkById(50, function ($admins) use ($school, $thread) {
+            foreach ($admins as $admin) {
+                app(CommunicationService::class)->sendPlatformEmail(
+                    $admin->email,
+                    'Support ticket created: '.$thread->subject,
+                    'Support update',
+                    'A new support ticket was created by '.$school->name.'.',
+                    'support_ticket_created',
+                    ['thread_id' => $thread->id, 'school_id' => $school->id]
+                );
+            }
+        });
+
         return redirect()
             ->route('school.support.show', $thread)
             ->with('success', 'Support request submitted successfully.');
@@ -125,6 +140,19 @@ class SupportThreadController extends Controller
 
         $auditLog->log('support_thread_reply_posted', $thread, $school, request: $request);
 
+        User::role('super_admin')->whereNotNull('email')->select('id', 'email')->chunkById(50, function ($admins) use ($school, $thread) {
+            foreach ($admins as $admin) {
+                app(CommunicationService::class)->sendPlatformEmail(
+                    $admin->email,
+                    'Support ticket reply: '.$thread->subject,
+                    'Support update',
+                    $school->name.' replied to support ticket #'.$thread->id.'.',
+                    'support_ticket_reply',
+                    ['thread_id' => $thread->id, 'school_id' => $school->id]
+                );
+            }
+        });
+
         return back()->with('success', 'Reply sent successfully.');
     }
 
@@ -136,6 +164,19 @@ class SupportThreadController extends Controller
         $thread->update(['status' => 'closed']);
 
         $auditLog->log('support_thread_closed', $thread, $school, request: $request);
+
+        User::role('super_admin')->whereNotNull('email')->select('id', 'email')->chunkById(50, function ($admins) use ($school, $thread) {
+            foreach ($admins as $admin) {
+                app(CommunicationService::class)->sendPlatformEmail(
+                    $admin->email,
+                    'Support ticket closed: '.$thread->subject,
+                    'Support update',
+                    $school->name.' closed support ticket #'.$thread->id.'.',
+                    'support_ticket_closed',
+                    ['thread_id' => $thread->id, 'school_id' => $school->id]
+                );
+            }
+        });
 
         return back()->with('success', 'Thread closed successfully.');
     }

@@ -11,12 +11,10 @@ use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
-use App\Notifications\ResultPublishedNotification;
+use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use App\Services\AuditLogService;
 
@@ -318,20 +316,20 @@ class ResultPublishingController extends Controller
             ->whereNotNull('guardian_email')
             ->chunkById(100, function ($students) use ($academicSession, $term, $data) {
                 foreach ($students as $student) {
-                    try {
-                        Notification::route('mail', $student->guardian_email)
-                            ->notify(new ResultPublishedNotification(
-                                $student,
-                                $academicSession,
-                                $term,
-                                $data['result_type']
-                            ));
-                    } catch (\Throwable $exception) {
-                        Log::warning('Result published notification failed.', [
+                    app(CommunicationService::class)->sendSchoolEmail(
+                        $student->school,
+                        $student->guardian_email,
+                        'Result published for '.$student->fullName(),
+                        'Result publication notice',
+                        'Session/Term: '.$academicSession->name.' / '.$term->name."\nResult type: ".$data['result_type'],
+                        'result_published',
+                        [
                             'student_id' => $student->id,
-                            'message' => $exception->getMessage(),
-                        ]);
-                    }
+                            'academic_session_id' => $academicSession->id,
+                            'term_id' => $term->id,
+                        ],
+                        'student_transactional'
+                    );
                 }
             });
     }

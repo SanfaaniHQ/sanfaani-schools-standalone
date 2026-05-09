@@ -39,7 +39,7 @@
                 @method('PATCH')
                 <label class="block text-sm font-medium text-gray-700">Status</label>
                 <select name="status" class="mt-1 block w-full rounded-xl border-gray-300">
-                    @foreach (['new', 'contacted', 'converted', 'closed'] as $status)
+                    @foreach (['new', 'contacted', 'demo_scheduled', 'trial_started', 'converted', 'closed'] as $status)
                         <option value="{{ $status }}" @selected(old('status', $lead->status) === $status)>{{ ucfirst($status) }}</option>
                     @endforeach
                 </select>

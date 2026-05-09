@@ -18,7 +18,7 @@
                 </select>
                 <select name="status" class="rounded-xl border-gray-300">
                     <option value="">All statuses</option>
-                    @foreach (['new', 'contacted', 'converted', 'closed'] as $option)
+                    @foreach (['new', 'contacted', 'demo_scheduled', 'trial_started', 'converted', 'closed'] as $option)
                         <option value="{{ $option }}" @selected($status === $option)>{{ ucfirst($option) }}</option>
                     @endforeach
                 </select>

@@ -7,6 +7,7 @@ use App\Models\SupportMessage;
 use App\Models\SupportThread;
 use App\Models\User;
 use App\Services\AuditLogService;
+use App\Services\CommunicationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -74,6 +75,17 @@ class SupportThreadController extends Controller
             'is_internal_note' => (bool) ($data['is_internal_note'] ?? false),
         ], request: $request);
 
+        if (! (bool) ($data['is_internal_note'] ?? false) && filled($thread->school?->email)) {
+            app(CommunicationService::class)->sendSchoolEmail(
+                $thread->school,
+                $thread->school->email,
+                'Support reply: '.$thread->subject,
+                'Support ticket update',
+                'A super admin replied to your support ticket #'.$thread->id.'.',
+                'support_ticket_reply'
+            );
+        }
+
         return back()->with('success', 'Reply sent successfully.');
     }
 
@@ -93,6 +105,17 @@ class SupportThreadController extends Controller
             'status' => $thread->status,
             'priority' => $thread->priority,
         ], request: $request);
+
+        if (filled($thread->school?->email)) {
+            app(CommunicationService::class)->sendSchoolEmail(
+                $thread->school,
+                $thread->school->email,
+                'Support ticket status updated',
+                'Support ticket update',
+                'Ticket #'.$thread->id.' status is now '.$thread->status.'.',
+                'support_ticket_status'
+            );
+        }
 
         return back()->with('success', 'Thread status updated.');
     }

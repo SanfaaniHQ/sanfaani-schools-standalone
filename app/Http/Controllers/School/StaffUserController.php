@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
-use App\Notifications\UserAccountCreatedNotification;
+use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use App\Services\StaffCodeGeneratorService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class StaffUserController extends Controller
@@ -108,14 +107,16 @@ class StaffUserController extends Controller
         ]);
 
         if (app(NotificationPreferenceService::class)->emailEnabled('user_account_created', $school, $user, $data['role'])) {
-            try {
-                $user->notify(new UserAccountCreatedNotification($user, $data['role'], $school));
-            } catch (\Throwable $exception) {
-                Log::warning('User account created notification failed.', [
-                    'user_id' => $user->id,
-                    'message' => $exception->getMessage(),
-                ]);
-            }
+            app(CommunicationService::class)->sendSchoolEmail(
+                $school,
+                $user->email,
+                'Your Sanfaani Schools account is ready',
+                'Staff account notification',
+                'Role: '.str_replace('_', ' ', ucfirst($data['role']))."\nLogin ID: ".($user->staff_code ?: $user->email),
+                'staff_account_created',
+                ['staff_id' => $user->id, 'role' => $data['role']],
+                'staff_transactional'
+            );
         }
 
         return redirect()

@@ -33,7 +33,7 @@ class LeadRequestController extends Controller
     public function update(Request $request, LeadRequest $leadRequest)
     {
         $data = $request->validate([
-            'status' => ['required', Rule::in(['new', 'contacted', 'converted', 'closed'])],
+            'status' => ['required', Rule::in(['new', 'contacted', 'demo_scheduled', 'trial_started', 'converted', 'closed'])],
             'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 

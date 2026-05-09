@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\LeadRequest;
+use App\Models\User;
+use App\Services\CommunicationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -107,5 +109,34 @@ class LandingPageController extends Controller
             'status' => 'new',
             'metadata' => array_filter($metadata, fn ($value) => filled($value)),
         ]);
+
+        if (filled($data['email'] ?? null)) {
+            app(CommunicationService::class)->sendPlatformEmail(
+                $data['email'],
+                'We received your request',
+                'Lead acknowledgment',
+                'Thank you for your interest in Sanfaani Schools. Our team will contact you shortly.',
+                'lead_acknowledgment',
+                ['lead_type' => $type],
+                'platform_transactional'
+            );
+        }
+
+        User::role('super_admin')
+            ->select('id', 'email')
+            ->whereNotNull('email')
+            ->chunkById(50, function ($admins) use ($data, $type) {
+                foreach ($admins as $admin) {
+                    app(CommunicationService::class)->sendPlatformEmail(
+                        $admin->email,
+                        'New '.ucfirst($type).' request received',
+                        'Lead notification',
+                        'A new '.$type.' request has been submitted by '.$data['name'].'.',
+                        'lead_admin_notification',
+                        ['lead_type' => $type, 'requester_email' => $data['email'] ?? null],
+                        'platform_transactional'
+                    );
+                }
+            });
     }
 }

@@ -4,13 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\School;
-use App\Notifications\SchoolCreatedNotification;
 use App\Services\AuditLogService;
+use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use App\Services\SchoolCodeGeneratorService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -65,15 +63,15 @@ class SchoolController extends Controller
             filled($school->email)
             && app(NotificationPreferenceService::class)->emailEnabled('school_created', $school)
         ) {
-            try {
-                Notification::route('mail', $school->email)
-                    ->notify(new SchoolCreatedNotification($school));
-            } catch (\Throwable $exception) {
-                Log::warning('School created notification failed.', [
-                    'school_id' => $school->id,
-                    'message' => $exception->getMessage(),
-                ]);
-            }
+            app(CommunicationService::class)->sendPlatformEmail(
+                $school->email,
+                'Welcome to Sanfaani Schools',
+                'School onboarding',
+                'Your school profile has been created successfully. You can now proceed with school admin onboarding and setup.',
+                'school_onboarding',
+                ['school_id' => $school->id, 'school_name' => $school->name],
+                'platform_transactional'
+            );
         }
 
         return redirect()
