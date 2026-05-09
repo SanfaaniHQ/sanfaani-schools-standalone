@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogService;
+use App\Services\CurrentSchoolService;
 use App\Services\MailSettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -11,17 +12,28 @@ use Illuminate\Validation\Rule;
 
 class MailSettingController extends Controller
 {
-    public function edit(MailSettingService $mailSettings)
+    public function edit(MailSettingService $mailSettings, CurrentSchoolService $currentSchool)
     {
-        return view('admin.mail-settings.edit', [
-            'setting' => $mailSettings->current(),
+        $school = $currentSchool->get();
+        abort_if(! $school, 403);
+
+        return view('school.mail-settings.edit', [
+            'school' => $school,
+            'setting' => $mailSettings->current($school->id),
             'masker' => $mailSettings,
         ]);
     }
 
-    public function update(Request $request, MailSettingService $mailSettings, AuditLogService $auditLog)
-    {
-        $setting = $mailSettings->current();
+    public function update(
+        Request $request,
+        MailSettingService $mailSettings,
+        CurrentSchoolService $currentSchool,
+        AuditLogService $auditLog
+    ) {
+        $school = $currentSchool->get();
+        abort_if(! $school, 403);
+
+        $setting = $mailSettings->current($school->id);
         $data = $request->validate([
             'mailer' => ['required', Rule::in(['log', 'smtp'])],
             'host' => ['nullable', 'string', 'max:255'],
@@ -42,33 +54,41 @@ class MailSettingController extends Controller
         $data['is_enabled'] = (bool) ($data['is_enabled'] ?? false);
         $setting->update($data);
 
-        $auditLog->log('mail_settings_updated', $setting, null, metadata: [
+        $auditLog->log('school_mail_settings_updated', $setting, $school, metadata: [
             'mailer' => $setting->mailer,
             'is_enabled' => $setting->is_enabled,
         ], request: $request);
 
-        return back()->with('success', 'Mail settings saved successfully.');
+        return back()->with('success', 'School mail settings saved successfully.');
     }
 
-    public function test(Request $request, MailSettingService $mailSettings, AuditLogService $auditLog)
-    {
+    public function test(
+        Request $request,
+        MailSettingService $mailSettings,
+        CurrentSchoolService $currentSchool,
+        AuditLogService $auditLog
+    ) {
+        $school = $currentSchool->get();
+        abort_if(! $school, 403);
+
         $data = $request->validate([
             'test_email' => ['required', 'email', 'max:255'],
         ]);
 
-        $setting = $mailSettings->current();
+        $setting = $mailSettings->resolveForSchool($school);
 
         try {
             $mailSettings->sendTest($setting, $data['test_email']);
         } catch (\Throwable $exception) {
-            Log::warning('Mail settings test failed.', [
+            Log::warning('School mail settings test failed.', [
+                'school_id' => $school->id,
                 'message' => $exception->getMessage(),
             ]);
 
-            return back()->with('error', 'Mail test could not be sent. Check the settings and try again.');
+            return back()->with('error', 'Mail test failed. Check SMTP settings and try again.');
         }
 
-        $auditLog->log('mail_settings_test_sent', $setting, null, metadata: [
+        $auditLog->log('school_mail_settings_test_sent', $setting, $school, metadata: [
             'mailer' => $setting->mailer,
         ], request: $request);
 

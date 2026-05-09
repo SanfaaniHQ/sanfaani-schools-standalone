@@ -1,8 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="text-xl font-semibold leading-tight text-gray-900">Mail Settings</h2>
-            <p class="mt-1 text-sm text-gray-500">Configure email delivery from the dashboard. Disabled settings fall back to .env.</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Admin / Settings / Mail</p>
+                <h2 class="text-xl font-semibold leading-tight text-gray-900">Platform Mail Settings</h2>
+                <p class="mt-1 text-sm text-gray-500">Configure global SMTP fallback and super admin communications.</p>
+            </div>
+            <a href="{{ route('admin.dashboard') }}" class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Back</a>
         </div>
     </x-slot>
 
@@ -73,6 +77,10 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">From Name</label>
                             <input name="from_name" value="{{ old('from_name', $setting->from_name) }}" class="mt-1 block w-full rounded-xl border-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Reply-To Email</label>
+                            <input name="reply_to_email" value="{{ old('reply_to_email', $setting->reply_to_email) }}" class="mt-1 block w-full rounded-xl border-gray-300">
                         </div>
                     </div>
 

@@ -90,6 +90,10 @@ class SchoolRoleFeatureService
                 'subjects.view' => 'View Subjects',
                 'classes.view' => 'View Classes',
                 'support.access' => 'Support Access',
+                'communication.send' => 'Send Communication',
+                'communication.bulk' => 'Bulk Communication',
+                'communication.results' => 'Result Communication',
+                'communication.students' => 'Student Communication',
             ],
             'teacher' => [
                 'teacher.assignments.view' => 'View Assignments',
@@ -97,6 +101,8 @@ class SchoolRoleFeatureService
                 'teacher.results.submit' => 'Submit Results',
                 'students.view_assigned' => 'View Assigned Students',
                 'support.access' => 'Support Access',
+                'communication.send' => 'Send Communication',
+                'communication.students' => 'Student Communication',
             ],
         ];
 
