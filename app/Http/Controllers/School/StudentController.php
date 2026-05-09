@@ -14,6 +14,7 @@ use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
@@ -136,14 +137,17 @@ class StudentController extends Controller
             ->limit(50)
             ->get();
 
-        $recentCommunications = CommunicationLog::where('school_id', $school->id)
-            ->where(function ($query) use ($student) {
-                $query->where('recipient', $student->guardian_email)
-                    ->orWhere('metadata->student_id', $student->id);
-            })
-            ->latest()
-            ->limit(8)
-            ->get();
+        $recentCommunications = collect();
+        if (Schema::hasTable('communication_logs')) {
+            $recentCommunications = CommunicationLog::where('school_id', $school->id)
+                ->where(function ($query) use ($student) {
+                    $query->where('recipient', $student->guardian_email)
+                        ->orWhere('metadata->student_id', $student->id);
+                })
+                ->latest()
+                ->limit(8)
+                ->get();
+        }
 
         // Calculate student age if date of birth exists
         $age = null;

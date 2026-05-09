@@ -11,6 +11,7 @@ use App\Models\CommunicationLog;
 use App\Models\School;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class CommunicationService
@@ -56,8 +57,9 @@ class CommunicationService
         array $metadata = []
     ): CommunicationLog {
         $user = auth()->user();
+        $tableReady = Schema::hasTable('communication_logs');
 
-        $log = CommunicationLog::create([
+        $attributes = [
             'school_id' => $school?->id,
             'sender_id' => $user?->id,
             'sender_type' => $user ? 'user' : 'system',
@@ -67,28 +69,34 @@ class CommunicationService
             'type' => $type,
             'status' => 'pending',
             'metadata' => array_merge($metadata, ['category' => $category, 'original_message' => $body]),
-        ]);
+        ];
+
+        $log = $tableReady
+            ? CommunicationLog::create($attributes)
+            : new CommunicationLog($attributes);
 
         try {
             $this->mailSettings->withSchoolMailContext($school, function () use ($recipient, $subject, $headline, $body, $school, $metadata, $category) {
                 Mail::to($recipient)->send($this->mailableForCategory($category, $subject, $headline, $body, $school, $metadata));
             });
 
-            $log->update([
-                'status' => 'sent',
-                'sent_at' => now(),
-                'failure_reason' => null,
-            ]);
+            $log->status = 'sent';
+            $log->sent_at = now();
+            $log->failure_reason = null;
+            if ($tableReady) {
+                $log->save();
+            }
 
             $this->auditLog->log('communication_email_sent', $log, $school, metadata: [
                 'type' => $type,
                 'recipient' => $recipient,
             ]);
         } catch (Throwable $exception) {
-            $log->update([
-                'status' => 'failed',
-                'failure_reason' => $exception->getMessage(),
-            ]);
+            $log->status = 'failed';
+            $log->failure_reason = $exception->getMessage();
+            if ($tableReady) {
+                $log->save();
+            }
 
             $this->auditLog->log('communication_email_failed', $log, $school, metadata: [
                 'type' => $type,
@@ -104,7 +112,7 @@ class CommunicationService
             ]);
         }
 
-        return $log->fresh();
+        return $tableReady ? $log->fresh() : $log;
     }
 
     private function mailableForCategory(

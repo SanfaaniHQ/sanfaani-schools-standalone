@@ -12,6 +12,8 @@ use App\Services\CommunicationService;
 use App\Services\CurrentSchoolService;
 use App\Services\SchoolRoleFeatureService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Validation\Rule;
 
@@ -54,6 +56,16 @@ class CommunicationController extends Controller
     {
         $school = $this->currentSchoolOrFail($currentSchool);
 
+        if (! Schema::hasTable('communication_logs')) {
+            return view('school.communications.history', [
+                'school' => $school,
+                'logs' => new LengthAwarePaginator([], 0, 20),
+                'status' => $request->input('status'),
+                'type' => $request->input('type'),
+                'recipient' => $request->input('recipient'),
+            ])->with('error', 'Communication logs table is not ready yet. Run migrations.');
+        }
+
         $logs = CommunicationLog::where('school_id', $school->id)
             ->with('sender')
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
@@ -83,6 +95,10 @@ class CommunicationController extends Controller
     {
         $school = $this->currentSchoolOrFail($currentSchool);
 
+        if (! Schema::hasTable('communication_logs')) {
+            return back()->with('error', 'Communication logs table is not ready yet. Run migrations.');
+        }
+
         if ((int) $communicationLog->school_id !== (int) $school->id) {
             abort(403);
         }
@@ -103,6 +119,10 @@ class CommunicationController extends Controller
     public function retryFailed(Request $request, CurrentSchoolService $currentSchool, CommunicationService $communications)
     {
         $school = $this->currentSchoolOrFail($currentSchool);
+
+        if (! Schema::hasTable('communication_logs')) {
+            return back()->with('error', 'Communication logs table is not ready yet. Run migrations.');
+        }
 
         CommunicationLog::where('school_id', $school->id)
             ->where('status', 'failed')
@@ -127,6 +147,9 @@ class CommunicationController extends Controller
     public function export(Request $request, CurrentSchoolService $currentSchool): StreamedResponse
     {
         $school = $this->currentSchoolOrFail($currentSchool);
+        if (! Schema::hasTable('communication_logs')) {
+            abort(404, 'Communication logs table is not ready yet.');
+        }
 
         $fileName = 'school-communication-logs-'.$school->id.'-'.now()->format('Ymd-His').'.csv';
 

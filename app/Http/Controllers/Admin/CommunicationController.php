@@ -8,6 +8,8 @@ use App\Models\LeadRequest;
 use App\Models\School;
 use App\Services\CommunicationService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Validation\Rule;
 
@@ -15,14 +17,19 @@ class CommunicationController extends Controller
 {
     public function index(Request $request)
     {
-        return view('admin.communications.index', [
-            'schools' => School::orderBy('name')->get(['id', 'name', 'email', 'subscription_status', 'status']),
-            'logs' => CommunicationLog::whereNull('school_id')
+        $logs = new LengthAwarePaginator([], 0, 20);
+        if (Schema::hasTable('communication_logs')) {
+            $logs = CommunicationLog::whereNull('school_id')
                 ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
                 ->when($request->filled('type'), fn ($query) => $query->where('type', $request->input('type')))
                 ->latest()
                 ->paginate(20)
-                ->withQueryString(),
+                ->withQueryString();
+        }
+
+        return view('admin.communications.index', [
+            'schools' => School::orderBy('name')->get(['id', 'name', 'email', 'subscription_status', 'status']),
+            'logs' => $logs,
             'leads' => LeadRequest::latest()->limit(50)->get(['id', 'email', 'name', 'status']),
             'status' => $request->input('status'),
             'type' => $request->input('type'),
@@ -74,6 +81,10 @@ class CommunicationController extends Controller
 
     public function resend(CommunicationLog $communicationLog, CommunicationService $communications)
     {
+        if (! Schema::hasTable('communication_logs')) {
+            return back()->with('error', 'Communication logs table is not ready yet. Run migrations.');
+        }
+
         if ($communicationLog->school_id !== null) {
             abort(403);
         }
@@ -92,6 +103,10 @@ class CommunicationController extends Controller
 
     public function retryFailed(CommunicationService $communications)
     {
+        if (! Schema::hasTable('communication_logs')) {
+            return back()->with('error', 'Communication logs table is not ready yet. Run migrations.');
+        }
+
         CommunicationLog::whereNull('school_id')
             ->where('status', 'failed')
             ->latest('id')
@@ -113,6 +128,10 @@ class CommunicationController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
+        if (! Schema::hasTable('communication_logs')) {
+            abort(404, 'Communication logs table is not ready yet.');
+        }
+
         $fileName = 'platform-communication-logs-'.now()->format('Ymd-His').'.csv';
 
         return response()->streamDownload(function () use ($request) {
