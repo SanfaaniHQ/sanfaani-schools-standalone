@@ -1,7 +1,4 @@
 <x-app-layout>
-    @php
-        $canDeleteResults = auth()->user()->hasRole('school_admin');
-    @endphp
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
@@ -13,10 +10,12 @@
                 </p>
             </div>
 
-            <a href="{{ route('school.results.manual.create') }}"
-               class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
-                Add Result
-            </a>
+            @can('create', [\App\Models\StudentResult::class, $school])
+                <a href="{{ route('school.results.manual.create') }}"
+                   class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                    Add Result
+                </a>
+            @endcan
         </div>
     </x-slot>
 
@@ -128,23 +127,25 @@
 
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex justify-end gap-3">
-                                            <a href="{{ route('school.results.manual.edit', $result) }}"
-                                               class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                                                Edit
-                                            </a>
+                                            @can('update', $result)
+                                                <a href="{{ route('school.results.manual.edit', $result) }}"
+                                                   class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                    Edit
+                                                </a>
+                                            @endcan
 
-                                            @if ($canDeleteResults && $result->status !== 'published')
+                                            @can('delete', $result)
                                                 <form method="POST"
                                                       action="{{ route('school.results.manual.destroy', $result) }}"
-                                                      data-confirm="Delete this draft/reviewed result?"
-                                                      data-loading-text="Deleting...">
+                                                      data-confirm="Archive this draft/reviewed result?"
+                                                      data-loading-text="Archiving...">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="text-sm font-medium text-red-700 hover:text-red-500">
-                                                        Delete
+                                                        Archive
                                                     </button>
                                                 </form>
-                                            @endif
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>

@@ -1,6 +1,43 @@
 <x-app-layout>
     @php
-        $canManageStudents = auth()->user()->hasRole('school_admin') || (auth()->user()->hasRole('super_admin') && session('support_school_id'));
+        $user = auth()->user();
+        $roleContext = app(\App\Services\CurrentSchoolService::class)->roleContext($user);
+        $featureAccess = app(\App\Services\SchoolRoleFeatureService::class);
+        $supportMode = $user?->hasRole('super_admin') && session('support_school_id');
+        $canManageStudents = $user?->hasRole('school_admin') || $supportMode;
+        $canEnterManualResult = $canManageStudents || (
+            $roleContext === 'result_officer'
+            && $featureAccess->enabled($school->id, 'result_officer', 'results.manual_entry')
+        );
+        $canEnterTeacherResult = $roleContext === 'teacher'
+            && $featureAccess->enabled($school->id, 'teacher', 'teacher.results.create');
+        $canViewReportCard = $canManageStudents || in_array($roleContext, ['result_officer', 'teacher'], true);
+        $currentClass = $student->currentEnrollment?->schoolClass ?? $student->schoolClass;
+        $currentClassLabel = $currentClass
+            ? trim(($currentClass->name ?? '').' '.($currentClass->section ?? ''))
+            : 'No class assigned';
+        $contextSession = $selectedSession ?? $activeSession;
+        $contextTerm = $selectedTerm ?? $activeTerm;
+        $studentInitials = strtoupper(mb_substr($student->first_name ?? 'S', 0, 1).mb_substr($student->last_name ?? 'T', 0, 1));
+        $studentPhoto = collect(['photo_url', 'photo_path', 'photo', 'passport_photo', 'avatar'])
+            ->map(fn ($key) => data_get($student, $key))
+            ->first(fn ($value) => filled($value));
+        if ($studentPhoto && ! \Illuminate\Support\Str::startsWith($studentPhoto, ['http://', 'https://', '/'])) {
+            $studentPhoto = \Illuminate\Support\Facades\Storage::disk('public')->url($studentPhoto);
+        }
+        $profileQuery = collect(request()->only(['academic_session_id', 'term_id']))
+            ->filter(fn ($value) => filled($value))
+            ->all();
+        $downloadProfileUrl = route('school.students.show', array_merge(['student' => $student], $profileQuery, ['print' => 1]));
+        $enterResultUrl = $canEnterManualResult
+            ? route('school.results.manual.create', ['student_id' => $student->id])
+            : ($canEnterTeacherResult
+                ? route('school.teacher-results.create', array_filter(['school_class_id' => $currentClass?->id]))
+                : null);
+        $primaryActionClass = 'inline-flex h-10 items-center justify-center rounded-lg bg-gray-900 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 whitespace-nowrap';
+        $secondaryActionClass = 'inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 whitespace-nowrap';
+        $dangerActionClass = 'inline-flex h-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-700 focus:ring-offset-2 whitespace-nowrap';
+        $disabledActionClass = 'inline-flex h-10 cursor-not-allowed items-center justify-center rounded-lg border border-gray-200 bg-gray-100 px-3 text-sm font-semibold text-gray-400 whitespace-nowrap';
     @endphp
 
     <!-- Print Styles -->
@@ -17,7 +54,65 @@
     </style>
 
     <x-slot name="header">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+                <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-900 shadow-sm ring-1 ring-gray-200">
+                    @if ($studentPhoto)
+                        <img src="{{ $studentPhoto }}" alt="{{ $student->fullName() }}" class="h-full w-full object-cover">
+                    @else
+                        <div class="flex h-full w-full items-center justify-center bg-gray-900 text-3xl font-semibold text-white">
+                            {{ $studentInitials }}
+                        </div>
+                    @endif
+                </div>
+
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <x-status-badge :status="$student->trashed() ? 'archived' : $student->status" />
+                        @if ($student->gender)
+                            <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
+                                {{ ucfirst($student->gender) }}
+                            </span>
+                        @endif
+                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
+                            {{ $publishedResults }} published
+                        </span>
+                        @if ($unpublishedResults > 0)
+                            <span class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                                {{ $unpublishedResults }} unpublished
+                            </span>
+                        @endif
+                    </div>
+
+                    <h2 class="mt-3 truncate text-2xl font-semibold leading-tight text-gray-900">
+                        {{ $student->fullName() }}
+                    </h2>
+
+                    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+                        <span class="font-mono font-semibold text-gray-900">{{ $student->admission_number }}</span>
+                        <span>{{ $school->name }}</span>
+                        <span>{{ $age ? $age.' years old' : 'Age not set' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <dl class="grid gap-3 text-sm sm:grid-cols-3 lg:w-[30rem]">
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                    <dt class="text-xs font-medium uppercase text-gray-500">Class</dt>
+                    <dd class="mt-1 truncate font-semibold text-gray-900">{{ $currentClassLabel }}</dd>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                    <dt class="text-xs font-medium uppercase text-gray-500">Session</dt>
+                    <dd class="mt-1 truncate font-semibold text-gray-900">{{ $contextSession?->name ?? 'No active session' }}</dd>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+                    <dt class="text-xs font-medium uppercase text-gray-500">Term</dt>
+                    <dd class="mt-1 truncate font-semibold text-gray-900">{{ $contextTerm?->name ?? 'No active term' }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        {{--
             <!-- Enhanced Identity Card -->
             <div class="flex items-center gap-4">
                 <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl font-bold text-white shadow-lg">
@@ -56,53 +151,180 @@
                     Print Profile
                 </button>
             </div>
-        </div>
+        --}}
     </x-slot>
 
     <div class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="no-print sticky top-0 z-30 -mx-4 mb-6 border-b border-gray-200 bg-slate-50/95 px-4 py-3 shadow-sm backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+                <div class="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <a href="{{ route('school.students.index') }}" class="{{ $secondaryActionClass }}">
+                        Back
+                    </a>
 
-            <!-- Enhanced Summary Cards -->
-            <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Current Class</p>
-                    <p class="mt-3 text-lg font-semibold text-gray-900">
-                        @if ($student->schoolClass)
-                            {{ $student->schoolClass->name }} {{ $student->schoolClass->section }}
-                        @else
-                            <span class="text-gray-400">No class</span>
+                    <div class="flex gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:justify-end lg:overflow-visible lg:pb-0">
+                        @if ($canManageStudents && ! $student->trashed())
+                            <a href="{{ route('school.students.edit', $student) }}" class="{{ $secondaryActionClass }}">
+                                Edit Profile
+                            </a>
                         @endif
-                    </p>
-                </div>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Total Results</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalResults }}</p>
-                </div>
+                        @if ($enterResultUrl && ! $student->trashed())
+                            <a href="{{ $enterResultUrl }}" class="{{ $primaryActionClass }}">
+                                Enter Result
+                            </a>
+                        @endif
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Published</p>
-                    <p class="mt-3 text-3xl font-semibold text-green-600">{{ $publishedResults }}</p>
-                </div>
+                        <a href="{{ route('school.students.results.workspace', $student) }}" class="{{ $secondaryActionClass }}">
+                            Result Workspace
+                        </a>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Unpublished</p>
-                    <p class="mt-3 text-3xl font-semibold text-amber-600">{{ $unpublishedResults }}</p>
-                    <p class="mt-1 text-xs text-gray-500">
-                        {{ $reviewedResults }} reviewed, {{ $draftResults }} draft
-                    </p>
-                </div>
+                        <button type="button" onclick="window.print()" class="{{ $secondaryActionClass }}">
+                            Print Profile
+                        </button>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Elective Subjects</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $electiveSubjects->count() }}</p>
-                </div>
+                        <a href="{{ $downloadProfileUrl }}" target="_blank" rel="noopener" class="{{ $secondaryActionClass }}">
+                            Download Profile
+                        </a>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Promotions</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $promotionHistory->count() }}</p>
-                    <p class="mt-1 text-xs text-gray-500">Class changes</p>
+                        @if ($canManageStudents)
+                            @if ($student->trashed())
+                                <form method="POST" action="{{ route('school.students.restore', $student->id) }}" data-confirm="Restore this student?" data-loading-text="Restoring...">
+                                    @csrf
+                                    <button type="submit" class="{{ $primaryActionClass }}">
+                                        Restore
+                                    </button>
+                                </form>
+                            @else
+                                <form method="POST" action="{{ route('school.students.destroy', $student) }}" data-confirm="Archive this student? Results will be preserved." data-loading-text="Archiving...">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="{{ $dangerActionClass }}">
+                                        Archive
+                                    </button>
+                                </form>
+                            @endif
+                        @endif
+
+                        @if ($canViewReportCard && $results->isNotEmpty())
+                            <a href="#result-profile" class="{{ $secondaryActionClass }}">
+                                View Report Card
+                            </a>
+                        @elseif ($canViewReportCard)
+                            <button type="button" class="{{ $disabledActionClass }}" disabled>
+                                View Report Card
+                            </button>
+                        @endif
+                    </div>
                 </div>
+            </div>
+
+            @php
+                $summaryCards = [
+                    [
+                        'label' => 'Current Class',
+                        'value' => $currentClassLabel,
+                        'detail' => $contextSession?->name ?? 'No active session',
+                        'percentage' => $currentClass ? 100 : 0,
+                        'tone' => 'gray',
+                    ],
+                    [
+                        'label' => 'Total Subjects',
+                        'value' => $summaryMetrics['subjects']['total'],
+                        'detail' => $summaryMetrics['subjects']['core'].' assigned subjects',
+                        'percentage' => $summaryMetrics['subjects']['total'] > 0 ? 100 : 0,
+                        'tone' => 'slate',
+                    ],
+                    [
+                        'label' => 'Elective Subjects',
+                        'value' => $summaryMetrics['subjects']['elective'],
+                        'detail' => 'Selected electives',
+                        'percentage' => $summaryMetrics['subjects']['total'] > 0 ? min(100, (int) round(($summaryMetrics['subjects']['elective'] / $summaryMetrics['subjects']['total']) * 100)) : 0,
+                        'tone' => 'sky',
+                    ],
+                    [
+                        'label' => 'Published Results',
+                        'value' => $summaryMetrics['result_stats']['published'],
+                        'detail' => $summaryMetrics['result_stats']['total'].' total results',
+                        'percentage' => $summaryMetrics['result_stats']['total'] > 0 ? (int) round(($summaryMetrics['result_stats']['published'] / $summaryMetrics['result_stats']['total']) * 100) : 0,
+                        'tone' => 'emerald',
+                    ],
+                    [
+                        'label' => 'Draft Results',
+                        'value' => $summaryMetrics['result_stats']['draft'],
+                        'detail' => $summaryMetrics['result_stats']['reviewed'].' reviewed',
+                        'percentage' => $summaryMetrics['result_stats']['total'] > 0 ? (int) round(($summaryMetrics['result_stats']['draft'] / $summaryMetrics['result_stats']['total']) * 100) : 0,
+                        'tone' => 'amber',
+                    ],
+                    [
+                        'label' => 'Result Completion',
+                        'value' => $summaryMetrics['completion']['percentage'].'%',
+                        'detail' => $summaryMetrics['completion']['completed'].' of '.$summaryMetrics['completion']['expected'].' subjects',
+                        'percentage' => $summaryMetrics['completion']['percentage'],
+                        'tone' => 'indigo',
+                    ],
+                    [
+                        'label' => 'Promotion Status',
+                        'value' => $summaryMetrics['promotion']['label'],
+                        'detail' => $summaryMetrics['promotion']['detail'],
+                        'percentage' => $summaryMetrics['promotion']['percentage'],
+                        'tone' => 'violet',
+                    ],
+                    [
+                        'label' => 'Guardian Contact',
+                        'value' => $summaryMetrics['guardian']['label'],
+                        'detail' => $summaryMetrics['guardian']['detail'],
+                        'percentage' => $summaryMetrics['guardian']['percentage'],
+                        'tone' => 'cyan',
+                    ],
+                    [
+                        'label' => 'Last Result Update',
+                        'value' => $summaryMetrics['last_result_update']['label'],
+                        'detail' => $summaryMetrics['last_result_update']['detail'],
+                        'percentage' => $summaryMetrics['last_result_update']['percentage'],
+                        'tone' => 'rose',
+                    ],
+                ];
+            @endphp
+
+            <!-- Student 360 Summary Cards -->
+            <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($summaryCards as $card)
+                    @php
+                        $barClass = match ($card['tone']) {
+                            'emerald' => 'bg-emerald-500',
+                            'amber' => 'bg-amber-500',
+                            'indigo' => 'bg-indigo-500',
+                            'violet' => 'bg-violet-500',
+                            'cyan' => 'bg-cyan-500',
+                            'sky' => 'bg-sky-500',
+                            'rose' => 'bg-rose-500',
+                            'slate' => 'bg-slate-500',
+                            default => 'bg-gray-700',
+                        };
+                        $percentage = max(0, min(100, (int) $card['percentage']));
+                    @endphp
+
+                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-500">{{ $card['label'] }}</p>
+                                <p class="mt-2 truncate text-xl font-semibold text-gray-900">{{ $card['value'] }}</p>
+                            </div>
+                            <span class="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                                {{ $percentage }}%
+                            </span>
+                        </div>
+
+                        <p class="mt-2 truncate text-xs text-gray-500">{{ $card['detail'] }}</p>
+
+                        <div class="mt-4 grid grid-cols-10 gap-1" aria-label="{{ $card['label'] }} progress {{ $percentage }}%">
+                            @for ($step = 1; $step <= 10; $step++)
+                                <span class="h-1.5 rounded-full {{ $percentage >= ($step * 10) ? $barClass : 'bg-gray-100' }}"></span>
+                            @endfor
+                        </div>
+                    </div>
+                @endforeach
             </div>
 
             <!-- Quick Navigation -->
@@ -211,8 +433,8 @@
                     <div>
                         <dt class="font-medium text-gray-500">Current Class</dt>
                         <dd class="mt-1 text-gray-900">
-                            @if ($student->schoolClass)
-                                {{ $student->schoolClass->name }} {{ $student->schoolClass->section }}
+                            @if ($currentClass)
+                                {{ $currentClassLabel }}
                             @else
                                 <span class="text-gray-400">No class assigned</span>
                             @endif
@@ -330,8 +552,8 @@
                     <div class="rounded-xl bg-gray-50 p-4">
                         <dt class="font-medium text-gray-500">Current Class</dt>
                         <dd class="mt-1 text-gray-900">
-                            @if ($student->schoolClass)
-                                {{ $student->schoolClass->name }} {{ $student->schoolClass->section }}
+                            @if ($currentClass)
+                                {{ $currentClassLabel }}
                             @else
                                 No class
                             @endif
@@ -447,7 +669,9 @@
                         <tbody class="divide-y divide-gray-100 bg-white">
                             @forelse ($promotionHistory as $promotion)
                                 <tr>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $promotion->academicSession->name ?? 'N/A' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        {{ $promotion->toSession?->name ?? $promotion->fromSession?->name ?? 'N/A' }}
+                                    </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         {{ $promotion->fromClass->name ?? 'N/A' }} {{ $promotion->fromClass->section ?? '' }}
                                     </td>
@@ -458,7 +682,7 @@
                                         <x-status-badge :status="$promotion->status ?? 'completed'" />
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
-                                        {{ $promotion->promotedBy->name ?? 'System' }}
+                                        {{ $promotion->batch?->createdBy?->name ?? 'System' }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         {{ $promotion->created_at?->format('d M Y') ?? 'N/A' }}
@@ -829,4 +1053,10 @@
 
         </div>
     </div>
+
+    @if (request()->boolean('print'))
+        <script>
+            window.addEventListener('load', () => window.print());
+        </script>
+    @endif
 </x-app-layout>

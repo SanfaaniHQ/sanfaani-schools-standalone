@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentTransaction;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardBatch;
+use App\Models\Student;
 use App\Notifications\ScratchCardRequestStatusNotification;
 use App\Services\AuditLogService;
 use App\Services\NotificationPreferenceService;
@@ -198,6 +200,8 @@ class ScratchCardRequestController extends Controller
             'Scratch cards have been generated and are ready for download.'
         );
 
+        $this->notifyGuardiansAboutGeneratedCards($batch->refresh());
+
         return back()->with('success', 'Scratch cards generated successfully.');
     }
 
@@ -350,6 +354,27 @@ class ScratchCardRequestController extends Controller
                         'user_id' => $user->id,
                         'message' => $exception->getMessage(),
                     ]);
+                }
+            });
+    }
+
+    private function notifyGuardiansAboutGeneratedCards(ScratchCardBatch $batch): void
+    {
+        $batch->loadMissing('school');
+
+        if (! $batch->school || ! $batch->school_class_id) {
+            return;
+        }
+
+        Student::where('school_id', $batch->school_id)
+            ->where('school_class_id', $batch->school_class_id)
+            ->whereNotNull('guardian_email')
+            ->with('school')
+            ->chunkById(100, function ($students) use ($batch) {
+                foreach ($students as $student) {
+                    StudentTransactionalEmailRequested::dispatch(
+                        StudentTransactionalEmailRequested::scratchCardGenerated($student, $batch)
+                    );
                 }
             });
     }

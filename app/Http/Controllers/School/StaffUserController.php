@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\School;
 
+use App\Events\StaffTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
-use App\Services\CommunicationService;
-use App\Services\NotificationPreferenceService;
 use App\Services\StaffCodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -106,18 +105,7 @@ class StaffUserController extends Controller
             'assigned_by' => auth()->id(),
         ]);
 
-        if (app(NotificationPreferenceService::class)->emailEnabled('user_account_created', $school, $user, $data['role'])) {
-            app(CommunicationService::class)->sendSchoolEmail(
-                $school,
-                $user->email,
-                'Your Sanfaani Schools account is ready',
-                'Staff account notification',
-                'Role: '.str_replace('_', ' ', ucfirst($data['role']))."\nLogin ID: ".($user->staff_code ?: $user->email),
-                'staff_account_created',
-                ['staff_id' => $user->id, 'role' => $data['role']],
-                'staff_transactional'
-            );
-        }
+        event(StaffTransactionalEmailRequested::accountCreated($user->refresh(), $school, $data['role'], $wasExistingUser));
 
         return redirect()
             ->route('school.staff.index')
@@ -141,6 +129,7 @@ class StaffUserController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeStaff($staff, $school);
+        $previousRole = $this->currentSchoolRole($staff, $school);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -179,6 +168,10 @@ class StaffUserController extends Controller
             'assigned_by' => auth()->id(),
         ]);
 
+        if ($previousRole && $previousRole !== $data['role']) {
+            event(StaffTransactionalEmailRequested::roleUpdated($staff->refresh(), $school, $previousRole, $data['role']));
+        }
+
         return redirect()
             ->route('school.staff.index')
             ->with('success', 'Staff account updated successfully.');
@@ -193,6 +186,8 @@ class StaffUserController extends Controller
         if ($staff->hasAnyRole(['super_admin', 'school_admin'])) {
             abort(403, 'You cannot disable this user.');
         }
+
+        $role = $this->currentSchoolRole($staff, $school) ?? 'staff';
 
         // Set user_school_roles to inactive for this school
         UserSchoolRole::where('user_id', $staff->id)
@@ -218,6 +213,8 @@ class StaffUserController extends Controller
         if (class_exists(\App\Services\AuditLogService::class)) {
             app(\App\Services\AuditLogService::class)->log('staff_access_disabled', $staff, $school, request: $request);
         }
+
+        event(StaffTransactionalEmailRequested::accountStatusChanged($staff, $school, $role, false));
 
         return redirect()
             ->route('school.staff.index')
@@ -258,6 +255,8 @@ class StaffUserController extends Controller
             app(\App\Services\AuditLogService::class)->log('staff_access_enabled', $staff, $school, request: $request);
         }
 
+        event(StaffTransactionalEmailRequested::accountStatusChanged($staff->refresh(), $school, $schoolRole->role_name, true));
+
         return redirect()
             ->route('school.staff.index')
             ->with('success', 'Staff access enabled successfully.');
@@ -284,6 +283,25 @@ class StaffUserController extends Controller
         if (((int) $staff->school_id !== (int) $school->id && ! $hasSchoolRole) || ! $staff->hasAnyRole($this->manageableRoles())) {
             abort(403, 'You cannot manage this staff account.');
         }
+    }
+
+    private function currentSchoolRole(User $staff, School $school): ?string
+    {
+        $activeRole = UserSchoolRole::where('user_id', $staff->id)
+            ->where('school_id', $school->id)
+            ->whereIn('role_name', $this->manageableRoles())
+            ->where('status', 'active')
+            ->value('role_name');
+
+        if ($activeRole) {
+            return $activeRole;
+        }
+
+        return UserSchoolRole::where('user_id', $staff->id)
+            ->where('school_id', $school->id)
+            ->whereIn('role_name', $this->manageableRoles())
+            ->latest()
+            ->value('role_name');
     }
 
     private function manageableRoles(): array

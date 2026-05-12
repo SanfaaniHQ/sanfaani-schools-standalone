@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\SchoolNotificationRequested;
 use App\Http\Controllers\Controller;
 use App\Models\CommunicationLog;
 use App\Models\LeadRequest;
@@ -42,29 +43,33 @@ class CommunicationController extends Controller
             'target' => ['required', Rule::in(['school', 'trial_schools', 'expired_schools', 'lead'])],
             'school_id' => ['nullable', Rule::exists('schools', 'id')],
             'lead_id' => ['nullable', Rule::exists('lead_requests', 'id')],
+            'target_roles' => ['nullable', 'array'],
+            'target_roles.*' => ['string', Rule::in(['school_admin', 'result_officer', 'teacher'])],
+            'include_school_contact' => ['nullable', 'boolean'],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
         ]);
 
+        $targetRoles = $this->targetRoles($data['target_roles'] ?? []);
+        $includeSchoolContact = $request->boolean('include_school_contact');
+
         if ($data['target'] === 'school' && filled($data['school_id'] ?? null)) {
             $school = School::findOrFail($data['school_id']);
-            if (filled($school->email)) {
-                $communications->sendPlatformEmail($school->email, $data['subject'], 'Platform announcement', $data['message'], 'platform_school_announcement', ['school_id' => $school->id], 'announcement');
-            }
+            event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'single_school'));
         }
 
         if ($data['target'] === 'trial_schools') {
-            School::where('subscription_status', 'trial')->whereNotNull('email')->chunkById(50, function ($schools) use ($data, $communications) {
+            School::where('subscription_status', 'trial')->chunkById(50, function ($schools) use ($data, $targetRoles, $includeSchoolContact) {
                 foreach ($schools as $school) {
-                    $communications->sendPlatformEmail($school->email, $data['subject'], 'Platform announcement', $data['message'], 'platform_trial_announcement', ['school_id' => $school->id], 'announcement');
+                    event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'trial_schools'));
                 }
             });
         }
 
         if ($data['target'] === 'expired_schools') {
-            School::where('subscription_status', 'expired')->whereNotNull('email')->chunkById(50, function ($schools) use ($data, $communications) {
+            School::where('subscription_status', 'expired')->chunkById(50, function ($schools) use ($data, $targetRoles, $includeSchoolContact) {
                 foreach ($schools as $school) {
-                    $communications->sendPlatformEmail($school->email, $data['subject'], 'Platform announcement', $data['message'], 'platform_expired_announcement', ['school_id' => $school->id], 'announcement');
+                    event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'expired_schools'));
                 }
             });
         }
@@ -77,6 +82,17 @@ class CommunicationController extends Controller
         }
 
         return back()->with('success', 'Communication dispatch completed.');
+    }
+
+    private function targetRoles(array $roles): array
+    {
+        $roles = collect($roles)
+            ->filter(fn ($role) => in_array($role, ['school_admin', 'result_officer', 'teacher'], true))
+            ->unique()
+            ->values()
+            ->all();
+
+        return $roles === [] ? ['school_admin'] : $roles;
     }
 
     public function resend(CommunicationLog $communicationLog, CommunicationService $communications)

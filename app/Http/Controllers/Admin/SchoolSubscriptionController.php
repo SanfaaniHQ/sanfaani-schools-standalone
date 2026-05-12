@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\SchoolNotificationRequested;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\SchoolSubscription;
@@ -54,7 +55,7 @@ class SchoolSubscriptionController extends Controller
             ->whereIn('status', ['trial', 'active', 'grace'])
             ->update(['status' => 'superseded']);
 
-        SchoolSubscription::create($data + [
+        $subscription = SchoolSubscription::create($data + [
             'billing_cycle' => $plan->billing_cycle,
             'pricing_model' => $plan->pricing_model,
             'price' => $plan->price,
@@ -71,6 +72,10 @@ class SchoolSubscriptionController extends Controller
                 ],
             ])->all(),
         ]);
+
+        if ($subscription->status === 'active') {
+            event(SchoolNotificationRequested::subscriptionActivated($subscription));
+        }
 
         return redirect()
             ->route('admin.school-subscriptions.index')

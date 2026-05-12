@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MailSetting extends Model
 {
@@ -26,4 +27,9 @@ class MailSetting extends Model
         'password' => 'encrypted',
         'metadata' => 'array',
     ];
+
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
+    }
 }

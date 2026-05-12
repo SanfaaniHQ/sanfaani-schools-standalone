@@ -110,8 +110,9 @@
                             <label class="block text-sm font-medium text-gray-700">Status</label>
                             <select name="status"
                                     class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
-                                <option value="draft" @selected(old('status') === 'draft')>Draft</option>
-                                <option value="reviewed" @selected(old('status') === 'reviewed')>Reviewed</option>
+                                @foreach ($statuses as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('status') === $value)>{{ $label }}</option>
+                                @endforeach
                             </select>
                             @error('status')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

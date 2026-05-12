@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Events\PasswordResetEmailRequested;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -63,6 +64,11 @@ class User extends Authenticatable
     public function communicationLogs(): HasMany
     {
         return $this->hasMany(CommunicationLog::class, 'sender_id');
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        PasswordResetEmailRequested::dispatch($this, $token);
     }
 
     /**

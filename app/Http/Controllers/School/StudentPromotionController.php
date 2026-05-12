@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\School;
 
+use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
@@ -9,6 +10,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentClassEnrollment;
 use App\Models\StudentPromotionBatch;
+use App\Models\StudentPromotionItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -84,8 +86,9 @@ class StudentPromotionController extends Controller
 
         $classes = SchoolClass::where('school_id', $school->id)->get()->keyBy('id');
         $counts = array_fill_keys(self::ACTIONS, 0);
+        $promotionItemIds = [];
 
-        DB::transaction(function () use ($school, $context, $selectedRows, $eligibleStudents, $classes, &$counts) {
+        DB::transaction(function () use ($school, $context, $selectedRows, $eligibleStudents, $classes, &$counts, &$promotionItemIds) {
             $batch = StudentPromotionBatch::create([
                 'school_id' => $school->id,
                 'from_academic_session_id' => $context['from_academic_session_id'],
@@ -168,7 +171,7 @@ class StudentPromotionController extends Controller
                     $student->update(['status' => 'withdrawn']);
                 }
 
-                $batch->items()->create([
+                $item = $batch->items()->create([
                     'school_id' => $school->id,
                     'student_id' => $student->id,
                     'from_school_class_id' => $context['from_school_class_id'],
@@ -180,11 +183,17 @@ class StudentPromotionController extends Controller
                     'notes' => data_get($row, 'notes'),
                 ]);
 
+                if ($item->status === 'completed') {
+                    $promotionItemIds[] = $item->id;
+                }
+
                 $counts[$action]++;
             }
 
             $batch->update(['metadata' => array_merge($batch->metadata ?? [], ['counts' => $counts])]);
         });
+
+        $this->dispatchPromotionEmails($promotionItemIds);
 
         return redirect()
             ->route('school.student-promotions.index')
@@ -315,5 +324,20 @@ class StudentPromotionController extends Controller
         }
 
         return $school;
+    }
+
+    private function dispatchPromotionEmails(array $promotionItemIds): void
+    {
+        if (empty($promotionItemIds)) {
+            return;
+        }
+
+        StudentPromotionItem::whereIn('id', $promotionItemIds)
+            ->with(['student.school', 'fromClass', 'toClass', 'fromSession', 'toSession'])
+            ->chunkById(100, function ($items) {
+                foreach ($items as $item) {
+                    StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentPromoted($item));
+                }
+            });
     }
 }

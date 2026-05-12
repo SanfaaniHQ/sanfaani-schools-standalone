@@ -21,8 +21,8 @@
             <form method="GET" class="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-sm">
                 <select name="status" class="rounded-lg border-gray-300 text-sm">
                     <option value="">Pending review</option>
-                    @foreach ($statuses as $status)
-                        <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ ucfirst($status) }}</option>
+                    @foreach ($statuses as $value => $label)
+                        <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
                 <button class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">Filter</button>
@@ -47,7 +47,7 @@
                                     <td class="px-5 py-3">{{ $submission->teacher?->name }}</td>
                                     <td class="px-5 py-3">{{ $submission->schoolClass?->name }}<br><span class="text-xs text-gray-500">{{ $submission->subject?->name }}</span></td>
                                     <td class="px-5 py-3">{{ $submission->academicSession?->name }} / {{ $submission->term?->name }}</td>
-                                    <td class="px-5 py-3"><span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">{{ ucfirst($submission->status) }}</span></td>
+                                    <td class="px-5 py-3"><x-status-badge :status="$submission->status" /></td>
                                     <td class="px-5 py-3 text-right"><a href="{{ route('school.result-reviews.show', $submission) }}" class="text-sm font-medium text-gray-900">Review</a></td>
                                 </tr>
                             @empty

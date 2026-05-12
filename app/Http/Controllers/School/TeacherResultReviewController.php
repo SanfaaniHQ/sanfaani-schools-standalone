@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\School;
 
+use App\Enums\ResultWorkflowStatus;
+use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\Student;
@@ -12,6 +14,7 @@ use App\Services\CurrentSchoolService;
 use App\Services\ResultGradingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class TeacherResultReviewController extends Controller
@@ -22,8 +25,11 @@ class TeacherResultReviewController extends Controller
 
         $submissions = $school->teacherResultSubmissions()
             ->with(['teacher', 'schoolClass', 'subject', 'academicSession', 'term'])
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
-            ->when(! $request->filled('status'), fn ($query) => $query->whereIn('status', ['submitted', 'returned', 'approved']))
+            ->when(
+                $request->filled('status') && in_array($request->input('status'), ResultWorkflowStatus::teacherSubmissionValues(), true),
+                fn ($query) => $query->where('status', $request->input('status'))
+            )
+            ->when(! $request->filled('status'), fn ($query) => $query->whereIn('status', ResultWorkflowStatus::reviewDeskValues()))
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -31,7 +37,7 @@ class TeacherResultReviewController extends Controller
         return view('school.result-reviews.index', [
             'school' => $school,
             'submissions' => $submissions,
-            'statuses' => TeacherResultSubmission::STATUSES,
+            'statuses' => ResultWorkflowStatus::labels(),
             'filters' => $request->only(['status']),
         ]);
     }
@@ -40,6 +46,7 @@ class TeacherResultReviewController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
+        Gate::authorize('view', $submission);
 
         return view('school.result-reviews.show', [
             'school' => $school,
@@ -53,45 +60,51 @@ class TeacherResultReviewController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
-
-        if (in_array($submission->status, ['published', 'voided'], true)) {
-            return back()->with('error', 'Published or voided submissions cannot be edited.');
-        }
+        Gate::authorize('review', $submission);
 
         $scores = $this->validatedScores($request, $submission);
+        $oldValues = $submission->only(['status', 'reviewed_by', 'reviewed_at', 'metadata']);
         $submission->update([
+            'status' => ResultWorkflowStatus::Reviewed->value,
             'metadata' => ['scores' => $scores],
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
         ]);
 
-        $auditLog->log('teacher_result_modified_by_admin', $submission, $school, metadata: [
+        $auditLog->log('teacher_result_reviewed', $submission, $school, $oldValues, $submission->only([
+            'status',
+            'reviewed_by',
+            'reviewed_at',
+        ]), metadata: [
             'rows' => count($scores),
         ], request: $request);
 
         return redirect()
             ->route('school.result-reviews.show', $submission)
-            ->with('success', 'Teacher result scores updated for review.');
+            ->with('success', 'Teacher result reviewed successfully.');
     }
 
     public function return(Request $request, TeacherResultSubmission $submission, AuditLogService $auditLog)
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
+        Gate::authorize('returnForCorrection', $submission);
         $data = $request->validate(['return_reason' => ['required', 'string', 'max:1000']]);
 
-        if (in_array($submission->status, ['published', 'voided'], true)) {
-            return back()->with('error', 'Published or voided submissions cannot be returned.');
-        }
-
+        $oldValues = $submission->only(['status', 'returned_by', 'returned_at', 'return_reason']);
         $submission->update([
-            'status' => 'returned',
+            'status' => ResultWorkflowStatus::Returned->value,
             'returned_by' => auth()->id(),
             'returned_at' => now(),
             'return_reason' => $data['return_reason'],
         ]);
 
-        $auditLog->log('teacher_result_returned', $submission, $school, metadata: [
+        $auditLog->log('teacher_result_returned', $submission, $school, $oldValues, $submission->only([
+            'status',
+            'returned_by',
+            'returned_at',
+            'return_reason',
+        ]), metadata: [
             'reason' => $data['return_reason'],
         ], request: $request);
 
@@ -102,20 +115,24 @@ class TeacherResultReviewController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
+        Gate::authorize('approve', $submission);
 
-        if (! in_array($submission->status, ['submitted', 'returned'], true)) {
-            return back()->with('error', 'Only submitted or returned results can be approved.');
-        }
-
+        $oldValues = $submission->only(['status', 'reviewed_by', 'reviewed_at', 'approved_by', 'approved_at']);
         $submission->update([
-            'status' => 'approved',
+            'status' => ResultWorkflowStatus::Approved->value,
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
 
-        $auditLog->log('teacher_result_approved', $submission, $school, metadata: [
+        $auditLog->log('teacher_result_approved', $submission, $school, $oldValues, $submission->only([
+            'status',
+            'reviewed_by',
+            'reviewed_at',
+            'approved_by',
+            'approved_at',
+        ]), metadata: [
             'school_class_id' => $submission->school_class_id,
             'subject_id' => $submission->subject_id,
         ], request: $request);
@@ -127,10 +144,7 @@ class TeacherResultReviewController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
-
-        if ($submission->status !== 'approved') {
-            return back()->with('error', 'Approve this teacher result before publishing.');
-        }
+        Gate::authorize('publish', $submission);
 
         $scores = $submission->metadata['scores'] ?? [];
 
@@ -138,7 +152,11 @@ class TeacherResultReviewController extends Controller
             return back()->with('error', 'This submission has no publishable scores.');
         }
 
-        DB::transaction(function () use ($submission, $school, $scores) {
+        $publishedStudentIds = [];
+
+        $oldValues = $submission->only(['status', 'published_by', 'published_at']);
+
+        DB::transaction(function () use ($submission, $school, $scores, &$publishedStudentIds) {
             foreach ($scores as $row) {
                 $student = Student::where('school_id', $school->id)
                     ->where('school_class_id', $submission->school_class_id)
@@ -157,16 +175,16 @@ class TeacherResultReviewController extends Controller
                     'subject_id' => $submission->subject_id,
                     'academic_session_id' => $submission->academic_session_id,
                     'term_id' => $submission->term_id,
+                    'result_type' => $submission->result_type,
                 ], [
                     'school_class_id' => $submission->school_class_id,
-                    'result_type' => $submission->result_type,
                     'ca_score' => $row['ca_score'],
                     'exam_score' => $row['exam_score'],
                     'total_score' => $total,
                     'grade' => $grading['grade'],
                     'remark' => $grading['remark'],
                     'teacher_remark' => $row['teacher_remark'] ?? null,
-                    'status' => 'published',
+                    'status' => ResultWorkflowStatus::Published->value,
                     'published_at' => now(),
                     'published_by' => auth()->id(),
                     'unpublished_at' => null,
@@ -175,18 +193,27 @@ class TeacherResultReviewController extends Controller
                     'recorded_by' => $submission->teacher_user_id,
                     'teacher_result_submission_id' => $submission->id,
                 ]);
+
+                $publishedStudentIds[] = $student->id;
             }
 
             $submission->update([
-                'status' => 'published',
+                'status' => ResultWorkflowStatus::Published->value,
                 'published_by' => auth()->id(),
                 'published_at' => now(),
             ]);
         });
 
-        $auditLog->log('teacher_result_published', $submission, $school, metadata: [
+        $submission->refresh();
+        $auditLog->log('teacher_result_published', $submission, $school, $oldValues, $submission->only([
+            'status',
+            'published_by',
+            'published_at',
+        ]), metadata: [
             'rows' => count($scores),
         ], request: $request);
+
+        $this->dispatchResultPublishedEmails($submission, array_unique($publishedStudentIds));
 
         return back()->with('success', 'Approved teacher result published successfully.');
     }
@@ -195,14 +222,12 @@ class TeacherResultReviewController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
+        Gate::authorize('void', $submission);
 
-        if ($submission->status === 'published') {
-            return back()->with('error', 'Published teacher submissions cannot be voided here. Unpublish related student results first.');
-        }
+        $oldValues = $submission->only(['status']);
+        $submission->update(['status' => ResultWorkflowStatus::Voided->value]);
 
-        $submission->update(['status' => 'voided']);
-
-        $auditLog->log('teacher_result_voided', $submission, $school, metadata: [
+        $auditLog->log('teacher_result_voided', $submission, $school, $oldValues, $submission->only(['status']), metadata: [
             'school_class_id' => $submission->school_class_id,
             'subject_id' => $submission->subject_id,
         ], request: $request);
@@ -265,6 +290,30 @@ class TeacherResultReviewController extends Controller
             ->orderBy('first_name')
             ->orderBy('last_name')
             ->get();
+    }
+
+    private function dispatchResultPublishedEmails(TeacherResultSubmission $submission, array $studentIds): void
+    {
+        if (empty($studentIds) || ! $submission->academicSession || ! $submission->term) {
+            return;
+        }
+
+        Student::where('school_id', $submission->school_id)
+            ->whereIn('id', $studentIds)
+            ->whereNotNull('guardian_email')
+            ->with('school')
+            ->chunkById(100, function ($students) use ($submission) {
+                foreach ($students as $student) {
+                    StudentTransactionalEmailRequested::dispatch(
+                        StudentTransactionalEmailRequested::resultPublished($student, $submission->academicSession, $submission->term, [
+                            'result_type' => $submission->result_type,
+                            'scope_type' => 'teacher_submission',
+                            'teacher_result_submission_id' => $submission->id,
+                            'subject_id' => $submission->subject_id,
+                        ])
+                    );
+                }
+            });
     }
 
     private function authorizeSubmission(TeacherResultSubmission $submission, School $school): void

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\School;
 
+use App\Enums\ResultWorkflowStatus;
+use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\ResultPublication;
@@ -11,12 +13,11 @@ use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
-use App\Services\CommunicationService;
-use App\Services\NotificationPreferenceService;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
-use App\Services\AuditLogService;
 
 class ResultPublishingController extends Controller
 {
@@ -52,18 +53,25 @@ class ResultPublishingController extends Controller
     public function publish(Request $request)
     {
         $school = $this->currentSchoolOrFail();
+        Gate::authorize('publish', [StudentResult::class, $school]);
 
         $data = $this->validatePublishingRequest($request, $school);
 
-        $query = $this->matchingResultsQuery($school, $data);
+        $query = $this->matchingResultsQuery($school, $data)
+            ->whereIn('status', ResultWorkflowStatus::publishableStudentResultValues());
 
         $totalResults = (clone $query)->count();
 
         if ($totalResults === 0) {
             return back()
                 ->withInput()
-                ->with('publishing_error', 'No matching results were found for the selected class, session, term, and scope.');
+                ->with('publishing_error', 'No reviewed, approved, or unpublished results were found for the selected class, session, term, and scope.');
         }
+
+        $sourceStatuses = (clone $query)
+            ->pluck('status')
+            ->countBy()
+            ->all();
 
         $studentIds = (clone $query)
             ->pluck('student_id')
@@ -75,7 +83,7 @@ class ResultPublishingController extends Controller
             $now = now();
 
             $query->update([
-                'status' => 'published',
+                'status' => ResultWorkflowStatus::Published->value,
                 'published_at' => $now,
                 'published_by' => auth()->id(),
                 'unpublished_at' => null,
@@ -110,6 +118,8 @@ class ResultPublishingController extends Controller
             'term_id' => $data['term_id'],
             'result_type' => $data['result_type'],
             'records' => $totalResults,
+            'from_statuses' => $sourceStatuses,
+            'to_status' => ResultWorkflowStatus::Published->value,
         ], request: $request);
 
         $this->notifyGuardians($school, $data, $studentIds);
@@ -120,11 +130,12 @@ class ResultPublishingController extends Controller
     public function unpublish(Request $request)
     {
         $school = $this->currentSchoolOrFail();
+        Gate::authorize('unpublish', [StudentResult::class, $school]);
 
         $data = $this->validateUnpublishingRequest($request, $school);
 
         $query = $this->matchingResultsQuery($school, $data)
-            ->where('status', 'published');
+            ->where('status', ResultWorkflowStatus::Published->value);
 
         $totalResults = (clone $query)->count();
 
@@ -138,7 +149,7 @@ class ResultPublishingController extends Controller
             $now = now();
 
             $query->update([
-                'status' => 'reviewed',
+                'status' => ResultWorkflowStatus::Unpublished->value,
                 'unpublished_at' => $now,
                 'unpublished_by' => auth()->id(),
                 'unpublish_reason' => $data['unpublish_reason'],
@@ -172,6 +183,8 @@ class ResultPublishingController extends Controller
             'result_type' => $data['result_type'],
             'records' => $totalResults,
             'reason' => $data['unpublish_reason'],
+            'from_status' => ResultWorkflowStatus::Published->value,
+            'to_status' => ResultWorkflowStatus::Unpublished->value,
         ], request: $request);
 
         return back()->with('success', "Results unpublished successfully. Total records affected: {$totalResults}.");
@@ -298,10 +311,6 @@ class ResultPublishingController extends Controller
 
     private function notifyGuardians(School $school, array $data, array $studentIds): void
     {
-        if (! app(NotificationPreferenceService::class)->emailEnabled('result_published', $school)) {
-            return;
-        }
-
         $academicSession = AcademicSession::where('school_id', $school->id)
             ->find($data['academic_session_id']);
         $term = Term::where('school_id', $school->id)
@@ -314,21 +323,11 @@ class ResultPublishingController extends Controller
         Student::where('school_id', $school->id)
             ->whereIn('id', $studentIds)
             ->whereNotNull('guardian_email')
+            ->with('school')
             ->chunkById(100, function ($students) use ($academicSession, $term, $data) {
                 foreach ($students as $student) {
-                    app(CommunicationService::class)->sendSchoolEmail(
-                        $student->school,
-                        $student->guardian_email,
-                        'Result published for '.$student->fullName(),
-                        'Result publication notice',
-                        'Session/Term: '.$academicSession->name.' / '.$term->name."\nResult type: ".$data['result_type'],
-                        'result_published',
-                        [
-                            'student_id' => $student->id,
-                            'academic_session_id' => $academicSession->id,
-                            'term_id' => $term->id,
-                        ],
-                        'student_transactional'
+                    StudentTransactionalEmailRequested::dispatch(
+                        StudentTransactionalEmailRequested::resultPublished($student, $academicSession, $term, $data)
                     );
                 }
             });

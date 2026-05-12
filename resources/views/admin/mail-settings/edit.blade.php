@@ -56,7 +56,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Password</label>
-                            <input name="password" type="password" placeholder="{{ $masker->mask($setting->password) }}" class="mt-1 block w-full rounded-xl border-gray-300">
+                            <input name="password" type="password" placeholder="{{ $masker->maskedPassword($setting) }}" autocomplete="new-password" class="mt-1 block w-full rounded-xl border-gray-300">
                             <p class="mt-1 text-xs text-gray-500">Leave blank to keep the current encrypted password.</p>
                         </div>
                     </div>

@@ -1,6 +1,6 @@
 <x-app-layout>
     @php
-        $canPublishResults = auth()->user()->hasRole('school_admin');
+        $canPublishResults = auth()->user()->can('publish', [\App\Models\StudentResult::class, $school]);
     @endphp
 
     <x-slot name="header">

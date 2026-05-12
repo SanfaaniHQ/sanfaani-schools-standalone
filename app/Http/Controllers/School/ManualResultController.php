@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\School;
 
+use App\Enums\ResultWorkflowStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
@@ -12,6 +13,7 @@ use App\Models\Term;
 use App\Services\ResultGradingService;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class ManualResultController extends Controller
@@ -46,6 +48,7 @@ class ManualResultController extends Controller
     public function create()
     {
         $school = $this->currentSchoolOrFail();
+        Gate::authorize('create', [StudentResult::class, $school]);
 
         return view('school.results.manual.create', [
             'school' => $school,
@@ -53,12 +56,14 @@ class ManualResultController extends Controller
             'subjects' => $this->subjectsForSchool($school),
             'academicSessions' => $this->academicSessionsForSchool($school),
             'terms' => $this->termsForSchool($school),
+            'statuses' => $this->manualStatusOptions(),
         ]);
     }
 
     public function store(Request $request)
     {
         $school = $this->currentSchoolOrFail();
+        Gate::authorize('create', [StudentResult::class, $school]);
 
         $data = $this->validateResult($request, $school);
 
@@ -93,6 +98,7 @@ class ManualResultController extends Controller
         $school = $this->currentSchoolOrFail();
 
         $this->authorizeResult($studentResult, $school);
+        Gate::authorize('update', $studentResult);
 
         return view('school.results.manual.edit', [
             'school' => $school,
@@ -101,6 +107,7 @@ class ManualResultController extends Controller
             'subjects' => $this->subjectsForSchool($school),
             'academicSessions' => $this->academicSessionsForSchool($school),
             'terms' => $this->termsForSchool($school),
+            'statuses' => $this->manualStatusOptions(),
         ]);
     }
 
@@ -109,8 +116,24 @@ class ManualResultController extends Controller
         $school = $this->currentSchoolOrFail();
 
         $this->authorizeResult($studentResult, $school);
+        Gate::authorize('update', $studentResult);
 
         $data = $this->validateResult($request, $school, $studentResult->id);
+
+        $targetStatus = ResultWorkflowStatus::fromValue($data['status']);
+        $canManuallyTransition = $targetStatus && (
+            $studentResult->canTransitionTo($targetStatus)
+            || (
+                $studentResult->status === ResultWorkflowStatus::Draft->value
+                && $targetStatus === ResultWorkflowStatus::Reviewed
+            )
+        );
+
+        if ($targetStatus && $studentResult->status !== $targetStatus->value && ! $canManuallyTransition) {
+            return back()
+                ->withInput()
+                ->with('error', 'This result cannot move from '.str_replace('_', ' ', $studentResult->status).' to '.$targetStatus->label().'.');
+        }
 
         $student = Student::where('school_id', $school->id)
             ->where('id', $data['student_id'])
@@ -141,21 +164,22 @@ class ManualResultController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeResult($studentResult, $school);
+        Gate::authorize('delete', $studentResult);
 
-        if ($studentResult->status === 'published') {
-            return back()->with('error', 'Published results must be unpublished before deletion.');
-        }
-
+        $oldValues = $studentResult->only(['status', 'deleted_at']);
+        $studentResult->update(['status' => ResultWorkflowStatus::Archived->value]);
         $studentResult->delete();
 
-        app(AuditLogService::class)->log('result_deleted', $studentResult, $school, metadata: [
-            'status' => $studentResult->status,
+        app(AuditLogService::class)->log('result_archived', $studentResult, $school, $oldValues, [
+            'status' => ResultWorkflowStatus::Archived->value,
+            'deleted_at' => $studentResult->deleted_at,
+        ], metadata: [
             'result_type' => $studentResult->result_type,
         ], request: $request);
 
         return redirect()
             ->route('school.results.manual.index')
-            ->with('success', 'Result deleted safely.');
+            ->with('success', 'Result archived safely.');
     }
 
     private function validateResult(Request $request, School $school, ?int $ignoreId = null): array
@@ -189,7 +213,7 @@ class ManualResultController extends Controller
             'ca_score' => ['required', 'numeric', 'min:0', 'max:40'],
             'exam_score' => ['required', 'numeric', 'min:0', 'max:60'],
             'teacher_remark' => ['nullable', 'string', 'max:500'],
-            'status' => ['required', Rule::in(['draft', 'reviewed'])],
+            'status' => ['required', Rule::in(ResultWorkflowStatus::manualEntryValues())],
         ]) + ['result_type' => 'term_result'];
     }
 
@@ -255,5 +279,13 @@ class ManualResultController extends Controller
             ->where('status', 'active')
             ->latest()
             ->get();
+    }
+
+    private function manualStatusOptions(): array
+    {
+        return array_intersect_key(
+            ResultWorkflowStatus::labels(),
+            array_flip(ResultWorkflowStatus::manualEntryValues())
+        );
     }
 }

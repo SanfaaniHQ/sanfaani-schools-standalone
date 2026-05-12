@@ -28,6 +28,17 @@
                 <div><label class="block text-sm font-medium text-gray-700">Target</label><select name="target" class="mt-1 block w-full rounded-xl border-gray-300"><option value="school">Single School</option><option value="trial_schools">Trial Schools</option><option value="expired_schools">Expired Schools</option><option value="lead">Lead/Demo Request</option></select></div>
                 <div><label class="block text-sm font-medium text-gray-700">School (single target)</label><select name="school_id" class="mt-1 block w-full rounded-xl border-gray-300"><option value="">Select school</option>@foreach($schools as $school)<option value="{{ $school->id }}">{{ $school->name }}</option>@endforeach</select></div>
                 <div><label class="block text-sm font-medium text-gray-700">Lead (lead target)</label><select name="lead_id" class="mt-1 block w-full rounded-xl border-gray-300"><option value="">Select lead</option>@foreach($leads as $lead)<option value="{{ $lead->id }}">{{ $lead->name }} ({{ $lead->email ?: 'No email' }})</option>@endforeach</select></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">School Roles</label>
+                    <div class="mt-2 grid gap-2 text-sm text-gray-700">
+                        <label class="flex items-center gap-2"><input type="checkbox" name="target_roles[]" value="school_admin" class="rounded border-gray-300" checked> School Admin</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="target_roles[]" value="result_officer" class="rounded border-gray-300"> Result Officer</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" name="target_roles[]" value="teacher" class="rounded border-gray-300"> Teacher</label>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <label class="mt-6 flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="include_school_contact" value="1" class="rounded border-gray-300" checked> Include school contact email</label>
+                </div>
                 <div><label class="block text-sm font-medium text-gray-700">Subject</label><input name="subject" class="mt-1 block w-full rounded-xl border-gray-300"></div>
                 <div class="lg:col-span-2"><label class="block text-sm font-medium text-gray-700">Message</label><textarea name="message" rows="5" class="mt-1 block w-full rounded-xl border-gray-300"></textarea></div>
                 <div class="lg:col-span-2 flex justify-end"><button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Send Communication</button></div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\School;
 
+use App\Enums\ResultWorkflowStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
@@ -13,8 +14,10 @@ use App\Models\TeacherSubjectAssignment;
 use App\Models\Term;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
+use App\Services\SchoolRoleFeatureService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -28,7 +31,10 @@ class TeacherResultEntryController extends Controller
         $submissions = $school->teacherResultSubmissions()
             ->with(['teacher', 'schoolClass', 'subject', 'academicSession', 'term'])
             ->when($roleContext === 'teacher', fn ($query) => $query->where('teacher_user_id', auth()->id()))
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
+            ->when(
+                $request->filled('status') && in_array($request->input('status'), ResultWorkflowStatus::teacherSubmissionValues(), true),
+                fn ($query) => $query->where('status', $request->input('status'))
+            )
             ->latest()
             ->paginate(15)
             ->withQueryString();
@@ -36,7 +42,7 @@ class TeacherResultEntryController extends Controller
         return view('school.teacher-results.index', [
             'school' => $school,
             'submissions' => $submissions,
-            'statuses' => TeacherResultSubmission::STATUSES,
+            'statuses' => ResultWorkflowStatus::labels(),
             'filters' => $request->only(['status']),
             'roleContext' => $roleContext,
         ]);
@@ -47,6 +53,8 @@ class TeacherResultEntryController extends Controller
         $school = $this->currentSchoolOrFail();
         $roleContext = $currentSchool->roleContext(auth()->user());
         $classId = $request->integer('school_class_id') ?: null;
+
+        Gate::authorize('create', [TeacherResultSubmission::class, $school]);
 
         return view('school.teacher-results.create', [
             'school' => $school,
@@ -63,6 +71,9 @@ class TeacherResultEntryController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $roleContext = $currentSchool->roleContext(auth()->user());
+
+        Gate::authorize('create', [TeacherResultSubmission::class, $school]);
+
         $data = $this->validatedBase($request, $school);
 
         if (! $this->canEnterFor($school, $roleContext, $data)) {
@@ -72,32 +83,44 @@ class TeacherResultEntryController extends Controller
         unset($data['action']);
 
         $scores = $this->validatedScores($request, $school, (int) $data['school_class_id']);
-        $status = $request->input('action') === 'submit' ? 'submitted' : 'draft';
+        $status = $request->input('action') === 'submit'
+            ? ResultWorkflowStatus::Submitted
+            : ResultWorkflowStatus::Draft;
+
+        if (
+            $status === ResultWorkflowStatus::Submitted
+            && $roleContext === 'teacher'
+            && ! app(SchoolRoleFeatureService::class)->enabled($school->id, 'teacher', 'teacher.results.submit')
+        ) {
+            abort(403, 'You do not have permission to submit teacher results.');
+        }
 
         $submission = TeacherResultSubmission::create($data + [
             'school_id' => $school->id,
             'teacher_user_id' => auth()->id(),
             'result_type' => 'term_result',
-            'status' => $status,
-            'submitted_at' => $status === 'submitted' ? now() : null,
+            'status' => $status->value,
+            'submitted_at' => $status === ResultWorkflowStatus::Submitted ? now() : null,
             'metadata' => ['scores' => $scores],
         ]);
 
-        $auditLog->log($status === 'submitted' ? 'teacher_result_submitted' : 'teacher_result_draft_saved', $submission, $school, metadata: [
+        $auditLog->log($status === ResultWorkflowStatus::Submitted ? 'teacher_result_submitted' : 'teacher_result_draft_saved', $submission, $school, metadata: [
             'school_class_id' => $submission->school_class_id,
             'subject_id' => $submission->subject_id,
+            'status' => $submission->status,
             'rows' => count($scores),
         ], request: $request);
 
         return redirect()
             ->route('school.teacher-results.show', $submission)
-            ->with('success', $status === 'submitted' ? 'Result submitted for review.' : 'Result draft saved successfully.');
+            ->with('success', $status === ResultWorkflowStatus::Submitted ? 'Result submitted for review.' : 'Result draft saved successfully.');
     }
 
     public function show(TeacherResultSubmission $submission)
     {
         $school = $this->currentSchoolOrFail();
-        $this->authorizeSubmission($submission, $school, readOnly: true);
+        $this->ensureSubmissionBelongsToSchool($submission, $school);
+        Gate::authorize('view', $submission);
 
         return view('school.teacher-results.show', [
             'school' => $school,
@@ -109,7 +132,8 @@ class TeacherResultEntryController extends Controller
     public function edit(TeacherResultSubmission $submission)
     {
         $school = $this->currentSchoolOrFail();
-        $this->authorizeSubmission($submission, $school);
+        $this->ensureSubmissionBelongsToSchool($submission, $school);
+        Gate::authorize('update', $submission);
 
         return view('school.teacher-results.edit', [
             'school' => $school,
@@ -122,17 +146,23 @@ class TeacherResultEntryController extends Controller
     public function update(Request $request, TeacherResultSubmission $submission, AuditLogService $auditLog)
     {
         $school = $this->currentSchoolOrFail();
-        $this->authorizeSubmission($submission, $school);
+        $this->ensureSubmissionBelongsToSchool($submission, $school);
+        Gate::authorize('update', $submission);
 
         $scores = $this->validatedScores($request, $school, $submission->school_class_id);
+        $oldValues = $submission->only(['status', 'submitted_at', 'return_reason', 'metadata']);
         $submission->update([
-            'status' => 'draft',
+            'status' => ResultWorkflowStatus::Draft->value,
             'submitted_at' => null,
             'return_reason' => null,
             'metadata' => ['scores' => $scores],
         ]);
 
-        $auditLog->log('teacher_result_draft_saved', $submission, $school, metadata: [
+        $auditLog->log('teacher_result_draft_saved', $submission, $school, $oldValues, $submission->only([
+            'status',
+            'submitted_at',
+            'return_reason',
+        ]), metadata: [
             'rows' => count($scores),
         ], request: $request);
 
@@ -144,19 +174,25 @@ class TeacherResultEntryController extends Controller
     public function submit(Request $request, TeacherResultSubmission $submission, AuditLogService $auditLog)
     {
         $school = $this->currentSchoolOrFail();
-        $this->authorizeSubmission($submission, $school);
+        $this->ensureSubmissionBelongsToSchool($submission, $school);
+        Gate::authorize('submit', $submission);
 
         if (empty($submission->metadata['scores'] ?? [])) {
             return back()->with('error', 'Add at least one student score before submitting.');
         }
 
+        $oldValues = $submission->only(['status', 'submitted_at', 'return_reason']);
         $submission->update([
-            'status' => 'submitted',
+            'status' => ResultWorkflowStatus::Submitted->value,
             'submitted_at' => now(),
             'return_reason' => null,
         ]);
 
-        $auditLog->log('teacher_result_submitted', $submission, $school, metadata: [
+        $auditLog->log('teacher_result_submitted', $submission, $school, $oldValues, $submission->only([
+            'status',
+            'submitted_at',
+            'return_reason',
+        ]), metadata: [
             'school_class_id' => $submission->school_class_id,
             'subject_id' => $submission->subject_id,
         ], request: $request);
@@ -230,20 +266,10 @@ class TeacherResultEntryController extends Controller
         return $rows;
     }
 
-    private function authorizeSubmission(TeacherResultSubmission $submission, School $school, bool $readOnly = false): void
+    private function ensureSubmissionBelongsToSchool(TeacherResultSubmission $submission, School $school): void
     {
         if ((int) $submission->school_id !== (int) $school->id) {
             abort(403, 'You cannot access this result submission.');
-        }
-
-        $roleContext = app(CurrentSchoolService::class)->roleContext(auth()->user());
-
-        if ($roleContext === 'teacher' && (int) $submission->teacher_user_id !== (int) auth()->id()) {
-            abort(403, 'You cannot access another teacher result submission.');
-        }
-
-        if (! $readOnly && ! in_array($submission->status, ['draft', 'returned'], true)) {
-            abort(403, 'Submitted, approved, published, or voided results cannot be edited by the teacher.');
         }
     }
 

@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\School;
 
+use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\CommunicationLog;
 use App\Models\Term;
 use App\Services\AuditLogService;
 use App\Services\AdmissionNumberGeneratorService;
-use App\Services\CommunicationService;
-use App\Services\NotificationPreferenceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -80,9 +81,8 @@ class StudentController extends Controller
 
         $student->load([
             'schoolClass',
-            'electiveSubjects.subject',
-            'electiveSubjects.academicSession',
-            'electiveSubjects.term',
+            'currentEnrollment.schoolClass',
+            'currentEnrollment.academicSession',
             'classEnrollments.academicSession',
             'classEnrollments.schoolClass',
             'classEnrollments.promotedFrom.schoolClass',
@@ -93,7 +93,11 @@ class StudentController extends Controller
             ->latest()
             ->get();
 
-        $selectedSession = $this->selectedAcademicSession($request, $school, $academicSessions);
+        $activeSession = $school->academicSessions()
+            ->where('is_active', true)
+            ->first();
+
+        $selectedSession = $this->selectedAcademicSession($request, $school, $academicSessions, $activeSession);
 
         $terms = $school->terms()
             ->with('academicSession')
@@ -102,24 +106,30 @@ class StudentController extends Controller
             ->latest()
             ->get();
 
-        $selectedTerm = $this->selectedTerm($request, $school, $terms, $selectedSession);
+        $activeTerm = $school->terms()
+            ->where('is_active', true)
+            ->when($selectedSession, fn ($query) => $query->where('academic_session_id', $selectedSession->id))
+            ->first();
 
-        $resultsQuery = $student->results()
-            ->where('school_id', $school->id)
+        $selectedTerm = $this->selectedTerm($request, $school, $terms, $selectedSession, $activeTerm);
+
+        $resultsQuery = $this->studentResultsForContext($school, $student, $selectedSession, $selectedTerm)
             ->with(['subject', 'academicSession', 'term']);
-
-        if ($selectedSession) {
-            $resultsQuery->where('academic_session_id', $selectedSession->id);
-        }
-
-        if ($selectedTerm) {
-            $resultsQuery->where('term_id', $selectedTerm->id);
-        }
 
         $results = $resultsQuery
             ->get()
             ->sortBy(fn ($result) => $result->subject->name ?? '')
             ->values();
+
+        $subjects = $school->subjects()
+            ->where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        $electiveSubjects = $student->electiveSubjects()
+            ->with(['subject', 'academicSession', 'term'])
+            ->latest()
+            ->get();
 
         // Scratch card usage data
         $scratchCardUsages = $student->scratchCardUsages()
@@ -157,13 +167,20 @@ class StudentController extends Controller
 
         // Get promotion history
         $promotionHistory = $student->promotionItems()
-            ->with(['fromClass', 'toClass', 'academicSession', 'promotedBy'])
+            ->with(['fromClass', 'toClass', 'fromSession', 'toSession', 'batch.createdBy'])
             ->latest()
             ->get();
 
-        // Get current active session and term
-        $activeSession = $school->academicSessions()->where('is_active', true)->first();
-        $activeTerm = $school->terms()->where('is_active', true)->first();
+        $summaryMetrics = $this->studentSummaryMetrics(
+            $school,
+            $student,
+            $results,
+            $subjects,
+            $electiveSubjects,
+            $promotionHistory,
+            $selectedSession,
+            $selectedTerm
+        );
 
         return view('school.students.show', [
             'school' => $school,
@@ -175,24 +192,19 @@ class StudentController extends Controller
             'selectedTerm' => $selectedTerm,
             'activeSession' => $activeSession,
             'activeTerm' => $activeTerm,
-            'subjects' => $school->subjects()
-                ->where('status', 'active')
-                ->orderBy('name')
-                ->get(),
-            'electiveSubjects' => $student->electiveSubjects()
-                ->with(['subject', 'academicSession', 'term'])
-                ->latest()
-                ->get(),
+            'subjects' => $subjects,
+            'electiveSubjects' => $electiveSubjects,
             'results' => $results,
             'classEnrollments' => $student->classEnrollments
                 ->sortByDesc(fn ($enrollment) => $enrollment->academicSession?->starts_at?->timestamp ?? $enrollment->id)
                 ->values(),
             'promotionHistory' => $promotionHistory,
-            'totalResults' => $student->results()->where('school_id', $school->id)->count(),
-            'publishedResults' => $student->results()->where('school_id', $school->id)->where('status', 'published')->count(),
-            'reviewedResults' => $student->results()->where('school_id', $school->id)->where('status', 'reviewed')->count(),
-            'draftResults' => $student->results()->where('school_id', $school->id)->where('status', 'draft')->count(),
-            'unpublishedResults' => $student->results()->where('school_id', $school->id)->whereIn('status', ['draft', 'submitted', 'returned', 'reviewed'])->count(),
+            'totalResults' => $summaryMetrics['result_stats']['total'],
+            'publishedResults' => $summaryMetrics['result_stats']['published'],
+            'reviewedResults' => $summaryMetrics['result_stats']['reviewed'],
+            'draftResults' => $summaryMetrics['result_stats']['draft'],
+            'unpublishedResults' => $summaryMetrics['result_stats']['unpublished'],
+            'summaryMetrics' => $summaryMetrics,
             'scratchCardUsages' => $scratchCardUsages,
             'recentActivities' => $recentActivities,
             'recentCommunications' => $recentCommunications,
@@ -247,18 +259,7 @@ class StudentController extends Controller
             return Student::create($data);
         });
 
-        if (filled($student->guardian_email) && app(NotificationPreferenceService::class)->emailEnabled('student_created_guardian', $school)) {
-            app(CommunicationService::class)->sendSchoolEmail(
-                $school,
-                $student->guardian_email,
-                $student->fullName().' has been registered',
-                'Student onboarding update',
-                'A student account has been created for '.$student->fullName().' (Admission: '.$student->admission_number.').',
-                'student_created',
-                ['student_id' => $student->id],
-                'student_transactional'
-            );
-        }
+        StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentCreated($student->loadMissing('school')));
 
         return redirect()
             ->route('school.students.index')
@@ -329,6 +330,8 @@ class StudentController extends Controller
             'admission_number' => $student->admission_number,
         ], request: $request);
 
+        StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentArchived($student->loadMissing('school')));
+
         return redirect()
             ->route('school.students.index')
             ->with('success', 'Student archived safely. Results were preserved.');
@@ -374,6 +377,156 @@ class StudentController extends Controller
             ->get();
     }
 
+    private function studentSummaryMetrics(
+        School $school,
+        Student $student,
+        Collection $results,
+        Collection $subjects,
+        Collection $electiveSubjects,
+        Collection $promotionHistory,
+        ?AcademicSession $selectedSession,
+        ?Term $selectedTerm
+    ): array {
+        $resultStats = $this->studentResultsForContext($school, $student, $selectedSession, $selectedTerm)
+            ->selectRaw('COUNT(*) as total_results')
+            ->selectRaw("SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published_results")
+            ->selectRaw("SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed_results")
+            ->selectRaw("SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft_results")
+            ->selectRaw("SUM(CASE WHEN status <> 'published' THEN 1 ELSE 0 END) as unpublished_results")
+            ->first();
+
+        $latestResult = $this->studentResultsForContext($school, $student, $selectedSession, $selectedTerm)
+            ->with(['subject:id,name', 'academicSession:id,name', 'term:id,name'])
+            ->latest('updated_at')
+            ->first();
+
+        $contextElectives = $electiveSubjects
+            ->filter(fn ($elective) => $elective->status === 'active')
+            ->when($selectedSession, fn ($collection) => $collection->filter(
+                fn ($elective) => (int) $elective->academic_session_id === (int) $selectedSession->id
+                    || blank($elective->academic_session_id)
+            ))
+            ->when($selectedTerm, fn ($collection) => $collection->filter(
+                fn ($elective) => (int) $elective->term_id === (int) $selectedTerm->id
+                    || blank($elective->term_id)
+            ))
+            ->values();
+
+        $currentClassId = $student->currentEnrollment?->school_class_id ?: $student->school_class_id;
+        $classSubjectIds = collect();
+        if ($currentClassId) {
+            $classSubjectIds = ClassSubjectAssignment::query()
+                ->where('school_id', $school->id)
+                ->where(function ($query) use ($currentClassId) {
+                    $query->whereNull('school_class_id')
+                        ->orWhere('school_class_id', $currentClassId);
+                })
+                ->where('status', 'active')
+                ->when($selectedSession, function ($query) use ($selectedSession) {
+                    $query->where(function ($query) use ($selectedSession) {
+                        $query->whereNull('academic_session_id')
+                            ->orWhere('academic_session_id', $selectedSession->id);
+                    });
+                })
+                ->when($selectedTerm, function ($query) use ($selectedTerm) {
+                    $query->where(function ($query) use ($selectedTerm) {
+                        $query->whereNull('term_id')
+                            ->orWhere('term_id', $selectedTerm->id);
+                    });
+                })
+                ->pluck('subject_id')
+                ->filter()
+                ->unique()
+                ->values();
+        }
+
+        if ($classSubjectIds->isEmpty()) {
+            $classSubjectIds = $subjects->pluck('id')->filter()->unique()->values();
+        }
+
+        $expectedSubjectIds = $classSubjectIds
+            ->merge($contextElectives->pluck('subject_id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $completedSubjectIds = $results->pluck('subject_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $expectedSubjects = $expectedSubjectIds->count();
+        $completedSubjects = $completedSubjectIds->count();
+        $completionPercentage = $expectedSubjects > 0
+            ? min(100, (int) round(($completedSubjects / $expectedSubjects) * 100))
+            : 0;
+
+        $latestPromotion = $promotionHistory->first();
+        $promotionFromClass = $latestPromotion
+            ? trim(($latestPromotion->fromClass?->name ?? '').' '.($latestPromotion->fromClass?->section ?? ''))
+            : null;
+        $promotionToClass = $latestPromotion
+            ? trim(($latestPromotion->toClass?->name ?? '').' '.($latestPromotion->toClass?->section ?? ''))
+            : null;
+        $guardianChannels = collect([$student->guardian_phone, $student->guardian_email])
+            ->filter(fn ($value) => filled($value))
+            ->count();
+
+        return [
+            'result_stats' => [
+                'total' => (int) ($resultStats->total_results ?? 0),
+                'published' => (int) ($resultStats->published_results ?? 0),
+                'reviewed' => (int) ($resultStats->reviewed_results ?? 0),
+                'draft' => (int) ($resultStats->draft_results ?? 0),
+                'unpublished' => (int) ($resultStats->unpublished_results ?? 0),
+            ],
+            'subjects' => [
+                'total' => $expectedSubjects,
+                'core' => $classSubjectIds->count(),
+                'elective' => $contextElectives->pluck('subject_id')->filter()->unique()->count(),
+            ],
+            'completion' => [
+                'completed' => $completedSubjects,
+                'expected' => $expectedSubjects,
+                'percentage' => $completionPercentage,
+            ],
+            'promotion' => [
+                'label' => $latestPromotion ? str($latestPromotion->action)->replace('_', ' ')->title()->toString() : 'No promotion yet',
+                'status' => $latestPromotion?->status,
+                'detail' => $latestPromotion
+                    ? trim(($promotionFromClass ?: 'Previous class').' to '.($promotionToClass ?: 'current class'))
+                    : 'No class movement recorded',
+                'percentage' => $latestPromotion ? 100 : 0,
+            ],
+            'guardian' => [
+                'label' => $guardianChannels === 2 ? 'Complete' : ($guardianChannels === 1 ? 'Partial' : 'Missing'),
+                'detail' => $student->guardian_name ?: 'No guardian name',
+                'channels' => $guardianChannels,
+                'percentage' => (int) round(($guardianChannels / 2) * 100),
+            ],
+            'last_result_update' => [
+                'label' => $latestResult?->updated_at?->format('d M Y') ?? 'No result yet',
+                'detail' => $latestResult
+                    ? trim(($latestResult->subject?->name ?? 'Result').' - '.ucfirst($latestResult->status))
+                    : 'No saved result records',
+                'time' => $latestResult?->updated_at?->format('h:i A'),
+                'percentage' => $latestResult ? 100 : 0,
+            ],
+        ];
+    }
+
+    private function studentResultsForContext(
+        School $school,
+        Student $student,
+        ?AcademicSession $selectedSession,
+        ?Term $selectedTerm
+    ) {
+        return $student->results()
+            ->where('school_id', $school->id)
+            ->when($selectedSession, fn ($query) => $query->where('academic_session_id', $selectedSession->id))
+            ->when($selectedTerm, fn ($query) => $query->where('term_id', $selectedTerm->id));
+    }
+
     private function authorizeStudent(Student $student, School $school): void
     {
         if ((int) $student->school_id !== (int) $school->id) {
@@ -381,20 +534,28 @@ class StudentController extends Controller
         }
     }
 
-    private function selectedAcademicSession(Request $request, School $school, $academicSessions): ?AcademicSession
+    private function selectedAcademicSession(
+        Request $request,
+        School $school,
+        $academicSessions,
+        ?AcademicSession $activeSession
+    ): ?AcademicSession
     {
         if ($request->filled('academic_session_id')) {
             return AcademicSession::where('school_id', $school->id)
                 ->findOrFail((int) $request->input('academic_session_id'));
         }
 
-        return $school->academicSessions()
-            ->where('is_active', true)
-            ->first()
-            ?? $academicSessions->first();
+        return $activeSession ?? $academicSessions->first();
     }
 
-    private function selectedTerm(Request $request, School $school, $terms, ?AcademicSession $selectedSession): ?Term
+    private function selectedTerm(
+        Request $request,
+        School $school,
+        $terms,
+        ?AcademicSession $selectedSession,
+        ?Term $activeTerm
+    ): ?Term
     {
         if ($request->filled('term_id')) {
             return Term::where('school_id', $school->id)
@@ -402,10 +563,6 @@ class StudentController extends Controller
                 ->findOrFail((int) $request->input('term_id'));
         }
 
-        return $school->terms()
-            ->where('is_active', true)
-            ->when($selectedSession, fn ($query) => $query->where('academic_session_id', $selectedSession->id))
-            ->first()
-            ?? $terms->first();
+        return $activeTerm ?? $terms->first();
     }
 }

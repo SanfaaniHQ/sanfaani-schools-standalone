@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\SchoolNotificationRequested;
 use App\Http\Controllers\Controller;
 use App\Models\SupportMessage;
 use App\Models\SupportThread;
 use App\Models\User;
 use App\Services\AuditLogService;
-use App\Services\CommunicationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -75,15 +75,12 @@ class SupportThreadController extends Controller
             'is_internal_note' => (bool) ($data['is_internal_note'] ?? false),
         ], request: $request);
 
-        if (! (bool) ($data['is_internal_note'] ?? false) && filled($thread->school?->email)) {
-            app(CommunicationService::class)->sendSchoolEmail(
-                $thread->school,
-                $thread->school->email,
-                'Support reply: '.$thread->subject,
-                'Support ticket update',
-                'A super admin replied to your support ticket #'.$thread->id.'.',
-                'support_ticket_reply'
-            );
+        if (! (bool) ($data['is_internal_note'] ?? false) && $thread->school) {
+            event(SchoolNotificationRequested::supportTicketUpdated(
+                $thread->refresh(),
+                'reply_posted',
+                ['message' => 'A support team member replied to your ticket.']
+            ));
         }
 
         return back()->with('success', 'Reply sent successfully.');
@@ -106,15 +103,12 @@ class SupportThreadController extends Controller
             'priority' => $thread->priority,
         ], request: $request);
 
-        if (filled($thread->school?->email)) {
-            app(CommunicationService::class)->sendSchoolEmail(
-                $thread->school,
-                $thread->school->email,
-                'Support ticket status updated',
-                'Support ticket update',
-                'Ticket #'.$thread->id.' status is now '.$thread->status.'.',
-                'support_ticket_status'
-            );
+        if ($thread->school) {
+            event(SchoolNotificationRequested::supportTicketUpdated(
+                $thread->refresh(),
+                'status_updated',
+                ['message' => 'Ticket status is now '.str_replace('_', ' ', $thread->status).'.']
+            ));
         }
 
         return back()->with('success', 'Thread status updated.');

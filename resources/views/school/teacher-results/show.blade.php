@@ -19,7 +19,7 @@
             @endif
 
             <div class="grid gap-4 rounded-xl bg-white p-5 shadow-sm md:grid-cols-4">
-                <div><p class="text-xs font-medium uppercase text-gray-500">Status</p><p class="mt-1 font-semibold text-gray-900">{{ ucfirst($submission->status) }}</p></div>
+                <div><p class="text-xs font-medium uppercase text-gray-500">Status</p><p class="mt-1"><x-status-badge :status="$submission->status" /></p></div>
                 <div><p class="text-xs font-medium uppercase text-gray-500">Teacher</p><p class="mt-1 font-semibold text-gray-900">{{ $submission->teacher?->name }}</p></div>
                 <div><p class="text-xs font-medium uppercase text-gray-500">Session</p><p class="mt-1 font-semibold text-gray-900">{{ $submission->academicSession?->name }}</p></div>
                 <div><p class="text-xs font-medium uppercase text-gray-500">Term</p><p class="mt-1 font-semibold text-gray-900">{{ $submission->term?->name }}</p></div>
@@ -57,13 +57,17 @@
                 </div>
             </div>
 
-            @if (in_array($submission->status, ['draft', 'returned'], true))
+            @if (auth()->user()->can('update', $submission) || auth()->user()->can('submit', $submission))
                 <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('school.teacher-results.edit', $submission) }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Edit draft</a>
-                    <form method="POST" action="{{ route('school.teacher-results.submit', $submission) }}">
-                        @csrf
-                        <button class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" onclick="return confirm('Submit this result for review?')">Submit for review</button>
-                    </form>
+                    @can('update', $submission)
+                        <a href="{{ route('school.teacher-results.edit', $submission) }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Edit draft</a>
+                    @endcan
+                    @can('submit', $submission)
+                        <form method="POST" action="{{ route('school.teacher-results.submit', $submission) }}">
+                            @csrf
+                            <button class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" onclick="return confirm('Submit this result for review?')">Submit for review</button>
+                        </form>
+                    @endcan
                 </div>
             @endif
         </div>

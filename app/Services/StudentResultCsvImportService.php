@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ResultWorkflowStatus;
 use App\Models\AcademicSession;
 use App\Models\School;
 use App\Models\SchoolClass;
@@ -93,7 +94,7 @@ class StudentResultCsvImportService
         $subjectCode = $this->clean($row['subject_code'] ?? null);
         $caScore = $row['ca_score'] ?? null;
         $examScore = $row['exam_score'] ?? null;
-        $status = $this->clean($row['status'] ?? 'draft') ?: 'draft';
+        $status = $this->clean($row['status'] ?? ResultWorkflowStatus::Draft->value) ?: ResultWorkflowStatus::Draft->value;
         $teacherRemark = $this->clean($row['teacher_remark'] ?? null);
 
         if (! $admissionNumber && ! $subjectCode && $this->scoreIsBlank($caScore) && $this->scoreIsBlank($examScore)) {
@@ -134,7 +135,7 @@ class StudentResultCsvImportService
             return;
         }
 
-        if (! in_array($status, ['draft', 'reviewed'], true)) {
+        if (! in_array($status, ResultWorkflowStatus::manualEntryValues(), true)) {
             $this->errors[] = "Row {$rowNumber}: Status must be draft or reviewed.";
             return;
         }

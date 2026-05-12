@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Public;
 
+use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
@@ -220,6 +221,13 @@ class ResultCheckerController extends Controller
             'result_type' => $data['result_type'],
             'scratch_card_id' => $scratchCardAccess['scratchCard']?->id,
         ], request: $request);
+
+        StudentTransactionalEmailRequested::dispatch(
+            StudentTransactionalEmailRequested::resultAvailable($student->loadMissing('school'), $academicSession, $term, [
+                'result_type' => $data['result_type'],
+                'scratch_card_id' => $scratchCardAccess['scratchCard']?->id,
+            ])
+        );
 
         $request->session()->forget(self::CONTEXT_KEY);
 

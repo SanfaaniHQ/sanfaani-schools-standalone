@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ResultWorkflowStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +12,18 @@ class StudentResult extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    public const STATUSES = [
+        ResultWorkflowStatus::Draft->value,
+        ResultWorkflowStatus::Submitted->value,
+        ResultWorkflowStatus::Returned->value,
+        ResultWorkflowStatus::Reviewed->value,
+        ResultWorkflowStatus::Approved->value,
+        ResultWorkflowStatus::Published->value,
+        ResultWorkflowStatus::Unpublished->value,
+        ResultWorkflowStatus::Voided->value,
+        ResultWorkflowStatus::Archived->value,
+    ];
 
     protected $fillable = [
         'school_id',
@@ -92,5 +105,20 @@ class StudentResult extends Model
     public function teacherResultSubmission(): BelongsTo
     {
         return $this->belongsTo(TeacherResultSubmission::class);
+    }
+
+    public function workflowStatus(): ?ResultWorkflowStatus
+    {
+        return ResultWorkflowStatus::fromValue($this->status);
+    }
+
+    public function isLockedAfterApproval(): bool
+    {
+        return (bool) $this->workflowStatus()?->isLockedAfterApproval();
+    }
+
+    public function canTransitionTo(ResultWorkflowStatus $target): bool
+    {
+        return (bool) $this->workflowStatus()?->canTransitionTo($target);
     }
 }

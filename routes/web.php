@@ -52,6 +52,7 @@ use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
 use App\Http\Controllers\School\StudentElectiveSubjectController;
 use App\Http\Controllers\School\StudentPromotionController;
+use App\Http\Controllers\School\StudentResultWorkspaceController;
 use App\Http\Controllers\School\SubjectAssignmentController;
 use App\Http\Controllers\School\SubscriptionController as SchoolPlanController;
 use App\Http\Controllers\School\SupportThreadController as SchoolSupportThreadController;
@@ -645,12 +646,6 @@ Route::middleware(['auth'])
                 Route::prefix('results')
                     ->name('results.')
                     ->group(function () {
-                        Route::post('/publishing/publish', [ResultPublishingController::class, 'publish'])
-                            ->name('publishing.publish');
-
-                        Route::post('/publishing/unpublish', [ResultPublishingController::class, 'unpublish'])
-                            ->name('publishing.unpublish');
-
                         Route::delete('/manual/{studentResult}', [ManualResultController::class, 'destroy'])
                             ->name('manual.destroy');
                     });
@@ -658,6 +653,16 @@ Route::middleware(['auth'])
 
         Route::middleware('role:school_admin|result_officer|super_admin')
             ->group(function () {
+                Route::prefix('results')
+                    ->name('results.')
+                    ->group(function () {
+                        Route::post('/publishing/publish', [ResultPublishingController::class, 'publish'])
+                            ->name('publishing.publish');
+
+                        Route::post('/publishing/unpublish', [ResultPublishingController::class, 'unpublish'])
+                            ->name('publishing.unpublish');
+                    });
+
                 Route::get('/result-reviews', [TeacherResultReviewController::class, 'index'])
                     ->name('result-reviews.index');
 
@@ -704,8 +709,13 @@ Route::middleware(['auth'])
             });
 
         Route::middleware('role:school_admin|result_officer|teacher|super_admin')
-            ->get('/students/{student}', [StudentController::class, 'show'])
-            ->name('students.show');
+            ->group(function () {
+                Route::get('/students/{student}/results/workspace', StudentResultWorkspaceController::class)
+                    ->name('students.results.workspace');
+
+                Route::get('/students/{student}', [StudentController::class, 'show'])
+                    ->name('students.show');
+            });
     });
 
 Route::middleware('auth')->group(function () {

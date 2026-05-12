@@ -1,4 +1,12 @@
 <x-app-layout>
+    @php
+        $canReview = auth()->user()->can('review', $submission);
+        $canReturn = auth()->user()->can('returnForCorrection', $submission);
+        $canApprove = auth()->user()->can('approve', $submission);
+        $canPublish = auth()->user()->can('publish', $submission);
+        $canVoid = auth()->user()->can('void', $submission);
+    @endphp
+
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -22,7 +30,7 @@
             @endif
 
             <div class="grid gap-4 rounded-xl bg-white p-5 shadow-sm md:grid-cols-5">
-                <div><p class="text-xs font-medium uppercase text-gray-500">Status</p><p class="mt-1 font-semibold text-gray-900">{{ ucfirst($submission->status) }}</p></div>
+                <div><p class="text-xs font-medium uppercase text-gray-500">Status</p><p class="mt-1"><x-status-badge :status="$submission->status" /></p></div>
                 <div><p class="text-xs font-medium uppercase text-gray-500">Teacher</p><p class="mt-1 font-semibold text-gray-900">{{ $submission->teacher?->name }}</p></div>
                 <div><p class="text-xs font-medium uppercase text-gray-500">Class</p><p class="mt-1 font-semibold text-gray-900">{{ $submission->schoolClass?->name }}</p></div>
                 <div><p class="text-xs font-medium uppercase text-gray-500">Session</p><p class="mt-1 font-semibold text-gray-900">{{ $submission->academicSession?->name }}</p></div>
@@ -47,42 +55,54 @@
                                 @php($row = $scores->get($student->id))
                                 <tr>
                                     <td class="px-4 py-3">{{ $student->fullName() }}<br><span class="text-xs text-gray-500">{{ $student->admission_number }}</span></td>
-                                    <td class="px-4 py-3"><input type="number" step="0.01" min="0" max="40" name="scores[{{ $student->id }}][ca_score]" value="{{ old("scores.{$student->id}.ca_score", $row['ca_score'] ?? '') }}" class="w-24 rounded-lg border-gray-300 text-sm"></td>
-                                    <td class="px-4 py-3"><input type="number" step="0.01" min="0" max="60" name="scores[{{ $student->id }}][exam_score]" value="{{ old("scores.{$student->id}.exam_score", $row['exam_score'] ?? '') }}" class="w-24 rounded-lg border-gray-300 text-sm"></td>
-                                    <td class="px-4 py-3"><input type="text" name="scores[{{ $student->id }}][teacher_remark]" value="{{ old("scores.{$student->id}.teacher_remark", $row['teacher_remark'] ?? '') }}" class="w-64 rounded-lg border-gray-300 text-sm"></td>
+                                    <td class="px-4 py-3"><input type="number" step="0.01" min="0" max="40" name="scores[{{ $student->id }}][ca_score]" value="{{ old("scores.{$student->id}.ca_score", $row['ca_score'] ?? '') }}" @disabled(! $canReview) class="w-24 rounded-lg border-gray-300 text-sm disabled:bg-gray-100"></td>
+                                    <td class="px-4 py-3"><input type="number" step="0.01" min="0" max="60" name="scores[{{ $student->id }}][exam_score]" value="{{ old("scores.{$student->id}.exam_score", $row['exam_score'] ?? '') }}" @disabled(! $canReview) class="w-24 rounded-lg border-gray-300 text-sm disabled:bg-gray-100"></td>
+                                    <td class="px-4 py-3"><input type="text" name="scores[{{ $student->id }}][teacher_remark]" value="{{ old("scores.{$student->id}.teacher_remark", $row['teacher_remark'] ?? '') }}" @disabled(! $canReview) class="w-64 rounded-lg border-gray-300 text-sm disabled:bg-gray-100"></td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-                @if (! in_array($submission->status, ['published', 'voided'], true))
-                    <button class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Save review edits</button>
+                @if ($canReview)
+                    <button class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Mark as reviewed</button>
                 @endif
             </form>
 
             <div class="grid gap-4 rounded-xl bg-white p-5 shadow-sm lg:grid-cols-4">
-                <form method="POST" action="{{ route('school.result-reviews.return', $submission) }}" class="space-y-3 lg:col-span-2">
-                    @csrf
-                    <label class="text-sm font-medium text-gray-700">Return reason</label>
-                    <textarea name="return_reason" rows="3" class="w-full rounded-lg border-gray-300 text-sm" placeholder="Explain what should be corrected.">{{ old('return_reason') }}</textarea>
-                    <button class="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-800" onclick="return confirm('Return this result to the teacher?')">Return to teacher</button>
-                </form>
+                @if ($canReturn)
+                    <form method="POST" action="{{ route('school.result-reviews.return', $submission) }}" class="space-y-3 lg:col-span-2">
+                        @csrf
+                        <label class="text-sm font-medium text-gray-700">Return reason</label>
+                        <textarea name="return_reason" rows="3" class="w-full rounded-lg border-gray-300 text-sm" placeholder="Explain what should be corrected.">{{ old('return_reason') }}</textarea>
+                        <button class="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-800" onclick="return confirm('Return this result to the teacher?')">Return to teacher</button>
+                    </form>
+                @else
+                    <div class="lg:col-span-2 rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Return is unavailable for this status.</div>
+                @endif
 
                 <div class="space-y-3">
-                    <form method="POST" action="{{ route('school.result-reviews.approve', $submission) }}">
-                        @csrf
-                        <button class="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" onclick="return confirm('Approve this teacher result?')">Approve</button>
-                    </form>
-                    <form method="POST" action="{{ route('school.result-reviews.publish', $submission) }}">
-                        @csrf
-                        <button class="w-full rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white" onclick="return confirm('Publish approved scores to student results?')">Publish</button>
-                    </form>
+                    @if ($canApprove)
+                        <form method="POST" action="{{ route('school.result-reviews.approve', $submission) }}">
+                            @csrf
+                            <button class="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" onclick="return confirm('Approve this teacher result?')">Approve</button>
+                        </form>
+                    @endif
+                    @if ($canPublish)
+                        <form method="POST" action="{{ route('school.result-reviews.publish', $submission) }}">
+                            @csrf
+                            <button class="w-full rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white" onclick="return confirm('Publish approved scores to student results?')">Publish</button>
+                        </form>
+                    @endif
                 </div>
 
-                <form method="POST" action="{{ route('school.result-reviews.void', $submission) }}">
-                    @csrf
-                    <button class="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700" onclick="return confirm('Void this teacher submission?')">Void</button>
-                </form>
+                @if ($canVoid)
+                    <form method="POST" action="{{ route('school.result-reviews.void', $submission) }}">
+                        @csrf
+                        <button class="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700" onclick="return confirm('Void this teacher submission?')">Void</button>
+                    </form>
+                @else
+                    <div class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Void is unavailable for this status.</div>
+                @endif
             </div>
         </div>
     </div>
