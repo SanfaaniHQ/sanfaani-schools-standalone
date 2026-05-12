@@ -23,7 +23,7 @@
   - Mark task complete when test is written, run, and failure is documented
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9_
 
-- [~] 2. Write preservation property tests (BEFORE implementing fix)
+- [ ] 2. Write preservation property tests (BEFORE implementing fix)
   - **Property 2: Preservation** - Cross-School Access Prevention
   - **IMPORTANT**: Follow observation-first methodology
   - Observe behavior on UNFIXED code for non-buggy inputs:
@@ -44,7 +44,7 @@
 
 - [ ] 3. Fix for result authorization bug
 
-  - [~] 3.1 Update ManualResultController::authorizeResult() method
+  - [ ] 3.1 Update ManualResultController::authorizeResult() method
     - Add role context resolution using CurrentSchoolService::roleContext()
     - Implement School Admin authorization (full access to all results in their school)
     - Implement Super Admin support mode authorization (full access to results in support school)
@@ -57,14 +57,14 @@
     - _Preservation: Cross-school access continues to be blocked with "403 | You cannot access this result", tenant isolation uses strict integer comparison_
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10, 2.11, 2.12, 2.13, 2.14, 2.15, 2.16, 2.17, 2.18, 2.19, 2.20, 2.21, 2.22, 3.1, 3.2, 3.10_
 
-  - [~] 3.2 Add isTeacherAssignedToResult() helper method to ManualResultController
+  - [ ] 3.2 Add isTeacherAssignedToResult() helper method to ManualResultController
     - Check TeacherSubjectAssignment for matching subject_id with optional class/session/term scoping
     - Check TeacherClassAssignment for matching school_class_id with optional session/term scoping
     - Return true if either assignment exists with status='active' and deleted_at=null
     - Handle cases where assignments are scoped to specific sessions/terms
     - _Requirements: 2.7, 2.8, 2.13, 2.14, 2.15, 2.16_
 
-  - [~] 3.3 Update TeacherResultEntryController::authorizeSubmission() method
+  - [ ] 3.3 Update TeacherResultEntryController::authorizeSubmission() method
     - Add School Admin authorization check before teacher-specific logic
     - Add Super Admin support mode authorization check
     - Add Result Officer feature permission check
@@ -72,7 +72,7 @@
     - Maintain existing error messages for teacher-specific restrictions
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.21, 2.22, 3.7_
 
-  - [~] 3.4 Verify bug condition exploration test now passes
+  - [ ] 3.4 Verify bug condition exploration test now passes
     - **Property 1: Expected Behavior** - Authorized Users Can Edit/Delete Results
     - **IMPORTANT**: Re-run the SAME test from task 1 - do NOT write a new test
     - The test from task 1 encodes the expected behavior
@@ -86,7 +86,7 @@
       - Super Admin in support mode can edit/delete results in support school
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.7, 2.8, 2.15, 2.16, 2.21, 2.22_
 
-  - [~] 3.5 Verify preservation tests still pass
+  - [ ] 3.5 Verify preservation tests still pass
     - **Property 2: Preservation** - Cross-School Access Prevention
     - **IMPORTANT**: Re-run the SAME tests from task 2 - do NOT write new tests
     - Run preservation property tests from step 2
@@ -101,19 +101,19 @@
 
 - [ ] 4. Add unit tests for authorization logic
 
-  - [~] 4.1 Test School Admin authorization
+  - [ ] 4.1 Test School Admin authorization
     - Test School Admin can edit any result in their school
     - Test School Admin can delete any result in their school
     - Test School Admin cannot access results from other schools
     - _Requirements: 2.1, 2.2, 3.2_
 
-  - [~] 4.2 Test Result Officer authorization
+  - [ ] 4.2 Test Result Officer authorization
     - Test Result Officer with manual_entry enabled can edit/delete results
     - Test Result Officer with manual_entry disabled receives feature-specific 403
     - Test Result Officer cannot access results from other schools
     - _Requirements: 2.3, 2.4, 2.5, 2.6, 3.3_
 
-  - [~] 4.3 Test Teacher authorization
+  - [ ] 4.3 Test Teacher authorization
     - Test Teacher can edit/delete draft results for assigned classes/subjects
     - Test Teacher can edit/delete returned results for assigned classes/subjects
     - Test Teacher cannot edit/delete submitted results (status restriction)
@@ -125,13 +125,13 @@
     - Test Teacher cannot access results from other schools
     - _Requirements: 2.7, 2.8, 2.9, 2.10, 2.11, 2.12, 2.13, 2.14, 2.15, 2.16, 2.17, 2.18, 2.19, 2.20, 3.4_
 
-  - [~] 4.4 Test Super Admin authorization
+  - [ ] 4.4 Test Super Admin authorization
     - Test Super Admin in support mode can edit/delete results in support school
     - Test Super Admin not in support mode receives appropriate 403
     - Test Super Admin in support mode cannot access results from other schools
     - _Requirements: 2.21, 2.22, 3.5, 3.6_
 
-  - [~] 4.5 Test Teacher assignment validation helper
+  - [ ] 4.5 Test Teacher assignment validation helper
     - Test isTeacherAssignedToResult() returns true for subject assignments
     - Test isTeacherAssignedToResult() returns true for class assignments
     - Test isTeacherAssignedToResult() returns false for unassigned classes/subjects
@@ -141,7 +141,7 @@
 
 - [ ] 5. Add integration tests for full workflows
 
-  - [~] 5.1 Test School Admin edit workflow
+  - [ ] 5.1 Test School Admin edit workflow
     - Create School Admin user with school_id=5
     - Create result with school_id=5
     - Attempt to edit result via ManualResultController::edit()
@@ -149,7 +149,7 @@
     - Verify audit log records the edit operation
     - _Requirements: 2.1, 3.12_
 
-  - [~] 5.2 Test Result Officer delete workflow
+  - [ ] 5.2 Test Result Officer delete workflow
     - Create Result Officer with manual_entry enabled
     - Create result in their school
     - Attempt to delete result via ManualResultController::destroy()
@@ -157,21 +157,21 @@
     - Verify audit log records the delete operation
     - _Requirements: 2.4, 3.12_
 
-  - [~] 5.3 Test Teacher edit draft workflow
+  - [ ] 5.3 Test Teacher edit draft workflow
     - Create Teacher with subject assignment to Math for Class 5
     - Create draft Math result for Class 5
     - Attempt to edit result via ManualResultController::edit()
     - Verify edit succeeds without 403 error
     - _Requirements: 2.7_
 
-  - [~] 5.4 Test Teacher status restriction workflow
+  - [ ] 5.4 Test Teacher status restriction workflow
     - Create Teacher with subject assignment
     - Create submitted result for assigned subject
     - Attempt to edit result via ManualResultController::edit()
     - Verify receives "403 | Submitted, approved, published, or voided results cannot be edited by the teacher"
     - _Requirements: 2.9_
 
-  - [~] 5.5 Test cross-school access prevention workflow
+  - [ ] 5.5 Test cross-school access prevention workflow
     - Create user with school_id=5
     - Create result with school_id=10
     - Attempt to edit result via ManualResultController::edit()
@@ -179,7 +179,7 @@
     - Verify tenant isolation is enforced
     - _Requirements: 3.1_
 
-  - [~] 5.6 Test published result deletion prevention workflow
+  - [ ] 5.6 Test published result deletion prevention workflow
     - Create School Admin user
     - Create published result in their school
     - Attempt to delete result via ManualResultController::destroy()
@@ -188,14 +188,14 @@
 
 - [ ] 6. Update error messages for better user experience
 
-  - [~] 6.1 Add role-specific error messages
+  - [ ] 6.1 Add role-specific error messages
     - Result Officer without feature: "This feature is not enabled for your role"
     - Teacher without assignment: "You are not assigned to this class and subject"
     - Teacher with wrong status: "Submitted, approved, published, or voided results cannot be edited/deleted by the teacher"
     - Cross-school access: "You cannot access this result" (preserve existing)
     - _Requirements: 2.5, 2.6, 2.9, 2.10, 2.11, 2.12, 2.13, 2.14, 2.17, 2.18, 2.19, 2.20, 3.1_
 
-  - [~] 6.2 Ensure error messages are consistent across controllers
+  - [ ] 6.2 Ensure error messages are consistent across controllers
     - Verify ManualResultController uses consistent messages
     - Verify TeacherResultEntryController uses consistent messages
     - Preserve existing messages for unchanged behaviors
@@ -203,7 +203,7 @@
 
 - [ ] 7. Manual testing and verification
 
-  - [~] 7.1 Test as School Admin
+  - [ ] 7.1 Test as School Admin
     - Log in as School Admin
     - Navigate to results list
     - Attempt to edit a result
@@ -212,7 +212,7 @@
     - Verify delete succeeds without 403 error
     - _Requirements: 2.1, 2.2_
 
-  - [~] 7.2 Test as Result Officer with feature enabled
+  - [ ] 7.2 Test as Result Officer with feature enabled
     - Log in as Result Officer
     - Verify manual_entry feature is enabled in role settings
     - Navigate to results list
@@ -220,7 +220,7 @@
     - Verify edit form loads without 403 error
     - _Requirements: 2.3, 2.4_
 
-  - [~] 7.3 Test as Result Officer with feature disabled
+  - [ ] 7.3 Test as Result Officer with feature disabled
     - Log in as Result Officer
     - Verify manual_entry feature is disabled in role settings
     - Navigate to results list
@@ -228,7 +228,7 @@
     - Verify receives "This feature is not enabled for your role" error
     - _Requirements: 2.5, 2.6_
 
-  - [~] 7.4 Test as Teacher with assignment
+  - [ ] 7.4 Test as Teacher with assignment
     - Log in as Teacher
     - Verify teacher is assigned to a class and subject
     - Navigate to results list for assigned class
@@ -238,14 +238,14 @@
     - Verify receives status-specific error message
     - _Requirements: 2.7, 2.8, 2.9_
 
-  - [~] 7.5 Test as Teacher without assignment
+  - [ ] 7.5 Test as Teacher without assignment
     - Log in as Teacher
     - Navigate to results list for unassigned class
     - Attempt to edit a result
     - Verify receives "You are not assigned to this class and subject" error
     - _Requirements: 2.13, 2.14_
 
-  - [~] 7.6 Test as Super Admin in support mode
+  - [ ] 7.6 Test as Super Admin in support mode
     - Log in as Super Admin
     - Enter support mode for a school
     - Navigate to results list
@@ -253,14 +253,14 @@
     - Verify edit form loads without 403 error
     - _Requirements: 2.21, 2.22_
 
-  - [~] 7.7 Test cross-school access prevention
+  - [ ] 7.7 Test cross-school access prevention
     - Log in as any user
     - Attempt to access result from different school (via URL manipulation)
     - Verify receives "You cannot access this result" error
     - Verify tenant isolation is enforced
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.6_
 
-- [~] 8. Checkpoint - Ensure all tests pass
+- [ ] 8. Checkpoint - Ensure all tests pass
   - Run all unit tests and verify they pass
   - Run all integration tests and verify they pass
   - Run bug condition exploration test and verify it now passes

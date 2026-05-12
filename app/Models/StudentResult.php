@@ -39,6 +39,8 @@ class StudentResult extends Model
         'grade',
         'remark',
         'teacher_remark',
+        'officer_remark',
+        'admin_remark',
         'status',
         'published_at',
         'published_by',

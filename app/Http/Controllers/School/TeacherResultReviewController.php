@@ -11,11 +11,11 @@ use App\Models\StudentResult;
 use App\Models\TeacherResultSubmission;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
+use App\Services\ResultEntryWorkspaceService;
 use App\Services\ResultGradingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\ValidationException;
 
 class TeacherResultReviewController extends Controller
 {
@@ -42,27 +42,78 @@ class TeacherResultReviewController extends Controller
         ]);
     }
 
-    public function show(TeacherResultSubmission $submission)
+    public function show(
+        TeacherResultSubmission $submission,
+        CurrentSchoolService $currentSchool,
+        ResultEntryWorkspaceService $workspace
+    )
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
         Gate::authorize('view', $submission);
+        $submission->load(['teacher', 'schoolClass', 'subject', 'academicSession', 'term']);
+        $students = $this->studentsForSubmission($submission);
+        $gradingScales = $workspace->activeGradingScales($school);
+        $roleContext = $currentSchool->roleContext(auth()->user());
+        $editableRemarks = $workspace->editableRemarkFields($roleContext);
+        $canReview = auth()->user()->can('review', $submission);
 
-        return view('school.result-reviews.show', [
+        return view('school.results.entry-workspace', [
             'school' => $school,
-            'submission' => $submission->load(['teacher', 'schoolClass', 'subject', 'academicSession', 'term']),
-            'studentsById' => $this->studentsForSubmission($submission)->keyBy('id'),
-            'scores' => collect($submission->metadata['scores'] ?? [])->keyBy('student_id'),
+            'mode' => 'review',
+            'title' => 'Result Review Workspace',
+            'subtitle' => $submission->schoolClass?->name.' / '.$submission->subject?->name,
+            'submission' => $submission,
+            'students' => $students,
+            'scoreRows' => $workspace->displayRows($students, $submission->metadata['scores'] ?? [], $gradingScales),
+            'classes' => collect(),
+            'subjects' => collect(),
+            'academicSessions' => collect(),
+            'terms' => collect(),
+            'selectedClassId' => $submission->school_class_id,
+            'roleContext' => $roleContext,
+            'gradingScales' => $gradingScales,
+            'gradingScaleLookup' => $workspace->gradingLookup($gradingScales),
+            'maxScores' => $workspace->maxScores(),
+            'entryFormAction' => route('school.result-reviews.update', $submission),
+            'entryFormMethod' => 'PATCH',
+            'selectionAction' => null,
+            'backUrl' => route('school.result-reviews.index'),
+            'canEditScores' => $canReview,
+            'canEditTeacherRemark' => false,
+            'canEditOfficerRemark' => $canReview && $editableRemarks['officer_remark'],
+            'canEditAdminRemark' => $canReview && $editableRemarks['admin_remark'],
+            'canSaveDraft' => false,
+            'canSubmit' => false,
+            'canReview' => $canReview,
+            'canReturn' => auth()->user()->can('returnForCorrection', $submission),
+            'canApprove' => auth()->user()->can('approve', $submission),
+            'canPublish' => auth()->user()->can('publish', $submission),
+            'canVoid' => auth()->user()->can('void', $submission),
         ]);
     }
 
-    public function update(Request $request, TeacherResultSubmission $submission, AuditLogService $auditLog)
+    public function update(
+        Request $request,
+        TeacherResultSubmission $submission,
+        AuditLogService $auditLog,
+        CurrentSchoolService $currentSchool,
+        ResultEntryWorkspaceService $workspace
+    )
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
         Gate::authorize('review', $submission);
 
-        $scores = $this->validatedScores($request, $submission);
+        $students = $this->studentsForSubmission($submission);
+        $gradingScales = $workspace->activeGradingScales($school);
+        $scores = $workspace->validateRows(
+            $request,
+            $students,
+            $gradingScales,
+            $currentSchool->roleContext(auth()->user()),
+            $submission->metadata['scores'] ?? []
+        );
         $oldValues = $submission->only(['status', 'reviewed_by', 'reviewed_at', 'metadata']);
         $submission->update([
             'status' => ResultWorkflowStatus::Reviewed->value,
@@ -140,7 +191,12 @@ class TeacherResultReviewController extends Controller
         return back()->with('success', 'Teacher result approved.');
     }
 
-    public function publish(Request $request, TeacherResultSubmission $submission, AuditLogService $auditLog)
+    public function publish(
+        Request $request,
+        TeacherResultSubmission $submission,
+        AuditLogService $auditLog,
+        ResultGradingService $gradingService
+    )
     {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
@@ -153,21 +209,25 @@ class TeacherResultReviewController extends Controller
         }
 
         $publishedStudentIds = [];
+        $studentsById = Student::where('school_id', $school->id)
+            ->where('school_class_id', $submission->school_class_id)
+            ->whereIn('id', collect($scores)->pluck('student_id')->filter()->unique()->values())
+            ->get()
+            ->keyBy('id');
+        $gradingScales = $gradingService->activeScales($school);
 
         $oldValues = $submission->only(['status', 'published_by', 'published_at']);
 
-        DB::transaction(function () use ($submission, $school, $scores, &$publishedStudentIds) {
+        DB::transaction(function () use ($submission, $school, $scores, $studentsById, $gradingScales, $gradingService, &$publishedStudentIds) {
             foreach ($scores as $row) {
-                $student = Student::where('school_id', $school->id)
-                    ->where('school_class_id', $submission->school_class_id)
-                    ->find($row['student_id']);
+                $student = $studentsById->get((int) ($row['student_id'] ?? 0));
 
                 if (! $student) {
                     continue;
                 }
 
-                $total = (float) $row['ca_score'] + (float) $row['exam_score'];
-                $grading = app(ResultGradingService::class)->calculate($school, $total);
+                $total = (float) ($row['total_score'] ?? ((float) $row['ca_score'] + (float) $row['exam_score']));
+                $grading = $gradingService->calculateFromScales($gradingScales, $total);
 
                 StudentResult::updateOrCreate([
                     'school_id' => $school->id,
@@ -184,6 +244,8 @@ class TeacherResultReviewController extends Controller
                     'grade' => $grading['grade'],
                     'remark' => $grading['remark'],
                     'teacher_remark' => $row['teacher_remark'] ?? null,
+                    'officer_remark' => $row['officer_remark'] ?? null,
+                    'admin_remark' => $row['admin_remark'] ?? null,
                     'status' => ResultWorkflowStatus::Published->value,
                     'published_at' => now(),
                     'published_by' => auth()->id(),
@@ -233,53 +295,6 @@ class TeacherResultReviewController extends Controller
         ], request: $request);
 
         return back()->with('success', 'Teacher result submission voided safely.');
-    }
-
-    private function validatedScores(Request $request, TeacherResultSubmission $submission): array
-    {
-        $students = $this->studentsForSubmission($submission)->keyBy('id');
-        $errors = [];
-        $rows = [];
-
-        foreach ($request->input('scores', []) as $studentId => $score) {
-            $studentId = (int) $studentId;
-
-            if (! $students->has($studentId)) {
-                continue;
-            }
-
-            $ca = trim((string) ($score['ca_score'] ?? ''));
-            $exam = trim((string) ($score['exam_score'] ?? ''));
-
-            if ($ca === '' && $exam === '') {
-                continue;
-            }
-
-            if (! is_numeric($ca) || (float) $ca < 0 || (float) $ca > 40) {
-                $errors[] = $students[$studentId]->fullName().': CA score must be between 0 and 40.';
-            }
-
-            if (! is_numeric($exam) || (float) $exam < 0 || (float) $exam > 60) {
-                $errors[] = $students[$studentId]->fullName().': exam score must be between 0 and 60.';
-            }
-
-            $rows[] = [
-                'student_id' => $studentId,
-                'ca_score' => round((float) $ca, 2),
-                'exam_score' => round((float) $exam, 2),
-                'teacher_remark' => trim((string) ($score['teacher_remark'] ?? '')),
-            ];
-        }
-
-        if ($errors !== []) {
-            throw ValidationException::withMessages(['scores' => implode(' ', $errors)]);
-        }
-
-        if ($rows === []) {
-            throw ValidationException::withMessages(['scores' => 'Enter at least one complete student score.']);
-        }
-
-        return $rows;
     }
 
     private function studentsForSubmission(TeacherResultSubmission $submission)

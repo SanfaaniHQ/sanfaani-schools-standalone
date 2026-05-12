@@ -3,62 +3,39 @@
 namespace App\Services;
 
 use App\Models\School;
+use Illuminate\Support\Collection;
 
 class ResultGradingService
 {
-    public function calculate(School $school, float $score): array
+    public function activeScales(School $school): Collection
     {
-        $gradingScale = $school->gradingScales()
+        return $school->gradingScales()
             ->where('status', 'active')
-            ->where('min_score', '<=', $score)
-            ->where('max_score', '>=', $score)
             ->orderByDesc('min_score')
-            ->first();
-
-        if ($gradingScale) {
-            return [
-                'grade' => $gradingScale->grade,
-                'remark' => $gradingScale->remark,
-                'is_pass' => $gradingScale->is_pass,
-            ];
-        }
-
-        return $this->fallback($score);
+            ->get();
     }
 
-    private function fallback(float $score): array
+    public function calculate(School $school, float $score): array
     {
-        return match (true) {
-            $score >= 70 => [
-                'grade' => 'A',
-                'remark' => 'Excellent',
-                'is_pass' => true,
-            ],
-            $score >= 60 => [
-                'grade' => 'B',
-                'remark' => 'Very Good',
-                'is_pass' => true,
-            ],
-            $score >= 50 => [
-                'grade' => 'C',
-                'remark' => 'Good',
-                'is_pass' => true,
-            ],
-            $score >= 45 => [
-                'grade' => 'D',
-                'remark' => 'Fair',
-                'is_pass' => true,
-            ],
-            $score >= 40 => [
-                'grade' => 'E',
-                'remark' => 'Pass',
-                'is_pass' => true,
-            ],
-            default => [
-                'grade' => 'F',
-                'remark' => 'Fail',
-                'is_pass' => false,
-            ],
-        };
+        return $this->calculateFromScales($this->activeScales($school), $score);
+    }
+
+    public function calculateFromScales(iterable $gradingScales, float $score): array
+    {
+        foreach ($gradingScales as $gradingScale) {
+            if ((float) $gradingScale->min_score <= $score && (float) $gradingScale->max_score >= $score) {
+                return [
+                    'grade' => $gradingScale->grade,
+                    'remark' => $gradingScale->remark,
+                    'is_pass' => $gradingScale->is_pass,
+                ];
+            }
+        }
+
+        return [
+            'grade' => null,
+            'remark' => null,
+            'is_pass' => null,
+        ];
     }
 }

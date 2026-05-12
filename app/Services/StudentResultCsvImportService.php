@@ -11,6 +11,7 @@ use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 class StudentResultCsvImportService
 {
@@ -21,6 +22,8 @@ class StudentResultCsvImportService
     public int $skippedCount = 0;
 
     public array $errors = [];
+
+    private ?Collection $gradingScales = null;
 
     public function __construct(
         private School $school,
@@ -169,7 +172,7 @@ class StudentResultCsvImportService
 
         $totalScore = $caScore + $examScore;
 
-        $grading = app(ResultGradingService::class)->calculate($this->school, $totalScore);
+        $grading = app(ResultGradingService::class)->calculateFromScales($this->gradingScales(), $totalScore);
 
         $result = StudentResult::updateOrCreate(
             [
@@ -235,5 +238,10 @@ class StudentResultCsvImportService
         }
 
         return trim((string) $value);
+    }
+
+    private function gradingScales(): Collection
+    {
+        return $this->gradingScales ??= app(ResultGradingService::class)->activeScales($this->school);
     }
 }

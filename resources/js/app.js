@@ -141,3 +141,52 @@ document.querySelectorAll('[data-session-term-source]').forEach((sessionSelect) 
     syncTermDropdown(sessionSelect);
     sessionSelect.addEventListener('change', () => syncTermDropdown(sessionSelect));
 });
+
+const formatScore = (value) => {
+    if (!Number.isFinite(value)) {
+        return '0.00';
+    }
+
+    return value.toFixed(2);
+};
+
+const findGradingScale = (scales, score) => scales.find((scale) => (
+    Number(scale.min_score) <= score && Number(scale.max_score) >= score
+));
+
+document.querySelectorAll('[data-result-workspace]').forEach((workspace) => {
+    const scaleSource = workspace.querySelector('[data-result-grading-scales]');
+    const scales = scaleSource ? JSON.parse(scaleSource.textContent || '[]') : [];
+
+    const syncRow = (row) => {
+        const caInput = row.querySelector('[data-score-field="ca"]');
+        const examInput = row.querySelector('[data-score-field="exam"]');
+        const totalTarget = row.querySelector('[data-total-score]');
+        const gradeTarget = row.querySelector('[data-grade-label]');
+        const remarkTarget = row.querySelector('[data-grade-remark]');
+        const ca = Number.parseFloat(caInput?.value || '0');
+        const exam = Number.parseFloat(examInput?.value || '0');
+        const total = (Number.isFinite(ca) ? ca : 0) + (Number.isFinite(exam) ? exam : 0);
+        const grading = findGradingScale(scales, total);
+
+        if (totalTarget) {
+            totalTarget.textContent = formatScore(total);
+        }
+
+        if (gradeTarget) {
+            gradeTarget.textContent = grading?.grade || 'N/A';
+        }
+
+        if (remarkTarget) {
+            remarkTarget.textContent = grading?.remark || 'No active grading match';
+        }
+    };
+
+    workspace.querySelectorAll('[data-result-row]').forEach((row) => {
+        syncRow(row);
+
+        row.querySelectorAll('[data-score-field]').forEach((input) => {
+            input.addEventListener('input', () => syncRow(row));
+        });
+    });
+});
