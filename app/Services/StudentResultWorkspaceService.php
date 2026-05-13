@@ -512,6 +512,7 @@ class StudentResultWorkspaceService
                 $classAssignmentsBySubject,
                 $electivesBySubject,
                 $teacherAssignmentsBySubject,
+                $submissionsBySubject,
                 $resultsBySubject
             ) {
                 $subjectResults = $resultsBySubject->get($subject->id, collect());

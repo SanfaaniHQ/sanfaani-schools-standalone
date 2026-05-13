@@ -51,11 +51,35 @@ return new class extends Migration
 
     private function indexExists(string $table, string $indexName): bool
     {
-        $result = DB::selectOne(
-            'SELECT COUNT(*) AS aggregate FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?',
-            [$table, $indexName]
-        );
+        $driver = DB::connection()->getDriverName();
 
-        return ((int) ($result->aggregate ?? 0)) > 0;
+        // SQLite: Use Laravel's Schema facade which handles SQLite introspection
+        if ($driver === 'sqlite') {
+            $indexes = DB::select("PRAGMA index_list({$table})");
+            return collect($indexes)->contains(fn ($index) => $index->name === $indexName);
+        }
+
+        // MySQL/MariaDB: Use information_schema
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            $result = DB::selectOne(
+                'SELECT COUNT(*) AS aggregate FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?',
+                [$table, $indexName]
+            );
+
+            return ((int) ($result->aggregate ?? 0)) > 0;
+        }
+
+        // PostgreSQL: Use pg_indexes
+        if ($driver === 'pgsql') {
+            $result = DB::selectOne(
+                'SELECT COUNT(*) AS aggregate FROM pg_indexes WHERE tablename = ? AND indexname = ?',
+                [$table, $indexName]
+            );
+
+            return ((int) ($result->aggregate ?? 0)) > 0;
+        }
+
+        // Fallback: assume index doesn't exist (safe default - will attempt to create)
+        return false;
     }
 };
