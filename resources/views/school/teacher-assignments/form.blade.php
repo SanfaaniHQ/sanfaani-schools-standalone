@@ -69,10 +69,18 @@
     <div>
         <label class="text-sm font-medium text-gray-700">Role type</label>
         <select name="role_type" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
-            @foreach (['class_teacher' => 'Class Teacher', 'assistant_teacher' => 'Assistant Teacher', 'subject_teacher' => 'Subject Teacher'] as $value => $label)
-                <option value="{{ $value }}" @selected(old('role_type', $assignment?->role_type ?? 'class_teacher') === $value)>{{ $label }}</option>
+            @foreach (['class_teacher' => 'Class Teacher', 'assistant_teacher' => 'Assistant Teacher', 'subject_teacher' => 'Subject Teacher', 'co_teacher' => 'Co-teacher'] as $value => $label)
+                <option value="{{ $value }}" @selected(old('role_type', $assignment?->role_type ?? ($assignmentType === 'class' ? 'class_teacher' : 'subject_teacher')) === $value)>{{ $label }}</option>
             @endforeach
         </select>
+    </div>
+    <div>
+        <label class="text-sm font-medium text-gray-700">Starts at</label>
+        <input type="date" name="starts_at" value="{{ old('starts_at', $assignment?->starts_at?->format('Y-m-d')) }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
+    </div>
+    <div>
+        <label class="text-sm font-medium text-gray-700">Ends at</label>
+        <input type="date" name="ends_at" value="{{ old('ends_at', $assignment?->ends_at?->format('Y-m-d')) }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
     </div>
     <div>
         <label class="text-sm font-medium text-gray-700">Status</label>

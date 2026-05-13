@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LeadRequest;
 use App\Models\User;
 use App\Services\CommunicationService;
+use App\Services\LeadCrmService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -94,7 +95,7 @@ class LandingPageController extends Controller
             return;
         }
 
-        LeadRequest::create([
+        $lead = LeadRequest::create([
             'type' => $type,
             'name' => $data['name'],
             'school_name' => $data['school_name'] ?? null,
@@ -108,6 +109,11 @@ class LandingPageController extends Controller
             'source' => $source,
             'status' => 'new',
             'metadata' => array_filter($metadata, fn ($value) => filled($value)),
+        ]);
+
+        app(LeadCrmService::class)->recordSystemEvent($lead, 'created', 'Lead request submitted', ucfirst($type).' request received.', [
+            'source' => $source,
+            'lead_type' => $type,
         ]);
 
         if (filled($data['email'] ?? null)) {

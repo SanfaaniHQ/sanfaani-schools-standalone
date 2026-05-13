@@ -13,6 +13,7 @@ use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
 use App\Services\ResultEntryWorkspaceService;
 use App\Services\ResultGradingService;
+use App\Services\StudentClassEnrollmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -46,8 +47,7 @@ class TeacherResultReviewController extends Controller
         TeacherResultSubmission $submission,
         CurrentSchoolService $currentSchool,
         ResultEntryWorkspaceService $workspace
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
         Gate::authorize('view', $submission);
@@ -99,8 +99,7 @@ class TeacherResultReviewController extends Controller
         AuditLogService $auditLog,
         CurrentSchoolService $currentSchool,
         ResultEntryWorkspaceService $workspace
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
         Gate::authorize('review', $submission);
@@ -196,8 +195,7 @@ class TeacherResultReviewController extends Controller
         TeacherResultSubmission $submission,
         AuditLogService $auditLog,
         ResultGradingService $gradingService
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $this->authorizeSubmission($submission, $school);
         Gate::authorize('publish', $submission);
@@ -209,10 +207,9 @@ class TeacherResultReviewController extends Controller
         }
 
         $publishedStudentIds = [];
-        $studentsById = Student::where('school_id', $school->id)
-            ->where('school_class_id', $submission->school_class_id)
+        $studentsById = app(StudentClassEnrollmentService::class)
+            ->studentsForClassContext($school, $submission->school_class_id, $submission->academicSession, activeOnly: false, includeArchived: true)
             ->whereIn('id', collect($scores)->pluck('student_id')->filter()->unique()->values())
-            ->get()
             ->keyBy('id');
         $gradingScales = $gradingService->activeScales($school);
 
@@ -299,12 +296,14 @@ class TeacherResultReviewController extends Controller
 
     private function studentsForSubmission(TeacherResultSubmission $submission)
     {
-        return Student::where('school_id', $submission->school_id)
-            ->where('school_class_id', $submission->school_class_id)
-            ->where('status', 'active')
-            ->orderBy('first_name')
-            ->orderBy('last_name')
-            ->get();
+        return app(StudentClassEnrollmentService::class)
+            ->studentsForClassContext(
+                $submission->school,
+                $submission->school_class_id,
+                $submission->academicSession,
+                activeOnly: false,
+                includeArchived: true
+            );
     }
 
     private function dispatchResultPublishedEmails(TeacherResultSubmission $submission, array $studentIds): void

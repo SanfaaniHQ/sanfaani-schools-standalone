@@ -99,7 +99,8 @@ class ResultCheckerController extends Controller
             return $this->redirectToChecker($locale, $school, __('public_result.invalid_access_details'), true, $request);
         }
 
-        $student = Student::where('school_id', $identifiedSchool->id)
+        $student = Student::withTrashed()
+            ->where('school_id', $identifiedSchool->id)
             ->where('admission_number', trim($data['admission_number']))
             ->first();
 
@@ -254,7 +255,9 @@ class ResultCheckerController extends Controller
         [$locale, $rtl] = $this->setPublicLocale($request, null, $tokenData['locale'] ?? null);
 
         $school = School::where('status', 'active')->find($tokenData['school_id'] ?? null);
-        $student = Student::where('school_id', $tokenData['school_id'] ?? null)->find($tokenData['student_id'] ?? null);
+        $student = Student::withTrashed()
+            ->where('school_id', $tokenData['school_id'] ?? null)
+            ->find($tokenData['student_id'] ?? null);
         $academicSession = AcademicSession::where('school_id', $tokenData['school_id'] ?? null)
             ->find($tokenData['academic_session_id'] ?? null);
         $term = Term::where('school_id', $tokenData['school_id'] ?? null)
@@ -430,7 +433,9 @@ class ResultCheckerController extends Controller
             return null;
         }
 
-        $student = Student::where('school_id', $school->id)->find($context['student_id'] ?? null);
+        $student = Student::withTrashed()
+            ->where('school_id', $school->id)
+            ->find($context['student_id'] ?? null);
         $scratchCard = ScratchCard::where('school_id', $school->id)->find($context['scratch_card_id'] ?? null);
 
         if (! $student || ! $scratchCard) {

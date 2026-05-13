@@ -5,7 +5,9 @@
                 <h2 class="text-xl font-semibold leading-tight text-gray-900">My Assigned Classes and Subjects</h2>
                 <p class="mt-1 text-sm text-gray-500">Only active assignments for your current school workspace are shown.</p>
             </div>
-            <a href="{{ route('school.teacher-results.create') }}" class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white">Enter Results</a>
+            @if ($canCreateResults ?? false)
+                <a href="{{ route('school.teacher-results.create') }}" class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white">Enter Results</a>
+            @endif
         </div>
     </x-slot>
 
@@ -18,8 +20,10 @@
                         <div class="rounded-xl border border-gray-100 p-4">
                             <p class="text-sm font-semibold text-gray-900">{{ $assignment->schoolClass?->name ?? 'Class not found' }}</p>
                             <p class="mt-1 text-xs text-gray-500">
+                                Mode: {{ str($assignment->role_type ?? 'class_teacher')->replace('_', ' ')->title() }} |
                                 Session: {{ $assignment->academicSession?->name ?? 'All sessions' }} |
-                                Term: {{ $assignment->term?->name ?? 'All terms' }}
+                                Term: {{ $assignment->term?->name ?? 'All terms' }} |
+                                Effective: {{ $assignment->starts_at?->format('d M Y') ?? 'Immediate' }} - {{ $assignment->ends_at?->format('d M Y') ?? 'Open' }}
                             </p>
                         </div>
                     @empty
@@ -37,8 +41,10 @@
                             <p class="text-sm font-semibold text-gray-900">{{ $assignment->subject?->name ?? 'Subject not found' }}</p>
                             <p class="mt-1 text-xs text-gray-500">
                                 Class: {{ $assignment->schoolClass?->name ?? 'All classes' }} |
+                                Mode: {{ str($assignment->role_type ?? 'subject_teacher')->replace('_', ' ')->title() }} |
                                 Session: {{ $assignment->academicSession?->name ?? 'All sessions' }} |
-                                Term: {{ $assignment->term?->name ?? 'All terms' }}
+                                Term: {{ $assignment->term?->name ?? 'All terms' }} |
+                                Effective: {{ $assignment->starts_at?->format('d M Y') ?? 'Immediate' }} - {{ $assignment->ends_at?->format('d M Y') ?? 'Open' }}
                             </p>
                         </div>
                     @empty

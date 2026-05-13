@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\Student;
 use App\Services\CurrentSchoolService;
+use App\Services\SchoolAuthorizationService;
 use App\Services\StudentResultWorkspaceService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -76,7 +77,9 @@ class StudentResultWorkspaceController extends Controller
 
     private function authorizeStudent(Student $student, School $school): void
     {
-        if ((int) $student->school_id !== (int) $school->id) {
+        $user = auth()->user();
+
+        if (! $user || ! app(SchoolAuthorizationService::class)->canViewStudent($user, $school, $student)) {
             abort(403, 'You cannot access this student.');
         }
     }

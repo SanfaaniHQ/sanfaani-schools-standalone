@@ -366,7 +366,7 @@
 
                 <a href="#activity-timeline"
                    class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    Activity
+                    Timeline
                 </a>
 
                 <a href="#communication-center"
@@ -667,6 +667,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Academic Session</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Action</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">From Class</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">To Class</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
@@ -679,6 +680,9 @@
                                 <tr>
                                     <td class="px-6 py-4 text-sm text-gray-700">
                                         {{ $promotion->toSession?->name ?? $promotion->fromSession?->name ?? 'N/A' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                        {{ ucfirst($promotion->action) }}
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         {{ $promotion->fromClass->name ?? 'N/A' }} {{ $promotion->fromClass->section ?? '' }}
@@ -698,7 +702,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center">
+                                    <td colspan="7" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -994,30 +998,31 @@
             <!-- Activity Timeline Section -->
             <div id="activity-timeline" class="overflow-hidden rounded-2xl bg-white shadow-sm">
                 <div class="border-b border-gray-100 px-6 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">Activity Timeline</h3>
+                    <h3 class="text-base font-semibold text-gray-900">Academic Timeline</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Recent activities and changes related to this student.
+                        Lifecycle, enrollment, result access, and audit events for this student.
                     </p>
                 </div>
 
                 <div class="px-6 py-4">
-                    @forelse ($recentActivities as $activity)
+                    @forelse ($academicTimeline as $event)
                         <div class="relative pb-8 {{ $loop->last ? '' : 'border-l-2 border-gray-200' }} pl-8">
                             <div class="absolute left-0 top-0 -ml-2 flex h-4 w-4 items-center justify-center rounded-full bg-gray-400">
                                 <div class="h-2 w-2 rounded-full bg-white"></div>
                             </div>
                             <div class="flex flex-col gap-1">
                                 <p class="text-sm font-medium text-gray-900">
-                                    {{ ucwords(str_replace('_', ' ', $activity->action)) }}
+                                    {{ $event['title'] }}
                                 </p>
                                 <p class="text-xs text-gray-500">
-                                    By {{ $activity->user?->name ?? 'System' }} • {{ $activity->created_at?->diffForHumans() ?? 'Unknown time' }}
+                                    By {{ $event['actor'] ?? 'System' }} &middot; {{ $event['occurred_at']?->diffForHumans() ?? 'Unknown time' }}
                                 </p>
-                                @if ($activity->metadata)
+                                <p class="text-sm text-gray-600">{{ $event['description'] }}</p>
+                                @if (! empty($event['details']))
                                     <div class="mt-1 text-xs text-gray-600">
-                                        @foreach ($activity->metadata as $key => $value)
-                                            <span class="inline-block">{{ ucwords(str_replace('_', ' ', $key)) }}: {{ $value }}</span>
-                                            @if (!$loop->last) • @endif
+                                        @foreach ($event['details'] as $detail)
+                                            <span class="inline-block">{{ $detail }}</span>
+                                            @if (!$loop->last) &middot; @endif
                                         @endforeach
                                     </div>
                                 @endif

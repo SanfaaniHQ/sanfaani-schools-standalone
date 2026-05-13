@@ -4,18 +4,18 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {{-- Welcome Card --}}
-        <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+        <x-ui.panel class="mb-8">
             <h3 class="text-lg font-semibold text-gray-900">
                 Welcome back, {{ auth()->user()->name }}
             </h3>
             <p class="mt-2 text-sm text-gray-600">
                 This dashboard is limited to your assigned school only.
             </p>
-        </div>
+        </x-ui.panel>
 
         {{-- Setup Checklist --}}
         @if (! empty($schoolOnboardingProgress))
-            <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel class="mb-8">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h3 class="text-base font-semibold text-gray-900">Setup Checklist</h3>
@@ -25,66 +25,27 @@
                 </div>
                 <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     @foreach ($schoolOnboardingSteps as $key => $label)
-                        <div class="rounded-xl border border-gray-100 p-3 text-sm {{ in_array($key, $schoolOnboardingCompleted, true) ? 'bg-emerald-50 text-emerald-900' : 'bg-gray-50 text-gray-700' }}">
+                        <div class="rounded-lg border border-gray-200 p-3 text-sm {{ in_array($key, $schoolOnboardingCompleted, true) ? 'bg-emerald-50 text-emerald-900' : 'bg-gray-50 text-gray-700' }}">
                             {{ $label }}
                         </div>
                     @endforeach
                 </div>
-            </div>
+            </x-ui.panel>
         @endif
 
         {{-- Summary Cards --}}
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Students</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalStudents }}</p>
-                <p class="mt-1 text-sm text-gray-500">{{ $totalSchoolUsers }} school users</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Results</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">{{ $publishedResults }} published</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Scratch Card Requests</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalScratchCardRequests }}</p>
-                <p class="mt-1 text-sm text-gray-500">{{ $pendingScratchCardRequests }} pending</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Subscription</p>
-                <p class="mt-3 text-lg font-semibold text-gray-900">{{ ucfirst($school->subscription_status) }}</p>
-                <p class="mt-1 text-sm text-gray-500">{{ ucfirst($school->status) }} school</p>
-            </div>
+            <x-ui.stat-card label="Students" :value="$totalStudents" :meta="$totalSchoolUsers . ' school users'" />
+            <x-ui.stat-card label="Results" :value="$totalResults" :meta="$publishedResults . ' published'" />
+            <x-ui.stat-card label="Scratch Card Requests" :value="$totalScratchCardRequests" :meta="$pendingScratchCardRequests . ' pending'" />
+            <x-ui.stat-card label="Subscription" :value="ucfirst($school->subscription_status)" :meta="ucfirst($school->status) . ' school'" />
         </div>
 
         {{-- Additional Stats --}}
         <div class="mt-6 grid gap-6 lg:grid-cols-3">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Current Session</p>
-                <p class="mt-3 text-lg font-semibold text-gray-900">
-                    {{ $activeSession?->name ?? 'Not set' }}
-                </p>
-                <p class="mt-1 text-sm text-gray-500">{{ $totalSessions }} sessions</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Current Term</p>
-                <p class="mt-3 text-lg font-semibold text-gray-900">
-                    {{ $activeTerm?->name ?? 'Not set' }}
-                </p>
-                <p class="mt-1 text-sm text-gray-500">{{ $totalTerms }} terms</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Setup</p>
-                <p class="mt-3 text-lg font-semibold text-gray-900">
-                    {{ $totalClasses }} classes / {{ $totalSubjects }} subjects
-                </p>
-                <p class="mt-1 text-sm text-gray-500">{{ $school->name }}</p>
-            </div>
+            <x-ui.stat-card label="Current Session" :value="$activeSession?->name ?? 'Not set'" :meta="$totalSessions . ' sessions'" class="[&>p:nth-child(2)]:text-lg" />
+            <x-ui.stat-card label="Current Term" :value="$activeTerm?->name ?? 'Not set'" :meta="$totalTerms . ' terms'" class="[&>p:nth-child(2)]:text-lg" />
+            <x-ui.stat-card label="Setup" :value="$totalClasses . ' classes / ' . $totalSubjects . ' subjects'" :meta="$school->name" class="[&>p:nth-child(2)]:text-lg" />
         </div>
 
         {{-- Results and Scratch Cards Stats --}}
@@ -92,10 +53,12 @@
             <div class="rounded-2xl bg-white p-6 shadow-sm">
                 <div class="flex items-center justify-between">
                     <h3 class="text-base font-semibold text-gray-900">Results by Status</h3>
-                    <a href="{{ route('school.results.publishing.index') }}"
-                       class="text-sm font-medium text-gray-900 transition hover:text-gray-600">
-                        Open
-                    </a>
+                    @schoolFeature('results.publish')
+                        <a href="{{ route('school.results.publishing.index') }}"
+                           class="text-sm font-medium text-gray-900 transition hover:text-gray-600">
+                            Open
+                        </a>
+                    @endschoolFeature
                 </div>
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-3">
@@ -178,12 +141,14 @@
                         <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                     </a>
 
-                    <a href="{{ route('school.teacher-assignments.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Teacher Assignments</h4>
-                        <p class="mt-2 text-sm text-gray-600">Assign teachers to classes and subjects.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('teacher.assignment.manage')
+                        <a href="{{ route('school.teacher-assignments.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Teacher Assignments</h4>
+                            <p class="mt-2 text-sm text-gray-600">Assign teachers to classes and subjects.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
 
                     <a href="{{ route('school.sessions.index') }}"
                        class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
@@ -271,12 +236,14 @@
                         <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                     </a>
 
-                    <a href="{{ route('school.student-promotions.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Student Promotions</h4>
-                        <p class="mt-2 text-sm text-gray-600">Promote classes, repeat students, and record graduation or transfers.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('student.promote', 'student.transfer')
+                        <a href="{{ route('school.student-promotions.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Student Promotions</h4>
+                            <p class="mt-2 text-sm text-gray-600">Promote classes, repeat students, and record graduation or transfers.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
                 </div>
             </section>
 
@@ -288,40 +255,50 @@
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <a href="{{ route('school.results.manual.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Manual Result Entry</h4>
-                        <p class="mt-2 text-sm text-gray-600">Enter and update scores manually.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('results.manual_entry')
+                        <a href="{{ route('school.results.manual.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Manual Result Entry</h4>
+                            <p class="mt-2 text-sm text-gray-600">Enter and update scores manually.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
 
-                    <a href="{{ route('school.results.upload.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">CSV Result Upload</h4>
-                        <p class="mt-2 text-sm text-gray-600">Upload class-based result CSV files.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('results.upload')
+                        <a href="{{ route('school.results.upload.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">CSV Result Upload</h4>
+                            <p class="mt-2 text-sm text-gray-600">Upload class-based result CSV files.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
 
-                    <a href="{{ route('school.result-reviews.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Result Reviews</h4>
-                        <p class="mt-2 text-sm text-gray-600">Review teacher-submitted scores before publishing.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('results.review')
+                        <a href="{{ route('school.result-reviews.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Result Reviews</h4>
+                            <p class="mt-2 text-sm text-gray-600">Review teacher-submitted scores before publishing.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
 
-                    <a href="{{ route('school.results.publishing.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Result Publishing</h4>
-                        <p class="mt-2 text-sm text-gray-600">Publish or unpublish checked results.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('results.publish')
+                        <a href="{{ route('school.results.publishing.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Result Publishing</h4>
+                            <p class="mt-2 text-sm text-gray-600">Publish or unpublish checked results.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
 
-                    <a href="{{ route('school.result-system.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Result System</h4>
-                        <p class="mt-2 text-sm text-gray-600">Open result settings and access modules.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('results.manual_entry', 'results.review', 'results.publish')
+                        <a href="{{ route('school.result-system.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Result System</h4>
+                            <p class="mt-2 text-sm text-gray-600">Open result settings and access modules.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
 
                     <a href="{{ route('school.report-card-settings.edit') }}"
                        class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
@@ -361,12 +338,14 @@
                         <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
                     </a>
 
-                    <a href="{{ route('school.support.index') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">Support</h4>
-                        <p class="mt-2 text-sm text-gray-600">Open platform support tickets and track responses.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                    </a>
+                    @schoolFeature('support.manage')
+                        <a href="{{ route('school.support.index') }}"
+                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
+                            <h4 class="text-base font-semibold text-gray-900">Support</h4>
+                            <p class="mt-2 text-sm text-gray-600">Open platform support tickets and track responses.</p>
+                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+                        </a>
+                    @endschoolFeature
                 </div>
             </section>
 

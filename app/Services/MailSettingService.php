@@ -31,6 +31,15 @@ class MailSettingService
         }
     }
 
+    public function replyToColumnIsReady(): bool
+    {
+        try {
+            return $this->tableIsReady() && Schema::hasColumn('mail_settings', 'reply_to_email');
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
     public function current(?int $schoolId = null): MailSetting
     {
         if (! $this->tableIsReady()) {
@@ -47,13 +56,57 @@ class MailSettingService
         $hasSchoolScope = $this->schoolScopeIsReady();
         $attributes = $hasSchoolScope ? ['school_id' => $schoolId] : [];
 
-        return MailSetting::firstOrCreate($attributes, [
+        return MailSetting::firstOrCreate($attributes, $this->defaultAttributes($schoolId));
+    }
+
+    public function configured(?int $schoolId = null): ?MailSetting
+    {
+        if (! $this->tableIsReady()) {
+            return null;
+        }
+
+        try {
+            return MailSetting::query()
+                ->when($this->schoolScopeIsReady(), fn ($query) => $query->where('school_id', $schoolId))
+                ->first();
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    public function applyConfigured(): void
+    {
+        $setting = $this->configured();
+
+        try {
+            if (! $setting) {
+                return;
+            }
+
+            $this->apply($setting);
+        } catch (Throwable) {
+            return;
+        }
+    }
+
+    private function defaultAttributes(?int $schoolId = null): array
+    {
+        $attributes = [
             'mailer' => config('mail.default', 'log'),
             'from_address' => config('mail.from.address'),
             'from_name' => config('mail.from.name'),
-            'reply_to_email' => null,
             'is_enabled' => false,
-        ]);
+        ];
+
+        if ($this->schoolScopeIsReady()) {
+            $attributes['school_id'] = $schoolId;
+        }
+
+        if ($this->replyToColumnIsReady()) {
+            $attributes['reply_to_email'] = null;
+        }
+
+        return $attributes;
     }
 
     public function resolveForSchool(?School $school): MailSetting
@@ -93,7 +146,10 @@ class MailSettingService
         Config::set('mail.default', $setting->mailer);
         Config::set('mail.from.address', $setting->from_address ?: config('mail.from.address'));
         Config::set('mail.from.name', $setting->from_name ?: config('mail.from.name'));
-        Config::set('mail.reply_to.address', $setting->reply_to_email ?: null);
+
+        if ($this->replyToColumnIsReady()) {
+            Config::set('mail.reply_to.address', $setting->reply_to_email ?: null);
+        }
 
         if ($setting->mailer === 'smtp') {
             Config::set('mail.mailers.smtp.host', $setting->host);
@@ -147,7 +203,7 @@ class MailSettingService
             'encryption' => $existing->encryption,
             'from_address' => $existing->from_address,
             'from_name' => $existing->from_name,
-            'reply_to_email' => $existing->reply_to_email,
+            'reply_to_email' => $this->replyToColumnIsReady() ? $existing->reply_to_email : null,
             'is_enabled' => $existing->is_enabled,
             'metadata' => $existing->metadata,
         ], $data));
@@ -255,7 +311,7 @@ class MailSettingService
             'encryption' => $setting->encryption,
             'from_address' => $setting->from_address,
             'from_name' => $setting->from_name,
-            'reply_to_email' => $setting->reply_to_email,
+            'reply_to_email' => $this->replyToColumnIsReady() ? $setting->reply_to_email : null,
             'is_enabled' => $setting->is_enabled,
             'password_set' => filled($setting->getRawOriginal('password')),
         ];
@@ -271,6 +327,10 @@ class MailSettingService
 
         if ($setting && array_key_exists('password', $data) && ! filled($data['password'])) {
             unset($data['password']);
+        }
+
+        if (! $this->replyToColumnIsReady()) {
+            unset($data['reply_to_email']);
         }
 
         return $data;

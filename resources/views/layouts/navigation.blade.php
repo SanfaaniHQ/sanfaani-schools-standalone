@@ -1,3 +1,4 @@
+@php($roleContext = app(\App\Services\CurrentSchoolService::class)->roleContext(Auth::user()))
 <nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,7 +17,7 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    @if (Auth::user()->hasRole('school_admin'))
+                    @if ($roleContext === 'school_admin')
                         <x-nav-link :href="route('school.profile.edit')" :active="request()->routeIs('school.profile.*')">
                             School Profile
                         </x-nav-link>
@@ -29,9 +30,11 @@
                             Admission Numbers
                         </x-nav-link>
 
-                        <x-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
-                            Communication
-                        </x-nav-link>
+                        @schoolFeature('communication.send')
+                            <x-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
+                                Communication
+                            </x-nav-link>
+                        @endschoolFeature
                     @endif
 
                     @if (Auth::user()->hasRole('super_admin'))
@@ -104,7 +107,7 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
-            @if (Auth::user()->hasRole('school_admin'))
+            @if ($roleContext === 'school_admin')
                 <x-responsive-nav-link :href="route('school.profile.edit')" :active="request()->routeIs('school.profile.*')">
                     School Profile
                 </x-responsive-nav-link>
@@ -116,9 +119,11 @@
                 <x-responsive-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
                     Admission Numbers
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
-                    Communication
-                </x-responsive-nav-link>
+                @schoolFeature('communication.send')
+                    <x-responsive-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
+                        Communication
+                    </x-responsive-nav-link>
+                @endschoolFeature
             @endif
 
             @if (Auth::user()->hasRole('super_admin'))

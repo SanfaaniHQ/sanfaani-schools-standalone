@@ -157,12 +157,10 @@
 
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex justify-end gap-3">
-                                            @if (! $student->trashed())
-                                                <a href="{{ route('school.students.show', $student) }}"
-                                                   class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                                                    View
-                                                </a>
-                                            @endif
+                                            <a href="{{ route('school.students.show', $student) }}"
+                                               class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                View
+                                            </a>
 
                                             @if ($canManageStudents)
                                                 @if ($student->trashed())

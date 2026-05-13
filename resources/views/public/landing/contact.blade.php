@@ -20,11 +20,11 @@
     <body class="bg-white font-sans text-gray-950 antialiased">
         @include('public.landing.partials.nav')
 
-        <main>
-            <section class="bg-white py-16 sm:py-20">
-                <div class="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+        <main id="main-content">
+            <section class="marketing-soft-gradient py-16 sm:py-20">
+                <x-ui.container class="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
                     <div>
-                        <p class="text-sm font-semibold text-gray-600">Contact Sales</p>
+                        <x-marketing.badge icon="mail">Contact Sales</x-marketing.badge>
                         <h1 class="mt-4 text-4xl font-semibold leading-tight text-gray-950 sm:text-5xl">
                             Talk to us about your school result workflow.
                         </h1>
@@ -33,17 +33,33 @@
                         </p>
 
                         <div class="mt-8 grid gap-4 sm:grid-cols-2">
-                            @foreach ([parse_url($productUrl, PHP_URL_HOST) ?: $productUrl, $salesEmail, 'Conventional schools', 'Islamic and madrasah support'] as $item)
-                                <div class="rounded-2xl bg-gray-50 p-5 text-sm font-semibold text-gray-800">{{ $item }}</div>
-                            @endforeach
+                            <div class="marketing-card rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                                <x-marketing.icon name="shield" class="h-5 w-5 text-emerald-700" />
+                                <p class="mt-3 text-sm font-semibold text-gray-950">Result access planning</p>
+                                <p class="mt-2 text-sm leading-6 text-gray-600">Scratch card, school-paid, or hybrid access setup.</p>
+                            </div>
+                            <div class="marketing-card rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                                <x-marketing.icon name="users" class="h-5 w-5 text-emerald-700" />
+                                <p class="mt-3 text-sm font-semibold text-gray-950">School onboarding fit</p>
+                                <p class="mt-2 text-sm leading-6 text-gray-600">Conventional, Islamic, madrasah, and mixed schools.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 rounded-lg border border-gray-200 bg-white p-5 text-sm shadow-sm">
+                            <p class="font-semibold text-gray-950">Direct channels</p>
+                            <div class="mt-3 space-y-2 text-gray-600">
+                                <p class="flex items-center gap-2"><x-marketing.icon name="mail" class="h-4 w-4 text-emerald-700" /> {{ $salesEmail }}</p>
+                                <p class="flex items-center gap-2"><x-marketing.icon name="phone" class="h-4 w-4 text-emerald-700" /> {{ $platformSettings->whatsapp_number }}</p>
+                                <p class="text-gray-500">{{ parse_url($productUrl, PHP_URL_HOST) ?: $productUrl }}</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <x-ui.panel>
                         @if (session('success'))
-                            <div class="mb-6 rounded-2xl bg-green-50 p-4 text-sm font-medium text-green-700">
+                            <x-ui.notice class="mb-6">
                                 {{ session('success') }}
-                            </div>
+                            </x-ui.notice>
                         @endif
 
                         <form method="POST" action="{{ route('landing.contact.submit') }}" data-loading-text="Sending..." class="space-y-5">
@@ -51,51 +67,56 @@
 
                             <div class="grid gap-5 sm:grid-cols-2">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Name <span class="text-gray-400">*</span></label>
-                                    <input type="text" name="name" value="{{ old('name') }}" class="mt-1 block w-full rounded-2xl border-gray-300 shadow-sm focus:border-gray-950 focus:ring-gray-950">
+                                    <label for="contact-name" class="block text-sm font-medium text-gray-700">Name <span class="text-gray-400">*</span></label>
+                                    <input id="contact-name" type="text" name="name" value="{{ old('name') }}" required autocomplete="name" class="mt-1 ui-input">
                                     @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">School Name</label>
-                                    <input type="text" name="school_name" value="{{ old('school_name') }}" class="mt-1 block w-full rounded-2xl border-gray-300 shadow-sm focus:border-gray-950 focus:ring-gray-950">
+                                    <label for="contact-school-name" class="block text-sm font-medium text-gray-700">School Name</label>
+                                    <input id="contact-school-name" type="text" name="school_name" value="{{ old('school_name') }}" autocomplete="organization" class="mt-1 ui-input">
                                     @error('school_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
 
                             <div class="grid gap-5 sm:grid-cols-2">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Phone</label>
-                                    <input type="text" name="phone" value="{{ old('phone') }}" class="mt-1 block w-full rounded-2xl border-gray-300 shadow-sm focus:border-gray-950 focus:ring-gray-950">
+                                    <label for="contact-phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                                    <input id="contact-phone" type="text" name="phone" value="{{ old('phone') }}" autocomplete="tel" class="mt-1 ui-input">
                                     @error('phone') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                                    <input type="email" name="email" value="{{ old('email') }}" class="mt-1 block w-full rounded-2xl border-gray-300 shadow-sm focus:border-gray-950 focus:ring-gray-950">
+                                    <label for="contact-email" class="block text-sm font-medium text-gray-700">Email</label>
+                                    <input id="contact-email" type="email" name="email" value="{{ old('email') }}" autocomplete="email" class="mt-1 ui-input">
                                     @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Role</label>
-                                <input type="text" name="role" value="{{ old('role') }}" placeholder="Proprietor, admin, result officer, consultant" class="mt-1 block w-full rounded-2xl border-gray-300 shadow-sm focus:border-gray-950 focus:ring-gray-950">
+                                <label for="contact-role" class="block text-sm font-medium text-gray-700">Role</label>
+                                <input id="contact-role" type="text" name="role" value="{{ old('role') }}" placeholder="Proprietor, admin, result officer, consultant" class="mt-1 ui-input">
                                 @error('role') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Message</label>
-                                <textarea name="message" rows="5" class="mt-1 block w-full rounded-2xl border-gray-300 shadow-sm focus:border-gray-950 focus:ring-gray-950">{{ old('message') }}</textarea>
+                                <label for="contact-message" class="block text-sm font-medium text-gray-700">Message</label>
+                                <textarea id="contact-message" name="message" rows="5" class="mt-1 ui-input">{{ old('message') }}</textarea>
                                 @error('message') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
-                            <button type="submit" data-loading-text="Sending..." class="w-full rounded-2xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800">
+                            <button type="submit" data-loading-text="Sending..." class="ui-button-primary w-full py-3">
                                 Contact Sales
                             </button>
                         </form>
-                    </div>
-                </div>
+                    </x-ui.panel>
+                </x-ui.container>
             </section>
+
+            @include('public.landing.partials.cta', [
+                'title' => 'Prefer to see the workflow before deciding?',
+                'body' => 'Request a guided demo and we will map the product to your school size, result process, and parent access model.',
+            ])
         </main>
 
         @include('public.landing.partials.footer')

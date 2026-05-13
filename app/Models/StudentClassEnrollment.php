@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class StudentClassEnrollment extends Model
 {
     public const CURRENT_STATUSES = ['active', 'repeating'];
+
+    public const TERMINAL_STATUSES = ['completed', 'graduated', 'transferred', 'withdrawn'];
 
     protected $fillable = [
         'school_id',
@@ -28,6 +31,13 @@ class StudentClassEnrollment extends Model
         'enrolled_at' => 'datetime',
         'metadata' => 'array',
     ];
+
+    public function scopeCurrent(Builder $query): Builder
+    {
+        return $query
+            ->whereIn('status', self::CURRENT_STATUSES)
+            ->whereNull('end_term_id');
+    }
 
     public function school(): BelongsTo
     {
@@ -72,5 +82,15 @@ class StudentClassEnrollment extends Model
     public function promotedToEnrollments(): HasMany
     {
         return $this->hasMany(self::class, 'promoted_from_enrollment_id');
+    }
+
+    public function promotionItemsFrom(): HasMany
+    {
+        return $this->hasMany(StudentPromotionItem::class, 'from_student_class_enrollment_id');
+    }
+
+    public function promotionItemsTo(): HasMany
+    {
+        return $this->hasMany(StudentPromotionItem::class, 'to_student_class_enrollment_id');
     }
 }

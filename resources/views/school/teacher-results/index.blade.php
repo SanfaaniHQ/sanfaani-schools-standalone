@@ -7,7 +7,9 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('school.dashboard') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Dashboard</a>
-                <a href="{{ route('school.teacher-results.create') }}" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">Enter Results</a>
+                @if ($canCreateResults ?? false)
+                    <a href="{{ route('school.teacher-results.create') }}" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">Enter Results</a>
+                @endif
             </div>
         </div>
     </x-slot>

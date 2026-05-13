@@ -15,9 +15,16 @@ class StudentPromotionItem extends Model
         'to_school_class_id',
         'from_academic_session_id',
         'to_academic_session_id',
+        'from_student_class_enrollment_id',
+        'to_student_class_enrollment_id',
         'action',
         'status',
         'notes',
+        'metadata',
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
     ];
 
     public function batch(): BelongsTo
@@ -48,5 +55,15 @@ class StudentPromotionItem extends Model
     public function toSession(): BelongsTo
     {
         return $this->belongsTo(AcademicSession::class, 'to_academic_session_id');
+    }
+
+    public function fromEnrollment(): BelongsTo
+    {
+        return $this->belongsTo(StudentClassEnrollment::class, 'from_student_class_enrollment_id');
+    }
+
+    public function toEnrollment(): BelongsTo
+    {
+        return $this->belongsTo(StudentClassEnrollment::class, 'to_student_class_enrollment_id');
     }
 }

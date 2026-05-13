@@ -35,12 +35,8 @@ class MailSettingController extends Controller
             'is_enabled' => ['nullable', 'boolean'],
         ]);
 
-        if (! filled($data['password'] ?? null)) {
-            unset($data['password']);
-        }
-
-        $data['is_enabled'] = (bool) ($data['is_enabled'] ?? false);
-        $setting->update($data);
+        $setting->fill($mailSettings->normalizedUpdateData($data, $setting));
+        $setting->save();
 
         $auditLog->log('mail_settings_updated', $setting, null, metadata: [
             'mailer' => $setting->mailer,

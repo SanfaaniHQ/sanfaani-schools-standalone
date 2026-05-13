@@ -32,6 +32,21 @@
                         </select>
                     </div>
                 </div>
+                @if ($canDirectEscalate)
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Route To</label>
+                            <select name="route_to" class="mt-1 block w-full rounded-xl border-gray-300">
+                                <option value="school_admin" @selected(old('route_to', $role === 'school_admin' ? 'super_admin' : 'school_admin') === 'school_admin')>School Admin</option>
+                                <option value="super_admin" @selected(old('route_to', $role === 'school_admin' ? 'super_admin' : 'school_admin') === 'super_admin')>Super Admin</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Escalation Reason</label>
+                            <input name="escalation_reason" value="{{ old('escalation_reason') }}" class="mt-1 block w-full rounded-xl border-gray-300">
+                        </div>
+                    </div>
+                @endif
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Message</label>
                     <textarea name="message" rows="6" class="mt-1 block w-full rounded-xl border-gray-300">{{ old('message') }}</textarea>

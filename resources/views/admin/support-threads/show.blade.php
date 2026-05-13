@@ -13,10 +13,35 @@
                     <div class="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-700">{{ session('success') }}</div>
                 @endif
 
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <span class="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{{ ucfirst(str_replace('_', ' ', $thread->status)) }}</span>
+                        <span class="rounded-full bg-amber-100 px-3 py-1 text-amber-800">{{ ucfirst($thread->priority) }}</span>
+                        <span class="rounded-full bg-blue-50 px-3 py-1 text-blue-700">{{ $thread->routeLabel() }}</span>
+                        @if ($thread->isEscalated())
+                            <span class="rounded-full bg-red-50 px-3 py-1 text-red-700">Escalated</span>
+                        @endif
+                    </div>
+                    <dl class="mt-5 grid gap-4 sm:grid-cols-2">
+                        <div><dt class="text-xs uppercase text-gray-500">School</dt><dd class="mt-1 font-medium text-gray-900">{{ $thread->school?->name ?? 'Platform' }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Created By</dt><dd class="mt-1 font-medium text-gray-900">{{ $thread->creator?->name ?? 'Unknown' }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Creator Role</dt><dd class="mt-1 font-medium text-gray-900">{{ ucwords(str_replace('_', ' ', $thread->creator_role ?: 'legacy')) }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Assigned To</dt><dd class="mt-1 font-medium text-gray-900">{{ $thread->assignedUser?->name ?? 'Unassigned' }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Escalated At</dt><dd class="mt-1 font-medium text-gray-900">{{ $thread->escalated_at?->format('d M Y H:i') ?: 'N/A' }}</dd></div>
+                        <div><dt class="text-xs uppercase text-gray-500">Escalated By</dt><dd class="mt-1 font-medium text-gray-900">{{ $thread->escalatedBy?->name ?? 'N/A' }}</dd></div>
+                    </dl>
+                </div>
+
                 <div class="space-y-3 rounded-2xl bg-white p-6 shadow-sm">
-                    @forelse ($thread->messages as $message)
+                    <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Conversation</h3>
+                    @forelse ($messages as $message)
                         <div class="rounded-xl border border-gray-100 p-4">
-                            <p class="text-xs text-gray-500">{{ $message->sender?->name ?? 'Unknown' }} - {{ $message->created_at?->diffForHumans() }}</p>
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <p class="text-xs text-gray-500">{{ $message->sender?->name ?? 'Unknown' }} - {{ ucwords(str_replace('_', ' ', $message->sender_role ?: 'support')) }} - {{ $message->created_at?->diffForHumans() }}</p>
+                                @if ($message->is_internal_note)
+                                    <span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">Internal</span>
+                                @endif
+                            </div>
                             <p class="mt-2 text-sm text-gray-800">{{ $message->message }}</p>
                         </div>
                     @empty
@@ -30,10 +55,28 @@
                     <textarea name="message" rows="4" class="mt-1 block w-full rounded-xl border-gray-300">{{ old('message') }}</textarea>
                     <label class="mt-3 flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" name="is_internal_note" value="1" class="rounded border-gray-300">
-                        Internal note (not for school-facing message)
+                        Internal note
                     </label>
                     <button class="mt-4 rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white">Send Reply</button>
                 </form>
+
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Timeline</h3>
+                    <div class="mt-4 space-y-4">
+                        @forelse ($thread->events->sortByDesc('occurred_at') as $event)
+                            <div class="border-l-2 border-gray-200 pl-4">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <p class="font-medium text-gray-900">{{ $event->title }}</p>
+                                    <span class="text-xs text-gray-500">{{ $event->occurred_at?->format('d M Y H:i') ?: $event->created_at->format('d M Y H:i') }}</span>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-600">{{ $event->body ?: ucwords(str_replace('_', ' ', $event->event_type)) }}</p>
+                                <p class="mt-1 text-xs text-gray-400">{{ $event->actor?->name ?? 'System' }} - {{ ucwords(str_replace('_', ' ', $event->actor_role ?: 'system')) }}</p>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500">No timeline events recorded yet.</p>
+                        @endforelse
+                    </div>
+                </div>
             </div>
 
             <div class="space-y-4">
@@ -67,6 +110,21 @@
                     </select>
                     <button class="mt-4 rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700">Update Assignment</button>
                 </form>
+
+                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                    <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Escalation History</h3>
+                    <div class="mt-4 space-y-3">
+                        @forelse ($thread->escalationHistories->sortByDesc('escalated_at') as $history)
+                            <div class="rounded-xl bg-gray-50 p-4 text-sm">
+                                <p class="font-medium text-gray-900">{{ ucwords(str_replace('_', ' ', $history->from_role ?: 'school')) }} to {{ ucwords(str_replace('_', ' ', $history->to_role)) }}</p>
+                                <p class="mt-1 text-gray-600">{{ $history->reason ?: 'No reason provided.' }}</p>
+                                <p class="mt-1 text-xs text-gray-500">{{ $history->escalatedBy?->name ?? 'System' }} - {{ $history->escalated_at?->format('d M Y H:i') }}</p>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500">No escalation history yet.</p>
+                        @endforelse
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ResultVerification extends Model
 {
@@ -53,5 +54,10 @@ class ResultVerification extends Model
     public function revokedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'revoked_by');
+    }
+
+    public function reportCardSnapshots(): HasMany
+    {
+        return $this->hasMany(ReportCardSnapshot::class);
     }
 }

@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\Cache;
 
 class SchoolRoleFeatureService
 {
+    private const FEATURE_ALIASES = [
+        'support.manage' => ['support.access'],
+        'support.access' => ['support.manage'],
+    ];
+
+    private const DEFAULT_DISABLED_FEATURES = [
+        'support.direct_escalation',
+    ];
+
     /**
      * Check if a feature is enabled for a role in a school.
      * Defaults to true if no setting exists.
@@ -21,14 +30,24 @@ class SchoolRoleFeatureService
         $cacheKey = "school_role_feature:{$schoolId}:{$roleName}:{$featureKey}";
 
         return Cache::remember($cacheKey, 3600, function () use ($schoolId, $roleName, $featureKey) {
-            $setting = SchoolRoleFeatureSetting::where('school_id', $schoolId)
-                ->where('role_name', $roleName)
-                ->where('feature_key', $featureKey)
+            $settings = $this->settingsForRole($schoolId, $roleName);
+            $candidateKeys = $this->candidateFeatureKeys($featureKey);
+            $setting = collect($candidateKeys)
+                ->map(fn (string $key) => $settings->get($key))
+                ->filter()
                 ->first();
 
-            // Default to true if no setting exists (safe default for V1.1 features)
-            return $setting ? $setting->is_enabled : true;
+            return $setting ? $setting->is_enabled : ! in_array($featureKey, self::DEFAULT_DISABLED_FEATURES, true);
         });
+    }
+
+    public function roleSupports(string $roleName, string $featureKey): bool
+    {
+        $availableKeys = array_keys($this->getAvailableFeatures($roleName));
+
+        return collect($this->candidateFeatureKeys($featureKey))
+            ->intersect($availableKeys)
+            ->isNotEmpty();
     }
 
     /**
@@ -50,6 +69,7 @@ class SchoolRoleFeatureService
         // Clear cache
         $cacheKey = "school_role_feature:{$schoolId}:{$roleName}:{$featureKey}";
         Cache::forget($cacheKey);
+        Cache::forget($this->roleSettingsCacheKey($schoolId, $roleName));
     }
 
     /**
@@ -57,10 +77,7 @@ class SchoolRoleFeatureService
      */
     public function getFeatures(int $schoolId, string $roleName): array
     {
-        $settings = SchoolRoleFeatureSetting::where('school_id', $schoolId)
-            ->where('role_name', $roleName)
-            ->get()
-            ->keyBy('feature_key');
+        $settings = $this->settingsForRole($schoolId, $roleName);
 
         $features = $this->getAvailableFeatures($roleName);
         $result = [];
@@ -87,9 +104,12 @@ class SchoolRoleFeatureService
                 'results.upload' => 'Result Upload',
                 'results.review' => 'Result Review',
                 'results.publish' => 'Result Publishing',
+                'student.promote' => 'Student Promotion',
+                'student.transfer' => 'Student Transfer / Withdrawal',
                 'subjects.view' => 'View Subjects',
                 'classes.view' => 'View Classes',
-                'support.access' => 'Support Access',
+                'support.manage' => 'Support Access',
+                'support.direct_escalation' => 'Direct Support Escalation',
                 'communication.send' => 'Send Communication',
                 'communication.bulk' => 'Bulk Communication',
                 'communication.results' => 'Result Communication',
@@ -100,12 +120,35 @@ class SchoolRoleFeatureService
                 'teacher.results.create' => 'Create Results',
                 'teacher.results.submit' => 'Submit Results',
                 'students.view_assigned' => 'View Assigned Students',
-                'support.access' => 'Support Access',
+                'support.manage' => 'Support Access',
+                'support.direct_escalation' => 'Direct Support Escalation',
                 'communication.send' => 'Send Communication',
+                'communication.bulk' => 'Bulk Communication',
                 'communication.students' => 'Student Communication',
             ],
         ];
 
         return $features[$roleName] ?? [];
+    }
+
+    private function settingsForRole(int $schoolId, string $roleName)
+    {
+        return Cache::remember($this->roleSettingsCacheKey($schoolId, $roleName), 3600, fn () => SchoolRoleFeatureSetting::where('school_id', $schoolId)
+            ->where('role_name', $roleName)
+            ->get()
+            ->keyBy('feature_key'));
+    }
+
+    private function candidateFeatureKeys(string $featureKey): array
+    {
+        return array_values(array_unique([
+            $featureKey,
+            ...(self::FEATURE_ALIASES[$featureKey] ?? []),
+        ]));
+    }
+
+    private function roleSettingsCacheKey(int $schoolId, string $roleName): string
+    {
+        return "school_role_features:{$schoolId}:{$roleName}";
     }
 }

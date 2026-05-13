@@ -11,7 +11,7 @@
         $schoolLogoUrl = $schoolLogoUrl && ! \Illuminate\Support\Str::startsWith($schoolLogoUrl, ['http://', 'https://'])
             ? url($schoolLogoUrl)
             : $schoolLogoUrl;
-        $roleLabel = data_get($metadata, 'role_label') ?? ucwords(str_replace('_', ' ', (string) data_get($metadata, 'role', 'staff')));
+        $roleLabel = data_get($mailMetadata, 'role_label') ?? ucwords(str_replace('_', ' ', (string) data_get($mailMetadata, 'role', 'staff')));
     @endphp
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:24px 0;background:#f3f4f6;">
         <tr>
@@ -31,10 +31,10 @@
                             <h1 style="margin:0 0 14px 0;font-size:20px;color:#111827;">{{ $headline }}</h1>
                             <div style="font-size:15px;line-height:1.7;color:#1f2937;white-space:pre-line;">{{ $body }}</div>
 
-                            @if (filled(data_get($metadata, 'action_url')))
+                            @if (filled(data_get($mailMetadata, 'action_url')))
                                 <div style="margin-top:24px;">
-                                    <a href="{{ data_get($metadata, 'action_url') }}" style="display:inline-block;border-radius:6px;background:#0f766e;color:#ffffff;padding:12px 18px;text-decoration:none;font-size:14px;font-weight:700;">
-                                        {{ data_get($metadata, 'action_label', 'Open') }}
+                                    <a href="{{ data_get($mailMetadata, 'action_url') }}" style="display:inline-block;border-radius:6px;background:#0f766e;color:#ffffff;padding:12px 18px;text-decoration:none;font-size:14px;font-weight:700;">
+                                        {{ data_get($mailMetadata, 'action_label', 'Open') }}
                                     </a>
                                 </div>
                             @endif

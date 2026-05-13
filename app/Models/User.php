@@ -19,7 +19,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     public function school(): BelongsTo
     {
@@ -61,9 +61,34 @@ class User extends Authenticatable
         return $this->hasMany(SupportMessage::class, 'sender_id');
     }
 
+    public function assignedSupportThreads(): HasMany
+    {
+        return $this->hasMany(SupportThread::class, 'assigned_to');
+    }
+
+    public function escalatedSupportThreads(): HasMany
+    {
+        return $this->hasMany(SupportThread::class, 'escalated_by');
+    }
+
     public function communicationLogs(): HasMany
     {
         return $this->hasMany(CommunicationLog::class, 'sender_id');
+    }
+
+    public function bulkCommunicationBatches(): HasMany
+    {
+        return $this->hasMany(BulkCommunicationBatch::class, 'sender_id');
+    }
+
+    public function assignedLeadRequests(): HasMany
+    {
+        return $this->hasMany(LeadRequest::class, 'assigned_to');
+    }
+
+    public function leadNotes(): HasMany
+    {
+        return $this->hasMany(LeadNote::class);
     }
 
     public function sendPasswordResetNotification($token): void

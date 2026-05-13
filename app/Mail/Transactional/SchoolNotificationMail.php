@@ -18,7 +18,7 @@ class SchoolNotificationMail extends Mailable
         public string $headline,
         public string $body,
         public ?School $school = null,
-        public array $metadata = []
+        public array $mailMetadata = []
     ) {}
 
     public function envelope(): Envelope
@@ -28,6 +28,11 @@ class SchoolNotificationMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.communication.school-notification');
+        return new Content(
+            view: 'emails.communication.school-notification',
+            with: [
+                'metadata' => $this->mailMetadata,
+            ]
+        );
     }
 }

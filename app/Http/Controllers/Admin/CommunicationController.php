@@ -8,6 +8,7 @@ use App\Models\CommunicationLog;
 use App\Models\LeadRequest;
 use App\Models\School;
 use App\Services\CommunicationService;
+use App\Services\LeadCrmService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Schema;
@@ -37,7 +38,7 @@ class CommunicationController extends Controller
         ]);
     }
 
-    public function send(Request $request, CommunicationService $communications)
+    public function send(Request $request, CommunicationService $communications, LeadCrmService $leadCrm)
     {
         $data = $request->validate([
             'target' => ['required', Rule::in(['school', 'trial_schools', 'expired_schools', 'lead'])],
@@ -77,7 +78,16 @@ class CommunicationController extends Controller
         if ($data['target'] === 'lead' && filled($data['lead_id'] ?? null)) {
             $lead = LeadRequest::findOrFail($data['lead_id']);
             if (filled($lead->email)) {
-                $communications->sendPlatformEmail($lead->email, $data['subject'], 'Lead follow-up', $data['message'], 'lead_followup', ['lead_id' => $lead->id], 'platform_transactional');
+                $log = $communications->sendPlatformEmail($lead->email, $data['subject'], 'Lead follow-up', $data['message'], 'lead_followup', ['lead_id' => $lead->id], 'platform_transactional', $request->user());
+                $leadCrm->recordCommunication($lead, $request->user(), [
+                    'channel' => 'email',
+                    'direction' => 'outbound',
+                    'recipient' => $lead->email,
+                    'subject' => $data['subject'],
+                    'body' => $data['message'],
+                    'status' => $log->status,
+                    'metadata' => ['source' => 'admin_communication_center'],
+                ], $log, $request);
             }
         }
 

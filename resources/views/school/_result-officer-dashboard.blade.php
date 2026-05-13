@@ -4,63 +4,44 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {{-- Welcome Card --}}
-        <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+        <x-ui.panel class="mb-8">
             <h3 class="text-lg font-semibold text-gray-900">
                 Welcome back, {{ auth()->user()->name }}
             </h3>
             <p class="mt-2 text-sm text-gray-600">
                 You can manage result-related tasks enabled by your School Admin.
             </p>
-        </div>
+        </x-ui.panel>
 
         {{-- Summary Cards --}}
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Students</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalStudents }}</p>
-                <p class="mt-1 text-sm text-gray-500">Total students</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Draft Results</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $draftResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">Pending entry</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Teacher Submissions</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $submittedResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">Awaiting review</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Published Results</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $publishedResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">Live results</p>
-            </div>
+            <x-ui.stat-card label="Students" :value="$totalStudents" meta="Total students" />
+            <x-ui.stat-card label="Draft Results" :value="$draftResults" meta="Pending entry" />
+            <x-ui.stat-card label="Teacher Submissions" :value="$submittedResults" meta="Awaiting review" />
+            <x-ui.stat-card label="Published Results" :value="$publishedResults" meta="Live results" />
         </div>
 
         {{-- Additional Stats --}}
         <div class="mt-6 grid gap-6 lg:grid-cols-3">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel>
                 <p class="text-sm font-medium text-gray-500">Reviewed / Approved</p>
                 <p class="mt-3 text-2xl font-semibold text-gray-900">{{ $reviewedResults }}</p>
                 <p class="mt-1 text-sm text-gray-500">Ready for publishing</p>
-            </div>
+            </x-ui.panel>
 
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel>
                 <p class="text-sm font-medium text-gray-500">Returned Results</p>
                 <p class="mt-3 text-2xl font-semibold text-gray-900">{{ $returnedResults }}</p>
                 <p class="mt-1 text-sm text-gray-500">Sent back for correction</p>
-            </div>
+            </x-ui.panel>
 
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel>
                 <p class="text-sm font-medium text-gray-500">Current Term</p>
                 <p class="mt-3 text-lg font-semibold text-gray-900">
                     {{ $activeTerm?->name ?? 'Not set' }}
                 </p>
                 <p class="mt-1 text-sm text-gray-500">{{ $activeSession?->name ?? 'No active session' }}</p>
-            </div>
+            </x-ui.panel>
         </div>
 
         {{-- Result Processing Modules --}}
@@ -173,7 +154,7 @@
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    @if(($features['support.access']['enabled'] ?? true))
+                    @if(($features['support.manage']['enabled'] ?? true))
                         <a href="{{ route('school.support.index') }}"
                            class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
                             <h4 class="text-base font-semibold text-gray-900">Support</h4>

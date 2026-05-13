@@ -56,6 +56,14 @@ class AuditLogService
 
     private function tagFor(string $action): string
     {
+        if (
+            str_starts_with($action, 'teacher_assignment')
+            || str_starts_with($action, 'teacher_class_assigned')
+            || str_starts_with($action, 'teacher_subject_assigned')
+        ) {
+            return 'teacher_assignment';
+        }
+
         $parts = explode('_', $action);
 
         if (count($parts) <= 1) {

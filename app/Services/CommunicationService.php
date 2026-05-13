@@ -23,12 +23,19 @@ use Throwable;
 class CommunicationService
 {
     public const CATEGORY_MANUAL = 'manual';
+
     public const CATEGORY_STUDENT_TRANSACTIONAL = 'student_transactional';
+
     public const CATEGORY_STUDENT_LIFECYCLE = 'student_lifecycle';
+
     public const CATEGORY_STAFF_TRANSACTIONAL = 'staff_transactional';
+
     public const CATEGORY_STAFF_LIFECYCLE = 'staff_lifecycle';
+
     public const CATEGORY_SCHOOL_NOTIFICATION = 'school_notification';
+
     public const CATEGORY_PLATFORM_TRANSACTIONAL = 'platform_transactional';
+
     public const CATEGORY_ANNOUNCEMENT = 'announcement';
 
     public function __construct(
@@ -44,9 +51,10 @@ class CommunicationService
         string $body,
         string $type,
         array $metadata = [],
-        string $category = 'student_transactional'
+        string $category = 'student_transactional',
+        ?Authenticatable $sender = null
     ): CommunicationLog {
-        return $this->sendTransactionalEmail($school, $recipient, $subject, $headline, $body, $type, $metadata, $category);
+        return $this->sendTransactionalEmail($school, $recipient, $subject, $headline, $body, $type, $metadata, $category, $sender);
     }
 
     public function sendPlatformEmail(
@@ -56,9 +64,10 @@ class CommunicationService
         string $body,
         string $type,
         array $metadata = [],
-        string $category = 'platform_transactional'
+        string $category = 'platform_transactional',
+        ?Authenticatable $sender = null
     ): CommunicationLog {
-        return $this->sendTransactionalEmail(null, $recipient, $subject, $headline, $body, $type, $metadata, $category);
+        return $this->sendTransactionalEmail(null, $recipient, $subject, $headline, $body, $type, $metadata, $category, $sender);
     }
 
     public function sendManualEmail(
@@ -68,9 +77,10 @@ class CommunicationService
         string $message,
         array $metadata = [],
         string $type = 'manual_email',
-        string $headline = 'Manual communication'
+        string $headline = 'Manual communication',
+        ?Authenticatable $sender = null
     ): CommunicationLog {
-        return $this->dispatch($school, $recipient, $subject, $headline, $message, $type, self::CATEGORY_MANUAL, $metadata);
+        return $this->dispatch($school, $recipient, $subject, $headline, $message, $type, self::CATEGORY_MANUAL, $metadata, $sender);
     }
 
     public function sendTransactionalEmail(
@@ -81,9 +91,10 @@ class CommunicationService
         string $body,
         string $type,
         array $metadata = [],
-        string $category = self::CATEGORY_STUDENT_TRANSACTIONAL
+        string $category = self::CATEGORY_STUDENT_TRANSACTIONAL,
+        ?Authenticatable $sender = null
     ): CommunicationLog {
-        return $this->dispatch($school, $recipient, $subject, $headline, $body, $type, $category, $metadata);
+        return $this->dispatch($school, $recipient, $subject, $headline, $body, $type, $category, $metadata, $sender);
     }
 
     public function resend(CommunicationLog $log, ?School $school = null, ?string $headline = null): CommunicationLog

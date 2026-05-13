@@ -58,6 +58,7 @@ class Student extends Model
     {
         return $this->hasOne(StudentClassEnrollment::class)
             ->whereIn('status', StudentClassEnrollment::CURRENT_STATUSES)
+            ->whereNull('end_term_id')
             ->latestOfMany();
     }
 
@@ -86,6 +87,11 @@ class Student extends Model
         return $this->hasMany(ResultVerification::class);
     }
 
+    public function reportCardSnapshots(): HasMany
+    {
+        return $this->hasMany(ReportCardSnapshot::class);
+    }
+
     public function electiveSubjects(): HasMany
     {
         return $this->hasMany(StudentElectiveSubject::class);
@@ -93,6 +99,6 @@ class Student extends Model
 
     public function fullName(): string
     {
-        return trim($this->first_name . ' ' . $this->middle_name . ' ' . $this->last_name);
+        return trim($this->first_name.' '.$this->middle_name.' '.$this->last_name);
     }
 }

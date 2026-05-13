@@ -1,3 +1,62 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+    .ui-input {
+        @apply block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700;
+    }
+
+    .ui-button-primary {
+        @apply inline-flex items-center justify-center rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .ui-button-secondary {
+        @apply inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2;
+    }
+
+    .ui-table-wrap {
+        @apply overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm;
+    }
+
+    .marketing-card {
+        @apply transition duration-200 ease-out motion-safe:hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg;
+    }
+
+    .marketing-stat {
+        @apply transition duration-200 ease-out motion-safe:hover:-translate-y-1;
+    }
+
+    .marketing-link {
+        @apply rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2;
+    }
+}
+
+.marketing-hero {
+    background-image:
+        linear-gradient(90deg, rgba(3, 7, 18, 0.84) 0%, rgba(3, 7, 18, 0.7) 42%, rgba(3, 7, 18, 0.18) 100%),
+        url('/images/marketing/hero-dashboard-preview.png');
+    background-position: center;
+    background-size: cover;
+}
+
+.marketing-cta-gradient {
+    background:
+        linear-gradient(135deg, rgba(6, 78, 59, 1) 0%, rgba(15, 118, 110, 1) 48%, rgba(3, 105, 161, 1) 100%);
+}
+
+.marketing-soft-gradient {
+    background:
+        linear-gradient(135deg, rgba(236, 253, 245, 0.92) 0%, rgba(255, 255, 255, 1) 42%, rgba(224, 242, 254, 0.82) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

@@ -5,14 +5,15 @@ namespace App\Http\Controllers\School;
 use App\Http\Controllers\Controller;
 use App\Services\CurrentSchoolService;
 use App\Services\OnboardingProgressService;
-use App\Services\SchoolRoleFeatureService;
+use App\Services\SchoolAuthorizationService;
+use App\Services\TeacherAssignmentAccessService;
 
 class SchoolAdminDashboardController extends Controller
 {
     public function index(
         CurrentSchoolService $currentSchool,
         OnboardingProgressService $onboarding,
-        SchoolRoleFeatureService $featureService
+        SchoolAuthorizationService $authorization
     ) {
         $user = auth()->user();
         $school = $currentSchool->get($user);
@@ -73,7 +74,7 @@ class SchoolAdminDashboardController extends Controller
         }
 
         // Get feature availability for current role
-        $data['features'] = $featureService->getFeatures($school->id, $roleContext);
+        $data['features'] = $authorization->featuresForRole($school, $user, $roleContext);
 
         return view('school.dashboard', $data);
     }
@@ -83,17 +84,15 @@ class SchoolAdminDashboardController extends Controller
      */
     private function getTeacherDashboardData($user, $school): array
     {
+        $assignmentAccess = app(TeacherAssignmentAccessService::class);
+
         // Get active class assignments for this teacher
-        $classAssignments = $user->teacherClassAssignments()
-            ->where('school_id', $school->id)
-            ->where('status', 'active')
+        $classAssignments = $assignmentAccess->classAssignmentsQuery($school, $user)
             ->with('schoolClass')
             ->get();
 
         // Get active subject assignments for this teacher
-        $subjectAssignments = $user->teacherSubjectAssignments()
-            ->where('school_id', $school->id)
-            ->where('status', 'active')
+        $subjectAssignments = $assignmentAccess->subjectAssignmentsQuery($school, $user)
             ->with('subject', 'schoolClass')
             ->get();
 
@@ -119,8 +118,9 @@ class SchoolAdminDashboardController extends Controller
             ->count();
 
         // Calculate total students in assigned classes
+        $visibleClassIds = $assignmentAccess->visibleClassIds($school, $user);
         $totalStudents = $school->students()
-            ->whereIn('school_class_id', $classAssignments->pluck('school_class_id'))
+            ->whereIn('school_class_id', $visibleClassIds)
             ->count();
 
         return [

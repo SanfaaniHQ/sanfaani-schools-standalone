@@ -13,7 +13,7 @@
             @endif
 
             <div class="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-sm text-emerald-800">
-                Promotion moves students into a new academic session/class without deleting previous results.
+                Lifecycle changes promote, demote, repeat, graduate, transfer, or withdraw students without deleting previous results. Archive remains a separate visibility action.
             </div>
 
             <form method="POST" action="{{ route('school.student-promotions.preview') }}" data-loading-text="Loading students..." class="space-y-6 rounded-2xl bg-white p-6 shadow-sm">

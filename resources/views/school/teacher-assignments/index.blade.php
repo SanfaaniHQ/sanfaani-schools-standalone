@@ -48,7 +48,9 @@
                             <tr>
                                 <th class="px-5 py-3">Teacher</th>
                                 <th class="px-5 py-3">Class</th>
+                                <th class="px-5 py-3">Mode</th>
                                 <th class="px-5 py-3">Session / Term</th>
+                                <th class="px-5 py-3">Effective</th>
                                 <th class="px-5 py-3">Status</th>
                                 <th class="px-5 py-3"></th>
                             </tr>
@@ -58,7 +60,9 @@
                                 <tr>
                                     <td class="px-5 py-3">{{ $assignment->teacher?->name }}<br><span class="text-xs text-gray-500">{{ $assignment->teacher?->email }}</span></td>
                                     <td class="px-5 py-3">{{ $assignment->schoolClass?->name }}</td>
+                                    <td class="px-5 py-3">{{ str($assignment->role_type ?? 'class_teacher')->replace('_', ' ')->title() }}</td>
                                     <td class="px-5 py-3">{{ $assignment->academicSession?->name ?? 'Any session' }} / {{ $assignment->term?->name ?? 'Any term' }}</td>
+                                    <td class="px-5 py-3">{{ $assignment->starts_at?->format('d M Y') ?? 'Immediate' }} / {{ $assignment->ends_at?->format('d M Y') ?? 'Open' }}</td>
                                     <td class="px-5 py-3"><span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">{{ ucfirst($assignment->status) }}</span></td>
                                     <td class="px-5 py-3 text-right">
                                         @if ($assignment->trashed())
@@ -78,7 +82,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="px-5 py-8 text-center text-sm text-gray-500">No class teacher assignments yet.</td></tr>
+                                <tr><td colspan="7" class="px-5 py-8 text-center text-sm text-gray-500">No class teacher assignments yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -98,7 +102,9 @@
                                 <th class="px-5 py-3">Teacher</th>
                                 <th class="px-5 py-3">Subject</th>
                                 <th class="px-5 py-3">Class</th>
+                                <th class="px-5 py-3">Mode</th>
                                 <th class="px-5 py-3">Session / Term</th>
+                                <th class="px-5 py-3">Effective</th>
                                 <th class="px-5 py-3">Status</th>
                                 <th class="px-5 py-3"></th>
                             </tr>
@@ -109,7 +115,9 @@
                                     <td class="px-5 py-3">{{ $assignment->teacher?->name }}<br><span class="text-xs text-gray-500">{{ $assignment->teacher?->email }}</span></td>
                                     <td class="px-5 py-3">{{ $assignment->subject?->name }}</td>
                                     <td class="px-5 py-3">{{ $assignment->schoolClass?->name ?? 'All assigned classes' }}</td>
+                                    <td class="px-5 py-3">{{ str($assignment->role_type ?? 'subject_teacher')->replace('_', ' ')->title() }}</td>
                                     <td class="px-5 py-3">{{ $assignment->academicSession?->name ?? 'Any session' }} / {{ $assignment->term?->name ?? 'Any term' }}</td>
+                                    <td class="px-5 py-3">{{ $assignment->starts_at?->format('d M Y') ?? 'Immediate' }} / {{ $assignment->ends_at?->format('d M Y') ?? 'Open' }}</td>
                                     <td class="px-5 py-3"><span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">{{ ucfirst($assignment->status) }}</span></td>
                                     <td class="px-5 py-3 text-right">
                                         @if ($assignment->trashed())
@@ -129,7 +137,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6" class="px-5 py-8 text-center text-sm text-gray-500">No subject teacher assignments yet.</td></tr>
+                                <tr><td colspan="8" class="px-5 py-8 text-center text-sm text-gray-500">No subject teacher assignments yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

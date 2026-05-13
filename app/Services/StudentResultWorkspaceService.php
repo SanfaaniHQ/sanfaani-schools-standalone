@@ -395,6 +395,14 @@ class StudentResultWorkspaceService
         return TeacherSubjectAssignment::query()
             ->where('school_id', $school->id)
             ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', today());
+            })
+            ->where(function ($query) {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', today());
+            })
             ->where(function ($query) use ($classIds) {
                 $query->whereNull('school_class_id')
                     ->when($classIds !== [], fn ($query) => $query->orWhereIn('school_class_id', $classIds));
@@ -424,6 +432,14 @@ class StudentResultWorkspaceService
         return TeacherClassAssignment::query()
             ->where('school_id', $school->id)
             ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('starts_at')
+                    ->orWhere('starts_at', '<=', today());
+            })
+            ->where(function ($query) {
+                $query->whereNull('ends_at')
+                    ->orWhere('ends_at', '>=', today());
+            })
             ->whereIn('school_class_id', $classIds)
             ->when($selectedSessionId, fn ($query) => $query->where(function ($query) use ($selectedSessionId) {
                 $query->whereNull('academic_session_id')

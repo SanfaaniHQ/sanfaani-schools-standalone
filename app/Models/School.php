@@ -103,9 +103,24 @@ class School extends Model
         return $this->hasMany(SupportMessage::class);
     }
 
+    public function supportEscalationHistories(): HasMany
+    {
+        return $this->hasMany(SupportEscalationHistory::class);
+    }
+
+    public function supportThreadEvents(): HasMany
+    {
+        return $this->hasMany(SupportThreadEvent::class);
+    }
+
     public function communicationLogs(): HasMany
     {
         return $this->hasMany(CommunicationLog::class);
+    }
+
+    public function bulkCommunicationBatches(): HasMany
+    {
+        return $this->hasMany(BulkCommunicationBatch::class);
     }
 
     public function academicSessions(): HasMany
@@ -136,6 +151,11 @@ class School extends Model
     public function reportCardSetting(): HasOne
     {
         return $this->hasOne(SchoolReportCardSetting::class);
+    }
+
+    public function reportCardSnapshots(): HasMany
+    {
+        return $this->hasMany(ReportCardSnapshot::class);
     }
 
     public function reportCardCommentRules(): HasMany

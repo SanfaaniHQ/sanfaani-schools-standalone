@@ -16,11 +16,12 @@ return new class extends Migration
         }
 
         Schema::table(self::TABLE, function (Blueprint $table) {
-            $this->dropIndexIfExists($table, 'communication_logs_school_id_status_index');
+            // Drop indexes that are NOT part of foreign key constraints
             $this->dropIndexIfExists($table, 'communication_logs_type_status_index');
             $this->dropIndexIfExists($table, 'communication_logs_sent_at_index');
 
-            $this->addIndexIfMissing($table, ['school_id', 'status', 'created_at'], 'comm_logs_school_status_created_idx');
+            // Add new optimized indexes
+            // Note: communication_logs_school_id_status_index is kept because it's used by foreign key
             $this->addIndexIfMissing($table, ['school_id', 'type', 'created_at'], 'comm_logs_school_type_created_idx');
             $this->addIndexIfMissing($table, ['sender_id', 'created_at'], 'comm_logs_sender_created_idx');
             $this->addIndexIfMissing($table, ['status', 'created_at'], 'comm_logs_status_created_idx');
@@ -38,13 +39,12 @@ return new class extends Migration
 
         Schema::table(self::TABLE, function (Blueprint $table) {
             $this->dropIndexIfExists($table, 'comm_logs_recipient_idx');
-            $this->dropIndexIfExists($table, 'comm_logs_school_status_created_idx');
             $this->dropIndexIfExists($table, 'comm_logs_school_type_created_idx');
             $this->dropIndexIfExists($table, 'comm_logs_sender_created_idx');
             $this->dropIndexIfExists($table, 'comm_logs_status_created_idx');
             $this->dropIndexIfExists($table, 'comm_logs_sent_at_idx');
 
-            $this->addIndexIfMissing($table, ['school_id', 'status'], 'communication_logs_school_id_status_index');
+            // Restore original indexes (except school_id_status which was kept)
             $this->addIndexIfMissing($table, ['type', 'status'], 'communication_logs_type_status_index');
             $this->addIndexIfMissing($table, 'sent_at', 'communication_logs_sent_at_index');
         });

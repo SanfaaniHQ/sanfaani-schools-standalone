@@ -13,7 +13,7 @@
     <div class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
-            <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel class="mb-8">
                 <h3 class="text-lg font-semibold text-gray-900">
                     Welcome back, {{ auth()->user()->name }}
                 </h3>
@@ -21,10 +21,10 @@
                 <p class="mt-2 text-sm text-gray-600">
                         Monitor schools, users, results, scratch cards, payments, audit logs, and launch settings.
                 </p>
-            </div>
+            </x-ui.panel>
 
             @if (! empty($platformOnboardingProgress))
-                <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+                <x-ui.panel class="mb-8">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <h3 class="text-base font-semibold text-gray-900">Platform Onboarding</h3>
@@ -34,44 +34,21 @@
                     </div>
                     <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                         @foreach ($platformOnboardingSteps as $key => $label)
-                            <div class="rounded-xl border border-gray-100 p-3 text-sm {{ in_array($key, $platformOnboardingCompleted, true) ? 'bg-emerald-50 text-emerald-900' : 'bg-gray-50 text-gray-700' }}">
+                            <div class="rounded-lg border border-gray-200 p-3 text-sm {{ in_array($key, $platformOnboardingCompleted, true) ? 'bg-emerald-50 text-emerald-900' : 'bg-gray-50 text-gray-700' }}">
                                 {{ $label }}
                             </div>
                         @endforeach
                     </div>
-                </div>
+                </x-ui.panel>
             @endif
 
             <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Total Schools</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSchools }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Total Users</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalUsers }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Total Roles</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalRoles }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Super Admins</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSuperAdmins }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">School Admins</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalSchoolAdmins }}</p>
-                </div>
-
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Result Officers</p>
-                    <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalResultOfficers }}</p>
-                </div>
+                <x-ui.stat-card label="Total Schools" :value="$totalSchools" />
+                <x-ui.stat-card label="Total Users" :value="$totalUsers" />
+                <x-ui.stat-card label="Total Roles" :value="$totalRoles" />
+                <x-ui.stat-card label="Super Admins" :value="$totalSuperAdmins" />
+                <x-ui.stat-card label="School Admins" :value="$totalSchoolAdmins" />
+                <x-ui.stat-card label="Result Officers" :value="$totalResultOfficers" />
             </div>
 
             <div class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -87,10 +64,7 @@
                     'New Demo Requests' => $newDemoRequests,
                     'New Contact Requests' => $newContactRequests,
                 ] as $label => $value)
-                    <div class="rounded-2xl bg-white p-5 shadow-sm">
-                        <p class="text-sm font-medium text-gray-500">{{ $label }}</p>
-                        <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $value }}</p>
-                    </div>
+                    <x-ui.stat-card :label="$label" :value="$value" class="[&>p:nth-child(2)]:text-2xl" />
                 @endforeach
             </div>
 

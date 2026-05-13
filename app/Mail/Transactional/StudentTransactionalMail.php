@@ -18,7 +18,7 @@ class StudentTransactionalMail extends Mailable
         public string $headline,
         public string $body,
         public ?School $school = null,
-        public array $metadata = []
+        public array $mailMetadata = []
     ) {}
 
     public function envelope(): Envelope
@@ -28,6 +28,11 @@ class StudentTransactionalMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.communication.student-transactional');
+        return new Content(
+            view: 'emails.communication.student-transactional',
+            with: [
+                'metadata' => $this->mailMetadata,
+            ]
+        );
     }
 }

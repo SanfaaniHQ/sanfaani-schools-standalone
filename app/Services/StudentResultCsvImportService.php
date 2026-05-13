@@ -6,7 +6,6 @@ use App\Enums\ResultWorkflowStatus;
 use App\Models\AcademicSession;
 use App\Models\School;
 use App\Models\SchoolClass;
-use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
@@ -40,6 +39,7 @@ class StudentResultCsvImportService
 
         if (! $handle) {
             $this->errors[] = 'Could not open the uploaded file.';
+
             return;
         }
 
@@ -48,6 +48,7 @@ class StudentResultCsvImportService
         if (! $headers) {
             $this->errors[] = 'The CSV file is empty or has no header row.';
             fclose($handle);
+
             return;
         }
 
@@ -65,6 +66,7 @@ class StudentResultCsvImportService
             if (! in_array($requiredHeader, $headers, true)) {
                 $this->errors[] = "Missing required column: {$requiredHeader}.";
                 fclose($handle);
+
                 return;
             }
         }
@@ -82,6 +84,7 @@ class StudentResultCsvImportService
 
             if (! $data) {
                 $this->errors[] = "Row {$rowNumber}: Could not read row data.";
+
                 continue;
             }
 
@@ -102,26 +105,31 @@ class StudentResultCsvImportService
 
         if (! $admissionNumber && ! $subjectCode && $this->scoreIsBlank($caScore) && $this->scoreIsBlank($examScore)) {
             $this->skippedCount++;
+
             return;
         }
 
         if (! $admissionNumber || ! $subjectCode) {
             $this->errors[] = "Row {$rowNumber}: admission_number and subject_code are required.";
+
             return;
         }
 
         if ($this->scoreIsBlank($caScore) && $this->scoreIsBlank($examScore)) {
             $this->skippedCount++;
+
             return;
         }
 
         if ($this->scoreIsBlank($caScore) || $this->scoreIsBlank($examScore)) {
             $this->errors[] = "Row {$rowNumber}: CA score and exam score must both be filled.";
+
             return;
         }
 
         if (! is_numeric($caScore) || ! is_numeric($examScore)) {
             $this->errors[] = "Row {$rowNumber}: CA score and exam score must be numbers.";
+
             return;
         }
 
@@ -130,31 +138,36 @@ class StudentResultCsvImportService
 
         if ($caScore < 0 || $caScore > 40) {
             $this->errors[] = "Row {$rowNumber}: CA score must be between 0 and 40.";
+
             return;
         }
 
         if ($examScore < 0 || $examScore > 60) {
             $this->errors[] = "Row {$rowNumber}: Exam score must be between 0 and 60.";
+
             return;
         }
 
         if (! in_array($status, ResultWorkflowStatus::manualEntryValues(), true)) {
             $this->errors[] = "Row {$rowNumber}: Status must be draft or reviewed.";
+
             return;
         }
 
         if ($teacherRemark && mb_strlen($teacherRemark) > 500) {
             $this->errors[] = "Row {$rowNumber}: Teacher remark must not exceed 500 characters.";
+
             return;
         }
 
-        $student = Student::where('school_id', $this->school->id)
-            ->where('school_class_id', $this->schoolClass->id)
+        $student = app(StudentClassEnrollmentService::class)
+            ->studentQueryForClassContext($this->school, $this->schoolClass->id, $this->academicSession)
             ->where('admission_number', $admissionNumber)
             ->first();
 
         if (! $student) {
             $this->errors[] = "Row {$rowNumber}: Student {$admissionNumber} was not found in the selected class.";
+
             return;
         }
 
@@ -167,6 +180,7 @@ class StudentResultCsvImportService
 
         if (! $subject) {
             $this->errors[] = "Row {$rowNumber}: Subject {$subjectCode} was not found.";
+
             return;
         }
 

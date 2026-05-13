@@ -10,8 +10,10 @@ use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
-use App\Services\ResultGradingService;
 use App\Services\AuditLogService;
+use App\Services\CurrentSchoolService;
+use App\Services\ResultGradingService;
+use App\Services\StudentClassEnrollmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -21,6 +23,7 @@ class ManualResultController extends Controller
     public function index(Request $request)
     {
         $school = $this->currentSchoolOrFail();
+        Gate::authorize('viewAny', [StudentResult::class, $school]);
 
         $results = $school->studentResults()
             ->with(['student', 'schoolClass', 'subject', 'academicSession', 'term'])
@@ -72,7 +75,7 @@ class ManualResultController extends Controller
             ->firstOrFail();
 
         $data['school_id'] = $school->id;
-        $data['school_class_id'] = $student->school_class_id;
+        $data['school_class_id'] = $this->resolveResultClassId($school, $student, $data);
         $data['recorded_by'] = auth()->id();
 
         $data = $this->calculateResult($school, $data);
@@ -139,7 +142,7 @@ class ManualResultController extends Controller
             ->where('id', $data['student_id'])
             ->firstOrFail();
 
-        $data['school_class_id'] = $student->school_class_id;
+        $data['school_class_id'] = $this->resolveResultClassId($school, $student, $data, $studentResult);
         $data = $this->calculateResult($school, $data);
 
         $oldValues = $studentResult->only(['ca_score', 'exam_score', 'total_score', 'grade', 'remark', 'teacher_remark', 'status']);
@@ -230,9 +233,35 @@ class ManualResultController extends Controller
         return $data;
     }
 
+    private function resolveResultClassId(
+        School $school,
+        Student $student,
+        array $data,
+        ?StudentResult $existingResult = null
+    ): ?int {
+        $contextUnchanged = $existingResult
+            && (int) $existingResult->student_id === (int) $student->id
+            && (int) $existingResult->academic_session_id === (int) $data['academic_session_id']
+            && (int) $existingResult->term_id === (int) $data['term_id']
+            && $existingResult->result_type === ($data['result_type'] ?? 'term_result');
+
+        if ($contextUnchanged && $existingResult->school_class_id) {
+            return $existingResult->school_class_id;
+        }
+
+        $academicSession = AcademicSession::where('school_id', $school->id)
+            ->findOrFail($data['academic_session_id']);
+        $term = Term::where('school_id', $school->id)
+            ->where('academic_session_id', $academicSession->id)
+            ->findOrFail($data['term_id']);
+
+        return app(StudentClassEnrollmentService::class)
+            ->classIdForResultContext($school, $student, $academicSession, $term);
+    }
+
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

@@ -20,13 +20,13 @@
             @endif
 
             <div class="mb-6 rounded-2xl border border-amber-100 bg-amber-50 p-5 text-sm text-amber-800">
-                Published results and historical records will not be deleted. Promotions only create enrollment/history records and update current student placement.
+                Published results and historical records will not be deleted. Lifecycle actions only create enrollment/history records and update current student placement.
             </div>
 
             <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
                 <div class="border-b border-gray-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-gray-900">Recent Promotion Batches</h3>
-                    <p class="mt-1 text-sm text-gray-500">Completed class movement, repeat, graduation, transfer, and withdrawal actions.</p>
+                    <p class="mt-1 text-sm text-gray-500">Completed promotion, demotion, repeat, graduation, transfer, and withdrawal actions.</p>
                 </div>
 
                 <div class="overflow-x-auto">

@@ -6,16 +6,15 @@ use App\Enums\ResultWorkflowStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
-use App\Models\Student;
 use App\Models\Subject;
-use App\Models\TeacherClassAssignment;
 use App\Models\TeacherResultSubmission;
-use App\Models\TeacherSubjectAssignment;
 use App\Models\Term;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
 use App\Services\ResultEntryWorkspaceService;
-use App\Services\SchoolRoleFeatureService;
+use App\Services\SchoolAuthorizationService;
+use App\Services\StudentClassEnrollmentService;
+use App\Services\TeacherAssignmentAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
@@ -27,6 +26,7 @@ class TeacherResultEntryController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         $roleContext = $currentSchool->roleContext(auth()->user());
+        Gate::authorize('viewAny', [TeacherResultSubmission::class, $school]);
 
         $submissions = $school->teacherResultSubmissions()
             ->with(['teacher', 'schoolClass', 'subject', 'academicSession', 'term'])
@@ -45,6 +45,7 @@ class TeacherResultEntryController extends Controller
             'statuses' => ResultWorkflowStatus::labels(),
             'filters' => $request->only(['status']),
             'roleContext' => $roleContext,
+            'canCreateResults' => auth()->user()->can('create', [TeacherResultSubmission::class, $school]),
         ]);
     }
 
@@ -52,12 +53,12 @@ class TeacherResultEntryController extends Controller
         Request $request,
         CurrentSchoolService $currentSchool,
         ResultEntryWorkspaceService $workspace
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $roleContext = $currentSchool->roleContext(auth()->user());
         $classId = $request->integer('school_class_id') ?: null;
-        $students = $classId ? $this->studentsForClass($school, $classId) : collect();
+        $sessionId = $request->integer('academic_session_id') ?: null;
+        $students = $classId ? $this->studentsForClass($school, $classId, $sessionId) : collect();
         $gradingScales = $workspace->activeGradingScales($school);
         $editableRemarks = $workspace->editableRemarkFields($roleContext);
 
@@ -90,7 +91,7 @@ class TeacherResultEntryController extends Controller
             'canEditAdminRemark' => $editableRemarks['admin_remark'],
             'canSaveDraft' => true,
             'canSubmit' => $roleContext !== 'teacher'
-                || app(SchoolRoleFeatureService::class)->enabled($school->id, 'teacher', 'teacher.results.submit'),
+                || app(SchoolAuthorizationService::class)->can(auth()->user(), $school, 'teacher.results.submit'),
             'canReview' => false,
             'canReturn' => false,
             'canApprove' => false,
@@ -104,8 +105,7 @@ class TeacherResultEntryController extends Controller
         AuditLogService $auditLog,
         CurrentSchoolService $currentSchool,
         ResultEntryWorkspaceService $workspace
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $roleContext = $currentSchool->roleContext(auth()->user());
 
@@ -119,7 +119,7 @@ class TeacherResultEntryController extends Controller
 
         unset($data['action']);
 
-        $students = $this->studentsForClass($school, (int) $data['school_class_id']);
+        $students = $this->studentsForClass($school, (int) $data['school_class_id'], (int) $data['academic_session_id']);
         $gradingScales = $workspace->activeGradingScales($school);
         $scores = $workspace->validateRows($request, $students, $gradingScales, $roleContext);
         $status = $request->input('action') === 'submit'
@@ -129,7 +129,7 @@ class TeacherResultEntryController extends Controller
         if (
             $status === ResultWorkflowStatus::Submitted
             && $roleContext === 'teacher'
-            && ! app(SchoolRoleFeatureService::class)->enabled($school->id, 'teacher', 'teacher.results.submit')
+            && ! app(SchoolAuthorizationService::class)->can(auth()->user(), $school, 'teacher.results.submit')
         ) {
             abort(403, 'You do not have permission to submit teacher results.');
         }
@@ -164,7 +164,7 @@ class TeacherResultEntryController extends Controller
         return view('school.teacher-results.show', [
             'school' => $school,
             'submission' => $submission->load(['teacher', 'schoolClass', 'subject', 'academicSession', 'term']),
-            'studentsById' => $this->studentsForClass($school, $submission->school_class_id)->keyBy('id'),
+            'studentsById' => $this->studentsForClass($school, $submission->school_class_id, $submission->academic_session_id, activeOnly: false, includeArchived: true)->keyBy('id'),
         ]);
     }
 
@@ -172,13 +172,12 @@ class TeacherResultEntryController extends Controller
         TeacherResultSubmission $submission,
         CurrentSchoolService $currentSchool,
         ResultEntryWorkspaceService $workspace
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $this->ensureSubmissionBelongsToSchool($submission, $school);
         Gate::authorize('update', $submission);
         $roleContext = $currentSchool->roleContext(auth()->user());
-        $students = $this->studentsForClass($school, $submission->school_class_id);
+        $students = $this->studentsForClass($school, $submission->school_class_id, $submission->academic_session_id, activeOnly: false, includeArchived: true);
         $gradingScales = $workspace->activeGradingScales($school);
         $editableRemarks = $workspace->editableRemarkFields($roleContext);
 
@@ -223,8 +222,7 @@ class TeacherResultEntryController extends Controller
         AuditLogService $auditLog,
         CurrentSchoolService $currentSchool,
         ResultEntryWorkspaceService $workspace
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $this->ensureSubmissionBelongsToSchool($submission, $school);
         Gate::authorize('update', $submission);
@@ -237,7 +235,7 @@ class TeacherResultEntryController extends Controller
             Gate::authorize('submit', $submission);
         }
 
-        $students = $this->studentsForClass($school, $submission->school_class_id);
+        $students = $this->studentsForClass($school, $submission->school_class_id, $submission->academic_session_id, activeOnly: false, includeArchived: true);
         $gradingScales = $workspace->activeGradingScales($school);
         $scores = $workspace->validateRows(
             $request,
@@ -330,43 +328,14 @@ class TeacherResultEntryController extends Controller
             return true;
         }
 
-        $subjectMatch = TeacherSubjectAssignment::where('school_id', $school->id)
-            ->where('teacher_user_id', auth()->id())
-            ->where('subject_id', $data['subject_id'])
-            ->where('status', 'active')
-            ->whereNull('deleted_at')
-            ->where(function ($query) use ($data) {
-                $query->whereNull('school_class_id')
-                    ->orWhere('school_class_id', $data['school_class_id']);
-            })
-            ->where(function ($query) use ($data) {
-                $query->whereNull('academic_session_id')
-                    ->orWhere('academic_session_id', $data['academic_session_id']);
-            })
-            ->where(function ($query) use ($data) {
-                $query->whereNull('term_id')
-                    ->orWhere('term_id', $data['term_id']);
-            })
-            ->exists();
-
-        if ($subjectMatch) {
-            return true;
-        }
-
-        return TeacherClassAssignment::where('school_id', $school->id)
-            ->where('teacher_user_id', auth()->id())
-            ->where('school_class_id', $data['school_class_id'])
-            ->where('status', 'active')
-            ->whereNull('deleted_at')
-            ->where(function ($query) use ($data) {
-                $query->whereNull('academic_session_id')
-                    ->orWhere('academic_session_id', $data['academic_session_id']);
-            })
-            ->where(function ($query) use ($data) {
-                $query->whereNull('term_id')
-                    ->orWhere('term_id', $data['term_id']);
-            })
-            ->exists();
+        return app(TeacherAssignmentAccessService::class)->canTeach(
+            $school,
+            auth()->user(),
+            (int) $data['school_class_id'],
+            (int) $data['subject_id'],
+            (int) $data['academic_session_id'],
+            (int) $data['term_id']
+        );
     }
 
     private function classesForUser(School $school, ?string $roleContext): Collection
@@ -375,33 +344,7 @@ class TeacherResultEntryController extends Controller
             return $school->schoolClasses()->where('status', 'active')->orderBy('name')->get();
         }
 
-        $classIds = TeacherClassAssignment::where('school_id', $school->id)
-            ->where('teacher_user_id', auth()->id())
-            ->where('status', 'active')
-            ->pluck('school_class_id')
-            ->merge(TeacherSubjectAssignment::where('school_id', $school->id)
-                ->where('teacher_user_id', auth()->id())
-                ->where('status', 'active')
-                ->whereNotNull('school_class_id')
-                ->pluck('school_class_id'))
-            ->unique()
-            ->values();
-
-        $hasGeneralSubjectAssignment = TeacherSubjectAssignment::where('school_id', $school->id)
-            ->where('teacher_user_id', auth()->id())
-            ->where('status', 'active')
-            ->whereNull('school_class_id')
-            ->exists();
-
-        if ($hasGeneralSubjectAssignment) {
-            return $school->schoolClasses()->where('status', 'active')->orderBy('name')->get();
-        }
-
-        return $school->schoolClasses()
-            ->whereIn('id', $classIds)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
+        return app(TeacherAssignmentAccessService::class)->classesForTeacher($school, auth()->user());
     }
 
     private function subjectsForUser(School $school, ?string $roleContext, ?int $classId): Collection
@@ -410,40 +353,22 @@ class TeacherResultEntryController extends Controller
             return Subject::where('school_id', $school->id)->where('status', 'active')->orderBy('name')->get();
         }
 
-        if ($classId && TeacherClassAssignment::where('school_id', $school->id)
-            ->where('teacher_user_id', auth()->id())
-            ->where('school_class_id', $classId)
-            ->where('status', 'active')
-            ->exists()) {
-            return Subject::where('school_id', $school->id)->where('status', 'active')->orderBy('name')->get();
-        }
-
-        $query = TeacherSubjectAssignment::where('school_id', $school->id)
-            ->where('teacher_user_id', auth()->id())
-            ->where('status', 'active');
-
-        if ($classId) {
-            $query->where(function ($query) use ($classId) {
-                $query->whereNull('school_class_id')
-                    ->orWhere('school_class_id', $classId);
-            });
-        }
-
-        return Subject::where('school_id', $school->id)
-            ->whereIn('id', $query->pluck('subject_id')->unique())
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
+        return app(TeacherAssignmentAccessService::class)->subjectsForTeacher($school, auth()->user(), $classId);
     }
 
-    private function studentsForClass(School $school, int $classId): Collection
-    {
-        return Student::where('school_id', $school->id)
-            ->where('school_class_id', $classId)
-            ->where('status', 'active')
-            ->orderBy('first_name')
-            ->orderBy('last_name')
-            ->get();
+    private function studentsForClass(
+        School $school,
+        int $classId,
+        ?int $academicSessionId = null,
+        bool $activeOnly = true,
+        bool $includeArchived = false
+    ): Collection {
+        $academicSession = $academicSessionId
+            ? AcademicSession::where('school_id', $school->id)->find($academicSessionId)
+            : null;
+
+        return app(StudentClassEnrollmentService::class)
+            ->studentsForClassContext($school, $classId, $academicSession, $activeOnly, $includeArchived);
     }
 
     private function currentSchoolOrFail(): School

@@ -32,10 +32,14 @@
                             <div>
                                 <h3 class="text-base font-semibold text-gray-900">{{ $thread->subject }}</h3>
                                 <p class="mt-1 text-sm text-gray-600">{{ $thread->school?->name ?? 'General platform thread' }}</p>
+                                <p class="mt-1 text-xs text-gray-500">Route: {{ $thread->routeLabel() }} · Level {{ (int) $thread->escalation_level }}</p>
                             </div>
                             <div class="flex flex-wrap gap-2 text-xs">
                                 <span class="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{{ ucfirst(str_replace('_', ' ', $thread->status)) }}</span>
                                 <span class="rounded-full bg-amber-100 px-3 py-1 text-amber-800">{{ ucfirst($thread->priority) }}</span>
+                                @if ($thread->isEscalated())
+                                    <span class="rounded-full bg-red-50 px-3 py-1 text-red-700">Escalated</span>
+                                @endif
                             </div>
                         </div>
                     </a>

@@ -5,8 +5,10 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -51,10 +53,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'staff_code';
-        $identifier = $field === 'staff_code' ? Str::upper($login) : $login;
-
-        if (! Auth::attempt([$field => $identifier, 'password' => $this->input('password')], $this->boolean('remember'))) {
+        if (! $this->attemptLogin($login)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -99,5 +98,76 @@ class LoginRequest extends FormRequest
     private function loginValue(): string
     {
         return trim((string) ($this->input('login') ?: $this->input('email')));
+    }
+
+    private function attemptLogin(string $login): bool
+    {
+        foreach ($this->loginCandidates($login) as $user) {
+            if (Auth::attempt([
+                'email' => $user->email,
+                'password' => $this->input('password'),
+            ], $this->boolean('remember'))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int, User>
+     */
+    private function loginCandidates(string $login): array
+    {
+        $normalized = Str::lower($login);
+
+        if (str_contains($login, '@')) {
+            $emailUser = $this->userByCaseInsensitiveColumn('email', $normalized);
+
+            return $emailUser ? [$emailUser] : [];
+        }
+
+        $candidates = [];
+
+        if ($this->staffCodeColumnIsReady()) {
+            $staffCodeUser = $this->userByCaseInsensitiveColumn('staff_code', $normalized);
+
+            if ($staffCodeUser && ! $this->isSuperAdmin($staffCodeUser)) {
+                $candidates[] = $staffCodeUser;
+            }
+        }
+
+        $emailUser = $this->userByCaseInsensitiveColumn('email', $normalized);
+
+        if ($emailUser && ! collect($candidates)->contains(fn (User $user) => $user->is($emailUser))) {
+            $candidates[] = $emailUser;
+        }
+
+        return $candidates;
+    }
+
+    private function userByCaseInsensitiveColumn(string $column, string $value): ?User
+    {
+        return User::query()
+            ->whereRaw('LOWER('.$column.') = ?', [$value])
+            ->first();
+    }
+
+    private function staffCodeColumnIsReady(): bool
+    {
+        try {
+            return Schema::hasColumn('users', 'staff_code');
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function isSuperAdmin(User $user): bool
+    {
+        try {
+            return $user->hasRole('super_admin');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

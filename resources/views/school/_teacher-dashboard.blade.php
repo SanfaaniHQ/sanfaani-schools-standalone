@@ -4,63 +4,44 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {{-- Welcome Card --}}
-        <div class="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+        <x-ui.panel class="mb-8">
             <h3 class="text-lg font-semibold text-gray-900">
                 Welcome back, {{ auth()->user()->name }}
             </h3>
             <p class="mt-2 text-sm text-gray-600">
                 You can only access assigned classes, subjects, and result submissions.
             </p>
-        </div>
+        </x-ui.panel>
 
         {{-- Summary Cards --}}
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Assigned Classes</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalAssignedClasses }}</p>
-                <p class="mt-1 text-sm text-gray-500">{{ $totalAssignedStudents }} students</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Assigned Subjects</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $totalAssignedSubjects }}</p>
-                <p class="mt-1 text-sm text-gray-500">Active assignments</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Draft Results</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $draftResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">Saved drafts</p>
-            </div>
-
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
-                <p class="text-sm font-medium text-gray-500">Submitted Results</p>
-                <p class="mt-3 text-3xl font-semibold text-gray-900">{{ $submittedResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">Under review</p>
-            </div>
+            <x-ui.stat-card label="Assigned Classes" :value="$totalAssignedClasses" :meta="$totalAssignedStudents . ' students'" />
+            <x-ui.stat-card label="Assigned Subjects" :value="$totalAssignedSubjects" meta="Active assignments" />
+            <x-ui.stat-card label="Draft Results" :value="$draftResults" meta="Saved drafts" />
+            <x-ui.stat-card label="Submitted Results" :value="$submittedResults" meta="Under review" />
         </div>
 
         {{-- Additional Stats --}}
         <div class="mt-6 grid gap-6 lg:grid-cols-3">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel>
                 <p class="text-sm font-medium text-gray-500">Returned for Correction</p>
                 <p class="mt-3 text-2xl font-semibold text-gray-900">{{ $returnedResults }}</p>
                 <p class="mt-1 text-sm text-gray-500">Needs your attention</p>
-            </div>
+            </x-ui.panel>
 
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel>
                 <p class="text-sm font-medium text-gray-500">Approved / Published</p>
                 <p class="mt-3 text-2xl font-semibold text-gray-900">{{ $approvedResults }}</p>
                 <p class="mt-1 text-sm text-gray-500">Completed submissions</p>
-            </div>
+            </x-ui.panel>
 
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+            <x-ui.panel>
                 <p class="text-sm font-medium text-gray-500">Current Term</p>
                 <p class="mt-3 text-lg font-semibold text-gray-900">
                     {{ $activeTerm?->name ?? 'Not set' }}
                 </p>
                 <p class="mt-1 text-sm text-gray-500">{{ $activeSession?->name ?? 'No active session' }}</p>
-            </div>
+            </x-ui.panel>
         </div>
 
         {{-- My Work Section --}}
@@ -136,7 +117,7 @@
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    @if(($features['support.access']['enabled'] ?? true))
+                    @if(($features['support.manage']['enabled'] ?? true))
                         <a href="{{ route('school.support.index') }}"
                            class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
                             <h4 class="text-base font-semibold text-gray-900">Support</h4>

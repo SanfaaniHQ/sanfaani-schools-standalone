@@ -98,13 +98,22 @@ class ReportCardService
             : $results;
         $total = $this->calculateTotalScore($safeResults);
         $average = $this->calculateAverageScore($safeResults);
+        $resultClass = $safeResults->first()?->schoolClass;
+
+        if (! $resultClass) {
+            $resultClassId = app(StudentClassEnrollmentService::class)
+                ->classIdForResultContext($school, $student, $academicSession, $term);
+            $resultClass = $resultClassId
+                ? SchoolClass::where('school_id', $school->id)->find($resultClassId)
+                : $student->schoolClass;
+        }
 
         return [
             'settings' => $settings,
             'template' => $settings->template,
             'student' => $student,
             'school' => $school,
-            'resultClass' => $safeResults->first()?->schoolClass ?? $student->schoolClass,
+            'resultClass' => $resultClass,
             'academicSession' => $academicSession,
             'term' => $term,
             'results' => $safeResults,

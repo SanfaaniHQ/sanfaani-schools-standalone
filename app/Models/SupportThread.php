@@ -13,6 +13,22 @@ class SupportThread extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUS_OPEN = 'open';
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_ESCALATED = 'escalated';
+    public const STATUS_RESOLVED = 'resolved';
+    public const STATUS_CLOSED = 'closed';
+
+    public const LEGACY_STATUS_AWAITING_RESPONSE = 'awaiting_response';
+    public const LEGACY_STATUS_IN_PROGRESS = 'in_progress';
+
+    public const ROUTE_SCHOOL_ADMIN = 'school_admin';
+    public const ROUTE_SUPER_ADMIN = 'super_admin';
+
+    public const VISIBILITY_INTERNAL = 'internal';
+    public const VISIBILITY_ESCALATED = 'escalated';
+    public const VISIBILITY_PLATFORM = 'platform';
+
     public const CATEGORIES = [
         'general_support',
         'result_issue',
@@ -25,12 +41,27 @@ class SupportThread extends Model
         'feature_request',
     ];
 
+    public const WORKFLOW_STATUSES = [
+        self::STATUS_OPEN,
+        self::STATUS_PENDING,
+        self::STATUS_ESCALATED,
+        self::STATUS_RESOLVED,
+        self::STATUS_CLOSED,
+    ];
+
+    public const LEGACY_STATUSES = [
+        self::LEGACY_STATUS_AWAITING_RESPONSE,
+        self::LEGACY_STATUS_IN_PROGRESS,
+    ];
+
     public const STATUSES = [
-        'open',
-        'awaiting_response',
-        'in_progress',
-        'resolved',
-        'closed',
+        self::STATUS_OPEN,
+        self::STATUS_PENDING,
+        self::STATUS_ESCALATED,
+        self::STATUS_RESOLVED,
+        self::STATUS_CLOSED,
+        self::LEGACY_STATUS_AWAITING_RESPONSE,
+        self::LEGACY_STATUS_IN_PROGRESS,
     ];
 
     public const PRIORITIES = [
@@ -43,17 +74,28 @@ class SupportThread extends Model
     protected $fillable = [
         'school_id',
         'created_by',
+        'creator_role',
         'assigned_to',
+        'routed_to_role',
         'subject',
         'category',
         'priority',
         'status',
         'visibility',
+        'escalation_level',
+        'escalated_at',
+        'escalated_by',
+        'resolved_at',
+        'closed_at',
         'last_message_at',
         'metadata',
     ];
 
     protected $casts = [
+        'escalation_level' => 'integer',
+        'escalated_at' => 'datetime',
+        'resolved_at' => 'datetime',
+        'closed_at' => 'datetime',
         'last_message_at' => 'datetime',
         'metadata' => 'array',
     ];
@@ -73,6 +115,11 @@ class SupportThread extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    public function escalatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'escalated_by');
+    }
+
     public function messages(): HasMany
     {
         return $this->hasMany(SupportMessage::class);
@@ -81,5 +128,27 @@ class SupportThread extends Model
     public function latestMessage(): HasOne
     {
         return $this->hasOne(SupportMessage::class)->latestOfMany();
+    }
+
+    public function escalationHistories(): HasMany
+    {
+        return $this->hasMany(SupportEscalationHistory::class);
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(SupportThreadEvent::class);
+    }
+
+    public function isEscalated(): bool
+    {
+        return $this->status === self::STATUS_ESCALATED
+            || $this->routed_to_role === self::ROUTE_SUPER_ADMIN
+            || (int) $this->escalation_level > 0;
+    }
+
+    public function routeLabel(): string
+    {
+        return ucwords(str_replace('_', ' ', $this->routed_to_role ?: self::ROUTE_SUPER_ADMIN));
     }
 }

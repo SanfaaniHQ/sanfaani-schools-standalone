@@ -18,7 +18,7 @@ class PlatformTransactionalMail extends Mailable
         public string $headline,
         public string $body,
         public ?School $school = null,
-        public array $metadata = []
+        public array $mailMetadata = []
     ) {}
 
     public function envelope(): Envelope
@@ -28,6 +28,11 @@ class PlatformTransactionalMail extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.communication.platform-transactional');
+        return new Content(
+            view: 'emails.communication.platform-transactional',
+            with: [
+                'metadata' => $this->mailMetadata,
+            ]
+        );
     }
 }

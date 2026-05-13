@@ -2,9 +2,10 @@
 
 namespace App\Policies\Concerns;
 
+use App\Models\School;
 use App\Models\User;
 use App\Services\CurrentSchoolService;
-use App\Services\SchoolRoleFeatureService;
+use App\Services\SchoolAuthorizationService;
 
 trait ResolvesSchoolRoleContext
 {
@@ -21,12 +22,8 @@ trait ResolvesSchoolRoleContext
 
     private function featureEnabled(User $user, int $schoolId, string $featureKey): bool
     {
-        $roleContext = $this->roleContext($user);
+        $school = School::find($schoolId);
 
-        if (! $roleContext) {
-            return false;
-        }
-
-        return app(SchoolRoleFeatureService::class)->enabled($schoolId, $roleContext, $featureKey);
+        return app(SchoolAuthorizationService::class)->can($user, $school, $featureKey);
     }
 }

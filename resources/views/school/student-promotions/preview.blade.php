@@ -3,6 +3,7 @@
         $counts = [
             'promote' => $defaultAction === 'promote' ? ($selectAll ? $students->count() : 0) : 0,
             'repeat' => $defaultAction === 'repeat' ? ($selectAll ? $students->count() : 0) : 0,
+            'demote' => $defaultAction === 'demote' ? ($selectAll ? $students->count() : 0) : 0,
             'graduate' => $defaultAction === 'graduate' ? ($selectAll ? $students->count() : 0) : 0,
             'transfer' => $defaultAction === 'transfer' ? ($selectAll ? $students->count() : 0) : 0,
             'withdraw' => 0,
@@ -34,8 +35,8 @@
 
             <form method="POST"
                   action="{{ route('school.student-promotions.store') }}"
-                  data-confirm="Are you sure you want to process this promotion? This will update student class placement for the selected session."
-                  data-loading-text="Processing promotion..."
+                  data-confirm="Are you sure you want to process these lifecycle changes? Historical enrollments and results will be preserved."
+                  data-loading-text="Processing lifecycle changes..."
                   class="overflow-hidden rounded-2xl bg-white shadow-sm">
                 @csrf
 
@@ -91,7 +92,7 @@
 
                 <div class="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
                     <a href="{{ route('school.student-promotions.create') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Back</a>
-                    <button type="submit" data-loading-text="Processing promotion..." class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">Confirm Promotion</button>
+                    <button type="submit" data-loading-text="Processing lifecycle changes..." class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">Confirm Lifecycle Changes</button>
                 </div>
             </form>
         </div>
@@ -102,7 +103,7 @@
             const counters = document.querySelectorAll('[data-promotion-count]');
             const rows = document.querySelectorAll('[data-promotion-selected]');
             const actions = document.querySelectorAll('[data-promotion-action]');
-            const labels = ['promote', 'repeat', 'graduate', 'transfer', 'withdraw', 'skip'];
+            const labels = ['promote', 'repeat', 'demote', 'graduate', 'transfer', 'withdraw', 'skip'];
 
             function refreshCounts() {
                 const counts = Object.fromEntries(labels.map((label) => [label, 0]));

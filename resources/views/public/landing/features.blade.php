@@ -20,7 +20,7 @@
         [
             'title' => 'Access & Payments',
             'body' => 'Start with scratch card access and grow into flexible payment models.',
-        'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'Hybrid scratch-card access', 'Parent-paid access - Available on selected plans'],
+            'items' => ['Scratch card request', 'Super Admin approval', 'Result checker', 'Plan-based access', 'Hybrid scratch-card access', 'Parent-paid access - Available on selected plans'],
         ],
         [
             'title' => 'Future Modules',
@@ -46,22 +46,29 @@
     <body class="bg-white font-sans text-gray-950 antialiased">
         @include('public.landing.partials.nav')
 
-        <main>
-            <section class="bg-white py-16 sm:py-20">
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <main id="main-content">
+            <section class="marketing-soft-gradient py-16 sm:py-20">
+                <x-ui.container>
                     <div class="max-w-3xl">
-                        <p class="text-sm font-semibold text-gray-600">Features</p>
+                        <x-marketing.badge icon="sparkles">Features</x-marketing.badge>
                         <h1 class="mt-4 text-4xl font-semibold leading-tight text-gray-950 sm:text-5xl">
                             Serious result management for schools that need flexibility.
                         </h1>
                         <p class="mt-5 text-lg leading-8 text-gray-600">
                             {{ $platformName }} keeps student admission numbers for students, staff codes for staff, and school codes for school identity. That separation keeps the platform clean as schools grow.
                         </p>
+                        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                            <a href="{{ route('landing.demo') }}" class="ui-button-primary gap-2">
+                                Request Demo
+                                <x-marketing.icon name="arrow-right" class="h-4 w-4" />
+                            </a>
+                            <a href="{{ route('landing.pricing') }}" class="ui-button-secondary">View pricing</a>
+                        </div>
                     </div>
 
                     <div class="mt-12 grid gap-6">
                         @foreach ($groups as $group)
-                            <section class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                            <section class="marketing-card rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                                 <div class="grid gap-6 lg:grid-cols-3">
                                     <div>
                                         <h2 class="text-2xl font-semibold text-gray-950">{{ $group['title'] }}</h2>
@@ -69,36 +76,50 @@
                                     </div>
                                     <div class="grid gap-3 sm:grid-cols-2 lg:col-span-2">
                                         @foreach ($group['items'] as $item)
-                                            <div class="rounded-2xl bg-gray-50 p-4 text-sm font-medium text-gray-700">{{ $item }}</div>
+                                            <div class="flex items-center gap-3 rounded-lg bg-gray-50 p-4 text-sm font-medium text-gray-700">
+                                                <x-marketing.icon name="check" class="h-4 w-4 shrink-0 text-emerald-700" />
+                                                <span>{{ $item }}</span>
+                                            </div>
                                         @endforeach
                                     </div>
                                 </div>
                             </section>
                         @endforeach
                     </div>
-                </div>
+                </x-ui.container>
             </section>
 
             <section class="bg-gray-50 py-16">
-                <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-semibold text-gray-950">For school admins</h2>
-                        <p class="mt-3 text-sm leading-6 text-gray-600">Create classes, students, sessions, terms, subjects, grading scales, result publications, and scratch card requests.</p>
-                    </div>
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-semibold text-gray-950">For result officers</h2>
-                        <p class="mt-3 text-sm leading-6 text-gray-600">Use staff code or email identities to work on results without borrowing student admission-number logic.</p>
-                    </div>
-                    <div class="rounded-2xl bg-white p-6 shadow-sm">
-                        <h2 class="text-lg font-semibold text-gray-950">For parents</h2>
-                        <p class="mt-3 text-sm leading-6 text-gray-600">Check published results online with admission number, session, term, serial number, and PIN.</p>
-                    </div>
-                </div>
+                <x-ui.container class="grid gap-6 lg:grid-cols-3">
+                    <x-marketing.feature-card icon="shield" title="For school admins" body="Create classes, students, sessions, terms, subjects, grading scales, result publications, and scratch card requests." />
+                    <x-marketing.feature-card icon="users" title="For result officers" body="Use staff code or email identities to work on results without borrowing student admission-number logic." />
+                    <x-marketing.feature-card icon="check" title="For parents" body="Check published results online with admission number, session, term, serial number, and PIN." />
+                </x-ui.container>
+            </section>
+
+            <section class="bg-white py-16">
+                <x-ui.container class="grid gap-6 lg:grid-cols-3">
+                    <x-ui.panel>
+                        <x-marketing.badge icon="clock">Fast onboarding</x-marketing.badge>
+                        <p class="mt-4 text-2xl font-semibold text-gray-950">Start with the essentials.</p>
+                        <p class="mt-3 text-sm leading-6 text-gray-600">Schools can launch setup, students, results, publishing, and result checking before adding future modules.</p>
+                    </x-ui.panel>
+                    <x-ui.panel>
+                        <x-marketing.badge icon="shield" tone="sky">Controlled access</x-marketing.badge>
+                        <p class="mt-4 text-2xl font-semibold text-gray-950">Publish only what is ready.</p>
+                        <p class="mt-3 text-sm leading-6 text-gray-600">Scratch-card and access policies keep public result visibility separate from staff result preparation.</p>
+                    </x-ui.panel>
+                    <x-ui.panel>
+                        <x-marketing.badge icon="trending" tone="amber">Future ready</x-marketing.badge>
+                        <p class="mt-4 text-2xl font-semibold text-gray-950">Room for growth.</p>
+                        <p class="mt-3 text-sm leading-6 text-gray-600">The UI and records foundation can support PDF, QR verification, SMS, and parent access expansion.</p>
+                    </x-ui.panel>
+                </x-ui.container>
             </section>
 
             @include('public.landing.partials.cta', [
-                'title' => 'Build your school result workflow on a cleaner foundation.',
-                'body' => 'Start with the modules you need now, then add advanced access, PDF, QR, and assessment features as they mature.',
+                'title' => 'Choose modules that fit your school now.',
+                'body' => 'Start with result operations, then add advanced access and communication modules when the school is ready.',
             ])
         </main>
 

@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\CurrentSchoolService;
-use App\Services\SchoolRoleFeatureService;
+use App\Services\SchoolAuthorizationService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,18 +18,13 @@ class EnsureCommunicationFeatureEnabled
             abort(403);
         }
 
-        if ($user->hasAnyRole(['super_admin', 'school_admin'])) {
-            return $next($request);
-        }
-
         $school = app(CurrentSchoolService::class)->get($user);
-        $role = app(CurrentSchoolService::class)->roleContext($user) ?? $user->roles->pluck('name')->first();
 
-        if (! $school || ! $role) {
+        if (! $school) {
             abort(403);
         }
 
-        if (! app(SchoolRoleFeatureService::class)->enabled($school->id, $role, $featureKey)) {
+        if (! app(SchoolAuthorizationService::class)->can($user, $school, $featureKey)) {
             abort(403, 'This communication feature is disabled for your role.');
         }
 

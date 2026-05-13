@@ -14,8 +14,9 @@ class StudentResultPolicy
 
     public function viewAny(User $user, ?School $school = null): bool
     {
-        return $this->canManageResults($user)
-            || ($school && $this->featureEnabled($user, $school->id, 'results.manual_entry'));
+        return $school
+            && $this->canManageResults($user)
+            && $this->featureEnabled($user, $school->id, 'results.manual_entry');
     }
 
     public function view(User $user, StudentResult $result): bool

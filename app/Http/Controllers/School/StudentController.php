@@ -5,14 +5,20 @@ namespace App\Http\Controllers\School;
 use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
+use App\Models\AuditLog;
 use App\Models\ClassSubjectAssignment;
+use App\Models\CommunicationLog;
 use App\Models\School;
 use App\Models\Student;
-use App\Models\CommunicationLog;
 use App\Models\Term;
-use App\Services\AuditLogService;
+use App\Models\User;
 use App\Services\AdmissionNumberGeneratorService;
+use App\Services\CurrentSchoolService;
+use App\Services\SchoolAuthorizationService;
+use App\Services\StudentAcademicLifecycleService;
+use App\Services\StudentAcademicTimelineService;
 use App\Services\StudentClassEnrollmentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -24,12 +30,23 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         $school = $this->currentSchoolOrFail();
+        $user = $request->user();
+        $roleContext = app(CurrentSchoolService::class)->roleContext($user);
+        $authorization = app(SchoolAuthorizationService::class);
+
+        $authorization->authorizeAny(
+            $user,
+            $school,
+            $roleContext === 'teacher' ? ['students.view_assigned'] : ['students.view']
+        );
+
         $selectedAcademicSessionId = $request->filled('academic_session_id') ? $request->integer('academic_session_id') : null;
         $selectedClassId = $request->filled('school_class_id') ? $request->integer('school_class_id') : null;
 
         $students = $school->students()
             ->when($request->boolean('include_archived'), fn ($query) => $query->withTrashed())
             ->with(['schoolClass', 'currentEnrollment.schoolClass', 'currentEnrollment.academicSession'])
+            ->when($roleContext === 'teacher', fn ($query) => $this->scopeStudentsToTeacher($query, $school, $user))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->input('search');
 
@@ -58,7 +75,7 @@ class StudentController extends Controller
             'search' => $request->input('search'),
             'includeArchived' => $request->boolean('include_archived'),
             'academicSessions' => $school->academicSessions()->latest()->get(),
-            'classes' => $this->classesForSchool($school),
+            'classes' => $this->classesForSchool($school, $user),
             'selectedAcademicSessionId' => $selectedAcademicSessionId,
             'selectedClassId' => $selectedClassId,
         ]);
@@ -145,13 +162,14 @@ class StudentController extends Controller
             ->get();
 
         // Recent activity timeline (audit logs) - increased to 50 for comprehensive view
-        $recentActivities = \App\Models\AuditLog::where('auditable_type', Student::class)
+        $recentActivities = AuditLog::where('auditable_type', Student::class)
             ->where('auditable_id', $student->id)
             ->where('school_id', $school->id)
             ->with('user')
             ->latest()
             ->limit(50)
             ->get();
+        $academicTimeline = app(StudentAcademicTimelineService::class)->build($school, $student);
 
         $recentCommunications = collect();
         if (Schema::hasTable('communication_logs')) {
@@ -168,7 +186,7 @@ class StudentController extends Controller
         // Calculate student age if date of birth exists
         $age = null;
         if ($student->date_of_birth) {
-            $age = \Carbon\Carbon::parse($student->date_of_birth)->age;
+            $age = Carbon::parse($student->date_of_birth)->age;
         }
 
         // Get promotion history
@@ -213,6 +231,7 @@ class StudentController extends Controller
             'summaryMetrics' => $summaryMetrics,
             'scratchCardUsages' => $scratchCardUsages,
             'recentActivities' => $recentActivities,
+            'academicTimeline' => $academicTimeline,
             'recentCommunications' => $recentCommunications,
         ]);
     }
@@ -330,32 +349,14 @@ class StudentController extends Controller
         $classId = $data['school_class_id'] ?? null;
         unset($data['school_class_id']);
 
-        DB::transaction(function () use ($school, $student, $data, $classId) {
-            $student->update($data);
-
-            $enrollments = app(StudentClassEnrollmentService::class);
-
-            if (in_array($student->status, ['graduated', 'transferred', 'withdrawn'], true)) {
-                $enrollments->closeOpenEnrollments(
-                    $school,
-                    $student,
-                    $enrollments->activeTerm($school),
-                    $student->status
-                );
-
-                return;
-            }
-
-            if ((int) $student->school_class_id !== (int) $classId || ($classId && ! $student->currentEnrollment)) {
-                $enrollments->recordPlacement(
-                    $school,
-                    $student,
-                    $classId,
-                    createdBy: auth()->id(),
-                    source: 'student_updated'
-                );
-            }
-        });
+        app(StudentAcademicLifecycleService::class)->updateProfileAndPlacement(
+            $school,
+            $student,
+            $data,
+            $classId,
+            $request->user(),
+            $request
+        );
 
         return redirect()
             ->route('school.students.index')
@@ -367,12 +368,7 @@ class StudentController extends Controller
         $school = $this->currentSchoolOrFail();
         $this->authorizeStudent($student, $school);
 
-        $student->update(['status' => 'inactive']);
-        $student->delete();
-
-        app(AuditLogService::class)->log('student_archived', $student, $school, metadata: [
-            'admission_number' => $student->admission_number,
-        ], request: $request);
+        $student = app(StudentAcademicLifecycleService::class)->archive($school, $student, $request->user(), $request);
 
         StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentArchived($student->loadMissing('school')));
 
@@ -385,26 +381,7 @@ class StudentController extends Controller
     {
         $school = $this->currentSchoolOrFail();
 
-        $student = Student::onlyTrashed()
-            ->where('school_id', $school->id)
-            ->findOrFail($student);
-
-        $student->restore();
-        $student->update(['status' => 'active']);
-
-        if ($student->school_class_id) {
-            app(StudentClassEnrollmentService::class)->recordPlacement(
-                $school,
-                $student,
-                $student->school_class_id,
-                createdBy: auth()->id(),
-                source: 'student_restored'
-            );
-        }
-
-        app(AuditLogService::class)->log('student_restored', $student, $school, metadata: [
-            'admission_number' => $student->admission_number,
-        ], request: $request);
+        app(StudentAcademicLifecycleService::class)->restore($school, $student, $request->user(), $request);
 
         return redirect()
             ->route('school.students.index', ['include_archived' => 1])
@@ -413,7 +390,7 @@ class StudentController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');
@@ -422,13 +399,24 @@ class StudentController extends Controller
         return $school;
     }
 
-    private function classesForSchool(School $school)
+    private function classesForSchool(School $school, ?User $user = null)
     {
-        return $school->schoolClasses()
+        $query = $school->schoolClasses()
             ->where('status', 'active')
             ->orderBy('name')
-            ->orderBy('section')
-            ->get();
+            ->orderBy('section');
+
+        if ($user && app(CurrentSchoolService::class)->roleContext($user) === 'teacher') {
+            $classIds = app(SchoolAuthorizationService::class)->teacherVisibleClassIds($user, $school);
+
+            if ($classIds->isEmpty()) {
+                return collect();
+            }
+
+            $query->whereIn('id', $classIds);
+        }
+
+        return $query->get();
     }
 
     private function studentSummaryMetrics(
@@ -583,9 +571,29 @@ class StudentController extends Controller
 
     private function authorizeStudent(Student $student, School $school): void
     {
-        if ((int) $student->school_id !== (int) $school->id) {
+        $user = auth()->user();
+
+        if (! $user || ! app(SchoolAuthorizationService::class)->canViewStudent($user, $school, $student)) {
             abort(403, 'You cannot access this student.');
         }
+    }
+
+    private function scopeStudentsToTeacher($query, School $school, User $user): void
+    {
+        $classIds = app(SchoolAuthorizationService::class)->teacherVisibleClassIds($user, $school);
+
+        if ($classIds->isEmpty()) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->where(function ($query) use ($school, $classIds) {
+            $query->whereIn('school_class_id', $classIds)
+                ->orWhereHas('classEnrollments', fn ($enrollmentQuery) => $enrollmentQuery
+                    ->where('school_id', $school->id)
+                    ->whereIn('school_class_id', $classIds));
+        });
     }
 
     private function selectedAcademicSession(
@@ -593,8 +601,7 @@ class StudentController extends Controller
         School $school,
         $academicSessions,
         ?AcademicSession $activeSession
-    ): ?AcademicSession
-    {
+    ): ?AcademicSession {
         if ($request->filled('academic_session_id')) {
             return AcademicSession::where('school_id', $school->id)
                 ->findOrFail((int) $request->input('academic_session_id'));
@@ -609,8 +616,7 @@ class StudentController extends Controller
         $terms,
         ?AcademicSession $selectedSession,
         ?Term $activeTerm
-    ): ?Term
-    {
+    ): ?Term {
         if ($request->filled('term_id')) {
             return Term::where('school_id', $school->id)
                 ->when($selectedSession, fn ($query) => $query->where('academic_session_id', $selectedSession->id))

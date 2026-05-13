@@ -18,7 +18,7 @@ class CommunicationMail extends Mailable
         public string $headline,
         public string $body,
         public ?School $school = null,
-        public array $metadata = []
+        public array $mailMetadata = []
     ) {}
 
     public function envelope(): Envelope
@@ -29,7 +29,10 @@ class CommunicationMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.communication.default'
+            view: 'emails.communication.default',
+            with: [
+                'metadata' => $this->mailMetadata,
+            ]
         );
     }
 }

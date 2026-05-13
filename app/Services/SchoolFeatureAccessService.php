@@ -7,6 +7,9 @@ use App\Models\School;
 
 class SchoolFeatureAccessService
 {
+    /** @var array<string, bool|null> */
+    private array $explicitAccessCache = [];
+
     public function canAccess(School $school, string $featureKey): bool
     {
         $override = $this->activeOverride($school, $featureKey);
@@ -22,6 +25,29 @@ class SchoolFeatureAccessService
         }
 
         return false;
+    }
+
+    public function explicitAccess(School $school, string $featureKey): ?bool
+    {
+        $cacheKey = $school->getKey().':'.$featureKey;
+
+        if (array_key_exists($cacheKey, $this->explicitAccessCache)) {
+            return $this->explicitAccessCache[$cacheKey];
+        }
+
+        $override = $this->activeOverride($school, $featureKey);
+
+        if ($override) {
+            return $this->explicitAccessCache[$cacheKey] = (bool) $override->is_enabled;
+        }
+
+        $planFeature = $this->activePlanFeature($school, $featureKey);
+
+        if ($planFeature) {
+            return $this->explicitAccessCache[$cacheKey] = (bool) $planFeature->is_enabled;
+        }
+
+        return $this->explicitAccessCache[$cacheKey] = null;
     }
 
     public function getLimit(School $school, string $featureKey): ?int

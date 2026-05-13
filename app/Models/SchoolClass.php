@@ -71,7 +71,7 @@ class SchoolClass extends Model
     public function assignedTeachers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'teacher_class_assignments', 'school_class_id', 'teacher_user_id')
-            ->withPivot(['school_id', 'academic_session_id', 'term_id', 'role_type', 'status'])
+            ->withPivot(['school_id', 'academic_session_id', 'term_id', 'role_type', 'starts_at', 'ends_at', 'status'])
             ->wherePivotNull('deleted_at')
             ->withTimestamps();
     }
