@@ -3,6 +3,8 @@
         $filters = $workspace['filters'];
         $options = $workspace['options'];
         $stats = $workspace['stats'];
+        $analysis = $workspace['analysis'];
+        $percentages = $analysis['percentages'];
         $subjectRows = $workspace['subjects'];
         $selectedEnrollment = $workspace['context']['selected_enrollment'];
         $teacherClassAssignments = $workspace['context']['teacher_class_assignments'];
@@ -101,30 +103,139 @@
 
             <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                 <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Subjects Loaded</p>
+                    <p class="text-sm font-medium text-gray-500">Expected Subjects</p>
                     <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $stats['total_subjects'] }}</p>
+                    @if ($stats['supplemental_subjects'] > 0)
+                        <p class="mt-1 text-xs text-gray-500">{{ $stats['supplemental_subjects'] }} supplemental shown</p>
+                    @endif
                 </div>
                 <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Recorded</p>
                     <p class="mt-2 text-2xl font-semibold text-gray-900">{{ $stats['recorded_subjects'] }}</p>
+                    <p class="mt-1 text-xs text-gray-500">{{ $percentages['result_recording'] }}% with result records</p>
                 </div>
                 <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                    <p class="text-sm font-medium text-gray-500">Published</p>
-                    <p class="mt-2 text-2xl font-semibold text-emerald-700">{{ $stats['published_results'] }}</p>
+                    <p class="text-sm font-medium text-gray-500">Publish Ready</p>
+                    <p class="mt-2 text-2xl font-semibold text-emerald-700">{{ $stats['publish_ready_subjects'] }}</p>
+                    <p class="mt-1 text-xs text-gray-500">{{ $percentages['publish_ready'] }}% ready or awaiting publish</p>
                 </div>
                 <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                     <p class="text-sm font-medium text-gray-500">Missing</p>
                     <p class="mt-2 text-2xl font-semibold text-amber-700">{{ $stats['missing_subjects'] }}</p>
+                    @if ($stats['draft_subjects'] || $stats['returned_subjects'])
+                        <p class="mt-1 text-xs text-gray-500">{{ $stats['draft_subjects'] }} draft, {{ $stats['returned_subjects'] }} returned</p>
+                    @endif
                 </div>
                 <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                     <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm font-medium text-gray-500">Completion</p>
-                        <span class="text-sm font-semibold text-gray-900">{{ $stats['completion_percentage'] }}%</span>
+                        <p class="text-sm font-medium text-gray-500">Published</p>
+                        <span class="text-sm font-semibold text-gray-900">{{ $percentages['published'] }}%</span>
                     </div>
                     <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
-                        <div class="h-full rounded-full bg-gray-900" style="width: {{ $stats['completion_percentage'] }}%"></div>
+                        <div class="h-full rounded-full bg-emerald-600" style="width: {{ $percentages['published'] }}%"></div>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">{{ $stats['published_results'] }} published subjects</p>
+                </div>
+            </div>
+
+            <div class="mb-6 grid gap-4 lg:grid-cols-4">
+                <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-sm font-medium text-gray-500">Score Entry</p>
+                        <span class="text-sm font-semibold text-gray-900">{{ $percentages['score_entry'] }}%</span>
+                    </div>
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div class="h-full rounded-full bg-blue-600" style="width: {{ $percentages['score_entry'] }}%"></div>
                     </div>
                 </div>
+                <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-sm font-medium text-gray-500">Result Records</p>
+                        <span class="text-sm font-semibold text-gray-900">{{ $percentages['result_recording'] }}%</span>
+                    </div>
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div class="h-full rounded-full bg-gray-900" style="width: {{ $percentages['result_recording'] }}%"></div>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-sm font-medium text-gray-500">Publish Ready</p>
+                        <span class="text-sm font-semibold text-gray-900">{{ $percentages['publish_ready'] }}%</span>
+                    </div>
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div class="h-full rounded-full bg-emerald-600" style="width: {{ $percentages['publish_ready'] }}%"></div>
+                    </div>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-sm font-medium text-gray-500">Published</p>
+                        <span class="text-sm font-semibold text-gray-900">{{ $percentages['published'] }}%</span>
+                    </div>
+                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
+                        <div class="h-full rounded-full bg-emerald-800" style="width: {{ $percentages['published'] }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6 grid gap-4 lg:grid-cols-2">
+                @if ($analysis['is_publish_ready'])
+                    <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                        <p class="font-semibold">Publish readiness passed</p>
+                        <p class="mt-1">All expected subjects are recorded, graded, and ready for publication or already published.</p>
+                    </div>
+                @else
+                    <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        <p class="font-semibold">Publish readiness needs attention</p>
+                        <p class="mt-1">
+                            {{ $stats['missing_subjects'] }} missing,
+                            {{ $stats['draft_subjects'] }} draft,
+                            {{ $stats['returned_subjects'] }} returned,
+                            {{ $stats['ungraded_subjects'] }} ungraded.
+                        </p>
+                    </div>
+                @endif
+
+                @if ($analysis['missing_subjects']->isNotEmpty())
+                    <div class="rounded-lg border border-amber-200 bg-white p-4">
+                        <p class="text-sm font-semibold text-gray-900">Missing Subjects</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach ($analysis['missing_subjects']->take(8) as $item)
+                                <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 ring-1 ring-amber-200">{{ $item['subject_name'] }}</span>
+                            @endforeach
+                            @if ($analysis['missing_subjects']->count() > 8)
+                                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">+{{ $analysis['missing_subjects']->count() - 8 }} more</span>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                @if ($analysis['draft_warnings']->isNotEmpty())
+                    <div class="rounded-lg border border-gray-200 bg-white p-4">
+                        <p class="text-sm font-semibold text-gray-900">Draft Warnings</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach ($analysis['draft_warnings']->take(8) as $item)
+                                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">{{ $item['subject_name'] }}</span>
+                            @endforeach
+                            @if ($analysis['draft_warnings']->count() > 8)
+                                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">+{{ $analysis['draft_warnings']->count() - 8 }} more</span>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                @if ($analysis['returned_warnings']->isNotEmpty())
+                    <div class="rounded-lg border border-orange-200 bg-white p-4">
+                        <p class="text-sm font-semibold text-gray-900">Returned Warnings</p>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach ($analysis['returned_warnings']->take(8) as $item)
+                                <span class="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-800 ring-1 ring-orange-200">{{ $item['subject_name'] }}</span>
+                            @endforeach
+                            @if ($analysis['returned_warnings']->count() > 8)
+                                <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">+{{ $analysis['returned_warnings']->count() - 8 }} more</span>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
 
             @if ($teacherClassAssignments->isNotEmpty())
@@ -170,6 +281,13 @@
                                             @endif
                                         </div>
                                         <div class="mt-1 text-xs text-gray-500">{{ $subject->code ?: 'No subject code' }}</div>
+                                        <div class="mt-2">
+                                            @if ($row['is_expected'])
+                                                <span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Expected</span>
+                                            @else
+                                                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Supplemental</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-5 py-4">
                                         <div class="flex max-w-md flex-wrap gap-2">
@@ -197,10 +315,17 @@
                                     <td class="px-5 py-4">
                                         <div class="flex items-center gap-2">
                                             <x-status-badge :status="$row['status']" />
-                                            @if ($row['result_count'] > 1)
-                                                <span class="text-xs text-gray-500">{{ $row['result_count'] }} records</span>
+                                            @if ($row['result_count'] > 1 || $row['submission_count'] > 0)
+                                                <span class="text-xs text-gray-500">
+                                                    {{ $row['result_count'] }} result / {{ $row['submission_count'] }} queue
+                                                </span>
                                             @endif
                                         </div>
+                                        @if ($row['is_expected'] && $row['result_count'] === 0 && $row['submission_count'] === 0)
+                                            <p class="mt-2 text-xs font-medium text-amber-700">Missing expected result</p>
+                                        @elseif ($row['is_expected'] && $row['latest_result'] && blank($row['latest_result']->grade))
+                                            <p class="mt-2 text-xs font-medium text-red-700">No grading match</p>
+                                        @endif
                                     </td>
                                     <td class="px-5 py-4 text-sm text-gray-700">
                                         @if ($latestResult)

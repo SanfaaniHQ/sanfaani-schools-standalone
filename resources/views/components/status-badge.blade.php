@@ -16,6 +16,7 @@
         'published' => 'bg-green-50 text-green-700 ring-green-600/20',
         'unpublished' => 'bg-slate-100 text-slate-700 ring-slate-500/20',
         'voided' => 'bg-red-50 text-red-700 ring-red-600/20',
+        'missing' => 'bg-amber-50 text-amber-700 ring-amber-600/20',
         'pending' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
         'pending_payment' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
         'manual_pending' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',

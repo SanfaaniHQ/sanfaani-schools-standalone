@@ -12,6 +12,7 @@ use App\Models\StudentElectiveSubject;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\TeacherClassAssignment;
+use App\Models\TeacherResultSubmission;
 use App\Models\TeacherSubjectAssignment;
 use App\Models\Term;
 use Illuminate\Support\Collection;
@@ -121,9 +122,19 @@ class StudentResultWorkspaceService
             $selectedResultType
         );
 
+        $submissions = $this->submissionsForContext(
+            $school,
+            $student,
+            $classIds,
+            $selectedSessionId,
+            $selectedTermId,
+            $selectedResultType
+        );
+
         $subjectIds = $classSubjectAssignments->pluck('subject_id')
             ->merge($electiveSubjects->pluck('subject_id'))
             ->merge($teacherSubjectAssignments->pluck('subject_id'))
+            ->merge($submissions->pluck('subject_id'))
             ->merge($results->pluck('subject_id'))
             ->filter()
             ->unique()
@@ -141,8 +152,10 @@ class StudentResultWorkspaceService
             $classSubjectAssignments,
             $electiveSubjects,
             $teacherSubjectAssignments,
+            $submissions,
             $results
         );
+        $analysis = $this->completionAnalysis($rows, $results);
 
         return [
             'filters' => [
@@ -166,7 +179,9 @@ class StudentResultWorkspaceService
             ],
             'subjects' => $rows,
             'results' => $results,
-            'stats' => $this->stats($rows, $results),
+            'submissions' => $submissions,
+            'analysis' => $analysis,
+            'stats' => $analysis['stats'],
         ];
     }
 
@@ -448,16 +463,46 @@ class StudentResultWorkspaceService
             ->get();
     }
 
+    private function submissionsForContext(
+        School $school,
+        Student $student,
+        array $classIds,
+        ?int $selectedSessionId,
+        ?int $selectedTermId,
+        string $selectedResultType
+    ): Collection {
+        return TeacherResultSubmission::query()
+            ->where('school_id', $school->id)
+            ->where('result_type', $selectedResultType)
+            ->whereNotNull('subject_id')
+            ->when($selectedSessionId, fn ($query) => $query->where('academic_session_id', $selectedSessionId))
+            ->when($selectedTermId, fn ($query) => $query->where('term_id', $selectedTermId))
+            ->when($classIds !== [], fn ($query) => $query->whereIn('school_class_id', $classIds))
+            ->with([
+                'subject:id,school_id,name,code,status',
+                'teacher:id,name',
+                'schoolClass:id,name,section',
+                'academicSession:id,name',
+                'term:id,name',
+            ])
+            ->latest('updated_at')
+            ->get()
+            ->filter(fn (TeacherResultSubmission $submission) => $this->submissionHasStudentScore($submission, $student->id))
+            ->values();
+    }
+
     private function subjectRows(
         Collection $subjects,
         Collection $classSubjectAssignments,
         Collection $electiveSubjects,
         Collection $teacherSubjectAssignments,
+        Collection $submissions,
         Collection $results
     ): Collection {
         $classAssignmentsBySubject = $classSubjectAssignments->groupBy('subject_id');
         $electivesBySubject = $electiveSubjects->groupBy('subject_id');
         $teacherAssignmentsBySubject = $teacherSubjectAssignments->groupBy('subject_id');
+        $submissionsBySubject = $submissions->groupBy('subject_id');
         $resultsBySubject = $results->groupBy('subject_id');
 
         return $subjects
@@ -472,24 +517,37 @@ class StudentResultWorkspaceService
                 $teacherNames = $teacherAssignmentsBySubject
                     ->get($subject->id, collect())
                     ->pluck('teacher.name')
+                    ->merge($submissionsBySubject->get($subject->id, collect())->pluck('teacher.name'))
                     ->filter()
                     ->unique()
                     ->values();
+                $subjectSubmissions = $submissionsBySubject->get($subject->id, collect());
+                $latestSubmission = $subjectSubmissions->sortByDesc('updated_at')->first();
+                $sources = $this->sourcesForSubject(
+                    $subject->id,
+                    $classAssignmentsBySubject,
+                    $electivesBySubject,
+                    $teacherAssignmentsBySubject,
+                    $subjectSubmissions,
+                    $subjectResults
+                );
+                $expected = collect($sources)
+                    ->pluck('key')
+                    ->intersect(['class_assignment', 'student_elective', 'teacher_assignment'])
+                    ->isNotEmpty();
 
                 return [
                     'subject' => $subject,
-                    'sources' => $this->sourcesForSubject(
-                        $subject->id,
-                        $classAssignmentsBySubject,
-                        $electivesBySubject,
-                        $teacherAssignmentsBySubject,
-                        $subjectResults
-                    ),
+                    'sources' => $sources,
+                    'is_expected' => $expected,
                     'teacher_names' => $teacherNames,
                     'results' => $subjectResults,
+                    'submissions' => $subjectSubmissions,
                     'latest_result' => $latestResult,
-                    'status' => $latestResult?->status ?? 'missing',
+                    'latest_submission' => $latestSubmission,
+                    'status' => $latestResult?->status ?? $latestSubmission?->status ?? 'missing',
                     'result_count' => $subjectResults->count(),
+                    'submission_count' => $subjectSubmissions->count(),
                 ];
             })
             ->sortBy(fn ($row) => $row['subject']->name)
@@ -501,6 +559,7 @@ class StudentResultWorkspaceService
         Collection $classAssignmentsBySubject,
         Collection $electivesBySubject,
         Collection $teacherAssignmentsBySubject,
+        Collection $subjectSubmissions,
         Collection $subjectResults
     ): array {
         $sources = [];
@@ -534,6 +593,13 @@ class StudentResultWorkspaceService
             ];
         }
 
+        if ($subjectSubmissions->isNotEmpty()) {
+            $sources[] = [
+                'key' => 'teacher_submission',
+                'label' => 'Teacher submission',
+            ];
+        }
+
         if ($subjectResults->isNotEmpty()) {
             $sources[] = [
                 'key' => 'result_record',
@@ -544,21 +610,137 @@ class StudentResultWorkspaceService
         return $sources;
     }
 
-    private function stats(Collection $rows, Collection $results): array
+    private function completionAnalysis(Collection $rows, Collection $results): array
     {
-        $recordedSubjects = $rows->filter(fn ($row) => $row['result_count'] > 0)->count();
-        $totalSubjects = $rows->count();
+        $expectedRows = $rows->where('is_expected', true)->values();
+        $supplementalRows = $rows->where('is_expected', false)->values();
+        $totalSubjects = $expectedRows->count();
+        $recordedRows = $expectedRows->filter(fn ($row) => $row['result_count'] > 0)->values();
+        $scoreCarrierRows = $expectedRows
+            ->filter(fn ($row) => $row['result_count'] > 0 || $row['submission_count'] > 0)
+            ->values();
+        $missingRows = $expectedRows
+            ->filter(fn ($row) => $row['result_count'] === 0 && $row['submission_count'] === 0)
+            ->values();
+        $draftRows = $expectedRows->filter(fn ($row) => $this->rowHasStatus($row, ResultWorkflowStatus::Draft))->values();
+        $returnedRows = $expectedRows->filter(fn ($row) => $this->rowHasStatus($row, ResultWorkflowStatus::Returned))->values();
+        $ungradedRows = $expectedRows
+            ->filter(fn ($row) => $row['latest_result'] && blank($row['latest_result']->grade))
+            ->values();
+        $publishReadyRows = $expectedRows->filter(fn ($row) => $this->rowIsPublishReady($row))->values();
+        $publishedRows = $expectedRows
+            ->filter(fn ($row) => $row['latest_result']?->status === ResultWorkflowStatus::Published->value)
+            ->values();
+        $notReadyRows = $expectedRows
+            ->reject(fn ($row) => $this->rowIsPublishReady($row) || $row['latest_result']?->status === ResultWorkflowStatus::Published->value)
+            ->values();
+        $pendingReviewRows = $expectedRows
+            ->filter(fn ($row) => $this->rowHasAnyStatus($row, [
+                ResultWorkflowStatus::Submitted,
+                ResultWorkflowStatus::Reviewed,
+            ]))
+            ->values();
+
+        $percentages = [
+            'score_entry' => $this->percentage($scoreCarrierRows->count(), $totalSubjects),
+            'result_recording' => $this->percentage($recordedRows->count(), $totalSubjects),
+            'publish_ready' => $this->percentage($publishReadyRows->count(), $totalSubjects),
+            'published' => $this->percentage($publishedRows->count(), $totalSubjects),
+        ];
+
+        $stats = [
+            'total_subjects' => $totalSubjects,
+            'loaded_subjects' => $rows->count(),
+            'supplemental_subjects' => $supplementalRows->count(),
+            'recorded_subjects' => $recordedRows->count(),
+            'score_carrier_subjects' => $scoreCarrierRows->count(),
+            'missing_subjects' => $missingRows->count(),
+            'draft_subjects' => $draftRows->count(),
+            'returned_subjects' => $returnedRows->count(),
+            'pending_review_subjects' => $pendingReviewRows->count(),
+            'ungraded_subjects' => $ungradedRows->count(),
+            'publish_ready_subjects' => $publishReadyRows->count(),
+            'not_ready_subjects' => $notReadyRows->count(),
+            'result_records' => $results->count(),
+            'published_results' => $publishedRows->count(),
+            'draft_results' => $draftRows->count(),
+            'completion_percentage' => $percentages['result_recording'],
+            'publish_ready_percentage' => $percentages['publish_ready'],
+            'published_percentage' => $percentages['published'],
+        ];
 
         return [
-            'total_subjects' => $totalSubjects,
-            'recorded_subjects' => $recordedSubjects,
-            'missing_subjects' => max(0, $totalSubjects - $recordedSubjects),
-            'result_records' => $results->count(),
-            'published_results' => $results->where('status', ResultWorkflowStatus::Published->value)->count(),
-            'draft_results' => $results->where('status', ResultWorkflowStatus::Draft->value)->count(),
-            'completion_percentage' => $totalSubjects > 0
-                ? (int) round(($recordedSubjects / $totalSubjects) * 100)
-                : 0,
+            'stats' => $stats,
+            'percentages' => $percentages,
+            'missing_subjects' => $this->analysisItems($missingRows),
+            'draft_warnings' => $this->analysisItems($draftRows),
+            'returned_warnings' => $this->analysisItems($returnedRows),
+            'pending_review' => $this->analysisItems($pendingReviewRows),
+            'ungraded_subjects' => $this->analysisItems($ungradedRows),
+            'not_ready_subjects' => $this->analysisItems($notReadyRows),
+            'publish_ready_subjects' => $this->analysisItems($publishReadyRows),
+            'is_publish_ready' => $totalSubjects > 0
+                && $missingRows->isEmpty()
+                && $draftRows->isEmpty()
+                && $returnedRows->isEmpty()
+                && $ungradedRows->isEmpty()
+                && $publishReadyRows->count() + $publishedRows->count() === $totalSubjects,
         ];
+    }
+
+    private function submissionHasStudentScore(TeacherResultSubmission $submission, int $studentId): bool
+    {
+        return collect($submission->metadata['scores'] ?? [])
+            ->contains(fn ($row) => (int) ($row['student_id'] ?? 0) === $studentId);
+    }
+
+    private function rowHasStatus(array $row, ResultWorkflowStatus $status): bool
+    {
+        return $this->rowHasAnyStatus($row, [$status]);
+    }
+
+    private function rowHasAnyStatus(array $row, array $statuses): bool
+    {
+        $values = collect($statuses)->map(fn (ResultWorkflowStatus $status) => $status->value);
+
+        if ($row['latest_result'] && $values->contains($row['latest_result']->status)) {
+            return true;
+        }
+
+        return $row['submissions']->contains(fn (TeacherResultSubmission $submission) => $values->contains($submission->status));
+    }
+
+    private function rowIsPublishReady(array $row): bool
+    {
+        if (! $row['is_expected'] || $this->rowHasStatus($row, ResultWorkflowStatus::Draft) || $this->rowHasStatus($row, ResultWorkflowStatus::Returned)) {
+            return false;
+        }
+
+        if ($row['latest_result']) {
+            return filled($row['latest_result']->grade)
+                && in_array($row['latest_result']->status, [
+                    ...ResultWorkflowStatus::publishableStudentResultValues(),
+                    ResultWorkflowStatus::Published->value,
+                ], true);
+        }
+
+        return $row['latest_submission']?->status === ResultWorkflowStatus::Approved->value;
+    }
+
+    private function analysisItems(Collection $rows): Collection
+    {
+        return $rows->map(fn ($row) => [
+            'subject_id' => $row['subject']->id,
+            'subject_name' => $row['subject']->name,
+            'subject_code' => $row['subject']->code,
+            'status' => $row['status'],
+            'updated_at' => $row['latest_result']?->updated_at ?? $row['latest_submission']?->updated_at,
+            'teacher_names' => $row['teacher_names'],
+        ])->values();
+    }
+
+    private function percentage(int $count, int $total): int
+    {
+        return $total > 0 ? (int) round(($count / $total) * 100) : 0;
     }
 }
