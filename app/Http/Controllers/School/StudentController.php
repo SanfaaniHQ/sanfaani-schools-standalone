@@ -12,6 +12,7 @@ use App\Models\CommunicationLog;
 use App\Models\Term;
 use App\Services\AuditLogService;
 use App\Services\AdmissionNumberGeneratorService;
+use App\Services\StudentClassEnrollmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -83,8 +84,13 @@ class StudentController extends Controller
             'schoolClass',
             'currentEnrollment.schoolClass',
             'currentEnrollment.academicSession',
+            'currentEnrollment.startTerm',
+            'currentEnrollment.endTerm',
             'classEnrollments.academicSession',
             'classEnrollments.schoolClass',
+            'classEnrollments.startTerm',
+            'classEnrollments.endTerm',
+            'classEnrollments.createdBy',
             'classEnrollments.promotedFrom.schoolClass',
         ]);
 
@@ -256,7 +262,17 @@ class StudentController extends Controller
                     ->generateForSchool($school);
             }
 
-            return Student::create($data);
+            $student = Student::create($data);
+
+            app(StudentClassEnrollmentService::class)->recordPlacement(
+                $school,
+                $student,
+                $data['school_class_id'] ?? null,
+                createdBy: auth()->id(),
+                source: 'student_created'
+            );
+
+            return $student;
         });
 
         StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentCreated($student->loadMissing('school')));
@@ -311,7 +327,35 @@ class StudentController extends Controller
             'status' => ['required', Rule::in(['active', 'inactive', 'graduated', 'transferred', 'withdrawn'])],
         ]);
 
-        $student->update($data);
+        $classId = $data['school_class_id'] ?? null;
+        unset($data['school_class_id']);
+
+        DB::transaction(function () use ($school, $student, $data, $classId) {
+            $student->update($data);
+
+            $enrollments = app(StudentClassEnrollmentService::class);
+
+            if (in_array($student->status, ['graduated', 'transferred', 'withdrawn'], true)) {
+                $enrollments->closeOpenEnrollments(
+                    $school,
+                    $student,
+                    $enrollments->activeTerm($school),
+                    $student->status
+                );
+
+                return;
+            }
+
+            if ((int) $student->school_class_id !== (int) $classId || ($classId && ! $student->currentEnrollment)) {
+                $enrollments->recordPlacement(
+                    $school,
+                    $student,
+                    $classId,
+                    createdBy: auth()->id(),
+                    source: 'student_updated'
+                );
+            }
+        });
 
         return redirect()
             ->route('school.students.index')
@@ -347,6 +391,16 @@ class StudentController extends Controller
 
         $student->restore();
         $student->update(['status' => 'active']);
+
+        if ($student->school_class_id) {
+            app(StudentClassEnrollmentService::class)->recordPlacement(
+                $school,
+                $student,
+                $student->school_class_id,
+                createdBy: auth()->id(),
+                source: 'student_restored'
+            );
+        }
 
         app(AuditLogService::class)->log('student_restored', $student, $school, metadata: [
             'admission_number' => $student->admission_number,

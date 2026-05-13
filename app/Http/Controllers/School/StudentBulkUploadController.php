@@ -109,7 +109,7 @@ class StudentBulkUploadController extends Controller
 
         $schoolClass = $this->findSchoolClass($school, (int) $data['school_class_id']);
 
-        $import = new StudentCsvImportService($school, $schoolClass);
+        $import = new StudentCsvImportService($school, $schoolClass, auth()->id());
 
         try {
             $import->import($request->file('student_file')->getRealPath());

@@ -8,12 +8,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class StudentClassEnrollment extends Model
 {
+    public const CURRENT_STATUSES = ['active', 'repeating'];
+
     protected $fillable = [
         'school_id',
         'student_id',
         'school_class_id',
         'academic_session_id',
+        'start_term_id',
+        'end_term_id',
         'status',
+        'created_by',
         'enrolled_at',
         'promoted_from_enrollment_id',
         'metadata',
@@ -42,6 +47,21 @@ class StudentClassEnrollment extends Model
     public function academicSession(): BelongsTo
     {
         return $this->belongsTo(AcademicSession::class);
+    }
+
+    public function startTerm(): BelongsTo
+    {
+        return $this->belongsTo(Term::class, 'start_term_id');
+    }
+
+    public function endTerm(): BelongsTo
+    {
+        return $this->belongsTo(Term::class, 'end_term_id');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function promotedFrom(): BelongsTo

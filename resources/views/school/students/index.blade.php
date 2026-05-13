@@ -128,10 +128,14 @@
                                     </td>
 
                                     <td class="px-6 py-4 text-sm text-gray-600">
-                                        @if ($student->schoolClass)
-                                            {{ $student->schoolClass->name }}
-                                            @if ($student->schoolClass->section)
-                                                {{ $student->schoolClass->section }}
+                                        @php($currentClass = $student->currentEnrollment?->schoolClass ?? $student->schoolClass)
+                                        @if ($currentClass)
+                                            {{ $currentClass->name }}
+                                            @if ($currentClass->section)
+                                                {{ $currentClass->section }}
+                                            @endif
+                                            @if ($student->currentEnrollment?->academicSession)
+                                                <div class="mt-1 text-xs text-gray-500">{{ $student->currentEnrollment->academicSession->name }}</div>
                                             @endif
                                         @else
                                             No class

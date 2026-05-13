@@ -19,7 +19,8 @@ class StudentCsvImportService
 
     public function __construct(
         private School $school,
-        private SchoolClass $schoolClass
+        private SchoolClass $schoolClass,
+        private ?int $createdBy = null
     ) {}
 
     public function import(string $filePath): void
@@ -133,13 +134,17 @@ class StudentCsvImportService
             $admissionNumber = $admissionNumber ?: app(AdmissionNumberGeneratorService::class)
                 ->generateForSchool($this->school);
 
-            return Student::updateOrCreate(
-                [
-                    'school_id' => $this->school->id,
-                    'admission_number' => $admissionNumber,
-                ],
-                [
-                'school_class_id' => $this->schoolClass->id,
+            $student = Student::firstOrNew([
+                'school_id' => $this->school->id,
+                'admission_number' => $admissionNumber,
+            ]);
+            $wasRecentlyCreated = ! $student->exists;
+
+            if ($wasRecentlyCreated) {
+                $student->school_class_id = $this->schoolClass->id;
+            }
+
+            $student->fill([
                 'first_name' => $firstName,
                 'middle_name' => $middleName,
                 'last_name' => $lastName,
@@ -150,8 +155,22 @@ class StudentCsvImportService
                 'guardian_email' => $guardianEmail,
                 'address' => $address,
                 'status' => $status,
-                ]
-            );
+            ]);
+            $student->save();
+
+            if ($status === 'active') {
+                app(StudentClassEnrollmentService::class)->recordPlacement(
+                    $this->school,
+                    $student,
+                    $this->schoolClass->id,
+                    createdBy: $this->createdBy,
+                    source: $wasRecentlyCreated ? 'student_csv_created' : 'student_csv_updated'
+                );
+            }
+
+            $student->wasRecentlyCreated = $wasRecentlyCreated;
+
+            return $student;
         });
 
         if ($student->wasRecentlyCreated) {

@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\StudentClassEnrollment;
 use App\Models\StudentPromotionBatch;
 use App\Models\StudentPromotionItem;
+use App\Services\StudentClassEnrollmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -85,10 +86,15 @@ class StudentPromotionController extends Controller
         }
 
         $classes = SchoolClass::where('school_id', $school->id)->get()->keyBy('id');
+        $sessions = AcademicSession::where('school_id', $school->id)
+            ->whereIn('id', [$context['from_academic_session_id'], $context['to_academic_session_id']])
+            ->get()
+            ->keyBy('id');
+        $enrollments = app(StudentClassEnrollmentService::class);
         $counts = array_fill_keys(self::ACTIONS, 0);
         $promotionItemIds = [];
 
-        DB::transaction(function () use ($school, $context, $selectedRows, $eligibleStudents, $classes, &$counts, &$promotionItemIds) {
+        DB::transaction(function () use ($school, $context, $selectedRows, $eligibleStudents, $classes, $sessions, $enrollments, &$counts, &$promotionItemIds) {
             $batch = StudentPromotionBatch::create([
                 'school_id' => $school->id,
                 'from_academic_session_id' => $context['from_academic_session_id'],
@@ -133,41 +139,63 @@ class StudentPromotionController extends Controller
                 }
 
                 if ($action === 'promote' || $action === 'repeat') {
-                    $fromEnrollment = $this->sourceEnrollment($school, $student, $context);
+                    $fromEnrollment = $this->sourceEnrollment($school, $student, $context, $enrollments);
+                    $toSession = $sessions->get((int) $context['to_academic_session_id']);
 
-                    StudentClassEnrollment::updateOrCreate(
-                        [
-                            'student_id' => $student->id,
-                            'academic_session_id' => $context['to_academic_session_id'],
-                        ],
-                        [
-                            'school_id' => $school->id,
-                            'school_class_id' => $targetClassId,
-                            'status' => $action === 'repeat' ? 'repeating' : 'active',
-                            'enrolled_at' => now(),
-                            'promoted_from_enrollment_id' => $fromEnrollment?->id,
-                            'metadata' => [
-                                'promotion_action' => $action,
-                                'promotion_batch_id' => $batch->id,
-                            ],
-                        ]
+                    if (! $toSession) {
+                        throw ValidationException::withMessages([
+                            'to_academic_session_id' => 'A valid target session is required.',
+                        ]);
+                    }
+
+                    $newEnrollment = $enrollments->promote(
+                        $school,
+                        $student,
+                        (int) $targetClassId,
+                        $toSession,
+                        $fromEnrollment,
+                        $action === 'repeat' ? 'repeating' : 'active',
+                        auth()->id(),
+                        'student_promotion'
                     );
 
-                    $student->update([
-                        'school_class_id' => $targetClassId,
-                        'status' => 'active',
-                    ]);
+                    if ($newEnrollment) {
+                        $newEnrollment->update([
+                            'metadata' => array_merge($newEnrollment->metadata ?? [], [
+                                'promotion_action' => $action,
+                                'promotion_batch_id' => $batch->id,
+                            ]),
+                        ]);
+                    }
                 }
 
                 if ($action === 'graduate') {
+                    $enrollments->closeOpenEnrollments(
+                        $school,
+                        $student,
+                        $enrollments->lastTermForSession($school, $sessions->get((int) $context['from_academic_session_id'])),
+                        'graduated'
+                    );
                     $student->update(['status' => 'graduated']);
                 }
 
                 if ($action === 'transfer') {
+                    $enrollments->closeOpenEnrollments(
+                        $school,
+                        $student,
+                        $enrollments->lastTermForSession($school, $sessions->get((int) $context['from_academic_session_id'])),
+                        'transferred'
+                    );
                     $student->update(['status' => 'transferred']);
                 }
 
                 if ($action === 'withdraw') {
+                    $enrollments->closeOpenEnrollments(
+                        $school,
+                        $student,
+                        $enrollments->lastTermForSession($school, $sessions->get((int) $context['from_academic_session_id'])),
+                        'withdrawn'
+                    );
                     $student->update(['status' => 'withdrawn']);
                 }
 
@@ -237,6 +265,7 @@ class StudentPromotionController extends Controller
     {
         $usesEnrollmentData = StudentClassEnrollment::where('school_id', $school->id)
             ->where('academic_session_id', $context['from_academic_session_id'])
+            ->whereIn('status', StudentClassEnrollment::CURRENT_STATUSES)
             ->exists();
 
         return Student::where('school_id', $school->id)
@@ -244,30 +273,44 @@ class StudentPromotionController extends Controller
             ->when($usesEnrollmentData, function ($query) use ($context) {
                 $query->whereHas('classEnrollments', function ($query) use ($context) {
                     $query->where('academic_session_id', $context['from_academic_session_id'])
-                        ->where('school_class_id', $context['from_school_class_id']);
+                        ->where('school_class_id', $context['from_school_class_id'])
+                        ->whereIn('status', StudentClassEnrollment::CURRENT_STATUSES);
                 });
             }, function ($query) use ($context) {
                 $query->where('school_class_id', $context['from_school_class_id']);
             });
     }
 
-    private function sourceEnrollment(School $school, Student $student, array $context): ?StudentClassEnrollment
+    private function sourceEnrollment(
+        School $school,
+        Student $student,
+        array $context,
+        StudentClassEnrollmentService $enrollments
+    ): ?StudentClassEnrollment
     {
-        return StudentClassEnrollment::firstOrCreate(
-            [
-                'student_id' => $student->id,
-                'academic_session_id' => $context['from_academic_session_id'],
-            ],
-            [
-                'school_id' => $school->id,
-                'school_class_id' => $context['from_school_class_id'],
-                'status' => 'active',
-                'enrolled_at' => null,
-                'metadata' => [
-                    'source' => 'backfilled_during_promotion',
-                ],
-            ]
-        );
+        $academicSession = AcademicSession::where('school_id', $school->id)
+            ->find((int) $context['from_academic_session_id']);
+
+        if (! $academicSession) {
+            return null;
+        }
+
+        return StudentClassEnrollment::query()
+            ->where('school_id', $school->id)
+            ->where('student_id', $student->id)
+            ->where('school_class_id', $context['from_school_class_id'])
+            ->where('academic_session_id', $academicSession->id)
+            ->whereIn('status', StudentClassEnrollment::CURRENT_STATUSES)
+            ->latest('id')
+            ->first()
+            ?? $enrollments->ensureHistoricalEnrollment(
+                $school,
+                $student,
+                (int) $context['from_school_class_id'],
+                $academicSession,
+                auth()->id(),
+                'backfilled_during_promotion'
+            );
     }
 
     private function targetClassId(string $action, array $row, array $context): ?int

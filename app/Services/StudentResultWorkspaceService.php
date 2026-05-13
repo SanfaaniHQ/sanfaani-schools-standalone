@@ -29,11 +29,13 @@ class StudentResultWorkspaceService
             'schoolClass',
             'currentEnrollment.schoolClass',
             'currentEnrollment.academicSession',
+            'currentEnrollment.startTerm',
+            'currentEnrollment.endTerm',
         ]);
 
         $enrollments = $student->classEnrollments()
             ->where('school_id', $school->id)
-            ->with(['schoolClass', 'academicSession'])
+            ->with(['schoolClass', 'academicSession', 'startTerm', 'endTerm'])
             ->orderByDesc('enrolled_at')
             ->orderByDesc('id')
             ->get();

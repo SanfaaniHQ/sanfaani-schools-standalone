@@ -605,8 +605,10 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Academic Session</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Class</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Terms</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Enrolled At</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Created By</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Promotion Source</th>
                             </tr>
                         </thead>
@@ -617,8 +619,14 @@
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                         {{ $enrollment->schoolClass->name ?? 'N/A' }} {{ $enrollment->schoolClass->section ?? '' }}
                                     </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        {{ $enrollment->startTerm?->name ?? 'Session start' }}
+                                        <span class="text-gray-400">to</span>
+                                        {{ $enrollment->endTerm?->name ?? 'Current' }}
+                                    </td>
                                     <td class="px-6 py-4"><x-status-badge :status="$enrollment->status" /></td>
                                     <td class="px-6 py-4 text-sm text-gray-600">{{ $enrollment->enrolled_at?->format('d M Y') ?? 'Backfilled/Not set' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $enrollment->createdBy?->name ?? 'System' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         @if ($enrollment->promotedFrom)
                                             From {{ $enrollment->promotedFrom->schoolClass->name ?? 'previous class' }}
@@ -629,7 +637,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center">
+                                    <td colspan="7" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />

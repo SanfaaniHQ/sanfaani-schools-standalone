@@ -56,7 +56,9 @@ class Student extends Model
 
     public function currentEnrollment(): HasOne
     {
-        return $this->hasOne(StudentClassEnrollment::class)->latestOfMany();
+        return $this->hasOne(StudentClassEnrollment::class)
+            ->whereIn('status', StudentClassEnrollment::CURRENT_STATUSES)
+            ->latestOfMany();
     }
 
     public function promotionItems(): HasMany
