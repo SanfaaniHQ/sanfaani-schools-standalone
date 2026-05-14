@@ -17,6 +17,10 @@ class SendStudentTransactionalEmail implements ShouldQueue
 
     public string $queue = 'mail';
 
+    public int $tries = 2;
+
+    public int $timeout = 30;
+
     public function __construct(
         private CommunicationService $communications,
         private NotificationPreferenceService $preferences,

@@ -158,6 +158,7 @@ class MailSettingService
             Config::set('mail.mailers.smtp.password', $setting->password);
             Config::set('mail.mailers.smtp.scheme', $this->smtpScheme($setting));
             Config::set('mail.mailers.smtp.encryption', $setting->encryption ?: null);
+            Config::set('mail.mailers.smtp.timeout', $this->smtpTimeout());
         }
 
         app(MailManager::class)->forgetMailers();
@@ -354,6 +355,11 @@ class MailSettingService
         }
 
         return null;
+    }
+
+    private function smtpTimeout(): int
+    {
+        return max(1, (int) config('mail.mailers.smtp.timeout', 10));
     }
 
     private function sendTestMessage(string $recipient): void

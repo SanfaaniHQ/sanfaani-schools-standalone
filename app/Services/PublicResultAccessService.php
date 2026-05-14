@@ -20,6 +20,8 @@ class PublicResultAccessService
 
     private const TOKEN_TTL_MINUTES = 30;
 
+    private const MAX_SESSION_TOKENS = 10;
+
     public function __construct(
         private SchoolFeatureAccessService $featureAccess
     ) {}
@@ -93,7 +95,7 @@ class PublicResultAccessService
         string $locale
     ): string {
         $token = Str::random(64);
-        $tokens = $request->session()->get(self::SESSION_KEY, []);
+        $tokens = $this->pruneTokens($request->session()->get(self::SESSION_KEY, []));
 
         $tokens[$token] = [
             'school_id' => $school->id,
@@ -142,23 +144,34 @@ class PublicResultAccessService
 
     public function tokenData(Request $request, string $token): ?array
     {
-        $tokens = $request->session()->get(self::SESSION_KEY, []);
+        $tokens = $this->pruneTokens($request->session()->get(self::SESSION_KEY, []));
 
         if (! isset($tokens[$token]) || ! is_array($tokens[$token])) {
-            return null;
-        }
-
-        $data = $tokens[$token];
-        $createdAt = (int) ($data['created_at'] ?? 0);
-
-        if ($createdAt < now()->subMinutes(self::TOKEN_TTL_MINUTES)->timestamp) {
-            unset($tokens[$token]);
             $request->session()->put(self::SESSION_KEY, $tokens);
 
             return null;
         }
 
+        $data = $tokens[$token];
+        $request->session()->put(self::SESSION_KEY, $tokens);
+
         return $data;
+    }
+
+    private function pruneTokens(mixed $tokens): array
+    {
+        if (! is_array($tokens)) {
+            return [];
+        }
+
+        $expiresBefore = now()->subMinutes(self::TOKEN_TTL_MINUTES)->timestamp;
+
+        $tokens = array_filter(
+            $tokens,
+            fn ($data) => is_array($data) && (int) ($data['created_at'] ?? 0) >= $expiresBefore
+        );
+
+        return array_slice($tokens, -self::MAX_SESSION_TOKENS, null, true);
     }
 
     private function publishedResultsQuery(

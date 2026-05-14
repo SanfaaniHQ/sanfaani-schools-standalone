@@ -2,11 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\PlatformSetting;
+use App\Services\PlatformSettingService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -49,16 +48,12 @@ class IdleTimeoutMiddleware
         $fallback = (int) config('sanfaani.idle_timeout_minutes', 30);
 
         try {
-            $settingsTableReady = Schema::hasTable('platform_settings');
+            $settings = app(PlatformSettingService::class)->get();
         } catch (Throwable) {
-            $settingsTableReady = false;
-        }
-
-        if (! $settingsTableReady) {
             return $fallback;
         }
 
-        $metadata = PlatformSetting::query()->value('metadata') ?: [];
+        $metadata = $settings->metadata ?: [];
 
         if (is_string($metadata)) {
             $metadata = json_decode($metadata, true) ?: [];

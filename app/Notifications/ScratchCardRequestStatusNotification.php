@@ -3,11 +3,21 @@
 namespace App\Notifications;
 
 use App\Models\ScratchCardBatch;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ScratchCardRequestStatusNotification extends Notification
+class ScratchCardRequestStatusNotification extends Notification implements ShouldQueue
 {
+    use Queueable;
+
+    public string $queue = 'mail';
+
+    public int $tries = 2;
+
+    public int $timeout = 30;
+
     public function __construct(
         private ScratchCardBatch $batch,
         private string $status,

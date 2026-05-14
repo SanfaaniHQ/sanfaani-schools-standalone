@@ -36,6 +36,9 @@ class SchoolAdminDashboardController extends Controller
         if ($roleContext === 'school_admin' || $roleContext === 'super_admin') {
             $schoolSteps = $onboarding->schoolSteps();
             $schoolCompleted = $onboarding->completedKeys('school', $school, $user);
+            $resultMetrics = $this->resultStatusMetrics($school);
+            $scratchBatchMetrics = $this->scratchCardBatchMetrics($school);
+            $scratchCardMetrics = $this->scratchCardMetrics($school);
 
             $data = array_merge($data, [
                 'totalSchoolUsers' => $school->users()->count(),
@@ -46,17 +49,17 @@ class SchoolAdminDashboardController extends Controller
                 'totalTerms' => $school->terms()->count(),
                 'activeTerm' => $school->terms()->where('is_active', true)->first(),
                 'totalStudents' => $school->students()->count(),
-                'totalResults' => $school->studentResults()->count(),
-                'draftResults' => $school->studentResults()->where('status', 'draft')->count(),
-                'reviewedResults' => $school->studentResults()->where('status', 'reviewed')->count(),
-                'publishedResults' => $school->studentResults()->where('status', 'published')->count(),
-                'totalScratchCardRequests' => $school->scratchCardBatches()->count(),
-                'pendingScratchCardRequests' => $school->scratchCardBatches()->where('status', 'pending_payment')->count(),
-                'generatedScratchCardRequests' => $school->scratchCardBatches()->where('status', 'generated')->count(),
-                'revokedScratchCardRequests' => $school->scratchCardBatches()->where('status', 'revoked')->count(),
-                'unusedScratchCards' => $school->scratchCards()->where('status', 'unused')->count(),
-                'usedScratchCards' => $school->scratchCards()->where('status', 'used')->count(),
-                'revokedScratchCards' => $school->scratchCards()->where('status', 'revoked')->count(),
+                'totalResults' => $resultMetrics['total'],
+                'draftResults' => $resultMetrics['draft'],
+                'reviewedResults' => $resultMetrics['reviewed'],
+                'publishedResults' => $resultMetrics['published'],
+                'totalScratchCardRequests' => $scratchBatchMetrics['total'],
+                'pendingScratchCardRequests' => $scratchBatchMetrics['pending_payment'],
+                'generatedScratchCardRequests' => $scratchBatchMetrics['generated'],
+                'revokedScratchCardRequests' => $scratchBatchMetrics['revoked'],
+                'unusedScratchCards' => $scratchCardMetrics['unused'],
+                'usedScratchCards' => $scratchCardMetrics['used'],
+                'revokedScratchCards' => $scratchCardMetrics['revoked'],
                 'schoolOnboardingSteps' => $schoolSteps,
                 'schoolOnboardingCompleted' => $schoolCompleted,
                 'schoolOnboardingProgress' => $onboarding->progress($schoolSteps, $schoolCompleted),
@@ -143,13 +146,8 @@ class SchoolAdminDashboardController extends Controller
      */
     private function getResultOfficerDashboardData($school): array
     {
-        // Get result statistics
+        $resultMetrics = $this->resultStatusMetrics($school);
         $totalStudents = $school->students()->count();
-        $draftResults = $school->studentResults()->where('status', 'draft')->count();
-        $submittedResults = $school->studentResults()->where('status', 'submitted')->count();
-        $reviewedResults = $school->studentResults()->where('status', 'reviewed')->count();
-        $publishedResults = $school->studentResults()->where('status', 'published')->count();
-        $returnedResults = $school->studentResults()->where('status', 'returned')->count();
 
         // Get recent result upload activity (last 30 days)
         $recentUploads = $school->studentResults()
@@ -162,14 +160,67 @@ class SchoolAdminDashboardController extends Controller
 
         return [
             'totalStudents' => $totalStudents,
-            'draftResults' => $draftResults,
-            'submittedResults' => $submittedResults,
-            'reviewedResults' => $reviewedResults,
-            'publishedResults' => $publishedResults,
-            'returnedResults' => $returnedResults,
+            'draftResults' => $resultMetrics['draft'],
+            'submittedResults' => $resultMetrics['submitted'],
+            'reviewedResults' => $resultMetrics['reviewed'],
+            'publishedResults' => $resultMetrics['published'],
+            'returnedResults' => $resultMetrics['returned'],
             'recentUploads' => $recentUploads,
             'activeSession' => $school->academicSessions()->where('is_active', true)->first(),
             'activeTerm' => $school->terms()->where('is_active', true)->first(),
+        ];
+    }
+
+    private function resultStatusMetrics($school): array
+    {
+        $row = $school->studentResults()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft")
+            ->selectRaw("SUM(CASE WHEN status = 'submitted' THEN 1 ELSE 0 END) as submitted")
+            ->selectRaw("SUM(CASE WHEN status = 'returned' THEN 1 ELSE 0 END) as returned")
+            ->selectRaw("SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed")
+            ->selectRaw("SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published")
+            ->first();
+
+        return [
+            'total' => (int) ($row->total ?? 0),
+            'draft' => (int) ($row->draft ?? 0),
+            'submitted' => (int) ($row->submitted ?? 0),
+            'returned' => (int) ($row->returned ?? 0),
+            'reviewed' => (int) ($row->reviewed ?? 0),
+            'published' => (int) ($row->published ?? 0),
+        ];
+    }
+
+    private function scratchCardBatchMetrics($school): array
+    {
+        $row = $school->scratchCardBatches()
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN status = 'pending_payment' THEN 1 ELSE 0 END) as pending_payment")
+            ->selectRaw("SUM(CASE WHEN status = 'generated' THEN 1 ELSE 0 END) as generated")
+            ->selectRaw("SUM(CASE WHEN status = 'revoked' THEN 1 ELSE 0 END) as revoked")
+            ->first();
+
+        return [
+            'total' => (int) ($row->total ?? 0),
+            'pending_payment' => (int) ($row->pending_payment ?? 0),
+            'generated' => (int) ($row->generated ?? 0),
+            'revoked' => (int) ($row->revoked ?? 0),
+        ];
+    }
+
+    private function scratchCardMetrics($school): array
+    {
+        $row = $school->scratchCards()
+            ->selectRaw("SUM(CASE WHEN status = 'unused' THEN 1 ELSE 0 END) as unused")
+            ->selectRaw("SUM(CASE WHEN status = 'used' THEN 1 ELSE 0 END) as used")
+            ->selectRaw("SUM(CASE WHEN status = 'revoked' THEN 1 ELSE 0 END) as revoked")
+            ->first();
+
+        return [
+            'unused' => (int) ($row->unused ?? 0),
+            'used' => (int) ($row->used ?? 0),
+            'revoked' => (int) ($row->revoked ?? 0),
         ];
     }
 }
