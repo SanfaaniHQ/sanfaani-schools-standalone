@@ -128,6 +128,15 @@ Route::get('/result-checker/payment/callback/{gateway?}', [ResultCheckerPaymentC
 Route::get('/verify-result/{verificationCode}', [ResultVerificationController::class, 'show'])
     ->name('public.results.verify');
 
+Route::get('/schools/{slug}', [PublicSchoolPublicPageController::class, 'show'])
+    ->name('public.schools.show');
+
+Route::get('/schools/{slug}/admissions', [PublicSchoolPublicPageController::class, 'admissions'])
+    ->name('public.schools.admissions');
+
+Route::get('/schools/{slug}/contact', [PublicSchoolPublicPageController::class, 'contact'])
+    ->name('public.schools.contact');
+
 Route::get('/s/{slug}', [PublicSchoolPublicPageController::class, 'show'])
     ->name('public.school-page.show');
 

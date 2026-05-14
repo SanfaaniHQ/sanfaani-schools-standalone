@@ -6,7 +6,7 @@
                 <p class="mt-1 text-sm text-gray-500">{{ $school->name }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a href="{{ route('public.school-page.show', $page->slug) }}" target="_blank" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Open page</a>
+                <a href="{{ route('public.schools.show', $page->slug) }}" target="_blank" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Open page</a>
                 <a href="{{ route('admin.schools.edit', $school) }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Back to school</a>
             </div>
         </div>

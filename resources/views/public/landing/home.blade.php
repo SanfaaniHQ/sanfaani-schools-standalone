@@ -1,12 +1,6 @@
 @php
     $platformName = $platformSettings->platform_name;
 
-    $metrics = [
-        ['label' => 'Publishing flow', 'value' => '5 steps', 'body' => 'Setup, entry, review, publish, access.'],
-        ['label' => 'Access models', 'value' => '4 ready', 'body' => 'Scratch card, school-paid, parent-paid, hybrid.'],
-        ['label' => 'School types', 'value' => '6+', 'body' => 'Conventional, Islamic, madrasah, training centers.'],
-    ];
-
     $quickActions = [
         ['title' => 'Request Demo', 'body' => 'Walk through setup, results, publishing, and parent access.', 'url' => route('landing.demo'), 'icon' => 'sparkles'],
         ['title' => 'Check Result', 'body' => 'Open the public result checker flow for published results.', 'url' => route('public.results.index'), 'icon' => 'shield'],
@@ -44,11 +38,13 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ $platformName }} - School Result Management SaaS</title>
-        <meta name="description" content="Smart result management and online result checking for modern schools.">
-        <meta property="og:title" content="{{ $platformName }} - School Result Management SaaS">
-        <meta property="og:description" content="Manage students, publish results safely, and let parents check approved results online.">
+        <title>{{ $platformName }} - African School Management and Result Portal</title>
+        <meta name="description" content="Modern school management SaaS for African private schools, Islamic schools, academies, and training centres with secure results, staff roles, scratch cards, and parent access.">
+        <meta property="og:title" content="{{ $platformName }} - African School Management and Result Portal">
+        <meta property="og:description" content="Manage students, publish results safely, protect role access, and let parents check approved results online.">
         <meta property="og:type" content="website">
+        <meta property="og:image" content="{{ asset('images/marketing/hero-dashboard-preview.png') }}">
+        <link rel="canonical" href="{{ route('landing.home') }}">
         <link rel="preload" as="image" href="{{ asset('images/marketing/hero-dashboard-preview.png') }}">
         @if (! empty($platformFaviconUrl))
             <link rel="icon" href="{{ $platformFaviconUrl }}">
@@ -59,34 +55,7 @@
         @include('public.landing.partials.nav')
 
         <main id="main-content">
-            <section class="marketing-hero relative overflow-hidden">
-                <x-ui.container class="py-20 sm:py-24 lg:py-28">
-                    <div class="max-w-3xl">
-                        <x-marketing.badge tone="white" icon="sparkles">Modern result management for real school operations</x-marketing.badge>
-                        <h1 class="mt-6 text-4xl font-semibold leading-tight text-white sm:text-6xl">
-                            Publish results safely. Let parents check them without chaos.
-                        </h1>
-                        <p class="mt-6 max-w-2xl text-lg leading-8 text-white/80">
-                            {{ $platformName }} brings student records, result entry, grading, publishing control, scratch cards, and parent result checking into one clean workflow.
-                        </p>
-                        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                            <a href="{{ route('landing.demo') }}" class="inline-flex items-center justify-center gap-2 rounded-md bg-white px-5 py-3 text-sm font-semibold text-gray-950 shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-950">
-                                Request Demo
-                                <x-marketing.icon name="arrow-right" class="h-4 w-4" />
-                            </a>
-                            <a href="{{ route('public.results.index') }}" class="inline-flex items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-950">
-                                Check Result
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="mt-12 grid max-w-5xl gap-4 sm:grid-cols-3">
-                        @foreach ($metrics as $metric)
-                            <x-marketing.metric-card :label="$metric['label']" :value="$metric['value']" :body="$metric['body']" tone="white" />
-                        @endforeach
-                    </div>
-                </x-ui.container>
-            </section>
+            @include('public.landing.partials.hero')
 
             <section class="bg-white py-10">
                 <x-ui.container class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

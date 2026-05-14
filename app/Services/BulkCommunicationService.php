@@ -326,7 +326,8 @@ class BulkCommunicationService
     private function refreshCounts(BulkCommunicationBatch $batch, ?int $duplicateCount = null): void
     {
         $counts = $batch->recipients()
-            ->selectRaw('status, count(*) as total')
+            ->select('status')
+            ->selectRaw('COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 

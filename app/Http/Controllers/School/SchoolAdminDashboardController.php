@@ -7,6 +7,8 @@ use App\Services\CurrentSchoolService;
 use App\Services\OnboardingProgressService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\TeacherAssignmentAccessService;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class SchoolAdminDashboardController extends Controller
 {
@@ -36,9 +38,21 @@ class SchoolAdminDashboardController extends Controller
         if ($roleContext === 'school_admin' || $roleContext === 'super_admin') {
             $schoolSteps = $onboarding->schoolSteps();
             $schoolCompleted = $onboarding->completedKeys('school', $school, $user);
-            $resultMetrics = $this->resultStatusMetrics($school);
-            $scratchBatchMetrics = $this->scratchCardBatchMetrics($school);
-            $scratchCardMetrics = $this->scratchCardMetrics($school);
+            $resultMetrics = $this->guardedMetrics(
+                'school_admin.result_status_metrics',
+                fn () => $this->resultStatusMetrics($school),
+                $this->defaultResultStatusMetrics()
+            );
+            $scratchBatchMetrics = $this->guardedMetrics(
+                'school_admin.scratch_card_batch_metrics',
+                fn () => $this->scratchCardBatchMetrics($school),
+                $this->defaultScratchCardBatchMetrics()
+            );
+            $scratchCardMetrics = $this->guardedMetrics(
+                'school_admin.scratch_card_metrics',
+                fn () => $this->scratchCardMetrics($school),
+                $this->defaultScratchCardMetrics()
+            );
 
             $data = array_merge($data, [
                 'totalSchoolUsers' => $school->users()->count(),
@@ -68,12 +82,20 @@ class SchoolAdminDashboardController extends Controller
 
         // Teacher-specific dashboard data
         if ($roleContext === 'teacher') {
-            $data = array_merge($data, $this->getTeacherDashboardData($user, $school));
+            $data = array_merge($data, $this->guardedMetrics(
+                'teacher.dashboard_data',
+                fn () => $this->getTeacherDashboardData($user, $school),
+                $this->defaultTeacherDashboardData()
+            ));
         }
 
         // Result Officer-specific dashboard data
         if ($roleContext === 'result_officer') {
-            $data = array_merge($data, $this->getResultOfficerDashboardData($school));
+            $data = array_merge($data, $this->guardedMetrics(
+                'result_officer.dashboard_data',
+                fn () => $this->getResultOfficerDashboardData($school),
+                $this->defaultResultOfficerDashboardData()
+            ));
         }
 
         // Get feature availability for current role
@@ -197,14 +219,14 @@ class SchoolAdminDashboardController extends Controller
         $row = $school->scratchCardBatches()
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("SUM(CASE WHEN status = 'pending_payment' THEN 1 ELSE 0 END) as pending_payment")
-            ->selectRaw("SUM(CASE WHEN status = 'generated' THEN 1 ELSE 0 END) as generated")
+            ->selectRaw("SUM(CASE WHEN status = 'generated' THEN 1 ELSE 0 END) as generated_count")
             ->selectRaw("SUM(CASE WHEN status = 'revoked' THEN 1 ELSE 0 END) as revoked")
             ->first();
 
         return [
             'total' => (int) ($row->total ?? 0),
             'pending_payment' => (int) ($row->pending_payment ?? 0),
-            'generated' => (int) ($row->generated ?? 0),
+            'generated' => (int) ($row->generated_count ?? 0),
             'revoked' => (int) ($row->revoked ?? 0),
         ];
     }
@@ -221,6 +243,83 @@ class SchoolAdminDashboardController extends Controller
             'unused' => (int) ($row->unused ?? 0),
             'used' => (int) ($row->used ?? 0),
             'revoked' => (int) ($row->revoked ?? 0),
+        ];
+    }
+
+    private function guardedMetrics(string $context, callable $callback, array $fallback): array
+    {
+        try {
+            return $callback();
+        } catch (Throwable $exception) {
+            Log::warning('School dashboard widget failed.', [
+                'context' => $context,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return $fallback;
+        }
+    }
+
+    private function defaultResultStatusMetrics(): array
+    {
+        return [
+            'total' => 0,
+            'draft' => 0,
+            'submitted' => 0,
+            'returned' => 0,
+            'reviewed' => 0,
+            'published' => 0,
+        ];
+    }
+
+    private function defaultScratchCardBatchMetrics(): array
+    {
+        return [
+            'total' => 0,
+            'pending_payment' => 0,
+            'generated' => 0,
+            'revoked' => 0,
+        ];
+    }
+
+    private function defaultScratchCardMetrics(): array
+    {
+        return [
+            'unused' => 0,
+            'used' => 0,
+            'revoked' => 0,
+        ];
+    }
+
+    private function defaultTeacherDashboardData(): array
+    {
+        return [
+            'assignedClasses' => collect(),
+            'assignedSubjects' => collect(),
+            'totalAssignedClasses' => 0,
+            'totalAssignedSubjects' => 0,
+            'totalAssignedStudents' => 0,
+            'draftResults' => 0,
+            'submittedResults' => 0,
+            'returnedResults' => 0,
+            'approvedResults' => 0,
+            'activeSession' => null,
+            'activeTerm' => null,
+        ];
+    }
+
+    private function defaultResultOfficerDashboardData(): array
+    {
+        return [
+            'totalStudents' => 0,
+            'draftResults' => 0,
+            'submittedResults' => 0,
+            'reviewedResults' => 0,
+            'publishedResults' => 0,
+            'returnedResults' => 0,
+            'recentUploads' => collect(),
+            'activeSession' => null,
+            'activeTerm' => null,
         ];
     }
 }

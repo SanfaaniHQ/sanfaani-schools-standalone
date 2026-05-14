@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\SuperAdminAccountProtectionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,7 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, SuperAdminAccountProtectionService $superAdminProtection): RedirectResponse
     {
         $user = $request->user();
 
@@ -49,13 +50,7 @@ class ProfileController extends Controller
             abort(403, 'You cannot delete your own account. Contact your administrator.');
         }
 
-        // Prevent last Super Admin from deleting their account
-        if ($user->hasRole('super_admin')) {
-            $superAdminCount = \App\Models\User::role('super_admin')->count();
-            if ($superAdminCount <= 1) {
-                abort(403, 'You cannot delete the last Super Admin account.');
-            }
-        }
+        $superAdminProtection->assertCanDelete($user, $user, 'userDeletion');
 
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],

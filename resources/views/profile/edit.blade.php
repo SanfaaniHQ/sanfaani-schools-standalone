@@ -19,7 +19,7 @@
                 </div>
             </div>
 
-            @unless(auth()->user()->hasAnyRole(['school_admin', 'result_officer', 'teacher']))
+            @unless(auth()->user()->hasAnyRole(['super_admin', 'school_admin', 'result_officer', 'teacher']))
                 <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                     <div class="max-w-xl">
                         @include('profile.partials.delete-user-form')

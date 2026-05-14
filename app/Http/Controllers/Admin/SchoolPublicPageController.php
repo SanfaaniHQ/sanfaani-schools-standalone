@@ -8,6 +8,7 @@ use App\Models\SchoolPublicPage;
 use App\Models\SchoolWebsiteSetting;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -28,9 +29,11 @@ class SchoolPublicPageController extends Controller
         $page = $this->pageFor($school);
         $websiteSetting = $this->websiteSettingFor($school);
         $data = $this->validated($request, $page);
+        $oldSlug = $page->slug;
 
         $page->update($data['page']);
         $websiteSetting->update($data['website']);
+        $this->forgetPublicPageCache($oldSlug, $page->slug);
 
         $auditLog->log('school_public_page_updated', $page, $school, metadata: [
             'slug' => $page->slug,
@@ -131,5 +134,12 @@ class SchoolPublicPageController extends Controller
         }
 
         return $slug;
+    }
+
+    private function forgetPublicPageCache(?string ...$slugs): void
+    {
+        foreach (array_filter(array_unique($slugs)) as $slug) {
+            Cache::forget(\App\Http\Controllers\Public\SchoolPublicPageController::cacheKey($slug));
+        }
     }
 }

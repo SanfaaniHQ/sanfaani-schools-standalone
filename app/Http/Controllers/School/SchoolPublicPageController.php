@@ -9,6 +9,7 @@ use App\Models\SchoolWebsiteSetting;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -52,6 +53,8 @@ class SchoolPublicPageController extends Controller
             'contact_page_enabled' => ['nullable', 'boolean'],
         ]);
 
+        $oldSlug = $page->slug;
+
         $page->update([
             'slug' => Str::slug($validated['slug']),
             'title' => $validated['title'] ?? null,
@@ -75,6 +78,7 @@ class SchoolPublicPageController extends Controller
             'admissions_enabled' => (bool) ($validated['admissions_enabled'] ?? false),
             'contact_page_enabled' => (bool) ($validated['contact_page_enabled'] ?? false),
         ]);
+        $this->forgetPublicPageCache($oldSlug, $page->slug);
 
         $auditLog->log('school_public_page_updated', $page, $school, metadata: [
             'slug' => $page->slug,
@@ -127,5 +131,12 @@ class SchoolPublicPageController extends Controller
         }
 
         return $school;
+    }
+
+    private function forgetPublicPageCache(?string ...$slugs): void
+    {
+        foreach (array_filter(array_unique($slugs)) as $slug) {
+            Cache::forget(\App\Http\Controllers\Public\SchoolPublicPageController::cacheKey($slug));
+        }
     }
 }

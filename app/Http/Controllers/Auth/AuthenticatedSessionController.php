@@ -27,6 +27,22 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        if ($request->user()?->hasRole('super_admin')) {
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()
+                ->route('admin.login')
+                ->withErrors([
+                    'email' => 'Super Admin accounts must use the system administrator login page.',
+                ])
+                ->withInput([
+                    'email' => $request->input('login') ?: $request->input('email'),
+                ]);
+        }
+
         $request->session()->regenerate();
 
         $contexts = $workspaces->contextsFor($request->user());

@@ -12,7 +12,7 @@
     <div>
         <label class="text-sm font-medium text-gray-700">Public page slug</label>
         <input name="slug" value="{{ old('slug', $page->slug) }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm" required>
-        <p class="mt-1 text-xs text-gray-500">Dedicated page: {{ url('/s/'.$page->slug) }}</p>
+        <p class="mt-1 text-xs text-gray-500">Dedicated page: {{ url('/schools/'.$page->slug) }}</p>
     </div>
     <div>
         <label class="text-sm font-medium text-gray-700">Website mode</label>

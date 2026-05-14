@@ -33,11 +33,7 @@
 }
 
 .marketing-hero {
-    background-image:
-        linear-gradient(90deg, rgba(3, 7, 18, 0.84) 0%, rgba(3, 7, 18, 0.7) 42%, rgba(3, 7, 18, 0.18) 100%),
-        url('/images/marketing/hero-dashboard-preview.png');
-    background-position: center;
-    background-size: cover;
+    background-color: rgb(2 44 34);
 }
 
 .marketing-cta-gradient {

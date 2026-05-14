@@ -88,7 +88,7 @@ class MultiFieldLoginTest extends TestCase
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
-    public function test_super_admin_can_login_with_email_without_staff_code(): void
+    public function test_super_admin_is_redirected_to_admin_login_from_public_login(): void
     {
         $superAdmin = User::create([
             'name' => 'Super Admin',
@@ -102,6 +102,28 @@ class MultiFieldLoginTest extends TestCase
 
         $response = $this->post('/login', [
             'login' => 'ADMIN@EXAMPLE.COM',
+            'password' => 'password123',
+        ]);
+
+        $this->assertGuest();
+        $response->assertRedirect(route('admin.login'));
+        $response->assertSessionHasErrors('email');
+    }
+
+    public function test_super_admin_can_login_through_admin_login(): void
+    {
+        $superAdmin = User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password123'),
+            'email_verified_at' => now(),
+        ]);
+
+        Role::findOrCreate('super_admin');
+        $superAdmin->assignRole('super_admin');
+
+        $response = $this->post('/admin/login', [
+            'email' => 'admin@example.com',
             'password' => 'password123',
         ]);
 
