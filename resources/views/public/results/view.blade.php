@@ -136,39 +136,13 @@
                         </div>
                     </section>
 
-                    <section class="mt-8 overflow-hidden rounded-lg border border-gray-200">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                                <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left">{{ __('public_result.subject') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('public_result.ca_score') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('public_result.exam_score') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('public_result.total') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('public_result.grade') }}</th>
-                                        <th class="px-4 py-3 text-left">{{ __('public_result.remark') }}</th>
-                                        @if ($showTeacherRemark)
-                                            <th class="px-4 py-3 text-left">{{ __('public_result.teacher_remark') }}</th>
-                                        @endif
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100 bg-white">
-                                    @foreach ($results as $result)
-                                        <tr>
-                                            <td class="px-4 py-3 font-medium text-gray-900">{{ $result->subject->name ?? 'N/A' }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $formatScore($result->ca_score) }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $formatScore($result->exam_score) }}</td>
-                                            <td class="px-4 py-3 font-semibold text-gray-900">{{ $formatScore($result->total_score) }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $result->grade }}</td>
-                                            <td class="px-4 py-3 text-gray-700">{{ $result->remark }}</td>
-                                            @if ($showTeacherRemark)
-                                                <td class="px-4 py-3 text-gray-700">{{ $result->teacher_remark ?: __('public_result.not_available') }}</td>
-                                            @endif
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                    <section class="mt-8">
+                        <x-results.table
+                            :results="$results"
+                            :show-teacher-remark="$showTeacherRemark"
+                            empty-title="{{ __('public_result.result_not_available') }}"
+                            empty-description="{{ __('public_result.not_available') }}"
+                        />
                     </section>
 
                     <section class="mt-6 grid gap-4 sm:grid-cols-3">

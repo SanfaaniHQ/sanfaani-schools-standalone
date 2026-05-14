@@ -1,14 +1,21 @@
 @php
     $selectedSchoolRouteKey = $selectedSchool?->slug ?: $selectedSchool?->getKey();
-    $identifyRoute = $isBrandedSchoolRoute && $selectedSchool
+    $publicPageSlug = $publicPageSlug ?? null;
+    $identifyRoute = $publicPageSlug
+        ? route('public.schools.results.identify', ['slug' => $publicPageSlug])
+        : ($isBrandedSchoolRoute && $selectedSchool
         ? route('public.school.results.identify', ['school' => $selectedSchoolRouteKey])
-        : route('public.results.identify');
-    $checkRoute = $isBrandedSchoolRoute && $selectedSchool
+        : route('public.results.identify'));
+    $checkRoute = $publicPageSlug
+        ? route('public.schools.results.check', ['slug' => $publicPageSlug])
+        : ($isBrandedSchoolRoute && $selectedSchool
         ? route('public.school.results.check', ['school' => $selectedSchoolRouteKey])
-        : route('public.results.check');
-    $indexRoute = $isBrandedSchoolRoute && $selectedSchool
+        : route('public.results.check'));
+    $indexRoute = $publicPageSlug
+        ? route('public.schools.results.index', ['slug' => $publicPageSlug, 'lang' => $locale, 'reset' => 1])
+        : ($isBrandedSchoolRoute && $selectedSchool
         ? route('public.school.results.index', ['school' => $selectedSchoolRouteKey, 'lang' => $locale, 'reset' => 1])
-        : route('public.results.index', ['lang' => $locale, 'reset' => 1]);
+        : route('public.results.index', ['lang' => $locale, 'reset' => 1]));
 @endphp
 
 <!DOCTYPE html>

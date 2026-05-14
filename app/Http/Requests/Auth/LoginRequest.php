@@ -7,6 +7,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -102,14 +103,31 @@ class LoginRequest extends FormRequest
 
     private function attemptLogin(string $login): bool
     {
-        foreach ($this->loginCandidates($login) as $user) {
+        $candidates = $this->loginCandidates($login);
+
+        foreach ($candidates as $user) {
             if (Auth::attempt([
                 'email' => $user->email,
                 'password' => $this->input('password'),
             ], $this->boolean('remember'))) {
+                Log::info('School login succeeded.', [
+                    'user_id' => $user->id,
+                    'school_id' => $user->school_id,
+                    'roles' => $this->safeRoleNames($user),
+                    'login_type' => str_contains($login, '@') ? 'email' : 'staff_code_or_email',
+                    'ip' => $this->ip(),
+                ]);
+
                 return true;
             }
         }
+
+        Log::notice('School login failed.', [
+            'login_type' => str_contains($login, '@') ? 'email' : 'staff_code_or_email',
+            'candidate_count' => count($candidates),
+            'staff_code_column_ready' => $this->staffCodeColumnIsReady(),
+            'ip' => $this->ip(),
+        ]);
 
         return false;
     }
@@ -149,7 +167,7 @@ class LoginRequest extends FormRequest
     private function userByCaseInsensitiveColumn(string $column, string $value): ?User
     {
         return User::query()
-            ->whereRaw('LOWER('.$column.') = ?', [$value])
+            ->whereRaw('LOWER(`'.$column.'`) = ?', [$value])
             ->first();
     }
 
@@ -168,6 +186,18 @@ class LoginRequest extends FormRequest
             return $user->hasRole('super_admin');
         } catch (\Throwable) {
             return false;
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function safeRoleNames(User $user): array
+    {
+        try {
+            return $user->roles->pluck('name')->values()->all();
+        } catch (\Throwable) {
+            return [];
         }
     }
 }

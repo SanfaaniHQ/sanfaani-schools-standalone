@@ -6,10 +6,12 @@ use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
+use App\Models\SchoolPublicPage;
 use App\Models\ScratchCard;
 use App\Models\Student;
 use App\Models\Term;
 use App\Services\AuditLogService;
+use App\Services\PlatformSettingService;
 use App\Services\PublicResultAccessService;
 use App\Services\ReportCardService;
 use App\Services\ResultGradingService;
@@ -29,9 +31,9 @@ class ResultCheckerController extends Controller
         private AuditLogService $auditLog
     ) {}
 
-    public function index(Request $request, ?School $school = null)
+    public function index(Request $request, ?School $school = null, ?SchoolPublicPage $publicPage = null)
     {
-        if ($school && $school->status !== 'active') {
+        if ($school && ! $this->schoolResultCheckerAvailable($school, $publicPage)) {
             abort(404);
         }
 
@@ -47,6 +49,8 @@ class ResultCheckerController extends Controller
             'rtl' => $rtl,
             'languages' => $this->languages(),
             'selectedSchool' => $school,
+            'publicPage' => $publicPage,
+            'publicPageSlug' => $publicPage?->slug,
             'isBrandedSchoolRoute' => (bool) $school,
             'contextSchool' => null,
             'contextStudent' => null,
@@ -68,9 +72,9 @@ class ResultCheckerController extends Controller
         return view('public.results.check', $viewData);
     }
 
-    public function identify(Request $request, ?School $school = null)
+    public function identify(Request $request, ?School $school = null, ?SchoolPublicPage $publicPage = null)
     {
-        if ($school && $school->status !== 'active') {
+        if ($school && ! $this->schoolResultCheckerAvailable($school, $publicPage)) {
             abort(404);
         }
 
@@ -89,14 +93,14 @@ class ResultCheckerController extends Controller
         );
 
         if (! $cardCheck['success']) {
-            return $this->redirectToChecker($locale, $school, $cardCheck['message'], true, $request);
+            return $this->redirectToChecker($locale, $school, $cardCheck['message'], true, $request, $publicPage);
         }
 
         $card = $cardCheck['scratchCard'];
         $identifiedSchool = School::where('status', 'active')->find($card->school_id);
 
         if (! $identifiedSchool || ($school && (int) $school->id !== (int) $identifiedSchool->id)) {
-            return $this->redirectToChecker($locale, $school, __('public_result.invalid_access_details'), true, $request);
+            return $this->redirectToChecker($locale, $school, __('public_result.invalid_access_details'), true, $request, $publicPage);
         }
 
         $student = Student::withTrashed()
@@ -105,7 +109,7 @@ class ResultCheckerController extends Controller
             ->first();
 
         if (! $student) {
-            return $this->redirectToChecker($locale, $school, __('public_result.invalid_access_details'), true, $request);
+            return $this->redirectToChecker($locale, $school, __('public_result.invalid_access_details'), true, $request, $publicPage);
         }
 
         $request->session()->put(self::CONTEXT_KEY, [
@@ -117,14 +121,14 @@ class ResultCheckerController extends Controller
         ]);
 
         return redirect()->route(
-            $school ? 'public.school.results.index' : 'public.results.index',
-            $this->checkerRouteParameters($locale, $school)
+            $publicPage ? 'public.schools.results.index' : ($school ? 'public.school.results.index' : 'public.results.index'),
+            $this->checkerRouteParameters($locale, $school, $publicPage)
         );
     }
 
-    public function check(Request $request, ?School $school = null)
+    public function check(Request $request, ?School $school = null, ?SchoolPublicPage $publicPage = null)
     {
-        if ($school && $school->status !== 'active') {
+        if ($school && ! $this->schoolResultCheckerAvailable($school, $publicPage)) {
             abort(404);
         }
 
@@ -134,7 +138,7 @@ class ResultCheckerController extends Controller
         $context = $this->resultCheckerContext($request, $school);
 
         if (! $context) {
-            return $this->redirectToChecker($locale, $routeSchool, __('public_result.context_expired'));
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.context_expired'), publicPage: $publicPage);
         }
 
         $models = $this->loadContextModels($context);
@@ -142,7 +146,7 @@ class ResultCheckerController extends Controller
         if (! $models) {
             $request->session()->forget(self::CONTEXT_KEY);
 
-            return $this->redirectToChecker($locale, $routeSchool, __('public_result.context_expired'));
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.context_expired'), publicPage: $publicPage);
         }
 
         $contextSchool = $models['school'];
@@ -166,13 +170,13 @@ class ResultCheckerController extends Controller
             : null;
 
         if (! $academicSession || ! $term) {
-            return $this->redirectToChecker($locale, $routeSchool, __('public_result.card_not_valid_for_result'));
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.card_not_valid_for_result'), publicPage: $publicPage);
         }
 
         $access = $this->resultAccess->evaluateAccess($contextSchool, $academicSession, $term, $data['result_type']);
 
         if (! $access['success']) {
-            return $this->redirectToChecker($locale, $routeSchool, $access['message']);
+            return $this->redirectToChecker($locale, $routeSchool, $access['message'], publicPage: $publicPage);
         }
 
         $scratchCardAccess = $this->scratchCardAccess->validateCardForResult(
@@ -185,11 +189,11 @@ class ResultCheckerController extends Controller
         );
 
         if (! $scratchCardAccess['success']) {
-            return $this->redirectToChecker($locale, $routeSchool, $scratchCardAccess['message']);
+            return $this->redirectToChecker($locale, $routeSchool, $scratchCardAccess['message'], publicPage: $publicPage);
         }
 
         if (! $this->resultAccess->hasPublishedResults($contextSchool, $student, $academicSession, $term, $data['result_type'])) {
-            return $this->redirectToChecker($locale, $routeSchool, __('public_result.result_not_available'));
+            return $this->redirectToChecker($locale, $routeSchool, __('public_result.result_not_available'), publicPage: $publicPage);
         }
 
         $scratchCardAccess = $this->scratchCardAccess->recordSuccessfulUsage(
@@ -203,7 +207,7 @@ class ResultCheckerController extends Controller
         );
 
         if (! $scratchCardAccess['success']) {
-            return $this->redirectToChecker($locale, $routeSchool, $scratchCardAccess['message']);
+            return $this->redirectToChecker($locale, $routeSchool, $scratchCardAccess['message'], publicPage: $publicPage);
         }
 
         $token = $this->resultAccess->createToken(
@@ -454,12 +458,13 @@ class ResultCheckerController extends Controller
         ?School $school,
         string $message,
         bool $withInput = false,
-        ?Request $request = null
+        ?Request $request = null,
+        ?SchoolPublicPage $publicPage = null
     ) {
         $redirect = redirect()
             ->route(
-                $school ? 'public.school.results.index' : 'public.results.index',
-                $this->checkerRouteParameters($locale, $school)
+                $publicPage ? 'public.schools.results.index' : ($school ? 'public.school.results.index' : 'public.results.index'),
+                $this->checkerRouteParameters($locale, $school, $publicPage)
             )
             ->with('error', $message);
 
@@ -470,14 +475,41 @@ class ResultCheckerController extends Controller
         return $redirect;
     }
 
-    private function checkerRouteParameters(string $locale, ?School $school = null): array
+    private function checkerRouteParameters(string $locale, ?School $school = null, ?SchoolPublicPage $publicPage = null): array
     {
         $parameters = ['lang' => $locale];
+
+        if ($publicPage) {
+            return array_merge(['slug' => $publicPage->slug], $parameters);
+        }
 
         if ($school) {
             return array_merge(['school' => $school->slug ?: $school->getKey()], $parameters);
         }
 
         return $parameters;
+    }
+
+    private function schoolResultCheckerAvailable(School $school, ?SchoolPublicPage $publicPage = null): bool
+    {
+        if ($school->status !== 'active') {
+            return false;
+        }
+
+        $settings = app(PlatformSettingService::class);
+
+        if (! $settings->publicResultCheckerEnabled()) {
+            return false;
+        }
+
+        $publicPage ??= $school->publicPage()->with('school.websiteSetting')->first();
+
+        if (! $publicPage) {
+            return true;
+        }
+
+        return $publicPage->is_active
+            && $publicPage->result_checker_enabled
+            && (bool) $school->websiteSetting?->result_checker_enabled;
     }
 }

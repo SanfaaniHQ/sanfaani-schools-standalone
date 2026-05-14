@@ -95,6 +95,22 @@ Route::post('/admin/login', [AdminAuthenticatedSessionController::class, 'store'
     ->middleware('guest')
     ->name('admin.login.store');
 
+Route::get('/admin/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'adminCreate'])
+    ->middleware('guest')
+    ->name('admin.password.request');
+
+Route::post('/admin/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'adminStore'])
+    ->middleware(['guest', 'throttle:6,1'])
+    ->name('admin.password.email');
+
+Route::get('/admin/reset-password/{token}', [\App\Http\Controllers\Auth\NewPasswordController::class, 'adminCreate'])
+    ->middleware('guest')
+    ->name('admin.password.reset');
+
+Route::post('/admin/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'adminStore'])
+    ->middleware(['guest', 'throttle:6,1'])
+    ->name('admin.password.store');
+
 Route::view('/privacy-policy', 'public.legal.privacy')
     ->name('legal.privacy');
 
@@ -136,6 +152,17 @@ Route::get('/schools/{slug}/admissions', [PublicSchoolPublicPageController::clas
 
 Route::get('/schools/{slug}/contact', [PublicSchoolPublicPageController::class, 'contact'])
     ->name('public.schools.contact');
+
+Route::get('/schools/{slug}/results', [PublicSchoolPublicPageController::class, 'results'])
+    ->name('public.schools.results.index');
+
+Route::post('/schools/{slug}/results/identify', [PublicSchoolPublicPageController::class, 'identifyResult'])
+    ->middleware('throttle:10,1')
+    ->name('public.schools.results.identify');
+
+Route::post('/schools/{slug}/results/check', [PublicSchoolPublicPageController::class, 'checkResult'])
+    ->middleware('throttle:10,1')
+    ->name('public.schools.results.check');
 
 Route::get('/s/{slug}', [PublicSchoolPublicPageController::class, 'show'])
     ->name('public.school-page.show');

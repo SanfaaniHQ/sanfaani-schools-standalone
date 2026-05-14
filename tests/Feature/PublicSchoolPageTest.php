@@ -49,5 +49,9 @@ class PublicSchoolPageTest extends TestCase
         $this->get('/s/greenfield-academy')
             ->assertOk()
             ->assertSee(route('public.schools.show', 'greenfield-academy'), false);
+
+        $this->get('/schools/greenfield-academy/results')
+            ->assertOk()
+            ->assertSee(route('public.schools.results.identify', 'greenfield-academy'), false);
     }
 }

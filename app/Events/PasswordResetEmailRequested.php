@@ -12,6 +12,7 @@ class PasswordResetEmailRequested
 
     public function __construct(
         public User $user,
-        public string $token
+        public string $token,
+        public ?string $resetUrl = null
     ) {}
 }

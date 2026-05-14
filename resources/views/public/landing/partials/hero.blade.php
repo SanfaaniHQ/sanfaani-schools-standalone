@@ -23,13 +23,13 @@
 
 <section class="marketing-hero relative isolate overflow-hidden bg-emerald-950 text-white">
     <div class="absolute inset-0 -z-10">
-        <img src="{{ asset('images/marketing/hero-dashboard-preview.png') }}" alt="" class="h-full w-full object-cover opacity-10" fetchpriority="high">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.34),transparent_32%),linear-gradient(135deg,rgba(2,44,34,0.98)_0%,rgba(6,78,59,0.96)_42%,rgba(15,23,42,0.98)_100%)]"></div>
+        <img src="{{ asset('images/marketing/hero-dashboard-preview.png') }}" alt="" class="h-full w-full object-cover opacity-[0.16]" fetchpriority="high">
+        <div class="absolute inset-0 bg-[linear-gradient(135deg,rgba(2,44,34,0.98)_0%,rgba(6,78,59,0.95)_48%,rgba(15,23,42,0.98)_100%)]"></div>
         <div class="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white to-transparent"></div>
     </div>
 
-    <x-ui.container class="relative grid gap-10 py-16 sm:py-20 lg:min-h-[720px] lg:grid-cols-[minmax(0,0.95fr)_minmax(440px,1.05fr)] lg:items-center lg:py-24">
-        <div>
+    <x-ui.container class="relative flex min-h-[760px] flex-col justify-center py-16 sm:py-20 lg:py-24">
+        <div class="max-w-4xl">
             <x-marketing.badge tone="white" icon="shield">Built for school owners, admins, teachers, and parents</x-marketing.badge>
             <h1 class="mt-6 max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-5xl lg:text-6xl">
                 Run results, records, and parent access from one trusted school platform.
@@ -68,10 +68,7 @@
             </div>
         </div>
 
-        <div class="relative lg:pl-4">
-            <div class="absolute -right-12 top-8 hidden h-36 w-36 rounded-full border-[24px] border-emerald-300/20 lg:block"></div>
-            <div class="absolute -left-10 bottom-10 hidden h-28 w-28 rounded-full border-[20px] border-sky-300/20 lg:block"></div>
-
+        <div class="relative mt-10 max-w-6xl">
             <div class="relative rounded-lg border border-white/15 bg-white/10 p-3 shadow-2xl backdrop-blur">
                 <div class="overflow-hidden rounded-md bg-white text-gray-950 shadow-xl">
                     <div class="flex items-center justify-between bg-emerald-800 px-5 py-4 text-white">

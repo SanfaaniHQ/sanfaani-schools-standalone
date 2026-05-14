@@ -1,5 +1,10 @@
 <x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
+    <div class="mb-6">
+        <h1 class="text-xl font-semibold text-gray-900">{{ $heading ?? __('Reset Password') }}</h1>
+        <p class="mt-2 text-sm text-gray-600">{{ __('Choose a strong password for this account.') }}</p>
+    </div>
+
+    <form method="POST" action="{{ $action ?? route('password.store') }}">
         @csrf
 
         <!-- Password Reset Token -->
@@ -31,6 +36,11 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
+            @if (! empty($loginRoute))
+                <a href="{{ $loginRoute }}" class="mr-4 text-sm font-medium text-gray-600 hover:text-gray-900">
+                    {{ __('Back to login') }}
+                </a>
+            @endif
             <x-primary-button>
                 {{ __('Reset Password') }}
             </x-primary-button>

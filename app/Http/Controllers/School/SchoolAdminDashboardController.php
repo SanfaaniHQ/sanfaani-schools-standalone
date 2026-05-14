@@ -174,9 +174,9 @@ class SchoolAdminDashboardController extends Controller
         // Get recent result upload activity (last 30 days)
         $recentUploads = $school->studentResults()
             ->where('created_at', '>=', now()->subDays(30))
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->groupBy('date')
-            ->orderBy('date', 'desc')
+            ->selectRaw('DATE(created_at) as uploaded_date, COUNT(*) as count')
+            ->groupBy('uploaded_date')
+            ->orderBy('uploaded_date', 'desc')
             ->limit(10)
             ->get();
 

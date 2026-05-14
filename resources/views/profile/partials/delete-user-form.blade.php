@@ -1,3 +1,7 @@
+@php
+    $deleteBlocked = $user->hasAnyRole(['super_admin', 'school_admin', 'result_officer', 'teacher']);
+@endphp
+
 <section class="space-y-6">
     <header>
         <h2 class="text-lg font-medium text-gray-900">
@@ -5,10 +9,15 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
+            @if ($deleteBlocked)
+                {{ __('Protected administrative and school staff accounts cannot be self-deleted. Contact another authorized administrator for account changes.') }}
+            @else
+                {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
+            @endif
         </p>
     </header>
 
+    @if (! $deleteBlocked)
     <x-danger-button
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
@@ -52,4 +61,5 @@
             </div>
         </form>
     </x-modal>
+    @endif
 </section>

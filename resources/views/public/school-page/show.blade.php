@@ -48,8 +48,8 @@
                     <h1 class="mt-4 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">{{ $page->headline ?: $school->name }}</h1>
                     <p class="mt-5 max-w-2xl text-base leading-7 text-emerald-50">{{ $description }}</p>
                     <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                        @if ($page->result_checker_enabled)
-                            <a href="{{ route('public.school.results.index', ['school' => $school->slug]) }}" class="inline-flex items-center justify-center rounded-md bg-white px-5 py-3 text-sm font-semibold text-emerald-950 shadow-sm hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-950">Check Result</a>
+                        @if ($page->result_checker_enabled && $websiteSetting?->result_checker_enabled)
+                            <a href="{{ route('public.schools.results.index', ['slug' => $page->slug]) }}" class="inline-flex items-center justify-center rounded-md bg-white px-5 py-3 text-sm font-semibold text-emerald-950 shadow-sm hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-950">Check Result</a>
                         @endif
                         @if ($websiteSetting?->admissions_enabled)
                             <a href="{{ route('public.schools.admissions', $page->slug) }}" class="inline-flex items-center justify-center rounded-md border border-white/25 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-emerald-950">Admissions</a>

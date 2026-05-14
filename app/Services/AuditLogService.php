@@ -85,7 +85,7 @@ class AuditLogService
 
     private function severityFor(string $action): string
     {
-        if (str_contains($action, 'failed') || str_contains($action, 'deleted') || str_contains($action, 'stopped')) {
+        if (str_contains($action, 'failed') || str_contains($action, 'deleted') || str_contains($action, 'blocked') || str_contains($action, 'stopped')) {
             return 'warning';
         }
 

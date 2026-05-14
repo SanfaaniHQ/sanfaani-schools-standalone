@@ -17,7 +17,7 @@
             @if (session('success'))
                 <div class="mb-5 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('success') }}</div>
             @endif
-            <form method="POST" action="{{ route('school.public-page.update') }}" class="space-y-6 rounded-xl bg-white p-6 shadow-sm">
+            <form method="POST" action="{{ route('school.public-page.update') }}" enctype="multipart/form-data" class="space-y-6 rounded-xl bg-white p-6 shadow-sm">
                 @csrf
                 @method('PATCH')
                 @include('shared.school-public-page-form', ['canManageActivation' => false])

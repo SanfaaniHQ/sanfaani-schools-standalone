@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Policies\StudentResultPolicy;
 use App\Policies\TeacherAssignmentPolicy;
 use App\Policies\TeacherResultSubmissionPolicy;
+use App\Policies\UserPolicy;
 use App\Services\CurrentSchoolService;
 use App\Services\PlatformSettingService;
 use App\Services\MailSettingService;
@@ -40,6 +41,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(TeacherClassAssignment::class, TeacherAssignmentPolicy::class);
         Gate::policy(TeacherSubjectAssignment::class, TeacherAssignmentPolicy::class);
         Gate::policy(TeacherResultSubmission::class, TeacherResultSubmissionPolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
 
         foreach ([
             'communication.send',

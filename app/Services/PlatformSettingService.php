@@ -46,8 +46,22 @@ class PlatformSettingService
                     'Kehinde Shafi Junction, Islamic Village, along Whitefield Hotel, Ilorin, Kwara State, Nigeria'
                 ),
                 'idle_timeout_minutes' => config('sanfaani.idle_timeout_minutes', 30),
+                'public_pages_enabled' => true,
+                'public_result_checker_enabled' => true,
+                'public_page_template' => 'institutional',
             ],
         ];
+    }
+
+    public function publicPagesEnabled(): bool
+    {
+        return (bool) data_get($this->get()->metadata, 'public_pages_enabled', true);
+    }
+
+    public function publicResultCheckerEnabled(): bool
+    {
+        return $this->publicPagesEnabled()
+            && (bool) data_get($this->get()->metadata, 'public_result_checker_enabled', true);
     }
 
     public function assetUrl(?string $path): ?string

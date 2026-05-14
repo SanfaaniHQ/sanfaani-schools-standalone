@@ -809,78 +809,14 @@
                     </p>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Subject</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Scores</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Grade</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Remark</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Teacher Remark</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Published</th>
-                            </tr>
-                        </thead>
-
-                        <tbody class="divide-y divide-gray-100 bg-white">
-                            @forelse ($results as $result)
-                                <tr>
-                                    <td class="px-6 py-4">
-                                        <div class="font-medium text-gray-900">
-                                            {{ $result->subject->name ?? 'Unknown subject' }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            {{ $result->academicSession->name ?? 'No session' }} / {{ $result->term->name ?? 'No term' }}
-                                        </div>
-                                    </td>
-
-                                    <td class="px-6 py-4 text-sm text-gray-600">
-                                        CA: {{ number_format((float) $result->ca_score, 2) }}<br>
-                                        Exam: {{ number_format((float) $result->exam_score, 2) }}<br>
-                                        Total: {{ number_format((float) $result->total_score, 2) }}
-                                    </td>
-
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                        {{ $result->grade ?? 'N/A' }}
-                                    </td>
-
-                                    <td class="px-6 py-4 text-sm text-gray-600">
-                                        {{ $result->remark ?? 'N/A' }}
-                                    </td>
-
-                                    <td class="px-6 py-4 text-sm text-gray-600">
-                                        {{ $result->teacher_remark ?: 'N/A' }}
-                                    </td>
-
-                                    <td class="px-6 py-4">
-                                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                            {{ ucfirst($result->status) }}
-                                        </span>
-                                    </td>
-
-                                    <td class="px-6 py-4 text-sm text-gray-600">
-                                        {{ $result->published_at?->format('d M Y, h:i A') ?? 'Not published' }}
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <svg class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            <p class="mt-4 text-sm font-medium text-gray-900">No results found for this selection.</p>
-                                            <p class="mt-1 text-sm text-gray-500">
-                                                Change the session or term filter, or add results for this student.
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                <x-results.table
+                    :results="$results"
+                    :show-status="true"
+                    :show-published="true"
+                    class="rounded-none border-0 shadow-none"
+                    empty-title="No results found for this selection."
+                    empty-description="Change the session or term filter, or add results for this student."
+                />
             </div>
 
             <!-- Scratch Card Usage Section -->

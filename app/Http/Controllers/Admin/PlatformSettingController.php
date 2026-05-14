@@ -35,6 +35,9 @@ class PlatformSettingController extends Controller
             'default_language' => ['required', Rule::in(['en', 'fr', 'ar'])],
             'business_address' => ['nullable', 'string', 'max:1000'],
             'idle_timeout_minutes' => ['required', 'integer', 'min:5', 'max:480'],
+            'public_pages_enabled' => ['nullable', 'boolean'],
+            'public_result_checker_enabled' => ['nullable', 'boolean'],
+            'public_page_template' => ['required', Rule::in(['institutional', 'minimal', 'result_focused'])],
             'logo_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'favicon_upload' => ['nullable', 'file', 'mimes:ico,png,svg', 'max:2048'],
             'login_background_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
@@ -43,10 +46,16 @@ class PlatformSettingController extends Controller
         $metadata = $platformSettings->metadata ?? [];
         $metadata['business_address'] = $data['business_address'] ?? null;
         $metadata['idle_timeout_minutes'] = (int) $data['idle_timeout_minutes'];
+        $metadata['public_pages_enabled'] = (bool) ($data['public_pages_enabled'] ?? false);
+        $metadata['public_result_checker_enabled'] = (bool) ($data['public_result_checker_enabled'] ?? false);
+        $metadata['public_page_template'] = $data['public_page_template'];
 
         unset(
             $data['business_address'],
             $data['idle_timeout_minutes'],
+            $data['public_pages_enabled'],
+            $data['public_result_checker_enabled'],
+            $data['public_page_template'],
             $data['logo_upload'],
             $data['favicon_upload'],
             $data['login_background_upload']
@@ -65,7 +74,7 @@ class PlatformSettingController extends Controller
             $data[$attribute] = $request->file($input)->store('platform', 'public');
         }
 
-        $data['metadata'] = array_filter($metadata, fn ($value) => filled($value));
+        $data['metadata'] = array_filter($metadata, fn ($value) => is_bool($value) || filled($value));
 
         $platformSettings->update($data);
 

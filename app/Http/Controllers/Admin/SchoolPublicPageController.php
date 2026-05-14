@@ -9,6 +9,7 @@ use App\Models\SchoolWebsiteSetting;
 use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -30,6 +31,18 @@ class SchoolPublicPageController extends Controller
         $websiteSetting = $this->websiteSettingFor($school);
         $data = $this->validated($request, $page);
         $oldSlug = $page->slug;
+
+        foreach ([
+            'logo_upload' => 'logo_path',
+            'banner_upload' => 'banner_path',
+        ] as $input => $attribute) {
+            if (! $request->hasFile($input)) {
+                continue;
+            }
+
+            $this->deleteStoredFile($page->{$attribute});
+            $data['page'][$attribute] = $request->file($input)->store('school-public-pages/'.$school->id, 'public');
+        }
 
         $page->update($data['page']);
         $websiteSetting->update($data['website']);
@@ -58,6 +71,8 @@ class SchoolPublicPageController extends Controller
             'contact_phone' => ['nullable', 'string', 'max:100'],
             'whatsapp' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:1000'],
+            'logo_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:2048'],
+            'banner_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'website_mode' => ['required', Rule::in(SchoolWebsiteSetting::MODES)],
             'website_enabled' => ['nullable', 'boolean'],
             'preferred_domain' => ['nullable', 'string', 'max:255'],
@@ -141,5 +156,14 @@ class SchoolPublicPageController extends Controller
         foreach (array_filter(array_unique($slugs)) as $slug) {
             Cache::forget(\App\Http\Controllers\Public\SchoolPublicPageController::cacheKey($slug));
         }
+    }
+
+    private function deleteStoredFile(?string $path): void
+    {
+        if (! filled($path) || Str::startsWith($path, ['http://', 'https://'])) {
+            return;
+        }
+
+        Storage::disk('public')->delete($path);
     }
 }

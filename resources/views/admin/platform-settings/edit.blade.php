@@ -132,6 +132,39 @@
                 </div>
 
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h3 class="text-base font-semibold text-gray-900">Public Page Governance</h3>
+                    <p class="mt-1 text-sm text-gray-500">Control school-facing pages and branded result checker routes from one platform-level switchboard.</p>
+
+                    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                        <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
+                            <input type="checkbox" name="public_pages_enabled" value="1" @checked(old('public_pages_enabled', data_get($settings->metadata, 'public_pages_enabled', true))) class="mt-1 rounded border-gray-300 text-emerald-700 focus:ring-emerald-700">
+                            <span>
+                                <span class="block text-sm font-semibold text-gray-900">Enable school public pages</span>
+                                <span class="mt-1 block text-sm text-gray-500">Turns approved school profile pages on or off globally.</span>
+                            </span>
+                        </label>
+
+                        <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
+                            <input type="checkbox" name="public_result_checker_enabled" value="1" @checked(old('public_result_checker_enabled', data_get($settings->metadata, 'public_result_checker_enabled', true))) class="mt-1 rounded border-gray-300 text-emerald-700 focus:ring-emerald-700">
+                            <span>
+                                <span class="block text-sm font-semibold text-gray-900">Enable public result checker</span>
+                                <span class="mt-1 block text-sm text-gray-500">Controls branded result access pages for approved schools.</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="mt-5">
+                        <label class="block text-sm font-medium text-gray-700">Default Public Template</label>
+                        <select name="public_page_template" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
+                            <option value="institutional" @selected(old('public_page_template', data_get($settings->metadata, 'public_page_template', 'institutional')) === 'institutional')>Institutional profile</option>
+                            <option value="minimal" @selected(old('public_page_template', data_get($settings->metadata, 'public_page_template', 'institutional')) === 'minimal')>Minimal contact page</option>
+                            <option value="result_focused" @selected(old('public_page_template', data_get($settings->metadata, 'public_page_template', 'institutional')) === 'result_focused')>Result-focused page</option>
+                        </select>
+                        @error('public_page_template')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">Images</h3>
                     <p class="mt-1 text-sm text-gray-500">Use JPG, PNG, or WebP up to 2MB. SVG is only accepted for favicon and is served as a file, never inlined.</p>
 

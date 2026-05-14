@@ -35,6 +35,20 @@
         <textarea name="description" rows="4" class="mt-1 w-full rounded-lg border-gray-300 text-sm">{{ old('description', $page->description) }}</textarea>
     </div>
     <div>
+        <label class="text-sm font-medium text-gray-700">School logo</label>
+        @if ($page->logoUrl())
+            <img src="{{ $page->logoUrl() }}" alt="{{ $school->name }} logo" class="mt-2 h-16 w-16 rounded-lg border border-gray-200 object-contain">
+        @endif
+        <input type="file" name="logo_upload" accept=".jpg,.jpeg,.png,.webp,.svg" class="mt-3 block w-full text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-emerald-800">
+    </div>
+    <div>
+        <label class="text-sm font-medium text-gray-700">Public banner</label>
+        @if ($page->bannerUrl())
+            <img src="{{ $page->bannerUrl() }}" alt="{{ $school->name }} banner" class="mt-2 h-16 w-28 rounded-lg border border-gray-200 object-cover">
+        @endif
+        <input type="file" name="banner_upload" accept=".jpg,.jpeg,.png,.webp" class="mt-3 block w-full text-sm text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-emerald-800">
+    </div>
+    <div>
         <label class="text-sm font-medium text-gray-700">Contact email</label>
         <input type="email" name="contact_email" value="{{ old('contact_email', $page->contact_email) }}" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
     </div>

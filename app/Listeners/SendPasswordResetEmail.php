@@ -43,7 +43,7 @@ class SendPasswordResetEmail implements ShouldQueue
                 return;
             }
 
-            $url = url(route('password.reset', [
+            $url = $event->resetUrl ?: url(route('password.reset', [
                 'token' => $event->token,
                 'email' => $recipient,
             ], false));

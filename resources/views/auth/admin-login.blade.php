@@ -33,12 +33,14 @@
                             <span class="ms-2 text-sm text-gray-600">Remember me</span>
                         </label>
 
-                        <a href="{{ route('landing.home') }}" class="text-sm font-medium text-emerald-700 hover:text-emerald-800">Back to home</a>
+                        <a href="{{ route('admin.password.request') }}" class="text-sm font-medium text-emerald-700 hover:text-emerald-800">Forgot password?</a>
                     </div>
 
                     <button type="submit" data-loading-text="Signing in..." class="inline-flex w-full items-center justify-center rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800">
                         Log in to Admin
                     </button>
+
+                    <a href="{{ route('landing.home') }}" class="block text-center text-sm font-medium text-gray-600 hover:text-gray-900">Back to home</a>
                 </form>
             </div>
         </div>
