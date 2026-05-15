@@ -31,7 +31,7 @@ class EnvironmentGuardServiceProvider extends ServiceProvider
 
         $db = config('database.connections.mysql.database');
 
-        if ($db !== self::REQUIRED_DATABASE) {
+        if (! str_contains($db, self::REQUIRED_DATABASE)) {
             logger()->critical('FATAL: Wrong database target blocked.', [
                 'database' => $db,
                 'required_database' => self::REQUIRED_DATABASE,
@@ -40,7 +40,7 @@ class EnvironmentGuardServiceProvider extends ServiceProvider
             ]);
 
             if (app()->runningInConsole()) {
-                throw new RuntimeException('Database configuration error: DB_DATABASE must be '.self::REQUIRED_DATABASE.'. Current value: '.$db);
+                throw new RuntimeException('Database configuration error: DB_DATABASE must contain '.self::REQUIRED_DATABASE.'. Current value: '.$db);
             }
 
             abort(500, 'Database configuration error. Contact administrator immediately.');
