@@ -4,13 +4,13 @@
 
 @php
     $tones = [
-        'success' => 'border-emerald-200 bg-emerald-50 text-emerald-800',
-        'info' => 'border-sky-200 bg-sky-50 text-sky-800',
-        'warning' => 'border-amber-200 bg-amber-50 text-amber-900',
-        'danger' => 'border-red-200 bg-red-50 text-red-800',
+        'success' => 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400',
+        'info' => 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400',
+        'warning' => 'border-amber-500/20 bg-amber-500/5 text-amber-400',
+        'danger' => 'border-rose-500/20 bg-rose-500/5 text-rose-400',
     ];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'rounded-lg border p-4 text-sm font-medium ' . ($tones[$tone] ?? $tones['success'])]) }}>
+<div role="status" {{ $attributes->merge(['class' => 'rounded-lg border p-4 text-sm font-medium ' . ($tones[$tone] ?? $tones['success'])]) }}>
     {{ $slot }}
 </div>

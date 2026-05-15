@@ -171,7 +171,7 @@
     }
 
     .enterprise-table tbody tr {
-        @apply border-b border-border-subtle transition hover:bg-bg-tertiary/60;
+        @apply border-b border-border-subtle transition hover:bg-bg-tertiary;
     }
 
     .enterprise-badge {

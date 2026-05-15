@@ -7,17 +7,17 @@
 
 @php
     $tones = [
-        'neutral' => 'border-gray-200 bg-white',
-        'success' => 'border-emerald-200 bg-emerald-50',
-        'info' => 'border-sky-200 bg-sky-50',
-        'warning' => 'border-amber-200 bg-amber-50',
+        'neutral' => 'border-border-subtle bg-bg-secondary',
+        'success' => 'border-emerald-500/20 bg-emerald-500/10',
+        'info' => 'border-indigo-500/20 bg-indigo-500/10',
+        'warning' => 'border-amber-500/20 bg-amber-500/10',
     ];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'rounded-lg border p-5 shadow-sm ' . ($tones[$tone] ?? $tones['neutral'])]) }}>
-    <p class="text-sm font-medium text-gray-600">{{ $label }}</p>
-    <p class="mt-3 text-3xl font-semibold leading-none text-gray-950">{{ $value }}</p>
+<div {{ $attributes->merge(['class' => 'rounded-lg border p-6 shadow-sm transition duration-200 ease-default motion-safe:hover:-translate-y-0.5 hover:border-border-hover hover:shadow-md ' . ($tones[$tone] ?? $tones['neutral'])]) }}>
+    <p class="text-xs font-medium uppercase tracking-wider text-text-secondary">{{ $label }}</p>
+    <p class="mt-3 font-mono text-2xl font-medium leading-none text-text-primary">{{ $value }}</p>
     @if ($meta)
-        <p class="mt-2 text-sm text-gray-500">{{ $meta }}</p>
+        <p class="mt-2 truncate text-sm text-text-secondary">{{ $meta }}</p>
     @endif
 </div>
