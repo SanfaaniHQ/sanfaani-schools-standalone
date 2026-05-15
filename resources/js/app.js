@@ -6,6 +6,31 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
+const applyTheme = (theme) => {
+    const normalizedTheme = theme === 'light' ? 'light' : 'dark';
+
+    document.documentElement.classList.toggle('light', normalizedTheme === 'light');
+    document.documentElement.classList.toggle('dark', normalizedTheme !== 'light');
+    localStorage.setItem('sanfaani-theme', normalizedTheme);
+};
+
+document.querySelectorAll('[data-theme-toggle]').forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+        applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
+    });
+});
+
+document.addEventListener('keydown', (event) => {
+    const opensCommandPalette = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
+
+    if (!opensCommandPalette) {
+        return;
+    }
+
+    event.preventDefault();
+    window.dispatchEvent(new CustomEvent('sanfaani:open-command-palette'));
+});
+
 document.addEventListener('click', (event) => {
     const button = event.target.closest('button[type="submit"], input[type="submit"]');
 
@@ -84,7 +109,10 @@ document.addEventListener('click', (event) => {
     }
 
     event.preventDefault();
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.scrollIntoView({
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+        block: 'start',
+    });
 });
 
 document.querySelectorAll('[data-faq-toggle]').forEach((toggle) => {

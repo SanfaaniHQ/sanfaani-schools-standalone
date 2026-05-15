@@ -4,7 +4,7 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="antialiased">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" class="dark antialiased">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,6 +14,17 @@
     @if (! empty($platformFaviconUrl))
         <link rel="icon" href="{{ $platformFaviconUrl }}">
     @endif
+
+    <script>
+        (() => {
+            const theme = localStorage.getItem('sanfaani-theme') || 'dark';
+            document.documentElement.classList.toggle('light', theme === 'light');
+            document.documentElement.classList.toggle('dark', theme !== 'light');
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|crimson-pro:600|jetbrains-mono:400,500&display=swap" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
@@ -25,17 +36,19 @@
     @endif
     @stack('styles')
 </head>
-<body class="bg-slate-50 font-sans text-slate-900">
-    @include('layouts.partials.sidebar')
+<body class="education-ops-shell bg-bg-primary font-sans text-text-primary">
+    <div x-data="{ sidebarOpen: false, commandPaletteOpen: false, notificationsOpen: false }" class="min-h-screen">
+        @include('layouts.partials.sidebar')
 
-    <div class="lg:pl-72">
-        @include('layouts.partials.topbar')
+        <div class="lg:pl-64">
+            @include('layouts.partials.topbar')
 
-        <main class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-            <div class="mx-auto max-w-7xl animate-[fadeIn_.2s_ease-out]">
-                @yield('content')
-            </div>
-        </main>
+            <main id="main-content" class="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
+                <div class="mx-auto max-w-dashboard animate-fade-in">
+                    @yield('content')
+                </div>
+            </main>
+        </div>
     </div>
 
     @stack('scripts')
