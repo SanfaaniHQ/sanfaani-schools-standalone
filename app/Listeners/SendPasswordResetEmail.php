@@ -53,7 +53,7 @@ class SendPasswordResetEmail implements ShouldQueue
                 $recipient,
                 'Reset your password',
                 'Password reset request',
-                "A password reset was requested for your ".$roleLabel." account."
+                'A password reset was requested for your '.$roleLabel.' account.'
                     ."\nLogin ID: ".($user->staff_code ?: $recipient)
                     ."\nUse the secure link below to continue. If you did not request this, you can ignore this message.",
                 'password_reset',

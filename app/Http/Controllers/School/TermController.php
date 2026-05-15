@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
-use App\Models\AcademicSession;
 use App\Models\School;
 use App\Models\Term;
+use App\Services\CurrentSchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -132,7 +132,7 @@ class TermController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

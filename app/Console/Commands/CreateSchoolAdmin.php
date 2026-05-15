@@ -39,8 +39,9 @@ class CreateSchoolAdmin extends Command
         $schoolId = $this->option('school') ?: $this->ask('Enter school ID');
         $school = School::find($schoolId);
 
-        if (!$school) {
+        if (! $school) {
             $this->error("School with ID {$schoolId} not found!");
+
             return self::FAILURE;
         }
 
@@ -65,6 +66,7 @@ class CreateSchoolAdmin extends Command
             foreach ($validator->errors()->all() as $error) {
                 $this->error($error);
             }
+
             return self::FAILURE;
         }
 

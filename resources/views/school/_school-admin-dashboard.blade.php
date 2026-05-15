@@ -5,12 +5,28 @@
 
         {{-- Welcome Card --}}
         <x-ui.panel class="mb-8">
-            <h3 class="text-lg font-semibold text-gray-900">
-                Welcome back, {{ auth()->user()->name }}
-            </h3>
-            <p class="mt-2 text-sm text-gray-600">
-                This dashboard is limited to your assigned school only.
-            </p>
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Welcome back, {{ auth()->user()->name }}
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        This dashboard is limited to your assigned school only.
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    @if ($school->logoUrl())
+                        <img src="{{ $school->logoUrl() }}" alt="{{ $school->name }} logo" class="h-11 w-11 rounded-lg bg-white object-contain p-1">
+                    @else
+                        <span class="flex h-11 w-11 items-center justify-center rounded-lg text-sm font-bold text-white" style="background: {{ $school->primary_color ?: '#4f46e5' }}">{{ $school->initials() }}</span>
+                    @endif
+                    <div>
+                        <p class="text-sm font-semibold text-slate-950">{{ $school->name }}</p>
+                        <p class="text-xs text-slate-500">Branding preview</p>
+                    </div>
+                </div>
+            </div>
         </x-ui.panel>
 
         {{-- Setup Checklist --}}

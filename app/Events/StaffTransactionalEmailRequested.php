@@ -39,8 +39,8 @@ class StaffTransactionalEmailRequested
             $roleLabel.' account ready',
             'Staff account update',
             ($wasExistingUser
-                ? 'Your existing Sanfaani Schools account has been granted access to '.$school->name.'.'
-                : 'A '.$roleLabel.' account has been created for you on Sanfaani Schools.')
+                ? 'Your existing account has been granted access to '.$school->name.'.'
+                : 'A '.$roleLabel.' account has been created for you.')
                 ."\nSchool: ".$school->name
                 ."\nRole: ".$roleLabel
                 ."\nLogin ID: ".$loginId

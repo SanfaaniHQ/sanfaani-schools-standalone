@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Services\AuditLogService;
 use App\Services\BulkCsvImportService;
+use App\Services\CurrentSchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +27,7 @@ class ClassUploadController extends Controller
             'class_file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
         ]);
 
-        $csv = new BulkCsvImportService();
+        $csv = new BulkCsvImportService;
 
         if (! $csv->read($request->file('class_file')->getRealPath(), ['name'])) {
             return back()->withInput()->with('import_errors', $csv->errors);
@@ -86,6 +87,7 @@ class ClassUploadController extends Controller
 
             if ($name === '') {
                 $errors[] = "Row {$rowNumber}: name is required.";
+
                 continue;
             }
 
@@ -140,7 +142,7 @@ class ClassUploadController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

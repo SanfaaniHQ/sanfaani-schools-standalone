@@ -31,7 +31,7 @@
 
             @if ($canPublishResults)
                 <div class="grid gap-6 lg:grid-cols-2">
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">
                         Publish Results Now
                     </h3>
@@ -39,6 +39,15 @@
                     <p class="mt-2 text-sm text-gray-600">
                         Publish whole class results, one subject, or one student result. Only published results will be visible in the public result checker later.
                     </p>
+
+                    <div class="mt-5 grid gap-3 text-sm sm:grid-cols-3">
+                        @foreach (['Select Class', 'Review Scope', 'Confirm'] as $step)
+                            <div class="rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-3 text-indigo-800">
+                                <span class="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold">{{ $loop->iteration }}</span>
+                                {{ $step }}
+                            </div>
+                        @endforeach
+                    </div>
 
                     <form method="POST"
                           action="{{ route('school.results.publishing.publish') }}"
@@ -163,13 +172,14 @@
                         </div>
 
                         <button type="submit"
-                                class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                                data-loading-text="Publishing..."
+                                class="inline-flex min-h-11 items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-700">
                             Publish Now
                         </button>
                     </form>
                 </div>
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">
                         Unpublish / Revoke Results
                     </h3>
@@ -305,14 +315,15 @@
                         </div>
 
                         <button type="submit"
-                                class="rounded-xl border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
+                                data-loading-text="Unpublishing..."
+                                class="inline-flex min-h-11 items-center rounded-xl border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50">
                             Unpublish Results
                         </button>
                     </form>
                 </div>
                 </div>
             @else
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">
                         Publishing Access
                     </h3>
@@ -333,22 +344,22 @@
                 </p>
 
                 <div class="mt-4 overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Action</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Scope</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Class</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Session / Term</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Subject / Student</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">By</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Scope</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Class</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Session / Term</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Subject / Student</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">By</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Date</th>
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y divide-gray-100 bg-white">
+                        <tbody class="divide-y divide-slate-100 bg-white">
                             @forelse ($publications as $publication)
-                                <tr>
+                                <tr class="transition hover:bg-slate-50">
                                     <td class="px-4 py-4">
                                         <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
                                             {{ ucfirst($publication->status) }}
@@ -404,12 +415,7 @@
                             @empty
                                 <tr>
                                     <td colspan="7" class="px-4 py-12 text-center">
-                                        <p class="text-sm font-medium text-gray-900">
-                                            No publishing history yet.
-                                        </p>
-                                        <p class="mt-1 text-sm text-gray-500">
-                                            Published and revoked results will appear here.
-                                        </p>
+                                        <x-empty-state title="No publishing history yet" description="Published and revoked results will appear here for audit review." />
                                     </td>
                                 </tr>
                             @endforelse

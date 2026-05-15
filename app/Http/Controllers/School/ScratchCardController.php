@@ -3,24 +3,32 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\School\StoreScratchCardRequest;
 use App\Models\AcademicSession;
-use App\Models\ScratchCardBatch;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\ScratchCardBatch;
 use App\Models\Term;
 use App\Notifications\ScratchCardRequestStatusNotification;
 use App\Services\AuditLogService;
+use App\Services\AuditService;
+use App\Services\CurrentSchoolService;
 use App\Services\NotificationPreferenceService;
+use App\Services\ScratchAnalyticsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class ScratchCardController extends Controller
 {
-    public function index()
+    public function index(Request $request, ScratchAnalyticsService $analytics)
     {
         $school = $this->currentSchoolOrFail();
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'status' => ['nullable', 'string', 'max:50'],
+        ]);
+        $search = trim((string) ($filters['search'] ?? ''));
 
         $batches = $school->scratchCardBatches()
             ->with([
@@ -36,12 +44,23 @@ class ScratchCardController extends Controller
                 'cards as used_cards_count' => fn ($query) => $query->where('status', 'used'),
                 'cards as revoked_cards_count' => fn ($query) => $query->where('status', 'revoked'),
             ])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('batch_code', 'like', "%{$search}%")
+                        ->orWhere('payment_reference', 'like', "%{$search}%");
+                });
+            })
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('school.scratch-cards.index', [
             'school' => $school,
             'batches' => $batches,
+            'filters' => $filters,
+            'scratchSummary' => $analytics->summary($school->id),
         ]);
     }
 
@@ -57,83 +76,60 @@ class ScratchCardController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreScratchCardRequest $request)
     {
         $school = $this->currentSchoolOrFail();
+        $data = $request->validated();
 
-        $data = $request->validate([
-            'title' => ['nullable', 'string', 'max:255'],
-            'school_class_id' => [
-                'nullable',
-                Rule::exists('school_classes', 'id')->where('school_id', $school->id),
-            ],
-            'academic_session_id' => [
-                'required',
-                Rule::exists('academic_sessions', 'id')->where('school_id', $school->id),
-            ],
-            'term_id' => [
-                'required',
-                Rule::exists('terms', 'id')->where('school_id', $school->id),
-            ],
-            'result_type' => [
-                'required',
-                Rule::in(['term_result']),
-            ],
-            'quantity' => ['required', 'integer', 'min:1', 'max:2000'],
-            'payment_method' => [
-                'nullable',
-                Rule::in(['bank_transfer', 'cash', 'manual']),
-            ],
-            'payment_reference' => ['nullable', 'string', 'max:255'],
-            'request_note' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        if (! Term::where('id', $data['term_id'])
-            ->where('school_id', $school->id)
-            ->where('academic_session_id', $data['academic_session_id'])
-            ->exists()) {
-            throw ValidationException::withMessages([
-                'term_id' => 'The selected term does not belong to the selected academic session.',
+        $batch = DB::transaction(function () use ($data, $school, $request) {
+            $batch = ScratchCardBatch::create([
+                'school_id' => $school->id,
+                'requested_by' => $request->user()?->id,
+                'school_class_id' => $data['school_class_id'] ?? null,
+                'academic_session_id' => $data['academic_session_id'],
+                'term_id' => $data['term_id'],
+                'result_type' => $data['result_type'],
+                'school_result_access_policy_id' => null,
+                'title' => $data['title'] ?? null,
+                'quantity' => $data['quantity'],
+                'amount' => 0,
+                'currency' => 'NGN',
+                'payment_status' => filled($data['payment_method'] ?? null) ? 'manual_pending' : 'pending',
+                'payment_method' => $data['payment_method'] ?? null,
+                'payment_reference' => $data['payment_reference'] ?? null,
+                'payment_confirmed_at' => null,
+                'payment_confirmed_by' => null,
+                'status' => 'pending_payment',
+                'expires_at' => null,
+                'generated_by' => null,
+                'metadata' => [
+                    'request_note' => $data['request_note'] ?? null,
+                    'requested_by' => $request->user()?->id,
+                    'requested_at' => now()->toDateTimeString(),
+                ],
             ]);
-        }
 
-        $batch = ScratchCardBatch::create([
-            'school_id' => $school->id,
-            'school_class_id' => $data['school_class_id'] ?? null,
-            'academic_session_id' => $data['academic_session_id'],
-            'term_id' => $data['term_id'],
-            'result_type' => 'term_result',
-            'school_result_access_policy_id' => null,
-            'title' => $data['title'] ?? null,
-            'quantity' => $data['quantity'],
-            'amount' => 0,
-            'currency' => 'NGN',
-            'payment_status' => filled($data['payment_method'] ?? null) ? 'manual_pending' : 'pending',
-            'payment_method' => $data['payment_method'] ?? null,
-            'payment_reference' => $data['payment_reference'] ?? null,
-            'payment_confirmed_at' => null,
-            'payment_confirmed_by' => null,
-            'status' => 'pending_payment',
-            'expires_at' => null,
-            'generated_by' => null,
-            'metadata' => [
-                'request_note' => $data['request_note'] ?? null,
-                'requested_by' => auth()->id(),
-                'requested_at' => now()->toDateTimeString(),
-            ],
-        ]);
+            app(AuditLogService::class)->log('scratch_card_request_created', $batch, $school, metadata: [
+                'quantity' => $batch->quantity,
+                'payment_method' => $batch->payment_method,
+            ], request: $request);
 
-        app(AuditLogService::class)->log('scratch_card_request_created', $batch, $school, metadata: [
-            'quantity' => $batch->quantity,
-            'payment_method' => $batch->payment_method,
-        ], request: $request);
+            AuditService::log('billing', 'scratch_card_request_submitted', [
+                'school_id' => $school->id,
+                'request_id' => $batch->id,
+                'quantity' => $batch->quantity,
+                'payment_method' => $batch->payment_method,
+            ]);
+
+            return $batch;
+        });
 
         if (app(NotificationPreferenceService::class)->emailEnabled('scratch_card_request_submitted', $school, auth()->user(), 'school_admin')) {
             try {
-                auth()->user()->notify(new ScratchCardRequestStatusNotification(
-                    $batch,
+                // Shared hosting worker: php artisan queue:work --queue=mail,exports --sleep=3 --tries=3 --timeout=60
+                $request->user()->notify(new ScratchCardRequestStatusNotification(
                     'submitted',
-                    'Your request has been submitted for Super Admin review.'
+                    'Your request is pending approval.'
                 ));
             } catch (\Throwable $exception) {
                 Log::warning('Scratch card submitted notification failed.', [
@@ -182,12 +178,18 @@ class ScratchCardController extends Controller
             return back()->with('error', 'Cards are not available for download yet.');
         }
 
-        $fileName = 'scratch-cards-batch-' . $batch->id . '-' . now()->format('YmdHis') . '.csv';
+        $fileName = 'scratch-cards-batch-'.$batch->id.'-'.now()->format('YmdHis').'.csv';
+
+        $batch->update([
+            'last_exported_at' => now(),
+            'last_exported_by' => auth()->id(),
+        ]);
 
         return response()->streamDownload(function () use ($batch) {
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
+                'batch_code',
                 'serial_number',
                 'pin_code',
                 'status',
@@ -201,17 +203,18 @@ class ScratchCardController extends Controller
             ]);
 
             $batch->cards()
-                ->with(['schoolClass', 'academicSession', 'term'])
+                ->with(['batch', 'schoolClass', 'academicSession', 'term'])
                 ->orderBy('id')
                 ->chunk(200, function ($cards) use ($handle) {
                     foreach ($cards as $card) {
                         fputcsv($handle, [
+                            $card->batch->batch_code ?? '',
                             $card->serial_number,
                             $card->pin_code,
                             $card->status,
                             $card->max_uses,
                             $card->used_count,
-                            trim(($card->schoolClass->name ?? '') . ' ' . ($card->schoolClass->section ?? '')),
+                            trim(($card->schoolClass->name ?? '').' '.($card->schoolClass->section ?? '')),
                             $card->academicSession->name ?? '',
                             $card->term->name ?? '',
                             $card->result_type,
@@ -228,7 +231,7 @@ class ScratchCardController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');
@@ -269,5 +272,4 @@ class ScratchCardController extends Controller
             ->latest()
             ->get();
     }
-
 }

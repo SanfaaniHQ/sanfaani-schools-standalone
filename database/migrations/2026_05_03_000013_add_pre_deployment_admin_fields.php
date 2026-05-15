@@ -40,20 +40,22 @@ return new class extends Migration
             }
         });
 
-        Schema::create('system_update_logs', function (Blueprint $table) {
-            $table->id();
-            $table->string('from_version')->nullable();
-            $table->string('to_version')->nullable();
-            $table->string('update_type');
-            $table->string('status')->default('uploaded');
-            $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('package_path')->nullable();
-            $table->text('notes')->nullable();
-            $table->json('metadata')->nullable();
-            $table->timestamp('started_at')->nullable();
-            $table->timestamp('completed_at')->nullable();
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('system_update_logs')) {
+            Schema::create('system_update_logs', function (Blueprint $table) {
+                $table->id();
+                $table->string('from_version')->nullable();
+                $table->string('to_version')->nullable();
+                $table->string('update_type');
+                $table->string('status')->default('uploaded');
+                $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->string('package_path')->nullable();
+                $table->text('notes')->nullable();
+                $table->json('metadata')->nullable();
+                $table->timestamp('started_at')->nullable();
+                $table->timestamp('completed_at')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

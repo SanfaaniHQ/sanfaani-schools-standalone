@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\RedirectResponse;
 use App\Services\UserWorkspaceService;
+use Illuminate\Http\RedirectResponse;
 
 class DashboardController extends Controller
 {

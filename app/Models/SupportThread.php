@@ -14,19 +14,27 @@ class SupportThread extends Model
     use HasFactory, SoftDeletes;
 
     public const STATUS_OPEN = 'open';
+
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_ESCALATED = 'escalated';
+
     public const STATUS_RESOLVED = 'resolved';
+
     public const STATUS_CLOSED = 'closed';
 
     public const LEGACY_STATUS_AWAITING_RESPONSE = 'awaiting_response';
+
     public const LEGACY_STATUS_IN_PROGRESS = 'in_progress';
 
     public const ROUTE_SCHOOL_ADMIN = 'school_admin';
+
     public const ROUTE_SUPER_ADMIN = 'super_admin';
 
     public const VISIBILITY_INTERNAL = 'internal';
+
     public const VISIBILITY_ESCALATED = 'escalated';
+
     public const VISIBILITY_PLATFORM = 'platform';
 
     public const CATEGORIES = [

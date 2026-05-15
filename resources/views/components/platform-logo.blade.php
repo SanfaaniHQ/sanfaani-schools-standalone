@@ -5,12 +5,19 @@
     'nameClass' => 'text-base font-semibold text-gray-950',
 ])
 
-@if ($platformLogoUrl)
-    <img src="{{ $platformLogoUrl }}" alt="{{ $platformSettings->platform_name }}" {{ $attributes->merge(['class' => $class]) }}>
+@php
+    $useSchoolBranding = request()->routeIs('school.*') && ($schoolBranding->is_school_context ?? false);
+    $logoUrl = $useSchoolBranding ? $schoolBranding->logo_url : $platformLogoUrl;
+    $brandName = $useSchoolBranding ? $schoolBranding->name : $platformSettings->platform_name;
+    $initials = $useSchoolBranding ? $schoolBranding->initials : $platformInitials;
+@endphp
+
+@if ($logoUrl)
+    <img src="{{ $logoUrl }}" alt="{{ $brandName }}" {{ $attributes->merge(['class' => $class]) }}>
 @else
-    <span {{ $attributes->merge(['class' => $markClass]) }}>{{ $platformInitials }}</span>
+    <span {{ $attributes->merge(['class' => $markClass]) }}>{{ $initials }}</span>
 @endif
 
 @if ($showName)
-    <span class="{{ $nameClass }}">{{ $platformSettings->platform_name }}</span>
+    <span class="{{ $nameClass }}">{{ $brandName }}</span>
 @endif

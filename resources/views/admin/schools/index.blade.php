@@ -98,6 +98,11 @@
                                                             <option value="result_officer">Result Officer</option>
                                                             <option value="teacher">Teacher</option>
                                                         </select>
+                                                        <input type="text"
+                                                               name="support_reason"
+                                                               value="Platform support review"
+                                                               class="w-40 rounded-lg border-gray-300 py-1 text-xs"
+                                                               aria-label="Support reason">
                                                         <button type="submit" class="text-sm font-medium text-emerald-700 hover:text-emerald-600">
                                                             Support Access
                                                         </button>

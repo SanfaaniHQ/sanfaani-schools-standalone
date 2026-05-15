@@ -113,6 +113,7 @@ class ResultEntryWorkspaceService
 
             if ($ca === '' || $exam === '') {
                 $errors[] = $student->fullName().': CA and exam scores must both be filled.';
+
                 continue;
             }
 
@@ -134,6 +135,7 @@ class ResultEntryWorkspaceService
 
             if ($rowErrors !== []) {
                 array_push($errors, ...$rowErrors);
+
                 continue;
             }
 

@@ -23,14 +23,34 @@ class School extends Model
         'phone',
         'address',
         'logo',
+        'logo_path',
+        'favicon_path',
+        'login_background_path',
+        'report_header_path',
+        'email_logo_path',
+        'primary_color',
+        'secondary_color',
+        'school_motto',
         'status',
         'subscription_status',
+        'smtp_host',
+        'smtp_port',
+        'smtp_username',
+        'smtp_password',
+        'smtp_encryption',
+        'sender_email',
+        'sender_name',
+        'result_checker_slug',
+        'is_result_checker_enabled',
+        'custom_css',
         'default_language',
         'supports_rtl',
     ];
 
     protected $casts = [
         'supports_rtl' => 'boolean',
+        'is_result_checker_enabled' => 'boolean',
+        'smtp_password' => 'encrypted',
     ];
 
     public function users(): HasMany
@@ -225,15 +245,40 @@ class School extends Model
 
     public function logoUrl(): ?string
     {
-        if (! filled($this->logo)) {
+        return $this->assetUrl($this->logo_path ?: $this->logo);
+    }
+
+    public function faviconUrl(): ?string
+    {
+        return $this->assetUrl($this->favicon_path);
+    }
+
+    public function loginBackgroundUrl(): ?string
+    {
+        return $this->assetUrl($this->login_background_path);
+    }
+
+    public function reportHeaderUrl(): ?string
+    {
+        return $this->assetUrl($this->report_header_path);
+    }
+
+    public function emailLogoUrl(): ?string
+    {
+        return $this->assetUrl($this->email_logo_path ?: $this->logo_path ?: $this->logo);
+    }
+
+    private function assetUrl(?string $path): ?string
+    {
+        if (! filled($path)) {
             return null;
         }
 
-        if (Str::startsWith($this->logo, ['http://', 'https://'])) {
-            return $this->logo;
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
         }
 
-        return Storage::disk('public')->url(ltrim($this->logo, '/'));
+        return Storage::disk('public')->url(ltrim($path, '/'));
     }
 
     public function initials(): string

@@ -32,12 +32,14 @@ class SchoolRoleFeatureService
         return Cache::remember($cacheKey, 3600, function () use ($schoolId, $roleName, $featureKey) {
             $settings = $this->settingsForRole($schoolId, $roleName);
             $candidateKeys = $this->candidateFeatureKeys($featureKey);
-            $setting = collect($candidateKeys)
-                ->map(fn (string $key) => $settings->get($key))
-                ->filter()
-                ->first();
 
-            return $setting ? $setting->is_enabled : ! in_array($featureKey, self::DEFAULT_DISABLED_FEATURES, true);
+            foreach ($candidateKeys as $key) {
+                if (array_key_exists($key, $settings)) {
+                    return (bool) $settings[$key];
+                }
+            }
+
+            return ! in_array($featureKey, self::DEFAULT_DISABLED_FEATURES, true);
         });
     }
 
@@ -85,7 +87,7 @@ class SchoolRoleFeatureService
         foreach ($features as $key => $label) {
             $result[$key] = [
                 'label' => $label,
-                'enabled' => $settings->has($key) ? $settings[$key]->is_enabled : true,
+                'enabled' => array_key_exists($key, $settings) ? (bool) $settings[$key] : true,
             ];
         }
 
@@ -131,12 +133,15 @@ class SchoolRoleFeatureService
         return $features[$roleName] ?? [];
     }
 
-    private function settingsForRole(int $schoolId, string $roleName)
+    private function settingsForRole(int $schoolId, string $roleName): array
     {
         return Cache::remember($this->roleSettingsCacheKey($schoolId, $roleName), 3600, fn () => SchoolRoleFeatureSetting::where('school_id', $schoolId)
             ->where('role_name', $roleName)
-            ->get()
-            ->keyBy('feature_key'));
+            ->get(['feature_key', 'is_enabled'])
+            ->mapWithKeys(fn (SchoolRoleFeatureSetting $setting) => [
+                (string) $setting->feature_key => (bool) $setting->is_enabled,
+            ])
+            ->all());
     }
 
     private function candidateFeatureKeys(string $featureKey): array
@@ -149,6 +154,6 @@ class SchoolRoleFeatureService
 
     private function roleSettingsCacheKey(int $schoolId, string $roleName): string
     {
-        return "school_role_features:{$schoolId}:{$roleName}";
+        return "school_role_features:v2:{$schoolId}:{$roleName}";
     }
 }

@@ -18,7 +18,7 @@ class StaffCodeGeneratorService
             ->count() + 1;
 
         do {
-            $candidate = "{$prefix}/{$roleCode}/{$year}/" . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
+            $candidate = "{$prefix}/{$roleCode}/{$year}/".str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
             $nextNumber++;
         } while (User::where('staff_code', $candidate)->exists());
 

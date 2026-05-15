@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\StudentResult;
 use App\Models\User;
 use App\Policies\Concerns\ResolvesSchoolRoleContext;
+use App\Services\CurrentSchoolService;
 
 class StudentResultPolicy
 {
@@ -53,7 +54,7 @@ class StudentResultPolicy
     public function publish(User $user, ?School $school = null): bool
     {
         if (! $school) {
-            $school = app(\App\Services\CurrentSchoolService::class)->get();
+            $school = app(CurrentSchoolService::class)->get();
         }
 
         return $school
@@ -73,7 +74,7 @@ class StudentResultPolicy
 
     private function belongsToCurrentSchool(StudentResult $result): bool
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         return $school && (int) $result->school_id === (int) $school->id;
     }

@@ -17,9 +17,15 @@
                         <option value="{{ $tag }}" @selected(($filters['action_tag'] ?? '') === $tag)>{{ $tag }}</option>
                     @endforeach
                 </select>
+                <select name="category" class="rounded-xl border-gray-300 text-sm shadow-sm">
+                    <option value="">All categories</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                    @endforeach
+                </select>
                 <select name="severity" class="rounded-xl border-gray-300 text-sm shadow-sm">
                     <option value="">All severities</option>
-                    @foreach (['info', 'notice', 'warning'] as $severity)
+                    @foreach (['info', 'notice', 'warning', 'critical'] as $severity)
                         <option value="{{ $severity }}" @selected(($filters['severity'] ?? '') === $severity)>{{ ucfirst($severity) }}</option>
                     @endforeach
                 </select>
@@ -62,8 +68,8 @@
                             @forelse ($logs as $log)
                                 <tr>
                                     <td class="px-4 py-3">
-                                        <p class="font-medium text-gray-900">{{ $log->action }}</p>
-                                        <p class="mt-1 text-xs text-gray-500">{{ $log->action_tag ?? 'general' }} - {{ $log->severity ?? 'info' }}</p>
+                                        <p class="font-medium text-gray-900">{{ $log->event ?? $log->action }}</p>
+                                        <p class="mt-1 text-xs text-gray-500">{{ $log->category ?? $log->action_tag ?? 'general' }} - {{ $log->severity ?? 'info' }}</p>
                                     </td>
                                     <td class="px-4 py-3 text-gray-700">{{ $log->user->name ?? 'System' }}</td>
                                     <td class="px-4 py-3 text-gray-700">{{ $log->school->name ?? 'Platform' }}</td>
@@ -74,10 +80,10 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-xs text-gray-500">
-                                        @if ($log->old_values || $log->new_values)
+                                        @if ($log->payload || $log->old_values || $log->new_values)
                                             <details>
                                                 <summary class="cursor-pointer font-medium text-gray-700">View readable values</summary>
-                                                <pre class="mt-2 max-h-40 overflow-auto rounded-lg bg-gray-50 p-3">{{ json_encode(['old' => $log->old_values, 'new' => $log->new_values], JSON_PRETTY_PRINT) }}</pre>
+                                                <pre class="mt-2 max-h-40 overflow-auto rounded-lg bg-gray-50 p-3">{{ json_encode(['payload' => $log->payload, 'old' => $log->old_values, 'new' => $log->new_values], JSON_PRETTY_PRINT) }}</pre>
                                             </details>
                                         @else
                                             No value changes

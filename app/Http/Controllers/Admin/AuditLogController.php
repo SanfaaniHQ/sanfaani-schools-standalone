@@ -19,13 +19,16 @@ class AuditLogController extends Controller
                 $search = $request->input('action');
 
                 $query->where(function ($query) use ($search) {
-                    $query->where('action', 'like', '%' . $search . '%')
-                        ->orWhere('action_tag', 'like', '%' . $search . '%');
+                    $query->where('action', 'like', '%'.$search.'%')
+                        ->orWhere('action_tag', 'like', '%'.$search.'%')
+                        ->orWhere('event', 'like', '%'.$search.'%')
+                        ->orWhere('category', 'like', '%'.$search.'%');
                 });
             })
+            ->when($request->filled('category'), fn ($query) => $query->where('category', $request->input('category')))
             ->when($request->filled('action_tag'), fn ($query) => $query->where('action_tag', $request->input('action_tag')))
             ->when($request->filled('severity'), fn ($query) => $query->where('severity', $request->input('severity')))
-            ->when($request->filled('auditable_type'), fn ($query) => $query->where('auditable_type', 'like', '%' . $request->input('auditable_type') . '%'))
+            ->when($request->filled('auditable_type'), fn ($query) => $query->where('auditable_type', 'like', '%'.$request->input('auditable_type').'%'))
             ->when($request->filled('date_from'), fn ($query) => $query->whereDate('created_at', '>=', $request->input('date_from')))
             ->when($request->filled('date_to'), fn ($query) => $query->whereDate('created_at', '<=', $request->input('date_to')))
             ->latest()
@@ -37,7 +40,8 @@ class AuditLogController extends Controller
             'schools' => School::withTrashed()->orderBy('name')->get(),
             'users' => User::orderBy('name')->get(),
             'tags' => AuditLog::query()->whereNotNull('action_tag')->distinct()->orderBy('action_tag')->pluck('action_tag'),
-            'filters' => $request->only(['school_id', 'user_id', 'action', 'action_tag', 'severity', 'auditable_type', 'date_from', 'date_to']),
+            'categories' => AuditLog::query()->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
+            'filters' => $request->only(['school_id', 'user_id', 'action', 'action_tag', 'category', 'severity', 'auditable_type', 'date_from', 'date_to']),
         ]);
     }
 }

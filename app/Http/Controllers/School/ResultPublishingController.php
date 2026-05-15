@@ -8,12 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\ResultPublication;
 use App\Models\School;
-use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Services\AuditLogService;
+use App\Services\CurrentSchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -256,7 +256,7 @@ class ResultPublishingController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

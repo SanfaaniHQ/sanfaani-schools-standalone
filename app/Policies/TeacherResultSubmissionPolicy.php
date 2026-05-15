@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\TeacherResultSubmission;
 use App\Models\User;
 use App\Policies\Concerns\ResolvesSchoolRoleContext;
+use App\Services\CurrentSchoolService;
 
 class TeacherResultSubmissionPolicy
 {
@@ -142,7 +143,7 @@ class TeacherResultSubmissionPolicy
 
     private function belongsToCurrentSchool(TeacherResultSubmission $submission): bool
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         return $school && (int) $submission->school_id === (int) $school->id;
     }

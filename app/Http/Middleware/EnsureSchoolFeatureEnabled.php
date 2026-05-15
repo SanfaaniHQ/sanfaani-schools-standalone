@@ -3,9 +3,9 @@
 namespace App\Http\Middleware;
 
 use App\Services\CurrentSchoolService;
-use App\Services\SchoolAuthorizationService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureSchoolFeatureEnabled
@@ -19,10 +19,12 @@ class EnsureSchoolFeatureEnabled
             abort(403);
         }
 
-        if (! app(SchoolAuthorizationService::class)->canAny($user, $school, $featureKeys)) {
-            abort(403, 'This feature is not enabled for your current school role.');
+        foreach ($featureKeys as $featureKey) {
+            if (Gate::forUser($user)->allows('school.feature', $featureKey)) {
+                return $next($request);
+            }
         }
 
-        return $next($request);
+        abort(403, 'This feature is not enabled for your current school role.');
     }
 }

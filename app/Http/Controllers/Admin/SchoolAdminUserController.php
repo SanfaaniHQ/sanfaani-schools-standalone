@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Validation\Rule;
 
 class SchoolAdminUserController extends Controller
 {
@@ -20,9 +19,8 @@ class SchoolAdminUserController extends Controller
         $admins = User::query()
             ->where(function ($q) use ($school) {
                 $q->where('school_id', $school->id)
-                    ->orWhereHas('schoolRoles', fn ($q) =>
-                        $q->where('school_id', $school->id)
-                            ->where('role_name', 'school_admin')
+                    ->orWhereHas('schoolRoles', fn ($q) => $q->where('school_id', $school->id)
+                        ->where('role_name', 'school_admin')
                     );
             })
             ->whereHas('roles', fn ($q) => $q->where('name', 'school_admin'))

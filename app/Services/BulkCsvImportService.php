@@ -14,6 +14,7 @@ class BulkCsvImportService
 
         if (! $handle) {
             $this->errors[] = 'Could not open the uploaded CSV file.';
+
             return false;
         }
 
@@ -22,6 +23,7 @@ class BulkCsvImportService
         if (! $headers) {
             $this->errors[] = 'The CSV file is empty or missing a header row.';
             fclose($handle);
+
             return false;
         }
 
@@ -35,6 +37,7 @@ class BulkCsvImportService
 
         if ($this->errors !== []) {
             fclose($handle);
+
             return false;
         }
 
@@ -65,6 +68,7 @@ class BulkCsvImportService
         return array_map(function ($header) {
             $header = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header);
             $header = strtolower(trim($header));
+
             return preg_replace('/\s+/', '_', $header);
         }, $headers);
     }

@@ -220,5 +220,4 @@ class SchoolAuthorizationService
             ->whereIn('school_class_id', $classIds)
             ->exists();
     }
-
 }

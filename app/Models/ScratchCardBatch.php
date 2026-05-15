@@ -14,7 +14,9 @@ class ScratchCardBatch extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'batch_code',
         'school_id',
+        'requested_by',
         'school_class_id',
         'academic_session_id',
         'term_id',
@@ -29,16 +31,29 @@ class ScratchCardBatch extends Model
         'payment_reference',
         'payment_confirmed_at',
         'payment_confirmed_by',
+        'approved_at',
+        'approved_by',
+        'rejected_at',
+        'rejected_by',
+        'approval_note',
         'status',
         'expires_at',
         'generated_by',
+        'failed_generation_at',
+        'failed_generation_reason',
+        'last_exported_at',
+        'last_exported_by',
         'metadata',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'payment_confirmed_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'expires_at' => 'datetime',
+        'failed_generation_at' => 'datetime',
+        'last_exported_at' => 'datetime',
         'metadata' => 'array',
     ];
 
@@ -77,8 +92,28 @@ class ScratchCardBatch extends Model
         return $this->belongsTo(User::class, 'payment_confirmed_by');
     }
 
+    public function requestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
     public function generatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'generated_by');
+    }
+
+    public function lastExportedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'last_exported_by');
     }
 }

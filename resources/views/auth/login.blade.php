@@ -1,25 +1,36 @@
 <x-guest-layout>
     @php
-        $backgroundStyle = $platformLoginBackgroundUrl
-            ? "background-image: linear-gradient(rgba(5, 46, 22, .72), rgba(15, 23, 42, .78)), url('{$platformLoginBackgroundUrl}')"
-            : null;
+        $brandName = data_get($schoolBranding ?? null, 'name') ?: ($platformSettings->platform_name ?? config('app.name', 'Sanfaani Schools'));
+        $brandLogoUrl = data_get($schoolBranding ?? null, 'logo_url') ?: ($platformLogoUrl ?? null);
+        $brandInitials = data_get($schoolBranding ?? null, 'initials') ?: ($platformInitials ?? 'SS');
+        $brandColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#4f46e5';
+        $loginBackgroundUrl = data_get($schoolBranding ?? null, 'login_background_url') ?: $platformLoginBackgroundUrl;
+        $backgroundStyle = $loginBackgroundUrl
+            ? "background-image: linear-gradient(rgba(15, 23, 42, .68), rgba(15, 23, 42, .82)), url('{$loginBackgroundUrl}')"
+            : "background: linear-gradient(135deg, {$brandColor} 0%, #0f172a 100%)";
     @endphp
 
     <div class="grid min-h-screen lg:grid-cols-2">
-        <section class="hidden bg-emerald-950 text-white lg:flex lg:flex-col lg:justify-between lg:bg-cover lg:bg-center lg:p-12" @if ($backgroundStyle) style="{{ $backgroundStyle }}" @endif>
+        <section class="hidden text-white lg:flex lg:flex-col lg:justify-between lg:bg-cover lg:bg-center lg:p-12" style="{{ $backgroundStyle }}">
             <a href="{{ route('landing.home') }}" class="inline-flex items-center gap-3">
-                <x-platform-logo class="h-12 w-auto object-contain" mark-class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-emerald-800" name-class="text-lg font-semibold text-white" />
+                @if ($brandLogoUrl)
+                    <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-12 w-12 rounded-2xl border border-white/20 bg-white object-contain p-1">
+                    <span class="text-lg font-semibold text-white">{{ $brandName }}</span>
+                @else
+                    <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sm font-semibold" style="color: {{ $brandColor }}">{{ $brandInitials }}</span>
+                    <span class="text-lg font-semibold text-white">{{ $brandName }}</span>
+                @endif
             </a>
 
             <div class="max-w-xl">
-                <p class="text-sm font-semibold uppercase tracking-wide text-emerald-100">{{ $platformSettings->company_name }}</p>
-                <h1 class="mt-4 text-4xl font-semibold leading-tight">Welcome back to Sanfaani Schools</h1>
-                <p class="mt-4 text-base leading-7 text-emerald-50">
+                <p class="text-sm font-semibold uppercase tracking-wide text-white/75">{{ $platformSettings->company_name }}</p>
+                <h1 class="mt-4 text-4xl font-semibold leading-tight tracking-tight">Welcome back to {{ $brandName }}</h1>
+                <p class="mt-4 text-base leading-7 text-white/80">
                     Manage school operations, academics, and results securely in one platform.
                 </p>
             </div>
 
-            <div class="text-sm text-emerald-50">
+            <div class="text-sm text-white/80">
                 <p>{{ $platformSettings->support_email }} | {{ $platformSettings->whatsapp_number }}</p>
             </div>
         </section>
@@ -28,14 +39,19 @@
             <div class="w-full max-w-md">
                 <div class="mb-8 flex items-center justify-center lg:hidden">
                     <a href="{{ route('landing.home') }}" class="flex items-center gap-3">
-                        <x-platform-logo class="h-11 w-auto object-contain" mark-class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-700 text-sm font-semibold text-white" />
+                        @if ($brandLogoUrl)
+                            <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-11 w-11 rounded-2xl border border-slate-200 bg-white object-contain p-1">
+                        @else
+                            <span class="flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-semibold text-white" style="background: {{ $brandColor }}">{{ $brandInitials }}</span>
+                        @endif
+                        <span class="text-base font-semibold text-slate-900">{{ $brandName }}</span>
                     </a>
                 </div>
 
-                <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
                     <div>
-                        <h2 class="text-2xl font-semibold text-gray-950">Welcome back to Sanfaani Schools</h2>
-                        <p class="mt-2 text-sm leading-6 text-gray-600">
+                        <h2 class="text-2xl font-semibold tracking-tight text-slate-950">Welcome back to {{ $brandName }}</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">
                             Manage school operations, academics, and results securely in one platform.
                         </p>
                     </div>
@@ -54,24 +70,29 @@
 
                         <div>
                             <x-input-label for="password" :value="__('Password')" />
-                            <x-text-input id="password" class="mt-1 block w-full rounded-xl" type="password" name="password" required autocomplete="current-password" />
+                            <div class="relative mt-1">
+                                <x-text-input id="password" class="block w-full rounded-xl pr-16" type="password" name="password" required autocomplete="current-password" />
+                                <button type="button" data-password-toggle="#password" class="absolute inset-y-1 right-1 rounded-lg px-3 text-xs font-semibold text-slate-600 hover:bg-slate-100">
+                                    Show
+                                </button>
+                            </div>
                             <x-input-error :messages="$errors->get('password')" class="mt-2" />
                         </div>
 
                         <div class="flex items-center justify-between gap-4">
                             <label for="remember_me" class="inline-flex items-center">
-                                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-emerald-700 shadow-sm focus:ring-emerald-700" name="remember">
+                                <input id="remember_me" type="checkbox" class="rounded border-slate-300 shadow-sm" style="color: {{ $brandColor }}" name="remember">
                                 <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
                             </label>
 
                             @if (Route::has('password.request'))
-                                <a class="text-sm font-medium text-emerald-700 hover:text-emerald-800" href="{{ route('password.request') }}">
+                                <a class="text-sm font-medium hover:opacity-80" style="color: {{ $brandColor }}" href="{{ route('password.request') }}">
                                     {{ __('Forgot password?') }}
                                 </a>
                             @endif
                         </div>
 
-                        <button type="submit" data-loading-text="Signing in..." class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800">
+                        <button type="submit" data-loading-text="Signing in..." class="inline-flex min-h-11 w-full items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95" style="background: {{ $brandColor }}">
                             {{ __('Log in') }}
                         </button>
                     </form>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\School;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Services\CurrentSchoolService;
 use App\Services\StudentCsvImportService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -36,10 +37,10 @@ class StudentBulkUploadController extends Controller
         $schoolClass = $this->findSchoolClass($school, (int) $data['school_class_id']);
 
         $fileName = 'student-upload-template-'
-            . str($schoolClass->name)->slug()
-            . '-'
-            . str($schoolClass->section ?: 'class')->slug()
-            . '.csv';
+            .str($schoolClass->name)->slug()
+            .'-'
+            .str($schoolClass->section ?: 'class')->slug()
+            .'.csv';
 
         return response()->streamDownload(function () use ($schoolClass) {
             $handle = fopen('php://output', 'w');
@@ -60,7 +61,7 @@ class StudentBulkUploadController extends Controller
             ]);
 
             fputcsv($handle, [
-                trim($schoolClass->name . ' ' . $schoolClass->section),
+                trim($schoolClass->name.' '.$schoolClass->section),
                 'SCH/2026/001',
                 'Aisha',
                 'Fatimah',
@@ -75,7 +76,7 @@ class StudentBulkUploadController extends Controller
             ]);
 
             fputcsv($handle, [
-                trim($schoolClass->name . ' ' . $schoolClass->section),
+                trim($schoolClass->name.' '.$schoolClass->section),
                 'SCH/2026/002',
                 'Umar',
                 '',
@@ -126,7 +127,7 @@ class StudentBulkUploadController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

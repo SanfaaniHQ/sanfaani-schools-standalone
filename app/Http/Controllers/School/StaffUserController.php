@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\AuditLogService;
+use App\Services\CurrentSchoolService;
 use App\Services\StaffCodeGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -210,8 +212,8 @@ class StaffUserController extends Controller
             }
         }
 
-        if (class_exists(\App\Services\AuditLogService::class)) {
-            app(\App\Services\AuditLogService::class)->log('staff_access_disabled', $staff, $school, request: $request);
+        if (class_exists(AuditLogService::class)) {
+            app(AuditLogService::class)->log('staff_access_disabled', $staff, $school, request: $request);
         }
 
         event(StaffTransactionalEmailRequested::accountStatusChanged($staff, $school, $role, false));
@@ -251,8 +253,8 @@ class StaffUserController extends Controller
             'assigned_by' => auth()->id(),
         ]);
 
-        if (class_exists(\App\Services\AuditLogService::class)) {
-            app(\App\Services\AuditLogService::class)->log('staff_access_enabled', $staff, $school, request: $request);
+        if (class_exists(AuditLogService::class)) {
+            app(AuditLogService::class)->log('staff_access_enabled', $staff, $school, request: $request);
         }
 
         event(StaffTransactionalEmailRequested::accountStatusChanged($staff->refresh(), $school, $schoolRole->role_name, true));
@@ -264,7 +266,7 @@ class StaffUserController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

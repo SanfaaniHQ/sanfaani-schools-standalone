@@ -56,6 +56,7 @@ return new class extends Migration
         // SQLite: Use Laravel's Schema facade which handles SQLite introspection
         if ($driver === 'sqlite') {
             $indexes = DB::select("PRAGMA index_list({$table})");
+
             return collect($indexes)->contains(fn ($index) => $index->name === $indexName);
         }
 

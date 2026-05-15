@@ -51,7 +51,7 @@ class ResultVerificationController extends Controller
 
         return collect($parts)
             ->filter()
-            ->map(fn (string $part) => mb_substr($part, 0, 1) . str_repeat('*', max(mb_strlen($part) - 1, 1)))
+            ->map(fn (string $part) => mb_substr($part, 0, 1).str_repeat('*', max(mb_strlen($part) - 1, 1)))
             ->implode(' ');
     }
 
@@ -63,6 +63,6 @@ class ResultVerificationController extends Controller
             return str_repeat('*', $length);
         }
 
-        return mb_substr($value, 0, 2) . str_repeat('*', $length - 4) . mb_substr($value, -2);
+        return mb_substr($value, 0, 2).str_repeat('*', $length - 4).mb_substr($value, -2);
     }
 }

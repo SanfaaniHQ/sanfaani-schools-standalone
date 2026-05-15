@@ -16,7 +16,7 @@
                         <div><p class="text-xs uppercase text-gray-500">Starts</p><p class="mt-1 font-semibold">{{ $policy->starts_at?->format('d M Y') ?? 'Now' }}</p></div>
                         <div><p class="text-xs uppercase text-gray-500">Ends</p><p class="mt-1 font-semibold">{{ $policy->ends_at?->format('d M Y') ?? 'Open' }}</p></div>
                     </div>
-                    <p class="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">Request changes through Sanfaani support if your school needs a different access model.</p>
+                    <p class="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">Request changes through platform support if your school needs a different access model.</p>
                 @else
                     <h3 class="text-base font-semibold text-gray-900">Scratch card access is active by default.</h3>
                     <p class="mt-2 text-sm text-gray-600">No custom policy is assigned yet. Public result checking will require scratch cards until Super Admin configures another policy.</p>

@@ -64,7 +64,7 @@ class SystemUpdateController extends Controller
 
     private function manifestFromZip(string $path): ?array
     {
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         if ($zip->open($path) !== true) {
             return null;

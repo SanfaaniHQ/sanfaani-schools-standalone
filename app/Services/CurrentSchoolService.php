@@ -19,8 +19,8 @@ class CurrentSchoolService
             return School::where('status', 'active')->find(session('support_school_id'));
         }
 
-        if (session()->has('active_school_id')) {
-            $schoolId = session('active_school_id');
+        if (TenantContext::schoolId()) {
+            $schoolId = TenantContext::schoolId();
 
             if ($user->activeSchoolRoles()->where('school_id', $schoolId)->exists() || (int) $user->school_id === (int) $schoolId) {
                 return School::where('status', 'active')->find($schoolId);
@@ -34,20 +34,20 @@ class CurrentSchoolService
     {
         $user ??= auth()->user();
 
-        return (bool) ($user?->hasRole('super_admin') && session()->has('support_school_id'));
+        return (bool) ($user?->hasRole('super_admin') && session('is_support_session') && session()->has('support_school_id'));
     }
 
     /**
      * Get the effective role context for the current user.
-     * 
+     *
      * Role context resolution order:
      * 1. Super Admin in support mode: session('support_role_context') with 'school_admin' default
      * 2. Regular user with active role: session('active_role_context')
      * 3. Fallback: user's first role from database
-     * 
+     *
      * Valid role values: 'school_admin', 'teacher', 'result_officer', 'super_admin'
-     * 
-     * @param User|null $user The user to get role context for (defaults to authenticated user)
+     *
+     * @param  User|null  $user  The user to get role context for (defaults to authenticated user)
      * @return string|null The role context name or null if user is not authenticated
      */
     public function roleContext(?User $user = null): ?string
@@ -63,7 +63,11 @@ class CurrentSchoolService
             return session('support_role_context', 'school_admin');
         }
 
+        if (TenantContext::roleName()) {
+            return TenantContext::roleName();
+        }
+
         // Regular user: check session for active role context, fallback to first role
-        return session('active_role_context') ?: $user->roles->pluck('name')->first();
+        return session('active_role_context') ?: $user->roles()->pluck('name')->first();
     }
 }

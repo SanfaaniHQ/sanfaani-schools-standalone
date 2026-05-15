@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Models\AcademicSession;
+use App\Models\ResultVerification;
 use App\Models\School;
 use App\Models\SchoolResultAccessPolicy;
 use App\Models\SchoolResultAccessPolicyRule;
 use App\Models\Student;
 use App\Models\StudentResult;
-use App\Models\ResultVerification;
 use App\Models\Term;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -265,7 +265,7 @@ class PublicResultAccessService
     private function uniqueVerificationCode(): string
     {
         do {
-            $code = 'RV-' . strtoupper(Str::random(10));
+            $code = 'RV-'.strtoupper(Str::random(10));
         } while (ResultVerification::where('verification_code', $code)->exists());
 
         return $code;

@@ -29,6 +29,7 @@ class StudentCsvImportService
 
         if (! $handle) {
             $this->errors[] = 'Could not open the uploaded file.';
+
             return;
         }
 
@@ -37,6 +38,7 @@ class StudentCsvImportService
         if (! $headers) {
             $this->errors[] = 'The CSV file is empty or has no header row.';
             fclose($handle);
+
             return;
         }
 
@@ -54,6 +56,7 @@ class StudentCsvImportService
             if (! in_array($requiredHeader, $headers, true)) {
                 $this->errors[] = "Missing required column: {$requiredHeader}.";
                 fclose($handle);
+
                 return;
             }
         }
@@ -65,6 +68,7 @@ class StudentCsvImportService
 
             if ($this->rowIsEmpty($row)) {
                 $this->skippedCount++;
+
                 continue;
             }
 
@@ -72,6 +76,7 @@ class StudentCsvImportService
 
             if (! $data) {
                 $this->errors[] = "Row {$rowNumber}: Could not read row data.";
+
                 continue;
             }
 
@@ -97,36 +102,43 @@ class StudentCsvImportService
 
         if (! $admissionNumber && ! $firstName && ! $lastName) {
             $this->skippedCount++;
+
             return;
         }
 
         if (! $firstName) {
             $this->errors[] = "Row {$rowNumber}: first_name is required.";
+
             return;
         }
 
         if (! $lastName) {
             $this->errors[] = "Row {$rowNumber}: last_name is required.";
+
             return;
         }
 
         if (! in_array($gender, ['male', 'female'], true)) {
             $this->errors[] = "Row {$rowNumber}: gender must be male or female.";
+
             return;
         }
 
         if (! in_array($status, ['active', 'inactive'], true)) {
             $this->errors[] = "Row {$rowNumber}: status must be active or inactive.";
+
             return;
         }
 
         if ($guardianEmail && ! filter_var($guardianEmail, FILTER_VALIDATE_EMAIL)) {
             $this->errors[] = "Row {$rowNumber}: guardian_email is not valid.";
+
             return;
         }
 
         if ($dateOfBirth && ! $this->validDate($dateOfBirth)) {
             $this->errors[] = "Row {$rowNumber}: date_of_birth must be in YYYY-MM-DD format.";
+
             return;
         }
 

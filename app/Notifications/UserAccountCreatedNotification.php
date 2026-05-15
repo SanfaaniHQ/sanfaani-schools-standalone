@@ -5,36 +5,59 @@ namespace App\Notifications;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
-class UserAccountCreatedNotification extends Notification
+class UserAccountCreatedNotification extends BaseSchoolNotification
 {
+    private string $userName;
+
+    private string $loginId;
+
+    private ?int $schoolId;
+
+    private ?string $schoolName;
+
     public function __construct(
-        private User $user,
+        User $user,
         private string $role,
-        private ?School $school = null
-    ) {}
+        ?School $school = null
+    ) {
+        parent::__construct();
+
+        $this->userName = $user->name;
+        $this->loginId = $user->staff_code ?: (string) $user->email;
+        $this->schoolId = $school?->id;
+        $this->schoolName = $school?->name;
+    }
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
         $supportEmail = app('App\Services\PlatformSettingService')->get()->support_email;
         $supportPhone = app('App\Services\PlatformSettingService')->get()->support_phone;
-        $loginId = $this->user->staff_code ?: $this->user->email;
+        $workspaceName = $this->schoolName ?: 'the platform';
 
         return (new MailMessage)
-            ->subject('Your Sanfaani Schools account is ready')
-            ->greeting('Hello '.$this->user->name.',')
-            ->line('An account has been created for you on Sanfaani Schools.')
+            ->subject('Your '.$workspaceName.' account is ready')
+            ->greeting('Hello '.$this->userName.',')
+            ->line('An account has been created for you.')
             ->line('Role: '.str_replace('_', ' ', ucfirst($this->role)))
-            ->when($this->school, fn (MailMessage $message) => $message->line('School: '.$this->school->name))
-            ->line('Login ID: '.$loginId)
+            ->when($this->schoolName, fn (MailMessage $message) => $message->line('School: '.$this->schoolName))
+            ->line('Login ID: '.$this->loginId)
             ->line('Use the password provided securely by your administrator.')
-            ->action('Login to Sanfaani Schools', route('login'))
+            ->action('Login', route('login'))
             ->line('For support, contact '.$supportEmail.' or '.$supportPhone.'.');
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'role' => $this->role,
+            'school_id' => $this->schoolId ?: data_get($notifiable, 'school_id'),
+            'school_name' => $this->schoolName,
+        ];
     }
 }

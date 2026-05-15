@@ -73,10 +73,10 @@ class UserWorkspaceService
 
     public function select(User $user, array $context): void
     {
-        session([
-            'active_school_id' => $context['school_id'],
-            'active_role_context' => $context['role_name'],
-        ]);
+        TenantContext::set(
+            filled($context['school_id']) ? (int) $context['school_id'] : null,
+            $context['role_name']
+        );
     }
 
     public function selectByKey(User $user, string $key): bool

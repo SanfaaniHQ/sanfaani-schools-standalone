@@ -1,21 +1,31 @@
 @php
     $selectedSchoolRouteKey = $selectedSchool?->slug ?: $selectedSchool?->getKey();
     $publicPageSlug = $publicPageSlug ?? null;
-    $identifyRoute = $publicPageSlug
+    $resultCheckerSlug = $resultCheckerSlug ?? null;
+    $identifyRoute = $resultCheckerSlug
+        ? route('public.results.slug.identify', ['slug' => $resultCheckerSlug])
+        : ($publicPageSlug
         ? route('public.schools.results.identify', ['slug' => $publicPageSlug])
         : ($isBrandedSchoolRoute && $selectedSchool
         ? route('public.school.results.identify', ['school' => $selectedSchoolRouteKey])
-        : route('public.results.identify'));
-    $checkRoute = $publicPageSlug
+        : route('public.results.identify')));
+    $checkRoute = $resultCheckerSlug
+        ? route('public.results.slug.check', ['slug' => $resultCheckerSlug])
+        : ($publicPageSlug
         ? route('public.schools.results.check', ['slug' => $publicPageSlug])
         : ($isBrandedSchoolRoute && $selectedSchool
         ? route('public.school.results.check', ['school' => $selectedSchoolRouteKey])
-        : route('public.results.check'));
-    $indexRoute = $publicPageSlug
+        : route('public.results.check')));
+    $indexRoute = $resultCheckerSlug
+        ? route('public.results.slug.index', ['slug' => $resultCheckerSlug, 'lang' => $locale, 'reset' => 1])
+        : ($publicPageSlug
         ? route('public.schools.results.index', ['slug' => $publicPageSlug, 'lang' => $locale, 'reset' => 1])
         : ($isBrandedSchoolRoute && $selectedSchool
         ? route('public.school.results.index', ['school' => $selectedSchoolRouteKey, 'lang' => $locale, 'reset' => 1])
-        : route('public.results.index', ['lang' => $locale, 'reset' => 1]));
+        : route('public.results.index', ['lang' => $locale, 'reset' => 1])));
+    $resultBrandName = $selectedSchool?->name ?? $platformSettings->platform_name;
+    $resultBrandColor = $selectedSchool?->primary_color ?: '#4f46e5';
+    $resultLogoUrl = $selectedSchool?->logoUrl() ?: ($platformLogoUrl ?? null);
 @endphp
 
 <!DOCTYPE html>
@@ -25,32 +35,43 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ __('public_result.check_result') }} - {{ $platformSettings->platform_name }}</title>
+        <title>{{ __('public_result.check_result') }} - {{ $resultBrandName }}</title>
 
         @if (! empty($platformFaviconUrl))
             <link rel="icon" href="{{ $platformFaviconUrl }}">
         @endif
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <style>
+            @media print {
+                .no-print { display: none !important; }
+                body { background: #ffffff !important; }
+                .print-card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+            }
+        </style>
+        @if ($selectedSchool?->custom_css)
+            <style>{!! $selectedSchool->custom_css !!}</style>
+        @endif
     </head>
 
-    <body class="bg-gray-100 font-sans text-gray-900 antialiased">
-        <main class="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+    <body class="bg-slate-100 font-sans text-slate-900 antialiased">
+        <main class="min-h-screen px-4 py-8 sm:px-6 lg:px-8" style="background: linear-gradient(180deg, {{ $resultBrandColor }}12 0%, #f8fafc 32%, #f8fafc 100%);">
             <div class="mx-auto max-w-3xl">
                 <div class="mb-6 text-center">
                     <div class="mb-4 flex justify-center">
-                        @if ($isBrandedSchoolRoute && $selectedSchool?->logoUrl())
-                            <img src="{{ $selectedSchool->logoUrl() }}" alt="{{ $selectedSchool->name }}" class="h-14 w-14 rounded-2xl border border-gray-200 bg-white object-contain">
+                        @if ($resultLogoUrl)
+                            <img src="{{ $resultLogoUrl }}" alt="{{ $resultBrandName }} logo" class="h-16 w-16 rounded-2xl border border-slate-200 bg-white object-contain p-1 shadow-sm">
                         @else
                             <a href="{{ route('landing.home') }}" class="flex items-center gap-3">
                                 <x-platform-logo class="h-11 w-auto object-contain" mark-class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-700 text-sm font-semibold text-white" />
                             </a>
                         @endif
                     </div>
-                    <h1 class="mt-2 text-3xl font-semibold text-gray-900">
+                    <p class="text-sm font-semibold text-slate-500">{{ $resultBrandName }}</p>
+                    <h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
                         {{ __('public_result.check_result') }}
                     </h1>
-                    <p class="mt-2 text-sm text-gray-600">
+                    <p class="mt-2 text-sm text-slate-600">
                         {{ $step === 2 ? __('public_result.school_identified') : __('public_result.enter_access_details') }}
                     </p>
                 </div>
@@ -67,13 +88,14 @@
                     </div>
                 @endif
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm">
+                <div class="print-card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
                     @if ($step === 2 && $contextSchool && $contextStudent)
                         <form method="POST"
                               action="{{ $checkRoute }}"
                               data-loading-text="{{ __('public_result.view_result') }}..."
                               class="space-y-6">
                             @csrf
+                            <input type="text" name="website_url" value="" tabindex="-1" autocomplete="off" class="hidden">
 
                             <div class="grid gap-6 sm:grid-cols-2">
                                 <div>
@@ -82,7 +104,7 @@
                                     </label>
                                     <select id="lang"
                                             name="lang"
-                                            class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                            class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                         @foreach ($languages as $code => $name)
                                             <option value="{{ $code }}" @selected($locale === $code)>{{ $name }}</option>
                                         @endforeach
@@ -121,11 +143,11 @@
                                         </div>
                                         <input type="hidden" name="academic_session_id" value="{{ $lockedAcademicSession->id }}">
                                     @else
-                                        <select id="academic_session_id"
-                                                name="academic_session_id"
-                                                data-session-term-source
-                                                data-term-target="#term_id"
-                                                class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                    <select id="academic_session_id"
+                                            name="academic_session_id"
+                                            data-session-term-source
+                                            data-term-target="#term_id"
+                                                class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                             <option value="">{{ __('public_result.academic_session') }}</option>
                                             @foreach ($academicSessions as $sessionOption)
                                                 <option value="{{ $sessionOption->id }}" @selected((int) $selectedAcademicSessionId === (int) $sessionOption->id)>
@@ -152,7 +174,7 @@
                                         <select id="term_id"
                                                 name="term_id"
                                                 data-term-select
-                                                class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                                class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                             <option value="">{{ __('public_result.term') }}</option>
                                             @foreach ($terms as $termOption)
                                                 <option value="{{ $termOption->id }}"
@@ -181,7 +203,7 @@
                                 @else
                                     <select id="result_type"
                                             name="result_type"
-                                            class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                            class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                         <option value="term_result" @selected($selectedResultType === 'term_result')>
                                             {{ __('public_result.term_result') }}
                                         </option>
@@ -196,7 +218,8 @@
                             <div class="flex flex-col gap-3 sm:flex-row">
                                 <button type="submit"
                                         data-loading-text="{{ __('public_result.view_result') }}..."
-                                        class="inline-flex flex-1 justify-center rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700">
+                                        class="inline-flex min-h-11 flex-1 justify-center rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95"
+                                        style="background: {{ $resultBrandColor }}">
                                     {{ __('public_result.view_result') }}
                                 </button>
 
@@ -212,6 +235,7 @@
                               data-loading-text="{{ __('public_result.continue') }}..."
                               class="space-y-6">
                             @csrf
+                            <input type="text" name="website_url" value="" tabindex="-1" autocomplete="off" class="hidden">
 
                             <div class="grid gap-6 sm:grid-cols-2">
                                 <div>
@@ -220,7 +244,7 @@
                                     </label>
                                     <select id="lang"
                                             name="lang"
-                                            class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                            class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                         @foreach ($languages as $code => $name)
                                             <option value="{{ $code }}" @selected($locale === $code)>{{ $name }}</option>
                                         @endforeach
@@ -241,7 +265,7 @@
                                        name="admission_number"
                                        value="{{ old('admission_number') }}"
                                        autocomplete="off"
-                                       class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                       class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                 @error('admission_number')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -257,7 +281,7 @@
                                            name="scratch_card_serial"
                                            value="{{ old('scratch_card_serial') }}"
                                            autocomplete="off"
-                                           class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                           class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                     @error('scratch_card_serial')
                                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
@@ -270,8 +294,11 @@
                                     <input id="scratch_card_pin"
                                            type="password"
                                            name="scratch_card_pin"
+                                           inputmode="numeric"
+                                           pattern="[0-9A-Za-z\\-\\s]*"
+                                           placeholder="0000 0000"
                                            autocomplete="off"
-                                           class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                           class="mt-1 block min-h-11 w-full rounded-xl border-gray-300 font-mono tracking-wide shadow-sm focus:border-gray-900 focus:ring-gray-900">
                                     @error('scratch_card_pin')
                                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
@@ -280,7 +307,8 @@
 
                             <button type="submit"
                                     data-loading-text="{{ __('public_result.continue') }}..."
-                                    class="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700">
+                                    class="min-h-11 w-full rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:opacity-95"
+                                    style="background: {{ $resultBrandColor }}">
                                 {{ __('public_result.continue') }}
                             </button>
                         </form>
@@ -291,7 +319,7 @@
                     <a href="{{ route('landing.home') }}" class="hover:text-gray-800">Home</a>
                     <a href="{{ route('legal.privacy') }}" class="hover:text-gray-800">Privacy Policy</a>
                     <a href="{{ route('legal.terms') }}" class="hover:text-gray-800">Terms</a>
-                    <span>{{ $platformSettings->support_email }}</span>
+                    <span>{{ $selectedSchool?->sender_email ?: $selectedSchool?->email ?: $platformSettings->support_email }}</span>
                 </div>
             </div>
         </main>

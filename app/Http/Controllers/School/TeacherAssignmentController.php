@@ -4,11 +4,12 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Models\School;
-use App\Models\TeacherResultSubmission;
 use App\Models\TeacherClassAssignment;
+use App\Models\TeacherResultSubmission;
 use App\Models\TeacherSubjectAssignment;
 use App\Models\User;
 use App\Services\AuditLogService;
+use App\Services\CurrentSchoolService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\TeacherAssignmentAccessService;
 use Illuminate\Http\Request;
@@ -402,7 +403,7 @@ class TeacherAssignmentController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

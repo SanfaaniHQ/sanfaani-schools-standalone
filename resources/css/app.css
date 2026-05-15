@@ -19,6 +19,35 @@
         @apply overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm;
     }
 
+    .enterprise-panel {
+        @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+    }
+
+    .enterprise-table {
+        @apply min-w-full divide-y divide-slate-200 text-sm;
+    }
+
+    .enterprise-table thead {
+        @apply bg-slate-50;
+    }
+
+    .enterprise-table th {
+        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+    }
+
+    .enterprise-table td {
+        @apply px-4 py-3 align-top text-slate-700;
+    }
+
+    .enterprise-badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset;
+    }
+
+    .tenant-focus {
+        @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+        --tw-ring-color: var(--tenant-primary);
+    }
+
     .marketing-card {
         @apply transition duration-200 ease-out motion-safe:hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg;
     }
@@ -29,6 +58,18 @@
 
     .marketing-link {
         @apply rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 

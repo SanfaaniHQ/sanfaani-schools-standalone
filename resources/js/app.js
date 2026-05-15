@@ -142,6 +142,21 @@ document.querySelectorAll('[data-session-term-source]').forEach((sessionSelect) 
     sessionSelect.addEventListener('change', () => syncTermDropdown(sessionSelect));
 });
 
+document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+        const input = document.querySelector(toggle.dataset.passwordToggle);
+
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+
+        const showPassword = input.type === 'password';
+        input.type = showPassword ? 'text' : 'password';
+        toggle.textContent = showPassword ? 'Hide' : 'Show';
+        toggle.setAttribute('aria-pressed', String(showPassword));
+    });
+});
+
 const formatScore = (value) => {
     if (!Number.isFinite(value)) {
         return '0.00';

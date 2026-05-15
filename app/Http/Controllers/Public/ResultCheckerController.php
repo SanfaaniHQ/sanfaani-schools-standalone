@@ -11,6 +11,7 @@ use App\Models\ScratchCard;
 use App\Models\Student;
 use App\Models\Term;
 use App\Services\AuditLogService;
+use App\Services\AuditService;
 use App\Services\PlatformSettingService;
 use App\Services\PublicResultAccessService;
 use App\Services\ReportCardService;
@@ -51,6 +52,7 @@ class ResultCheckerController extends Controller
             'selectedSchool' => $school,
             'publicPage' => $publicPage,
             'publicPageSlug' => $publicPage?->slug,
+            'resultCheckerSlug' => $request->attributes->get('result_checker_slug'),
             'isBrandedSchoolRoute' => (bool) $school,
             'contextSchool' => null,
             'contextStudent' => null,
@@ -80,10 +82,17 @@ class ResultCheckerController extends Controller
 
         [$locale] = $this->setPublicLocale($request, $school);
 
+        AuditService::log('result', 'public_result_identify_attempt', [
+            'school_id' => $school?->id,
+            'admission_number' => $request->input('admission_number'),
+            'branded_route' => (bool) $school,
+        ]);
+
         $data = $request->validate([
             'admission_number' => ['required', 'string', 'max:100'],
             'scratch_card_serial' => ['required', 'string', 'max:100'],
             'scratch_card_pin' => ['required', 'string', 'max:100'],
+            'website_url' => ['nullable', 'max:0'],
             'lang' => ['nullable', Rule::in(array_keys($this->languages()))],
         ]);
 
@@ -121,7 +130,7 @@ class ResultCheckerController extends Controller
         ]);
 
         return redirect()->route(
-            $publicPage ? 'public.schools.results.index' : ($school ? 'public.school.results.index' : 'public.results.index'),
+            $this->checkerRouteName($school, $publicPage, 'index'),
             $this->checkerRouteParameters($locale, $school, $publicPage)
         );
     }
@@ -134,6 +143,14 @@ class ResultCheckerController extends Controller
 
         $routeSchool = $school;
         [$locale] = $this->setPublicLocale($request, $school);
+
+        AuditService::log('result', 'public_result_check_attempt', [
+            'school_id' => $school?->id,
+            'academic_session_id' => $request->input('academic_session_id'),
+            'term_id' => $request->input('term_id'),
+            'result_type' => $request->input('result_type'),
+            'branded_route' => (bool) $school,
+        ]);
 
         $context = $this->resultCheckerContext($request, $school);
 
@@ -157,6 +174,7 @@ class ResultCheckerController extends Controller
             'academic_session_id' => ['required', 'integer'],
             'term_id' => ['required', 'integer'],
             'result_type' => ['required', Rule::in(['term_result'])],
+            'website_url' => ['nullable', 'max:0'],
             'lang' => ['nullable', Rule::in(array_keys($this->languages()))],
         ]);
 
@@ -463,7 +481,7 @@ class ResultCheckerController extends Controller
     ) {
         $redirect = redirect()
             ->route(
-                $publicPage ? 'public.schools.results.index' : ($school ? 'public.school.results.index' : 'public.results.index'),
+                $this->checkerRouteName($school, $publicPage, 'index'),
                 $this->checkerRouteParameters($locale, $school, $publicPage)
             )
             ->with('error', $message);
@@ -479,6 +497,10 @@ class ResultCheckerController extends Controller
     {
         $parameters = ['lang' => $locale];
 
+        if ($slug = request()->attributes->get('result_checker_slug')) {
+            return array_merge(['slug' => $slug], $parameters);
+        }
+
         if ($publicPage) {
             return array_merge(['slug' => $publicPage->slug], $parameters);
         }
@@ -490,9 +512,30 @@ class ResultCheckerController extends Controller
         return $parameters;
     }
 
+    private function checkerRouteName(?School $school = null, ?SchoolPublicPage $publicPage = null, string $action = 'index'): string
+    {
+        if (request()->attributes->has('result_checker_slug')) {
+            return "public.results.slug.{$action}";
+        }
+
+        if ($publicPage) {
+            return "public.schools.results.{$action}";
+        }
+
+        if ($school) {
+            return "public.school.results.{$action}";
+        }
+
+        return "public.results.{$action}";
+    }
+
     private function schoolResultCheckerAvailable(School $school, ?SchoolPublicPage $publicPage = null): bool
     {
         if ($school->status !== 'active') {
+            return false;
+        }
+
+        if (request()->attributes->has('result_checker_slug') && ! (bool) $school->is_result_checker_enabled) {
             return false;
         }
 

@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\SupportThread;
 use App\Models\User;
 use App\Services\CurrentSchoolService;
+use App\Services\SchoolAuthorizationService;
 use App\Services\SupportRoutingService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -54,7 +55,7 @@ class SupportThreadController extends Controller
             'role' => $role,
             'categories' => SupportThread::CATEGORIES,
             'priorities' => SupportThread::PRIORITIES,
-            'canDirectEscalate' => $role === 'school_admin' || app(\App\Services\SchoolAuthorizationService::class)->can($request->user(), $school, 'support.direct_escalation'),
+            'canDirectEscalate' => $role === 'school_admin' || app(SchoolAuthorizationService::class)->can($request->user(), $school, 'support.direct_escalation'),
         ]);
     }
 

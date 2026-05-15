@@ -14,14 +14,21 @@ class LeadRequest extends Model
     use HasFactory, SoftDeletes;
 
     public const STATUS_NEW = 'new';
+
     public const STATUS_CONTACTED = 'contacted';
+
     public const STATUS_FOLLOW_UP = 'follow_up';
+
     public const STATUS_DEMO_SCHEDULED = 'demo_scheduled';
+
     public const STATUS_CONVERTED = 'converted';
+
     public const STATUS_LOST = 'lost';
+
     public const STATUS_ARCHIVED = 'archived';
 
     public const LEGACY_STATUS_TRIAL_STARTED = 'trial_started';
+
     public const LEGACY_STATUS_CLOSED = 'closed';
 
     public const STATUSES = [

@@ -11,8 +11,9 @@ use App\Models\Student;
 use App\Models\StudentElectiveSubject;
 use App\Models\Subject;
 use App\Models\Term;
-use App\Services\StudentResultCsvImportService;
 use App\Services\AuditLogService;
+use App\Services\CurrentSchoolService;
+use App\Services\StudentResultCsvImportService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Throwable;
@@ -54,12 +55,12 @@ class ResultUploadController extends Controller
             ->get();
 
         $fileName = 'result-template-'
-            . str($schoolClass->name)->slug()
-            . '-'
-            . str($academicSession->name)->replace('/', '-')->slug()
-            . '-'
-            . str($term->name)->slug()
-            . '.csv';
+            .str($schoolClass->name)->slug()
+            .'-'
+            .str($academicSession->name)->replace('/', '-')->slug()
+            .'-'
+            .str($term->name)->slug()
+            .'.csv';
 
         return response()->streamDownload(function () use ($students, $fallbackSubjects, $school, $schoolClass, $academicSession, $term, $data) {
             $handle = fopen('php://output', 'w');
@@ -84,7 +85,7 @@ class ResultUploadController extends Controller
 
                 foreach ($subjects as $subject) {
                     fputcsv($handle, [
-                        trim($schoolClass->name . ' ' . $schoolClass->section),
+                        trim($schoolClass->name.' '.$schoolClass->section),
                         $academicSession->name,
                         $term->name,
                         $data['result_type'],
@@ -189,7 +190,7 @@ class ResultUploadController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

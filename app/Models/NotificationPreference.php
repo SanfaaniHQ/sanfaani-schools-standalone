@@ -11,6 +11,9 @@ class NotificationPreference extends Model
         'school_id',
         'user_id',
         'role',
+        'event',
+        'channels',
+        'enabled',
         'channel',
         'event_key',
         'is_enabled',
@@ -19,6 +22,8 @@ class NotificationPreference extends Model
 
     protected $casts = [
         'is_enabled' => 'boolean',
+        'enabled' => 'boolean',
+        'channels' => 'array',
         'metadata' => 'array',
     ];
 

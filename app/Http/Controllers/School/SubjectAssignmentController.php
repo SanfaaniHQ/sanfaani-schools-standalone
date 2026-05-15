@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Services\AuditLogService;
+use App\Services\CurrentSchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -277,7 +278,7 @@ class SubjectAssignmentController extends Controller
 
     private function currentSchoolOrFail(): School
     {
-        $school = app(\App\Services\CurrentSchoolService::class)->get();
+        $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
             abort(403, 'Your account is not assigned to a school.');

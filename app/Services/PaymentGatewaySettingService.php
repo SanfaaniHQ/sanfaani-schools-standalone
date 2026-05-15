@@ -41,6 +41,6 @@ class PaymentGatewaySettingService
             return str_repeat('*', strlen($value));
         }
 
-        return substr($value, 0, 7) . '****' . substr($value, -4);
+        return substr($value, 0, 7).'****'.substr($value, -4);
     }
 }

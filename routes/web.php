@@ -21,6 +21,8 @@ use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadCont
 use App\Http\Controllers\Admin\SystemMaintenanceController;
 use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
@@ -29,6 +31,7 @@ use App\Http\Controllers\Public\ResultCheckerController;
 use App\Http\Controllers\Public\ResultCheckerPaymentController;
 use App\Http\Controllers\Public\ResultVerificationController;
 use App\Http\Controllers\Public\SchoolPublicPageController as PublicSchoolPublicPageController;
+use App\Http\Controllers\PublicResultController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
 use App\Http\Controllers\School\ClassUploadController;
@@ -95,19 +98,19 @@ Route::post('/admin/login', [AdminAuthenticatedSessionController::class, 'store'
     ->middleware('guest')
     ->name('admin.login.store');
 
-Route::get('/admin/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'adminCreate'])
+Route::get('/admin/forgot-password', [PasswordResetLinkController::class, 'adminCreate'])
     ->middleware('guest')
     ->name('admin.password.request');
 
-Route::post('/admin/forgot-password', [\App\Http\Controllers\Auth\PasswordResetLinkController::class, 'adminStore'])
+Route::post('/admin/forgot-password', [PasswordResetLinkController::class, 'adminStore'])
     ->middleware(['guest', 'throttle:6,1'])
     ->name('admin.password.email');
 
-Route::get('/admin/reset-password/{token}', [\App\Http\Controllers\Auth\NewPasswordController::class, 'adminCreate'])
+Route::get('/admin/reset-password/{token}', [NewPasswordController::class, 'adminCreate'])
     ->middleware('guest')
     ->name('admin.password.reset');
 
-Route::post('/admin/reset-password', [\App\Http\Controllers\Auth\NewPasswordController::class, 'adminStore'])
+Route::post('/admin/reset-password', [NewPasswordController::class, 'adminStore'])
     ->middleware(['guest', 'throttle:6,1'])
     ->name('admin.password.store');
 
@@ -127,6 +130,18 @@ Route::post('/result-checker/identify', [ResultCheckerController::class, 'identi
 Route::post('/result-checker/check', [ResultCheckerController::class, 'check'])
     ->middleware('throttle:10,1')
     ->name('public.results.check');
+
+Route::get('/results/{slug}', [PublicResultController::class, 'showForm'])
+    ->middleware('throttle:10,1')
+    ->name('public.results.slug.index');
+
+Route::post('/results/{slug}/identify', [PublicResultController::class, 'identify'])
+    ->middleware('throttle:10,1')
+    ->name('public.results.slug.identify');
+
+Route::post('/results/{slug}/check', [PublicResultController::class, 'check'])
+    ->middleware('throttle:10,1')
+    ->name('public.results.slug.check');
 
 Route::get('/result-checker/view/{token}', [ResultCheckerController::class, 'view'])
     ->name('public.results.view');
@@ -224,6 +239,9 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::post('/support-access/stop', [SchoolController::class, 'stopSupportAccess'])
             ->name('support-access.stop');
+
+        Route::post('/revoke-support-session', [SchoolController::class, 'revokeSupportSession'])
+            ->name('support-access.revoke');
 
         Route::post('/support-access/continue', [SchoolController::class, 'continueSupportAccess'])
             ->name('support-access.continue');
@@ -395,7 +413,7 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('scratch-cards.revoke');
     });
 
-Route::middleware(['auth'])
+Route::middleware(['auth', 'school.context'])
     ->prefix('school')
     ->name('school.')
     ->group(function () {

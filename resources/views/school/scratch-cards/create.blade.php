@@ -12,7 +12,7 @@
 
     <div class="py-8">
         <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+            <x-card class="p-6 sm:p-8">
                 <form method="POST" action="{{ route('school.scratch-cards.store') }}" data-loading-text="Submitting..." class="space-y-6">
                     @csrf
 
@@ -94,12 +94,17 @@
                     <div class="grid gap-6 sm:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Quantity</label>
-                            <input type="number"
-                                   name="quantity"
-                                   min="1"
-                                   max="2000"
-                                   value="{{ old('quantity', 50) }}"
-                                   class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            <div class="mt-1 flex rounded-xl border border-gray-300 bg-white shadow-sm focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900">
+                                <button type="button" data-quantity-step="-10" aria-label="Reduce quantity" class="min-h-11 w-12 rounded-l-xl text-lg font-semibold text-slate-600 hover:bg-slate-50">-</button>
+                                <input type="number"
+                                       name="quantity"
+                                       min="1"
+                                       max="2000"
+                                       value="{{ old('quantity', 50) }}"
+                                       data-quantity-input
+                                       class="block w-full border-0 text-center shadow-none focus:ring-0">
+                                <button type="button" data-quantity-step="10" aria-label="Increase quantity" class="min-h-11 w-12 rounded-r-xl text-lg font-semibold text-slate-600 hover:bg-slate-50">+</button>
+                            </div>
                             @error('quantity')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -143,8 +148,15 @@
                         @enderror
                     </div>
 
-                    <div class="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
-                        Requests are reviewed by the Super Admin. Cards are downloadable only after payment/access approval and generation.
+                    <div class="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:grid-cols-2">
+                        <div>
+                            <p class="font-semibold text-slate-950">Review Process</p>
+                            <p class="mt-1">Requests are reviewed by the Super Admin. Cards are downloadable only after payment/access approval and generation.</p>
+                        </div>
+                        <div class="rounded-lg bg-white p-3 shadow-sm">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Request Summary</p>
+                            <p class="mt-1 text-2xl font-bold text-slate-950"><span data-quantity-summary>{{ old('quantity', 50) }}</span> cards</p>
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-end gap-3">
@@ -154,12 +166,33 @@
                         </a>
 
                         <button type="submit"
-                                class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                                data-loading-text="Submitting..."
+                                class="inline-flex min-h-11 items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-700">
                             Submit Request
                         </button>
                     </div>
                 </form>
-            </div>
+            </x-card>
         </div>
     </div>
+
+    <script>
+        document.querySelectorAll('[data-quantity-step]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.querySelector('[data-quantity-input]');
+                const summary = document.querySelector('[data-quantity-summary]');
+                const step = Number(button.dataset.quantityStep || 0);
+                const min = Number(input.getAttribute('min') || 1);
+                const max = Number(input.getAttribute('max') || 2000);
+                const next = Math.min(max, Math.max(min, Number(input.value || min) + step));
+                input.value = next;
+                if (summary) summary.textContent = next;
+            });
+        });
+
+        document.querySelector('[data-quantity-input]')?.addEventListener('input', (event) => {
+            const summary = document.querySelector('[data-quantity-summary]');
+            if (summary) summary.textContent = event.target.value || 0;
+        });
+    </script>
 </x-app-layout>

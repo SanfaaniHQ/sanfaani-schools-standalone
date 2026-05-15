@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Services\AuditLogService;
+use App\Services\AuditService;
 use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use App\Services\SchoolCodeGeneratorService;
+use App\Services\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -65,7 +67,7 @@ class SchoolController extends Controller
         ) {
             app(CommunicationService::class)->sendPlatformEmail(
                 $school->email,
-                'Welcome to Sanfaani Schools',
+                'Your school workspace is ready',
                 'School onboarding',
                 'Your school profile has been created successfully. You can now proceed with school admin onboarding and setup.',
                 'school_onboarding',
@@ -135,20 +137,32 @@ class SchoolController extends Controller
 
         $data = $request->validate([
             'role_context' => ['nullable', Rule::in(['school_admin', 'result_officer', 'teacher'])],
+            'support_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         session([
+            'is_support_session' => true,
             'support_school_id' => $school->id,
             'support_role_context' => $data['role_context'] ?? 'school_admin',
+            'support_reason' => $data['support_reason'] ?? 'Platform support review',
             'support_access_started_by' => auth()->id(),
             'support_access_started_at' => now()->toDateTimeString(),
             'support_access_last_confirmed_at' => now()->toDateTimeString(),
         ]);
 
+        TenantContext::set($school->id, session('support_role_context'));
+
         $auditLog->log('support_access_started', $school, $school, metadata: [
             'support_school_id' => $school->id,
             'role_context' => session('support_role_context'),
+            'reason' => session('support_reason'),
         ], request: $request);
+
+        AuditService::log('support', 'support_access_started', [
+            'school_id' => $school->id,
+            'role_context' => session('support_role_context'),
+            'reason' => session('support_reason'),
+        ]);
 
         return redirect()
             ->route('school.dashboard')
@@ -170,6 +184,7 @@ class SchoolController extends Controller
         $auditLog->log('support_access_continued', $school, $school, metadata: [
             'support_school_id' => $school->id,
             'role_context' => session('support_role_context', 'school_admin'),
+            'reason' => session('support_reason'),
         ], request: $request);
 
         return back()->with('success', 'Support access continued. This action is logged for security.');
@@ -182,21 +197,37 @@ class SchoolController extends Controller
         $auditLog->log('support_access_stopped', $school, $school, metadata: [
             'support_school_id' => session('support_school_id'),
             'role_context' => session('support_role_context'),
+            'reason' => session('support_reason'),
             'started_at' => session('support_access_started_at'),
             'last_confirmed_at' => session('support_access_last_confirmed_at'),
         ], request: $request);
 
+        AuditService::log('support', 'support_access_stopped', [
+            'school_id' => session('support_school_id'),
+            'role_context' => session('support_role_context'),
+            'reason' => session('support_reason'),
+        ]);
+
         session()->forget([
+            'is_support_session',
             'support_school_id',
             'support_role_context',
+            'support_reason',
             'support_access_started_by',
             'support_access_started_at',
             'support_access_last_confirmed_at',
         ]);
 
+        TenantContext::clear();
+
         return redirect()
             ->route('admin.schools.index')
             ->with('success', 'Support access ended.');
+    }
+
+    public function revokeSupportSession(AuditLogService $auditLog, Request $request)
+    {
+        return $this->stopSupportAccess($auditLog, $request);
     }
 
     public function archive(School $school, AuditLogService $auditLog, Request $request)
@@ -239,7 +270,7 @@ class SchoolController extends Controller
                 ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
                 ->exists()
         ) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 

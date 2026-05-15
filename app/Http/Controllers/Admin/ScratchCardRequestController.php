@@ -5,29 +5,40 @@ namespace App\Http\Controllers\Admin;
 use App\Events\StudentTransactionalEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentTransaction;
+use App\Models\School;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardBatch;
 use App\Models\Student;
 use App\Notifications\ScratchCardRequestStatusNotification;
 use App\Services\AuditLogService;
 use App\Services\NotificationPreferenceService;
+use App\Services\ScratchAnalyticsService;
+use App\Services\ScratchCardManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ScratchCardRequestController extends Controller
 {
-    public function index()
+    public function index(Request $request, ScratchAnalyticsService $analytics)
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'school_id' => ['nullable', 'integer', Rule::exists('schools', 'id')],
+            'status' => ['nullable', Rule::in(['pending_payment', 'pending_approval', 'generated', 'revoked'])],
+            'payment_status' => ['nullable', Rule::in(['pending', 'manual_pending', 'paid', 'failed', 'refunded'])],
+        ]);
+
+        $search = trim((string) ($filters['search'] ?? ''));
+
         $batches = ScratchCardBatch::query()
             ->with([
                 'school',
                 'schoolClass',
                 'academicSession',
                 'term',
+                'requestedBy',
                 'generatedBy',
                 'paymentConfirmedBy',
             ])
@@ -37,11 +48,26 @@ class ScratchCardRequestController extends Controller
                 'cards as used_cards_count' => fn ($query) => $query->where('status', 'used'),
                 'cards as revoked_cards_count' => fn ($query) => $query->where('status', 'revoked'),
             ])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', "%{$search}%")
+                        ->orWhere('batch_code', 'like', "%{$search}%")
+                        ->orWhere('payment_reference', 'like', "%{$search}%")
+                        ->orWhereHas('school', fn ($schoolQuery) => $schoolQuery->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->when($filters['school_id'] ?? null, fn ($query, $schoolId) => $query->where('school_id', $schoolId))
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['payment_status'] ?? null, fn ($query, $status) => $query->where('payment_status', $status))
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('admin.scratch-card-requests.index', [
             'batches' => $batches,
+            'filters' => $filters,
+            'schools' => School::orderBy('name')->get(['id', 'name']),
+            'scratchSummary' => $analytics->summary(),
         ]);
     }
 
@@ -52,8 +78,12 @@ class ScratchCardRequestController extends Controller
             'schoolClass',
             'academicSession',
             'term',
+            'requestedBy',
             'generatedBy',
             'paymentConfirmedBy',
+            'approvedBy',
+            'rejectedBy',
+            'lastExportedBy',
         ])->loadCount([
             'cards',
             'cards as unused_cards_count' => fn ($query) => $query->where('status', 'unused'),
@@ -129,70 +159,18 @@ class ScratchCardRequestController extends Controller
         return back()->with('success', 'Payment confirmed successfully.');
     }
 
-    public function generate(Request $request, ScratchCardBatch $batch)
+    public function generate(Request $request, ScratchCardBatch $batch, ScratchCardManager $manager)
     {
         $data = $request->validate([
             'max_uses' => ['required', 'integer', 'min:1', 'max:100'],
         ]);
 
-        DB::transaction(function () use ($batch, $data) {
-            $lockedBatch = ScratchCardBatch::query()
-                ->whereKey($batch->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        $generatedBatch = $manager->generateForBatch($batch, (int) $data['max_uses'], auth()->id());
 
-            if ($lockedBatch->status === 'revoked') {
-                throw ValidationException::withMessages([
-                    'max_uses' => 'Cards cannot be generated for a revoked request.',
-                ]);
-            }
-
-            if ($lockedBatch->payment_status !== 'paid' || ! $lockedBatch->payment_confirmed_at) {
-                throw ValidationException::withMessages([
-                    'max_uses' => 'Confirm payment before generating scratch cards.',
-                ]);
-            }
-
-            if ($lockedBatch->cards()->exists()) {
-                throw ValidationException::withMessages([
-                    'max_uses' => 'This request already has generated cards.',
-                ]);
-            }
-
-            for ($i = 1; $i <= $lockedBatch->quantity; $i++) {
-                $pin = $this->generatePin();
-
-                ScratchCard::create([
-                    'scratch_card_batch_id' => $lockedBatch->id,
-                    'school_id' => $lockedBatch->school_id,
-                    'school_class_id' => $lockedBatch->school_class_id,
-                    'academic_session_id' => $lockedBatch->academic_session_id,
-                    'term_id' => $lockedBatch->term_id,
-                    'result_type' => $lockedBatch->result_type,
-                    'serial_number' => $this->generateSerialNumber($lockedBatch),
-                    'pin_code' => $pin,
-                    'pin_hash' => hash('sha256', $pin),
-                    'max_uses' => $data['max_uses'],
-                    'used_count' => 0,
-                    'status' => 'unused',
-                    'expires_at' => $lockedBatch->expires_at,
-                    'generated_by' => auth()->id(),
-                    'metadata' => [
-                        'batch_title' => $lockedBatch->title,
-                    ],
-                ]);
-            }
-
-            $lockedBatch->update([
-                'status' => 'generated',
-                'generated_by' => auth()->id(),
-            ]);
-
-            app(AuditLogService::class)->log('scratch_card_batch_generated', $lockedBatch, $lockedBatch->school, metadata: [
-                'quantity' => $lockedBatch->quantity,
-                'max_uses' => $data['max_uses'],
-            ], request: request());
-        });
+        app(AuditLogService::class)->log('scratch_card_batch_generated', $generatedBatch, $generatedBatch->school, metadata: [
+            'quantity' => $generatedBatch->quantity,
+            'max_uses' => $data['max_uses'],
+        ], request: $request);
 
         $this->notifySchoolAdmins(
             $batch->refresh(),
@@ -211,12 +189,18 @@ class ScratchCardRequestController extends Controller
             return back()->with('error', 'Cards are not available for download yet.');
         }
 
-        $fileName = 'scratch-cards-batch-' . $batch->id . '-' . now()->format('YmdHis') . '.csv';
+        $batch->update([
+            'last_exported_at' => now(),
+            'last_exported_by' => auth()->id(),
+        ]);
+
+        $fileName = 'scratch-cards-batch-'.$batch->id.'-'.now()->format('YmdHis').'.csv';
 
         return response()->streamDownload(function () use ($batch) {
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
+                'batch_code',
                 'school',
                 'serial_number',
                 'pin_code',
@@ -231,18 +215,19 @@ class ScratchCardRequestController extends Controller
             ]);
 
             $batch->cards()
-                ->with(['school', 'schoolClass', 'academicSession', 'term'])
+                ->with(['batch', 'school', 'schoolClass', 'academicSession', 'term'])
                 ->orderBy('id')
                 ->chunk(200, function ($cards) use ($handle) {
                     foreach ($cards as $card) {
                         fputcsv($handle, [
+                            $card->batch->batch_code ?? '',
                             $card->school->name ?? '',
                             $card->serial_number,
                             $card->pin_code,
                             $card->status,
                             $card->max_uses,
                             $card->used_count,
-                            trim(($card->schoolClass->name ?? '') . ' ' . ($card->schoolClass->section ?? '')),
+                            trim(($card->schoolClass->name ?? '').' '.($card->schoolClass->section ?? '')),
                             $card->academicSession->name ?? '',
                             $card->term->name ?? '',
                             $card->result_type,
@@ -257,38 +242,17 @@ class ScratchCardRequestController extends Controller
         ]);
     }
 
-    public function revokeBatch(Request $request, ScratchCardBatch $batch)
+    public function revokeBatch(Request $request, ScratchCardBatch $batch, ScratchCardManager $manager)
     {
         $data = $request->validate([
             'revoke_reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($batch, $data) {
-            $lockedBatch = ScratchCardBatch::query()
-                ->whereKey($batch->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        $revokedBatch = $manager->revokeBatch($batch, $data['revoke_reason'], auth()->id());
 
-            $lockedBatch->update([
-                'status' => 'revoked',
-                'metadata' => array_merge($lockedBatch->metadata ?? [], [
-                    'revoked_at' => now()->toDateTimeString(),
-                    'revoked_by' => auth()->id(),
-                    'revoke_reason' => $data['revoke_reason'],
-                ]),
-            ]);
-
-            $lockedBatch->cards()->update([
-                'status' => 'revoked',
-                'revoked_at' => now(),
-                'revoked_by' => auth()->id(),
-                'revoke_reason' => $data['revoke_reason'],
-            ]);
-
-            app(AuditLogService::class)->log('scratch_card_batch_revoked', $lockedBatch, $lockedBatch->school, metadata: [
-                'reason' => $data['revoke_reason'],
-            ], request: request());
-        });
+        app(AuditLogService::class)->log('scratch_card_batch_revoked', $revokedBatch, $revokedBatch->school, metadata: [
+            'reason' => $data['revoke_reason'],
+        ], request: $request);
 
         $this->notifySchoolAdmins(
             $batch->refresh(),
@@ -299,38 +263,19 @@ class ScratchCardRequestController extends Controller
         return back()->with('success', 'Scratch card batch revoked successfully.');
     }
 
-    public function revokeCard(Request $request, ScratchCard $card)
+    public function revokeCard(Request $request, ScratchCard $card, ScratchCardManager $manager)
     {
         $data = $request->validate([
             'revoke_reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        $card->update([
-            'status' => 'revoked',
-            'revoked_at' => now(),
-            'revoked_by' => auth()->id(),
-            'revoke_reason' => $data['revoke_reason'],
-        ]);
+        $card = $manager->revokeCard($card, $data['revoke_reason'], auth()->id());
 
         app(AuditLogService::class)->log('scratch_card_revoked', $card, $card->school, metadata: [
             'reason' => $data['revoke_reason'],
         ], request: $request);
 
         return back()->with('success', 'Scratch card revoked successfully.');
-    }
-
-    private function generatePin(): string
-    {
-        return str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
-    }
-
-    private function generateSerialNumber(ScratchCardBatch $batch): string
-    {
-        do {
-            $serial = 'SC-' . $batch->school_id . '-' . now()->format('Ymd') . '-' . Str::upper(Str::random(8));
-        } while (ScratchCard::where('serial_number', $serial)->exists());
-
-        return $serial;
     }
 
     private function notifySchoolAdmins(ScratchCardBatch $batch, string $status, ?string $note = null): void
@@ -347,7 +292,9 @@ class ScratchCardRequestController extends Controller
             ->get()
             ->each(function ($user) use ($batch, $status, $note) {
                 try {
-                    $user->notify(new ScratchCardRequestStatusNotification($batch, $status, $note));
+                    $message = trim(($note ?: 'Scratch card request status updated.').' Request #'.$batch->id.'.');
+
+                    $user->notify(new ScratchCardRequestStatusNotification($status, $message));
                 } catch (\Throwable $exception) {
                     Log::warning('Scratch card status notification failed.', [
                         'batch_id' => $batch->id,

@@ -1,4 +1,10 @@
-@php($roleContext = app(\App\Services\CurrentSchoolService::class)->roleContext(Auth::user()))
+@php
+    $roleContext = app(\App\Services\CurrentSchoolService::class)->roleContext(Auth::user());
+    $navBrandName = data_get($schoolBranding ?? null, 'name') ?: ($platformSettings->platform_name ?? config('app.name', 'Sanfaani Schools'));
+    $navLogoUrl = data_get($schoolBranding ?? null, 'logo_url') ?: ($platformLogoUrl ?? null);
+    $navInitials = data_get($schoolBranding ?? null, 'initials') ?: ($platformInitials ?? 'SS');
+    $navColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#4f46e5';
+@endphp
 <nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -7,7 +13,12 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                        <x-platform-logo class="block h-9 w-auto" mark-class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-700 text-xs font-semibold text-white" :show-name="false" />
+                        @if ($navLogoUrl)
+                            <img src="{{ $navLogoUrl }}" alt="{{ $navBrandName }} logo" class="block h-9 w-9 rounded-xl border border-slate-200 bg-white object-contain p-1">
+                        @else
+                            <span class="flex h-9 w-9 items-center justify-center rounded-xl text-xs font-semibold text-white" style="background: {{ $navColor }}">{{ $navInitials }}</span>
+                        @endif
+                        <span class="hidden max-w-40 truncate text-sm font-semibold text-slate-900 lg:inline">{{ $navBrandName }}</span>
                     </a>
                 </div>
 

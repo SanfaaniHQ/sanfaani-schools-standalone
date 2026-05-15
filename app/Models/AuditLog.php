@@ -14,6 +14,11 @@ class AuditLog extends Model
     protected $fillable = [
         'user_id',
         'school_id',
+        'actor_id',
+        'actor_type',
+        'category',
+        'event',
+        'payload',
         'action',
         'action_tag',
         'severity',
@@ -30,6 +35,7 @@ class AuditLog extends Model
         'old_values' => 'array',
         'new_values' => 'array',
         'metadata' => 'array',
+        'payload' => 'array',
     ];
 
     public function user(): BelongsTo

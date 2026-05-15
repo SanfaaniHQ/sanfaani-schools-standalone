@@ -364,8 +364,11 @@ class MailSettingService
 
     private function sendTestMessage(string $recipient): void
     {
-        Mail::raw('Sanfaani Schools mail settings test completed successfully.', function ($message) use ($recipient) {
-            $message->to($recipient)->subject('Sanfaani Schools Mail Test');
+        $brandName = app(BrandingService::class)->current()->name
+            ?: app(PlatformSettingService::class)->get()->platform_name;
+
+        Mail::raw($brandName.' mail settings test completed successfully.', function ($message) use ($recipient, $brandName) {
+            $message->to($recipient)->subject($brandName.' Mail Test');
         });
     }
 }

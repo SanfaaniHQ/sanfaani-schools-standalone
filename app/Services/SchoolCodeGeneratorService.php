@@ -15,7 +15,7 @@ class SchoolCodeGeneratorService
             ->count() + 1;
 
         do {
-            $candidate = "{$prefix}-SCH-" . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+            $candidate = "{$prefix}-SCH-".str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
             $nextNumber++;
         } while (School::withTrashed()->where('school_code', $candidate)->exists());
 

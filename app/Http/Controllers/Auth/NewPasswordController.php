@@ -95,7 +95,7 @@ class NewPasswordController extends Controller
 
         if (! $target || ! $target->hasRole('super_admin')) {
             return back()->withInput($request->only('email'))
-                ->withErrors(['email' => __(\Illuminate\Support\Facades\Password::INVALID_USER)]);
+                ->withErrors(['email' => __(Password::INVALID_USER)]);
         }
 
         $status = Password::reset(
