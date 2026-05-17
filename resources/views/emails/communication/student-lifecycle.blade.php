@@ -6,7 +6,7 @@
 
     @if (filled(data_get($emailMeta, 'action_url')))
         <div style="margin-top:24px;">
-            <a href="{{ data_get($emailMeta, 'action_url') }}" style="display:inline-block;border-radius:8px;background:#4f46e5;color:#ffffff;padding:12px 18px;text-decoration:none;font-size:14px;font-weight:700;">
+            <a href="{{ data_get($emailMeta, 'action_url') }}" style="display:inline-block;border-radius:8px;background:#047857;color:#ffffff;padding:12px 18px;text-decoration:none;font-size:14px;font-weight:700;">
                 {{ data_get($emailMeta, 'action_label', 'Open') }}
             </a>
         </div>

@@ -24,7 +24,7 @@
         ? route('public.school.results.index', ['school' => $selectedSchoolRouteKey, 'lang' => $locale, 'reset' => 1])
         : route('public.results.index', ['lang' => $locale, 'reset' => 1])));
     $resultBrandName = $selectedSchool?->name ?? $platformSettings->platform_name;
-    $resultBrandColor = $selectedSchool?->primary_color ?: '#4f46e5';
+    $resultBrandColor = $selectedSchool?->primary_color ?: '#047857';
     $resultLogoUrl = $selectedSchool?->logoUrl() ?: ($platformLogoUrl ?? null);
 @endphp
 

@@ -76,9 +76,9 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Default Language</label>
                             <select name="default_language" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
-                                <option value="en" @selected(old('default_language', $school->default_language) === 'en')>English</option>
-                                <option value="fr" @selected(old('default_language', $school->default_language) === 'fr')>French</option>
-                                <option value="ar" @selected(old('default_language', $school->default_language) === 'ar')>Arabic</option>
+                                @foreach ($supportedLanguages as $code => $language)
+                                    <option value="{{ $code }}" @selected(old('default_language', $school->default_language) === $code)>{{ $language['label'] }}</option>
+                                @endforeach
                             </select>
                             @error('default_language')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
@@ -117,7 +117,7 @@
                     <div class="mt-5 grid gap-6 sm:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Primary Color</label>
-                            <input type="color" name="primary_color" value="{{ old('primary_color', $school->primary_color ?: '#4f46e5') }}" class="mt-1 h-12 w-full rounded-xl border border-gray-300">
+                            <input type="color" name="primary_color" value="{{ old('primary_color', $school->primary_color ?: '#047857') }}" class="mt-1 h-12 w-full rounded-xl border border-gray-300">
                             @error('primary_color')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>
 

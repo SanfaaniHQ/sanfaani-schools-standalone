@@ -28,7 +28,17 @@ class StudentResultWorkspaceController extends Controller
                 'integer',
                 Rule::exists('academic_sessions', 'id')->where('school_id', $school->id),
             ],
+            'session' => [
+                'nullable',
+                'integer',
+                Rule::exists('academic_sessions', 'id')->where('school_id', $school->id),
+            ],
             'term_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('terms', 'id')->where('school_id', $school->id),
+            ],
+            'term' => [
                 'nullable',
                 'integer',
                 Rule::exists('terms', 'id')->where('school_id', $school->id),
@@ -47,13 +57,16 @@ class StudentResultWorkspaceController extends Controller
             ],
         ]);
 
+        $selectedSessionId = $validated['academic_session_id'] ?? $validated['session'] ?? null;
+        $selectedTermId = $validated['term_id'] ?? $validated['term'] ?? null;
+
         $filters = [
-            'academic_session_id' => $validated['academic_session_id'] ?? null,
-            'term_id' => $validated['term_id'] ?? null,
+            'academic_session_id' => $selectedSessionId,
+            'term_id' => $selectedTermId,
             'result_type' => $validated['result_type'] ?? 'term_result',
             'class_enrollment_id' => $validated['class_enrollment_id'] ?? null,
-            '_has_academic_session_filter' => $request->query->has('academic_session_id'),
-            '_has_term_filter' => $request->query->has('term_id'),
+            '_has_academic_session_filter' => $request->query->has('academic_session_id') || $request->query->has('session'),
+            '_has_term_filter' => $request->query->has('term_id') || $request->query->has('term'),
             '_has_class_enrollment_filter' => $request->query->has('class_enrollment_id'),
         ];
 

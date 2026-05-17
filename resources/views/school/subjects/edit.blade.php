@@ -73,9 +73,9 @@
                         <select name="language_code"
                                 class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
                             <option value="">Use school default</option>
-                            <option value="en" @selected(old('language_code', $languagePreference?->language_code) === 'en')>English</option>
-                            <option value="fr" @selected(old('language_code', $languagePreference?->language_code) === 'fr')>French</option>
-                            <option value="ar" @selected(old('language_code', $languagePreference?->language_code) === 'ar')>Arabic</option>
+                            @foreach ($supportedLanguages as $code => $language)
+                                <option value="{{ $code }}" @selected(old('language_code', $languagePreference?->language_code) === $code)>{{ $language['label'] }}</option>
+                            @endforeach
                         </select>
                         <p class="mt-1 text-xs text-gray-500">Optional foundation for subject-level language preferences.</p>
                     </div>

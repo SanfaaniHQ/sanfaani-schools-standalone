@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\Subject;
 use App\Models\TeacherClassAssignment;
@@ -83,16 +84,31 @@ class TeacherAssignmentAccessService
             ->get();
     }
 
-    public function subjectsForTeacher(School $school, User $teacher, ?int $classId = null): Collection
+    public function subjectsForTeacher(
+        School $school,
+        User $teacher,
+        ?int $classId = null,
+        ?int $academicSessionId = null,
+        ?int $termId = null
+    ): Collection
     {
-        if ($classId && $this->hasClassAssignment($school, $teacher, $classId)) {
-            return Subject::where('school_id', $school->id)
+        $subjectIds = collect();
+
+        if ($classId && $this->hasClassAssignment($school, $teacher, $classId, $academicSessionId, $termId)) {
+            $classSubjectQuery = ClassSubjectAssignment::query()
+                ->where('school_id', $school->id)
                 ->where('status', 'active')
-                ->orderBy('name')
-                ->get();
+                ->where(function (Builder $query) use ($classId) {
+                    $query->whereNull('school_class_id')
+                        ->orWhere('school_class_id', $classId);
+                });
+
+            $this->withinAcademicContext($classSubjectQuery, $academicSessionId, $termId);
+
+            $subjectIds = $subjectIds->merge($classSubjectQuery->pluck('subject_id'));
         }
 
-        $assignmentQuery = $this->subjectAssignmentsQuery($school, $teacher);
+        $assignmentQuery = $this->subjectAssignmentsQuery($school, $teacher, $academicSessionId, $termId);
 
         if ($classId) {
             $assignmentQuery->where(function (Builder $query) use ($classId) {
@@ -101,7 +117,11 @@ class TeacherAssignmentAccessService
             });
         }
 
-        $subjectIds = $assignmentQuery->pluck('subject_id')->filter()->unique()->values();
+        $subjectIds = $subjectIds
+            ->merge($assignmentQuery->pluck('subject_id'))
+            ->filter()
+            ->unique()
+            ->values();
 
         if ($subjectIds->isEmpty()) {
             return collect();
@@ -132,7 +152,8 @@ class TeacherAssignmentAccessService
             return true;
         }
 
-        return $this->hasClassAssignment($school, $teacher, $classId, $academicSessionId, $termId);
+        return $this->hasClassAssignment($school, $teacher, $classId, $academicSessionId, $termId)
+            && $this->classOffersSubject($school, $classId, $subjectId, $academicSessionId, $termId);
     }
 
     public function hasClassAssignment(
@@ -182,5 +203,26 @@ class TeacherAssignmentAccessService
             $query->whereNull('ends_at')
                 ->orWhere('ends_at', '>=', $today);
         });
+    }
+
+    private function classOffersSubject(
+        School $school,
+        int $classId,
+        int $subjectId,
+        ?int $academicSessionId = null,
+        ?int $termId = null
+    ): bool {
+        $query = ClassSubjectAssignment::query()
+            ->where('school_id', $school->id)
+            ->where('subject_id', $subjectId)
+            ->where('status', 'active')
+            ->where(function (Builder $query) use ($classId) {
+                $query->whereNull('school_class_id')
+                    ->orWhere('school_class_id', $classId);
+            });
+
+        $this->withinAcademicContext($query, $academicSessionId, $termId);
+
+        return $query->exists();
     }
 }

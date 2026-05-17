@@ -1,7 +1,7 @@
 @props(['href', 'active' => false, 'icon' => 'circle'])
 
 @php
-    $base = 'group flex min-h-11 items-center gap-3 rounded-md border-l-2 px-3 py-2.5 text-sm font-medium transition duration-200 ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary';
+    $base = 'group flex min-h-11 items-center gap-3 rounded-md border-s-2 px-3 py-2.5 text-sm font-medium transition duration-200 ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary';
     $state = $active
         ? 'border-brand-primary bg-bg-secondary text-text-primary'
         : 'border-transparent text-text-secondary hover:bg-bg-secondary hover:text-text-primary';

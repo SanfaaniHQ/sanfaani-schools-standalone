@@ -5,6 +5,7 @@ namespace App\Http\Controllers\School;
 use App\Enums\ResultWorkflowStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\Subject;
 use App\Models\TeacherResultSubmission;
@@ -70,7 +71,7 @@ class TeacherResultEntryController extends Controller
             'title' => 'Result Entry Workspace',
             'subtitle' => $school->name,
             'classes' => $this->classesForUser($school, $roleContext),
-            'subjects' => $this->subjectsForUser($school, $roleContext, $classId),
+            'subjects' => $this->subjectsForUser($school, $roleContext, $classId, $sessionId),
             'academicSessions' => AcademicSession::where('school_id', $school->id)->where('status', 'active')->latest()->get(),
             'terms' => Term::where('school_id', $school->id)->where('status', 'active')->with('academicSession')->latest()->get(),
             'students' => $students,
@@ -347,13 +348,47 @@ class TeacherResultEntryController extends Controller
         return app(TeacherAssignmentAccessService::class)->classesForTeacher($school, auth()->user());
     }
 
-    private function subjectsForUser(School $school, ?string $roleContext, ?int $classId): Collection
+    private function subjectsForUser(School $school, ?string $roleContext, ?int $classId, ?int $academicSessionId = null, ?int $termId = null): Collection
     {
         if ($roleContext !== 'teacher') {
-            return Subject::where('school_id', $school->id)->where('status', 'active')->orderBy('name')->get();
+            $subjectIds = ClassSubjectAssignment::query()
+                ->where('school_id', $school->id)
+                ->where('status', 'active')
+                ->when($classId, function ($query) use ($classId) {
+                    $query->where(function ($query) use ($classId) {
+                        $query->whereNull('school_class_id')
+                            ->orWhere('school_class_id', $classId);
+                    });
+                })
+                ->when($academicSessionId, function ($query) use ($academicSessionId) {
+                    $query->where(function ($query) use ($academicSessionId) {
+                        $query->whereNull('academic_session_id')
+                            ->orWhere('academic_session_id', $academicSessionId);
+                    });
+                })
+                ->when($termId, function ($query) use ($termId) {
+                    $query->where(function ($query) use ($termId) {
+                        $query->whereNull('term_id')
+                            ->orWhere('term_id', $termId);
+                    });
+                })
+                ->pluck('subject_id')
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($subjectIds->isEmpty()) {
+                return collect();
+            }
+
+            return Subject::where('school_id', $school->id)
+                ->whereIn('id', $subjectIds)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
         }
 
-        return app(TeacherAssignmentAccessService::class)->subjectsForTeacher($school, auth()->user(), $classId);
+        return app(TeacherAssignmentAccessService::class)->subjectsForTeacher($school, auth()->user(), $classId, $academicSessionId, $termId);
     }
 
     private function studentsForClass(

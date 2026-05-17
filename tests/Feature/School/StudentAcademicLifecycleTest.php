@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\School;
 
+use App\Events\StudentTransactionalEmailRequested;
 use App\Models\AcademicSession;
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\ScratchCard;
@@ -329,6 +331,97 @@ class StudentAcademicLifecycleTest extends TestCase
         $this->assertSame('70.00', $result->total_score);
     }
 
+    public function test_student_result_workspace_deep_link_uses_enrollment_aware_subjects_only(): void
+    {
+        $school = $this->createSchool();
+        $admin = $this->createUserForSchool($school, 'school_admin');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $class = $this->createClass($school, 'JSS 1', 'A');
+        $session = $this->createSession($school, '2025/2026');
+        $term = $this->createTerm($school, $session, 'First Term');
+        $assignedSubject = $this->createSubject($school, 'Mathematics');
+        $unassignedSubject = $this->createSubject($school, 'Unassigned Commerce');
+        $student = $this->createStudent($school, $class, 'ADM-005');
+
+        StudentClassEnrollment::create([
+            'school_id' => $school->id,
+            'student_id' => $student->id,
+            'school_class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'start_term_id' => $term->id,
+            'status' => 'active',
+            'created_by' => $admin->id,
+        ]);
+
+        ClassSubjectAssignment::create([
+            'school_id' => $school->id,
+            'school_class_id' => $class->id,
+            'subject_id' => $assignedSubject->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'assignment_type' => 'core',
+            'status' => 'active',
+        ]);
+
+        $this->get(route('school.students.results', [
+            'student' => $student,
+            'session' => $session->id,
+            'term' => $term->id,
+        ]))
+            ->assertOk()
+            ->assertSee('Mathematics')
+            ->assertDontSee('Unassigned Commerce');
+    }
+
+    public function test_scratch_card_notification_event_resolves_school_from_batch_context(): void
+    {
+        $school = $this->createSchool();
+        $class = $this->createClass($school, 'JSS 1', 'A');
+        $session = $this->createSession($school, '2025/2026');
+        $term = $this->createTerm($school, $session, 'First Term');
+        $student = $this->createStudent($school, $class, 'ADM-006');
+        $batch = ScratchCardBatch::create([
+            'school_id' => $school->id,
+            'school_class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'result_type' => 'term_result',
+            'title' => 'First term result cards',
+            'quantity' => 10,
+            'payment_status' => 'paid',
+            'status' => 'generated',
+        ]);
+
+        $student->setRelation('school', null);
+        $batch->setRelation('school', $school);
+
+        $event = StudentTransactionalEmailRequested::scratchCardGenerated($student, $batch);
+
+        $this->assertSame($school->id, $event->school->id);
+        $this->assertSame('scratch_card_generated', $event->eventKey);
+        $this->assertSame($batch->id, $event->metadata['scratch_card_batch_id']);
+    }
+
+    public function test_result_available_notification_event_resolves_school_from_student_school_id(): void
+    {
+        $school = $this->createSchool();
+        $class = $this->createClass($school, 'JSS 1', 'A');
+        $session = $this->createSession($school, '2025/2026');
+        $term = $this->createTerm($school, $session, 'First Term');
+        $student = $this->createStudent($school, $class, 'ADM-007');
+
+        $student->setRelation('school', null);
+
+        $event = StudentTransactionalEmailRequested::resultAvailable($student, $session, $term, [
+            'result_type' => 'term_result',
+        ]);
+
+        $this->assertSame($school->id, $event->school->id);
+        $this->assertSame('result_available', $event->eventKey);
+        $this->assertSame($student->id, $event->metadata['student_id']);
+    }
+
     private function createSchool(): School
     {
         return School::create([
@@ -368,11 +461,11 @@ class StudentAcademicLifecycleTest extends TestCase
         ]);
     }
 
-    private function createSubject(School $school): Subject
+    private function createSubject(School $school, ?string $name = null): Subject
     {
         return Subject::create([
             'school_id' => $school->id,
-            'name' => fake()->unique()->word().' Studies',
+            'name' => $name ?: fake()->unique()->word().' Studies',
             'code' => strtoupper(fake()->unique()->lexify('???')),
             'status' => 'active',
         ]);

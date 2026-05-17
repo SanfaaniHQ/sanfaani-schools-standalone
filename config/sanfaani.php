@@ -5,7 +5,7 @@ return [
     'company_name' => env('SANFAANI_COMPANY_NAME', 'Sanfaani Ltd'),
     'product_url' => env('SANFAANI_PRODUCT_URL', 'https://schools.sanfaani.net'),
     'main_company_url' => env('SANFAANI_MAIN_URL', 'https://sanfaani.net'),
-    'support_email' => env('SANFAANI_SUPPORT_EMAIL', 'sanfaanisaas@gmail.com'),
+    'support_email' => env('SANFAANI_SUPPORT_EMAIL', 'Sanfaanischools@gmail.com'),
     'sales_email' => env('SANFAANI_SALES_EMAIL', env('SANFAANI_SUPPORT_EMAIL', 'sanfaanisaas@gmail.com')),
     'support_phone' => env('SANFAANI_SUPPORT_PHONE', '+2349010172138'),
     'support_whatsapp' => env('SANFAANI_SUPPORT_WHATSAPP', env('SANFAANI_WHATSAPP_NUMBER', '+2349010172138')),
@@ -18,6 +18,18 @@ return [
     'default_country' => env('SANFAANI_DEFAULT_COUNTRY', 'Nigeria'),
     'default_currency' => env('SANFAANI_DEFAULT_CURRENCY', 'NGN'),
     'default_language' => env('SANFAANI_DEFAULT_LANGUAGE', 'en'),
-    'supported_languages' => array_filter(array_map('trim', explode(',', env('SANFAANI_SUPPORTED_LANGUAGES', 'en')))),
+    'supported_languages' => array_filter(array_map('trim', explode(',', env('SANFAANI_SUPPORTED_LANGUAGES', 'en,ar,fr,yo,ha')))),
+    'languages' => [
+        'en' => ['label' => 'English', 'native' => 'English', 'short' => 'EN', 'rtl' => false],
+        'ar' => ['label' => 'Arabic', 'native' => 'العربية', 'short' => 'AR', 'rtl' => true],
+        'fr' => ['label' => 'French', 'native' => 'Français', 'short' => 'FR', 'rtl' => false],
+        'yo' => ['label' => 'Yoruba', 'native' => 'Yoruba', 'short' => 'YO', 'rtl' => false],
+        'ha' => ['label' => 'Hausa', 'native' => 'Hausa', 'short' => 'HA', 'rtl' => false],
+    ],
+    'rtl_locales' => ['ar'],
     'idle_timeout_minutes' => (int) env('SANFAANI_IDLE_TIMEOUT_MINUTES', 30),
+    'backups' => [
+        'retention_count' => (int) env('SANFAANI_BACKUP_RETENTION_COUNT', 10),
+        'chunk_size' => (int) env('SANFAANI_BACKUP_CHUNK_SIZE', 500),
+    ],
 ];

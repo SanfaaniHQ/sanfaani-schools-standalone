@@ -3,6 +3,7 @@
 namespace Tests\Feature\School;
 
 use App\Models\AcademicSession;
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Subject;
@@ -36,6 +37,14 @@ class TeacherAssignmentArchitectureTest extends TestCase
         $math = $this->createSubject($school, 'Mathematics', 'MTH');
         $english = $this->createSubject($school, 'English', 'ENG');
         $teacher = $this->createUserForSchool($school, 'teacher');
+
+        ClassSubjectAssignment::create([
+            'school_id' => $school->id,
+            'school_class_id' => $classA->id,
+            'subject_id' => $english->id,
+            'assignment_type' => 'core',
+            'status' => 'active',
+        ]);
 
         TeacherClassAssignment::create([
             'school_id' => $school->id,

@@ -18,6 +18,7 @@ use App\Services\ReportCardService;
 use App\Services\ResultGradingService;
 use App\Services\ScratchCardAccessService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class ResultCheckerController extends Controller
@@ -245,12 +246,19 @@ class ResultCheckerController extends Controller
             'scratch_card_id' => $scratchCardAccess['scratchCard']?->id,
         ], request: $request);
 
-        StudentTransactionalEmailRequested::dispatch(
-            StudentTransactionalEmailRequested::resultAvailable($student->loadMissing('school'), $academicSession, $term, [
+        try {
+            event(StudentTransactionalEmailRequested::resultAvailable($student->loadMissing('school'), $academicSession, $term, [
                 'result_type' => $data['result_type'],
                 'scratch_card_id' => $scratchCardAccess['scratchCard']?->id,
-            ])
-        );
+            ]));
+        } catch (\Throwable $exception) {
+            Log::warning('Public result availability email dispatch failed.', [
+                'school_id' => $contextSchool->id,
+                'student_id' => $student->id,
+                'scratch_card_id' => $scratchCardAccess['scratchCard']?->id,
+                'message' => $exception->getMessage(),
+            ]);
+        }
 
         $request->session()->forget(self::CONTEXT_KEY);
 

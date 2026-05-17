@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureCommunicationFeatureEnabled;
 use App\Http\Middleware\EnsureSchoolFeatureEnabled;
 use App\Http\Middleware\EnsureValidSchoolContext;
 use App\Http\Middleware\IdleTimeoutMiddleware;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            SetLocale::class,
             IdleTimeoutMiddleware::class,
         ]);
 

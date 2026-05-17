@@ -31,7 +31,7 @@ class StudentTransactionalEmailRequested
 
     public static function studentCreated(Student $student): self
     {
-        $school = $student->school;
+        $school = self::schoolForStudent($student);
 
         return new self(
             $school,
@@ -51,7 +51,7 @@ class StudentTransactionalEmailRequested
 
     public static function studentArchived(Student $student): self
     {
-        $school = $student->school;
+        $school = self::schoolForStudent($student);
 
         return new self(
             $school,
@@ -73,7 +73,7 @@ class StudentTransactionalEmailRequested
     public static function studentPromoted(StudentPromotionItem $item): self
     {
         $student = $item->student;
-        $school = $student->school;
+        $school = self::schoolForStudent($student);
         $fromClass = $item->fromClass;
         $toClass = $item->toClass;
         $fromSession = $item->fromSession;
@@ -105,7 +105,7 @@ class StudentTransactionalEmailRequested
 
     public static function resultPublished(Student $student, AcademicSession $academicSession, Term $term, array $context = []): self
     {
-        $school = $student->school;
+        $school = self::schoolForStudent($student);
 
         return new self(
             $school,
@@ -126,7 +126,9 @@ class StudentTransactionalEmailRequested
 
     public static function scratchCardGenerated(Student $student, ScratchCardBatch $batch): self
     {
-        $school = $student->school;
+        $batch->loadMissing('school');
+
+        $school = self::schoolForStudent($student, $batch->school);
 
         return new self(
             $school,
@@ -150,7 +152,7 @@ class StudentTransactionalEmailRequested
 
     public static function resultAvailable(Student $student, AcademicSession $academicSession, Term $term, array $context = []): self
     {
-        $school = $student->school;
+        $school = self::schoolForStudent($student);
 
         return new self(
             $school,
@@ -167,6 +169,21 @@ class StudentTransactionalEmailRequested
             ]),
             'result_available'
         );
+    }
+
+    private static function schoolForStudent(Student $student, ?School $fallback = null): School
+    {
+        if ($fallback instanceof School && (int) $fallback->id === (int) $student->school_id) {
+            return $fallback;
+        }
+
+        $student->loadMissing('school');
+
+        if ($student->school instanceof School) {
+            return $student->school;
+        }
+
+        return School::query()->findOrFail($student->school_id);
     }
 
     private static function promotionBody(

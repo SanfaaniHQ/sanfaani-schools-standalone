@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Models\School;
+use App\Models\CommunicationLog;
 use App\Models\StudentResult;
 use App\Models\TeacherClassAssignment;
 use App\Models\TeacherResultSubmission;
 use App\Models\TeacherSubjectAssignment;
 use App\Models\User;
 use App\Policies\SchoolPolicy;
+use App\Policies\CommunicationLogPolicy;
 use App\Policies\StudentResultPolicy;
 use App\Policies\TeacherAssignmentPolicy;
 use App\Policies\TeacherResultSubmissionPolicy;
@@ -52,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(StudentResult::class, StudentResultPolicy::class);
+        Gate::policy(CommunicationLog::class, CommunicationLogPolicy::class);
         Gate::policy(TeacherClassAssignment::class, TeacherAssignmentPolicy::class);
         Gate::policy(TeacherSubjectAssignment::class, TeacherAssignmentPolicy::class);
         Gate::policy(TeacherResultSubmission::class, TeacherResultSubmissionPolicy::class);
@@ -107,6 +110,11 @@ class AppServiceProvider extends ServiceProvider
             $settings = $service->get();
             $schoolBranding = app(BrandingService::class)->current();
             $tenantTheme = app(TenantThemeResolver::class)->forBranding($schoolBranding);
+            $supportedLanguageCodes = config('sanfaani.supported_languages', ['en', 'ar', 'fr', 'yo', 'ha']);
+            $supportedLanguages = collect(config('sanfaani.languages', []))
+                ->only($supportedLanguageCodes)
+                ->all();
+            $rtlLocales = config('sanfaani.rtl_locales', ['ar']);
 
             $view->with([
                 'platformSettings' => $settings,
@@ -117,6 +125,9 @@ class AppServiceProvider extends ServiceProvider
                 'schoolBranding' => $schoolBranding,
                 'tenantTheme' => $tenantTheme,
                 'tenantCssVariables' => app(TenantThemeResolver::class)->cssVariables($schoolBranding),
+                'supportedLanguages' => $supportedLanguages,
+                'rtlLocales' => $rtlLocales,
+                'isRtl' => in_array(app()->getLocale(), $rtlLocales, true),
             ]);
         });
     }

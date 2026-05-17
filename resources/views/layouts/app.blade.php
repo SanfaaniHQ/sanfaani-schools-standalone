@@ -2,15 +2,16 @@
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
     $pageFavicon = data_get($schoolBranding ?? null, 'favicon_url') ?: ($platformFaviconUrl ?? null);
     $pageTitle = trim($__env->yieldContent('title')) ?: $brandName;
+    $schoolServiceForShell = auth()->check() ? app(\App\Services\CurrentSchoolService::class) : null;
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" class="dark antialiased">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $isRtl ? 'rtl' : 'ltr' }}" class="antialiased">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="{{ data_get($tenantTheme ?? [], 'primary_color', '#4f46e5') }}">
+        <meta name="theme-color" content="{{ data_get($tenantTheme ?? [], 'primary_color', '#047857') }}">
 
         <title>{{ $pageTitle }}</title>
 
@@ -20,7 +21,7 @@
 
         <script>
             (() => {
-                const theme = localStorage.getItem('sanfaani-theme') || 'dark';
+                const theme = localStorage.getItem('sanfaani-theme') || 'light';
                 document.documentElement.classList.toggle('light', theme === 'light');
                 document.documentElement.classList.toggle('dark', theme !== 'light');
             })();
@@ -31,7 +32,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <style>
-            :root { {!! $tenantCssVariables ?? '--tenant-primary: #4f46e5; --tenant-secondary: #0f766e; --school-primary: #4f46e5;' !!} }
+            :root { {!! $tenantCssVariables ?? '--tenant-primary: #047857; --tenant-secondary: #0f766e; --school-primary: #047857;' !!} }
             [x-cloak] { display: none !important; }
         </style>
         @if (data_get($schoolBranding ?? null, 'custom_css'))
@@ -52,7 +53,7 @@
         >
             @include('layouts.partials.sidebar')
 
-            <div class="lg:pl-64">
+            <div class="lg:ps-64">
                 @include('layouts.partials.topbar')
 
                 @if (auth()->check() && auth()->user()->hasRole('super_admin') && session('is_support_session') && session('support_school_id'))
@@ -112,7 +113,7 @@
                         <div class="border-b border-border-subtle p-4">
                             <h2 id="command-palette-title" class="sr-only">Global command palette</h2>
                             <label for="command-palette-search" class="sr-only">Search students, teachers, results, and settings</label>
-                            <div class="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-primary px-3 py-2 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-indigo-500/20">
+                            <div class="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-primary px-3 py-2 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-emerald-700/20">
                                 <svg aria-hidden="true" class="h-5 w-5 text-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="11" cy="11" r="8"></circle>
                                     <path d="m21 21-4.3-4.3"></path>
@@ -131,13 +132,30 @@
                         <div class="max-h-[60vh] overflow-y-auto p-2">
                             <p class="px-3 py-2 text-xs font-medium uppercase tracking-wider text-text-tertiary">Core operations</p>
                             @php
-                                $commandItems = [
-                                    ['label' => 'Dashboard', 'context' => 'Institutional health overview', 'href' => route('dashboard')],
-                                    ['label' => 'Students', 'context' => 'Enrollment, profiles, and lifecycle', 'href' => Route::has('school.students.index') ? route('school.students.index') : route('dashboard')],
-                                    ['label' => 'Results', 'context' => 'Entry, review, publishing pipeline', 'href' => Route::has('school.result-system.index') ? route('school.result-system.index') : route('dashboard')],
-                                    ['label' => 'Scratch Cards', 'context' => 'Inventory, batches, and result access', 'href' => Route::has('school.scratch-cards.index') ? route('school.scratch-cards.index') : route('dashboard')],
-                                    ['label' => 'Audit Logs', 'context' => 'Security and compliance trail', 'href' => Route::has('admin.audit-logs.index') ? route('admin.audit-logs.index') : route('dashboard')],
-                                ];
+                                $user = auth()->user();
+                                $schoolService = $schoolServiceForShell;
+                                $school = $schoolService->get($user);
+                                $roleContext = $schoolService->roleContext($user);
+                                $authz = app(\App\Services\SchoolAuthorizationService::class);
+                                $canCommand = fn (?string $feature = null) => ! $feature || ($school && $authz->can($user, $school, $feature));
+
+                                $commandItems = $user->hasRole('super_admin') && ! $schoolService->inSupportMode($user)
+                                    ? [
+                                        ['label' => 'Platform Dashboard', 'context' => 'Global platform status', 'href' => route('admin.dashboard'), 'visible' => true],
+                                        ['label' => 'Schools', 'context' => 'Institution accounts and support access', 'href' => route('admin.schools.index'), 'visible' => true],
+                                        ['label' => 'Scratch Requests', 'context' => 'Card batches awaiting action', 'href' => route('admin.scratch-card-requests.index'), 'visible' => true],
+                                        ['label' => 'Audit Logs', 'context' => 'Security and compliance trail', 'href' => route('admin.audit-logs.index'), 'visible' => true],
+                                    ]
+                                    : [
+                                        ['label' => 'Dashboard', 'context' => 'School operations status', 'href' => route('school.dashboard'), 'visible' => true],
+                                        ['label' => 'Students', 'context' => 'Enrollment, profiles, and lifecycle', 'href' => route('school.students.index'), 'visible' => $canCommand($roleContext === 'teacher' ? 'students.view_assigned' : 'students.view')],
+                                        ['label' => 'Results', 'context' => 'Entry, review, publishing pipeline', 'href' => Route::has('school.result-system.index') ? route('school.result-system.index') : route('school.dashboard'), 'visible' => $canCommand('results.manual_entry') || $canCommand('results.review') || $canCommand('results.publish')],
+                                        ['label' => 'Sessions', 'context' => 'Academic years and current session', 'href' => route('school.sessions.index'), 'visible' => $roleContext === 'school_admin'],
+                                        ['label' => 'Terms', 'context' => 'Academic terms by session', 'href' => route('school.terms.index'), 'visible' => $roleContext === 'school_admin'],
+                                        ['label' => 'Bulk Communication', 'context' => 'Send school-scoped operational messages', 'href' => route('school.communications.bulk'), 'visible' => $roleContext === 'school_admin' && $canCommand('communication.bulk')],
+                                    ];
+
+                                $commandItems = collect($commandItems)->filter(fn ($item) => $item['visible']);
                             @endphp
 
                             @foreach ($commandItems as $item)

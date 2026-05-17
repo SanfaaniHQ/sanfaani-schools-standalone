@@ -135,10 +135,10 @@ class AuditMigrationState extends Command
         foreach ($tables as $table) {
             $matchingMigration = $this->findMigrationForTable($table, $migrationFiles);
 
-            if ($matchingMigration && ! in_array($matchingMigration, $recordedMigrations)) {
+            if (! $matchingMigration || ! in_array($matchingMigration, $recordedMigrations)) {
                 $inconsistencies['tables_without_migrations'][] = [
                     'table' => $table,
-                    'migration' => $matchingMigration,
+                    'migration' => $matchingMigration ?: 'No matching migration file',
                 ];
             }
         }
@@ -179,6 +179,24 @@ class AuditMigrationState extends Command
     {
         foreach ($migrationFiles as $migration) {
             if (str_contains($migration, "create_{$table}_table")) {
+                return $migration;
+            }
+
+            $path = database_path("migrations/{$migration}.php");
+
+            if (! File::exists($path)) {
+                continue;
+            }
+
+            $contents = File::get($path);
+            $tablePattern = preg_quote($table, '/');
+
+            if (preg_match("/Schema::create\\(\\s*['\"]{$tablePattern}['\"]/", $contents)) {
+                return $migration;
+            }
+
+            if (str_contains($contents, "['{$table}']")
+                || str_contains($contents, "[\"{$table}\"]")) {
                 return $migration;
             }
         }

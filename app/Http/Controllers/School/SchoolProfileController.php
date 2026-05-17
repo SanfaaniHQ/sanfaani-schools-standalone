@@ -40,7 +40,7 @@ class SchoolProfileController extends Controller
             ],
             'is_result_checker_enabled' => ['nullable', 'boolean'],
             'custom_css' => ['nullable', 'string', 'max:10000'],
-            'default_language' => ['required', Rule::in(['en', 'fr', 'ar'])],
+            'default_language' => ['required', Rule::in(config('sanfaani.supported_languages', ['en', 'ar', 'fr', 'yo', 'ha']))],
             'supports_rtl' => ['nullable', 'boolean'],
             'logo_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'favicon_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,ico', 'max:1024'],

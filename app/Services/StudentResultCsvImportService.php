@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\ResultWorkflowStatus;
 use App\Models\AcademicSession;
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\SchoolClass;
+use App\Models\StudentElectiveSubject;
 use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
@@ -184,9 +186,30 @@ class StudentResultCsvImportService
             return;
         }
 
+        if (! $this->subjectIsAllowedForStudent($student->id, $subject->id)) {
+            $this->errors[] = "Row {$rowNumber}: Subject {$subjectCode} is not assigned to the selected class, student elective set, session, or term.";
+
+            return;
+        }
+
         $totalScore = $caScore + $examScore;
 
         $grading = app(ResultGradingService::class)->calculateFromScales($this->gradingScales(), $totalScore);
+
+        $existingResult = StudentResult::query()
+            ->where('school_id', $this->school->id)
+            ->where('student_id', $student->id)
+            ->where('subject_id', $subject->id)
+            ->where('academic_session_id', $this->academicSession->id)
+            ->where('term_id', $this->term->id)
+            ->where('result_type', $this->resultType)
+            ->first();
+
+        if ($existingResult?->isLockedAfterApproval()) {
+            $this->errors[] = "Row {$rowNumber}: Existing result for {$admissionNumber} / {$subjectCode} is approved, published, or locked.";
+
+            return;
+        }
 
         $result = StudentResult::updateOrCreate(
             [
@@ -207,7 +230,8 @@ class StudentResultCsvImportService
                 'remark' => $grading['remark'],
                 'teacher_remark' => $teacherRemark,
                 'status' => $status,
-                'recorded_by' => $this->user->id,
+                'recorded_by' => $existingResult?->recorded_by ?: $this->user->id,
+                'updated_by' => $this->user->id,
             ]
         );
 
@@ -257,5 +281,49 @@ class StudentResultCsvImportService
     private function gradingScales(): Collection
     {
         return $this->gradingScales ??= app(ResultGradingService::class)->activeScales($this->school);
+    }
+
+    private function subjectIsAllowedForStudent(int $studentId, int $subjectId): bool
+    {
+        $classAssigned = ClassSubjectAssignment::query()
+            ->where('school_id', $this->school->id)
+            ->where('subject_id', $subjectId)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('school_class_id')
+                    ->orWhere('school_class_id', $this->schoolClass->id);
+            })
+            ->where(function ($query) {
+                $query->whereNull('academic_session_id')
+                    ->orWhere('academic_session_id', $this->academicSession->id);
+            })
+            ->where(function ($query) {
+                $query->whereNull('term_id')
+                    ->orWhere('term_id', $this->term->id);
+            })
+            ->exists();
+
+        if ($classAssigned) {
+            return true;
+        }
+
+        return StudentElectiveSubject::query()
+            ->where('school_id', $this->school->id)
+            ->where('student_id', $studentId)
+            ->where('subject_id', $subjectId)
+            ->where('status', 'active')
+            ->where(function ($query) {
+                $query->whereNull('school_class_id')
+                    ->orWhere('school_class_id', $this->schoolClass->id);
+            })
+            ->where(function ($query) {
+                $query->whereNull('academic_session_id')
+                    ->orWhere('academic_session_id', $this->academicSession->id);
+            })
+            ->where(function ($query) {
+                $query->whereNull('term_id')
+                    ->orWhere('term_id', $this->term->id);
+            })
+            ->exists();
     }
 }

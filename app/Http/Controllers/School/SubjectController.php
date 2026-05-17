@@ -137,7 +137,7 @@ class SubjectController extends Controller
             'assignment_type' => ['required', Rule::in(ClassSubjectAssignment::TYPES)],
             'is_elective' => ['nullable', 'boolean'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
-            'language_code' => ['nullable', Rule::in(['en', 'fr', 'ar'])],
+            'language_code' => ['nullable', Rule::in(config('sanfaani.supported_languages', ['en', 'ar', 'fr', 'yo', 'ha']))],
         ]);
 
         $languageCode = $data['language_code'] ?? null;

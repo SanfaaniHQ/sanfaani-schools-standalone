@@ -23,6 +23,7 @@ class TeacherResultSubmission extends Model
         ResultWorkflowStatus::Unpublished->value,
         ResultWorkflowStatus::Voided->value,
         ResultWorkflowStatus::Archived->value,
+        ResultWorkflowStatus::Locked->value,
     ];
 
     protected $fillable = [

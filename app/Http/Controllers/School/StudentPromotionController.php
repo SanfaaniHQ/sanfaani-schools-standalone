@@ -246,7 +246,7 @@ class StudentPromotionController extends Controller
             ->with(['student.school', 'fromClass', 'toClass', 'fromSession', 'toSession'])
             ->chunkById(100, function ($items) {
                 foreach ($items as $item) {
-                    StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentPromoted($item));
+                    event(StudentTransactionalEmailRequested::studentPromoted($item));
                 }
             });
     }

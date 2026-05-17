@@ -5,10 +5,13 @@ namespace App\Http\Controllers\School;
 use App\Enums\ResultWorkflowStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
+use App\Models\ClassSubjectAssignment;
 use App\Models\School;
 use App\Models\Student;
+use App\Models\StudentElectiveSubject;
 use App\Models\StudentResult;
 use App\Models\Subject;
+use App\Models\TeacherSubjectAssignment;
 use App\Models\Term;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
@@ -77,6 +80,8 @@ class ManualResultController extends Controller
         $data['school_id'] = $school->id;
         $data['school_class_id'] = $this->resolveResultClassId($school, $student, $data);
         $data['recorded_by'] = auth()->id();
+        $data['updated_by'] = auth()->id();
+        $data['approved_by'] = $data['status'] === ResultWorkflowStatus::Reviewed->value ? auth()->id() : null;
 
         $data = $this->calculateResult($school, $data);
 
@@ -143,6 +148,10 @@ class ManualResultController extends Controller
             ->firstOrFail();
 
         $data['school_class_id'] = $this->resolveResultClassId($school, $student, $data, $studentResult);
+        $data['updated_by'] = auth()->id();
+        $data['approved_by'] = $data['status'] === ResultWorkflowStatus::Reviewed->value
+            ? ($studentResult->approved_by ?: auth()->id())
+            : null;
         $data = $this->calculateResult($school, $data);
 
         $oldValues = $studentResult->only(['ca_score', 'exam_score', 'total_score', 'grade', 'remark', 'teacher_remark', 'status']);
@@ -161,6 +170,81 @@ class ManualResultController extends Controller
         return redirect()
             ->route('school.results.manual.index')
             ->with('success', 'Result updated successfully.');
+    }
+
+    public function inlineUpdate(Request $request, StudentResult $studentResult)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeResult($studentResult, $school);
+        Gate::authorize('update', $studentResult);
+
+        $data = $request->validate([
+            'ca_score' => ['nullable', 'numeric', 'min:0', 'max:40'],
+            'exam_score' => ['nullable', 'numeric', 'min:0', 'max:60'],
+            'teacher_remark' => ['nullable', 'string', 'max:500'],
+            'officer_remark' => ['nullable', 'string', 'max:1000'],
+            'admin_remark' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $roleContext = app(CurrentSchoolService::class)->roleContext($request->user());
+        $allowedRemarkFields = match ($roleContext) {
+            'school_admin' => ['teacher_remark', 'officer_remark', 'admin_remark'],
+            'result_officer' => ['officer_remark'],
+            default => ['teacher_remark'],
+        };
+
+        foreach (['teacher_remark', 'officer_remark', 'admin_remark'] as $remarkField) {
+            if (array_key_exists($remarkField, $data) && ! in_array($remarkField, $allowedRemarkFields, true)) {
+                abort(403, 'You cannot edit this remark field.');
+            }
+        }
+
+        $data['ca_score'] = array_key_exists('ca_score', $data) ? $data['ca_score'] : $studentResult->ca_score;
+        $data['exam_score'] = array_key_exists('exam_score', $data) ? $data['exam_score'] : $studentResult->exam_score;
+        $data['updated_by'] = auth()->id();
+        $data = $this->calculateResult($school, $data);
+
+        $oldValues = $studentResult->only([
+            'ca_score',
+            'exam_score',
+            'total_score',
+            'grade',
+            'remark',
+            'teacher_remark',
+            'officer_remark',
+            'admin_remark',
+            'status',
+            'result_version',
+        ]);
+
+        $studentResult->update($data);
+        $studentResult->refresh()->load(['updatedBy:id,name', 'approvedBy:id,name']);
+
+        app(AuditLogService::class)->log('result_inline_autosaved', $studentResult, $school, $oldValues, $studentResult->only([
+            'ca_score',
+            'exam_score',
+            'total_score',
+            'grade',
+            'remark',
+            'teacher_remark',
+            'officer_remark',
+            'admin_remark',
+            'result_version',
+        ]), request: $request);
+
+        return response()->json([
+            'success' => true,
+            'ca_score' => number_format((float) $studentResult->ca_score, 2, '.', ''),
+            'exam_score' => number_format((float) $studentResult->exam_score, 2, '.', ''),
+            'total_score' => number_format((float) $studentResult->total_score, 2, '.', ''),
+            'grade' => $studentResult->grade,
+            'remark' => $studentResult->remark,
+            'pass_fail' => is_numeric($studentResult->total_score) && (float) $studentResult->total_score >= 50 ? 'Pass' : 'Fail',
+            'updated_by' => $studentResult->updatedBy?->name,
+            'last_edited' => $studentResult->updated_at?->format('d M Y, h:i A'),
+            'result_version' => 'v'.max(1, (int) $studentResult->result_version),
+        ]);
     }
 
     public function destroy(Request $request, StudentResult $studentResult)
@@ -288,7 +372,37 @@ class ManualResultController extends Controller
 
     private function subjectsForSchool(School $school)
     {
+        $subjectIds = ClassSubjectAssignment::query()
+            ->where('school_id', $school->id)
+            ->where('status', 'active')
+            ->pluck('subject_id')
+            ->merge(
+                StudentElectiveSubject::query()
+                    ->where('school_id', $school->id)
+                    ->where('status', 'active')
+                    ->pluck('subject_id')
+            )
+            ->merge(
+                TeacherSubjectAssignment::query()
+                    ->where('school_id', $school->id)
+                    ->where('status', 'active')
+                    ->pluck('subject_id')
+            )
+            ->merge(
+                StudentResult::query()
+                    ->where('school_id', $school->id)
+                    ->pluck('subject_id')
+            )
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($subjectIds->isEmpty()) {
+            return collect();
+        }
+
         return Subject::where('school_id', $school->id)
+            ->whereIn('id', $subjectIds)
             ->where('status', 'active')
             ->orderBy('name')
             ->get();

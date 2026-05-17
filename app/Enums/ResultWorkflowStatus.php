@@ -13,6 +13,7 @@ enum ResultWorkflowStatus: string
     case Unpublished = 'unpublished';
     case Voided = 'voided';
     case Archived = 'archived';
+    case Locked = 'locked';
 
     public function label(): string
     {
@@ -32,6 +33,7 @@ enum ResultWorkflowStatus: string
             self::Unpublished,
             self::Voided,
             self::Archived,
+            self::Locked,
         ], true);
     }
 
@@ -64,6 +66,7 @@ enum ResultWorkflowStatus: string
             self::Unpublished->value,
             self::Voided->value,
             self::Archived->value,
+            self::Locked->value,
         ];
     }
 
@@ -116,6 +119,7 @@ enum ResultWorkflowStatus: string
         return [
             self::Voided->value,
             self::Archived->value,
+            self::Locked->value,
         ];
     }
 
@@ -162,6 +166,7 @@ enum ResultWorkflowStatus: string
             ],
             self::Voided->value => [],
             self::Archived->value => [],
+            self::Locked->value => [],
         ];
     }
 }

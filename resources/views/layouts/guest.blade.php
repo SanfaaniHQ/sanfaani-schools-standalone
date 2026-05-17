@@ -5,12 +5,12 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}" class="dark antialiased">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $isRtl ? 'rtl' : 'ltr' }}" class="antialiased">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="{{ data_get($tenantTheme ?? [], 'primary_color', '#4f46e5') }}">
+        <meta name="theme-color" content="{{ data_get($tenantTheme ?? [], 'primary_color', '#047857') }}">
 
         <title>{{ $brandName }}</title>
 
@@ -20,7 +20,7 @@
 
         <script>
             (() => {
-                const theme = localStorage.getItem('sanfaani-theme') || 'dark';
+                const theme = localStorage.getItem('sanfaani-theme') || 'light';
                 document.documentElement.classList.toggle('light', theme === 'light');
                 document.documentElement.classList.toggle('dark', theme !== 'light');
             })();
@@ -31,7 +31,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <style>
-            :root { {!! $tenantCssVariables ?? '--tenant-primary: #4f46e5; --tenant-secondary: #0f766e; --school-primary: #4f46e5;' !!} }
+            :root { {!! $tenantCssVariables ?? '--tenant-primary: #047857; --tenant-secondary: #0f766e; --school-primary: #047857;' !!} }
         </style>
     </head>
     <body class="education-ops-shell font-sans text-text-primary antialiased">

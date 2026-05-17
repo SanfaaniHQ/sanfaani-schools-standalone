@@ -206,6 +206,16 @@ class TeacherResultReviewController extends Controller
             return back()->with('error', 'This submission has no publishable scores.');
         }
 
+        $invalidRows = collect($scores)->filter(function ($row) {
+            return ! is_numeric($row['ca_score'] ?? null)
+                || ! is_numeric($row['exam_score'] ?? null)
+                || ! is_numeric($row['total_score'] ?? null);
+        })->count();
+
+        if ($invalidRows > 0) {
+            return back()->with('error', "Publishing blocked: {$invalidRows} score row(s) are incomplete.");
+        }
+
         $publishedStudentIds = [];
         $studentsById = app(StudentClassEnrollmentService::class)
             ->studentsForClassContext($school, $submission->school_class_id, $submission->academicSession, activeOnly: false, includeArchived: true)
@@ -250,6 +260,8 @@ class TeacherResultReviewController extends Controller
                     'unpublished_by' => null,
                     'unpublish_reason' => null,
                     'recorded_by' => $submission->teacher_user_id,
+                    'updated_by' => auth()->id(),
+                    'approved_by' => $submission->approved_by,
                     'teacher_result_submission_id' => $submission->id,
                 ]);
 
@@ -318,14 +330,12 @@ class TeacherResultReviewController extends Controller
             ->with('school')
             ->chunkById(100, function ($students) use ($submission) {
                 foreach ($students as $student) {
-                    StudentTransactionalEmailRequested::dispatch(
-                        StudentTransactionalEmailRequested::resultPublished($student, $submission->academicSession, $submission->term, [
+                    event(StudentTransactionalEmailRequested::resultPublished($student, $submission->academicSession, $submission->term, [
                             'result_type' => $submission->result_type,
                             'scope_type' => 'teacher_submission',
                             'teacher_result_submission_id' => $submission->id,
                             'subject_id' => $submission->subject_id,
-                        ])
-                    );
+                    ]));
                 }
             });
     }

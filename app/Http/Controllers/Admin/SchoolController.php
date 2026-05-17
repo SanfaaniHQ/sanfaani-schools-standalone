@@ -43,7 +43,7 @@ class SchoolController extends Controller
             'logo_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', Rule::in(['active', 'inactive', 'suspended'])],
             'subscription_status' => ['required', Rule::in(['trial', 'active', 'expired'])],
-            'default_language' => ['required', Rule::in(['en', 'fr', 'ar'])],
+            'default_language' => ['required', Rule::in(config('sanfaani.supported_languages', ['en', 'ar', 'fr', 'yo', 'ha']))],
             'supports_rtl' => ['nullable', 'boolean'],
         ]);
 
@@ -105,7 +105,7 @@ class SchoolController extends Controller
             'logo_upload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', Rule::in(['active', 'inactive', 'suspended'])],
             'subscription_status' => ['required', Rule::in(['trial', 'active', 'expired'])],
-            'default_language' => ['required', Rule::in(['en', 'fr', 'ar'])],
+            'default_language' => ['required', Rule::in(config('sanfaani.supported_languages', ['en', 'ar', 'fr', 'yo', 'ha']))],
             'supports_rtl' => ['nullable', 'boolean'],
         ]);
 

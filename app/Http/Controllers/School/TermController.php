@@ -5,6 +5,7 @@ namespace App\Http\Controllers\School;
 use App\Http\Controllers\Controller;
 use App\Models\School;
 use App\Models\Term;
+use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,13 @@ class TermController extends Controller
 
         $terms = $school->terms()
             ->with('academicSession')
+            ->withCount([
+                'studentResults',
+                'resultPublications',
+                'reportCardSnapshots',
+                'teacherResultSubmissions',
+            ])
+            ->orderByDesc('is_active')
             ->latest()
             ->paginate(10);
 
@@ -128,6 +136,78 @@ class TermController extends Controller
         return redirect()
             ->route('school.terms.index')
             ->with('success', 'Term updated successfully.');
+    }
+
+    public function activate(Request $request, Term $term, AuditLogService $auditLog)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeTerm($term, $school);
+
+        if ($term->academicSession?->status === 'archived') {
+            return back()->with('error', 'Archived session terms cannot be activated.');
+        }
+
+        $oldValues = $term->only(['status', 'is_active']);
+
+        $school->terms()
+            ->whereKeyNot($term->id)
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        $term->update([
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $auditLog->log('term_activated', $term, $school, $oldValues, $term->only([
+            'status',
+            'is_active',
+        ]), request: $request);
+
+        return back()->with('success', 'Term activated successfully.');
+    }
+
+    public function archive(Request $request, Term $term, AuditLogService $auditLog)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeTerm($term, $school);
+
+        $oldValues = $term->only(['status', 'is_active']);
+
+        $term->update([
+            'status' => 'archived',
+            'is_active' => false,
+        ]);
+
+        $auditLog->log('term_archived', $term, $school, $oldValues, $term->only([
+            'status',
+            'is_active',
+        ]), request: $request);
+
+        return back()->with('success', 'Term archived. Historical results and report cards remain intact.');
+    }
+
+    public function restore(Request $request, Term $term, AuditLogService $auditLog)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeTerm($term, $school);
+
+        $oldValues = $term->only(['status', 'is_active']);
+
+        $term->update([
+            'status' => 'inactive',
+            'is_active' => false,
+        ]);
+
+        $auditLog->log('term_restored', $term, $school, $oldValues, $term->only([
+            'status',
+            'is_active',
+        ]), request: $request);
+
+        return back()->with('success', 'Term restored as inactive.');
     }
 
     private function currentSchoolOrFail(): School

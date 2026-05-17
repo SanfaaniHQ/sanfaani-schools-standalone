@@ -6,7 +6,6 @@
                 <h2 class="text-xl font-semibold leading-tight text-gray-900">Bulk Communication</h2>
                 <p class="mt-1 text-sm text-gray-500">Send chunked communication by class, arm, session, result status, and staff cohort.</p>
             </div>
-            <a href="{{ route('school.communications.history') }}" class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">History</a>
         </div>
     </x-slot>
 

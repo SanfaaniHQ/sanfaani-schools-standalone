@@ -11,6 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('school_subscriptions')) {
+            $this->assertExistingTableMatchesMigration();
+
+            return;
+        }
+
         Schema::create('school_subscriptions', function (Blueprint $table) {
             $table->id();
 
@@ -96,5 +102,140 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('school_subscriptions');
+    }
+
+    private function assertExistingTableMatchesMigration(): void
+    {
+        $missingColumns = array_values(array_filter(
+            $this->requiredColumns(),
+            fn (string $column): bool => ! Schema::hasColumn('school_subscriptions', $column)
+        ));
+
+        $missingIndexes = array_values(array_filter(
+            $this->requiredIndexes(),
+            fn (string $index): bool => ! $this->hasIndex($index)
+        ));
+
+        $missingForeignKeys = array_values(array_filter(
+            $this->requiredForeignKeys(),
+            fn (array $foreignKey): bool => ! $this->hasForeignKey($foreignKey['column'], $foreignKey['table'])
+        ));
+
+        if ($missingColumns === [] && $missingIndexes === [] && $missingForeignKeys === []) {
+            return;
+        }
+
+        $problems = [];
+
+        if ($missingColumns !== []) {
+            $problems[] = 'missing columns: '.implode(', ', $missingColumns);
+        }
+
+        if ($missingIndexes !== []) {
+            $problems[] = 'missing indexes: '.implode(', ', $missingIndexes);
+        }
+
+        if ($missingForeignKeys !== []) {
+            $problems[] = 'missing foreign keys: '.implode(', ', array_map(
+                fn (array $foreignKey): string => "{$foreignKey['column']} -> {$foreignKey['table']}.id",
+                $missingForeignKeys
+            ));
+        }
+
+        throw new RuntimeException(
+            'school_subscriptions exists but does not match 2026_05_01_204102_create_school_subscriptions_table; '.
+            implode('; ', $problems).
+            '. Refusing to mark an incomplete schema as migrated.'
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function requiredColumns(): array
+    {
+        return [
+            'id',
+            'school_id',
+            'subscription_plan_id',
+            'status',
+            'starts_at',
+            'ends_at',
+            'trial_ends_at',
+            'grace_ends_at',
+            'billing_cycle',
+            'pricing_model',
+            'price',
+            'currency',
+            'student_count',
+            'amount_due',
+            'amount_paid',
+            'payment_status',
+            'payment_reference',
+            'activated_by',
+            'upgraded_from_subscription_id',
+            'downgraded_from_subscription_id',
+            'superseded_by_subscription_id',
+            'plan_name_snapshot',
+            'price_snapshot',
+            'billing_cycle_snapshot',
+            'pricing_model_snapshot',
+            'features_snapshot',
+            'metadata',
+            'created_at',
+            'updated_at',
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function requiredIndexes(): array
+    {
+        return [
+            'school_subscriptions_school_status_index',
+            'school_subscriptions_plan_status_index',
+            'school_subscriptions_period_index',
+        ];
+    }
+
+    /**
+     * @return array<int, array{column: string, table: string}>
+     */
+    private function requiredForeignKeys(): array
+    {
+        return [
+            ['column' => 'school_id', 'table' => 'schools'],
+            ['column' => 'subscription_plan_id', 'table' => 'subscription_plans'],
+        ];
+    }
+
+    private function hasIndex(string $index): bool
+    {
+        try {
+            return Schema::hasIndex('school_subscriptions', $index);
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function hasForeignKey(string $column, string $referencedTable): bool
+    {
+        try {
+            $foreignKeys = Schema::getForeignKeys('school_subscriptions');
+        } catch (Throwable) {
+            return false;
+        }
+
+        foreach ($foreignKeys as $foreignKey) {
+            if (
+                in_array($column, $foreignKey['columns'] ?? [], true)
+                && ($foreignKey['foreign_table'] ?? null) === $referencedTable
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };

@@ -32,7 +32,7 @@ class PlatformSettingController extends Controller
             'whatsapp_number' => ['required', 'string', 'max:50'],
             'default_country' => ['required', 'string', 'max:100'],
             'default_currency' => ['required', 'string', 'max:10'],
-            'default_language' => ['required', Rule::in(['en', 'fr', 'ar'])],
+            'default_language' => ['required', Rule::in(config('sanfaani.supported_languages', ['en', 'ar', 'fr', 'yo', 'ha']))],
             'business_address' => ['nullable', 'string', 'max:1000'],
             'idle_timeout_minutes' => ['required', 'integer', 'min:5', 'max:480'],
             'public_pages_enabled' => ['nullable', 'boolean'],

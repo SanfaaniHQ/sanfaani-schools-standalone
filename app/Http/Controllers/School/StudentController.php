@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\AuditLog;
 use App\Models\ClassSubjectAssignment;
-use App\Models\CommunicationLog;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Term;
@@ -22,7 +21,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class StudentController extends Controller
@@ -94,6 +92,11 @@ class StudentController extends Controller
     public function show(Request $request, Student $student)
     {
         $school = $this->currentSchoolOrFail();
+        $roleContext = app(CurrentSchoolService::class)->roleContext($request->user());
+        $authorization = app(SchoolAuthorizationService::class);
+        $canSendCommunication = $roleContext === 'school_admin'
+            && $authorization->can($request->user(), $school, 'communication.send');
+        $canViewCommunicationLogs = false;
 
         $this->authorizeStudent($student, $school);
 
@@ -144,7 +147,7 @@ class StudentController extends Controller
             ->sortBy(fn ($result) => $result->subject->name ?? '')
             ->values();
 
-        $subjects = $school->subjects()
+        $subjectOptions = $school->subjects()
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -153,6 +156,15 @@ class StudentController extends Controller
             ->with(['subject', 'academicSession', 'term'])
             ->latest()
             ->get();
+
+        $academicSubjects = $this->studentSubjectsForContext(
+            $school,
+            $student,
+            $results,
+            $electiveSubjects,
+            $selectedSession,
+            $selectedTerm
+        );
 
         // Scratch card usage data
         $scratchCardUsages = $student->scratchCardUsages()
@@ -172,16 +184,6 @@ class StudentController extends Controller
         $academicTimeline = app(StudentAcademicTimelineService::class)->build($school, $student);
 
         $recentCommunications = collect();
-        if (Schema::hasTable('communication_logs')) {
-            $recentCommunications = CommunicationLog::where('school_id', $school->id)
-                ->where(function ($query) use ($student) {
-                    $query->where('recipient', $student->guardian_email)
-                        ->orWhere('metadata->student_id', $student->id);
-                })
-                ->latest()
-                ->limit(8)
-                ->get();
-        }
 
         // Calculate student age if date of birth exists
         $age = null;
@@ -199,7 +201,7 @@ class StudentController extends Controller
             $school,
             $student,
             $results,
-            $subjects,
+            $academicSubjects,
             $electiveSubjects,
             $promotionHistory,
             $selectedSession,
@@ -216,7 +218,8 @@ class StudentController extends Controller
             'selectedTerm' => $selectedTerm,
             'activeSession' => $activeSession,
             'activeTerm' => $activeTerm,
-            'subjects' => $subjects,
+            'subjects' => $academicSubjects,
+            'subjectOptions' => $subjectOptions,
             'electiveSubjects' => $electiveSubjects,
             'results' => $results,
             'classEnrollments' => $student->classEnrollments
@@ -233,6 +236,9 @@ class StudentController extends Controller
             'recentActivities' => $recentActivities,
             'academicTimeline' => $academicTimeline,
             'recentCommunications' => $recentCommunications,
+            'canManageCommunication' => $canSendCommunication || $canViewCommunicationLogs,
+            'canSendCommunication' => $canSendCommunication,
+            'canViewCommunicationLogs' => $canViewCommunicationLogs,
         ]);
     }
 
@@ -294,7 +300,7 @@ class StudentController extends Controller
             return $student;
         });
 
-        StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentCreated($student->loadMissing('school')));
+        event(StudentTransactionalEmailRequested::studentCreated($student->loadMissing('school')));
 
         return redirect()
             ->route('school.students.index')
@@ -370,7 +376,7 @@ class StudentController extends Controller
 
         $student = app(StudentAcademicLifecycleService::class)->archive($school, $student, $request->user(), $request);
 
-        StudentTransactionalEmailRequested::dispatch(StudentTransactionalEmailRequested::studentArchived($student->loadMissing('school')));
+        event(StudentTransactionalEmailRequested::studentArchived($student->loadMissing('school')));
 
         return redirect()
             ->route('school.students.index')
@@ -482,10 +488,6 @@ class StudentController extends Controller
                 ->values();
         }
 
-        if ($classSubjectIds->isEmpty()) {
-            $classSubjectIds = $subjects->pluck('id')->filter()->unique()->values();
-        }
-
         $expectedSubjectIds = $classSubjectIds
             ->merge($contextElectives->pluck('subject_id'))
             ->filter()
@@ -555,6 +557,78 @@ class StudentController extends Controller
                 'percentage' => $latestResult ? 100 : 0,
             ],
         ];
+    }
+
+    private function studentSubjectsForContext(
+        School $school,
+        Student $student,
+        Collection $results,
+        Collection $electiveSubjects,
+        ?AcademicSession $selectedSession,
+        ?Term $selectedTerm
+    ): Collection {
+        $enrollments = $student->classEnrollments
+            ->when($selectedSession, fn ($collection) => $collection->filter(
+                fn ($enrollment) => (int) $enrollment->academic_session_id === (int) $selectedSession->id
+            ));
+
+        $classIds = $enrollments
+            ->pluck('school_class_id')
+            ->when($enrollments->isEmpty(), fn ($collection) => $collection
+                ->push($student->currentEnrollment?->school_class_id)
+                ->push($student->school_class_id))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $assignmentSubjectIds = ClassSubjectAssignment::query()
+            ->where('school_id', $school->id)
+            ->where('status', 'active')
+            ->where(function ($query) use ($classIds) {
+                $query->whereNull('school_class_id')
+                    ->when($classIds->isNotEmpty(), fn ($query) => $query->orWhereIn('school_class_id', $classIds));
+            })
+            ->when($selectedSession, function ($query) use ($selectedSession) {
+                $query->where(function ($query) use ($selectedSession) {
+                    $query->whereNull('academic_session_id')
+                        ->orWhere('academic_session_id', $selectedSession->id);
+                });
+            })
+            ->when($selectedTerm, function ($query) use ($selectedTerm) {
+                $query->where(function ($query) use ($selectedTerm) {
+                    $query->whereNull('term_id')
+                        ->orWhere('term_id', $selectedTerm->id);
+                });
+            })
+            ->pluck('subject_id');
+
+        $electiveSubjectIds = $electiveSubjects
+            ->filter(fn ($elective) => $elective->status === 'active')
+            ->when($selectedSession, fn ($collection) => $collection->filter(
+                fn ($elective) => blank($elective->academic_session_id)
+                    || (int) $elective->academic_session_id === (int) $selectedSession->id
+            ))
+            ->when($selectedTerm, fn ($collection) => $collection->filter(
+                fn ($elective) => blank($elective->term_id)
+                    || (int) $elective->term_id === (int) $selectedTerm->id
+            ))
+            ->pluck('subject_id');
+
+        $subjectIds = $assignmentSubjectIds
+            ->merge($electiveSubjectIds)
+            ->merge($results->pluck('subject_id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($subjectIds->isEmpty()) {
+            return collect();
+        }
+
+        return $school->subjects()
+            ->whereIn('id', $subjectIds)
+            ->orderBy('name')
+            ->get();
     }
 
     private function studentResultsForContext(

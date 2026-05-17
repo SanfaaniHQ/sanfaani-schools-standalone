@@ -4,7 +4,6 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Models\BulkCommunicationBatch;
-use App\Models\CommunicationLog;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\User;
@@ -14,16 +13,14 @@ use App\Services\CurrentSchoolService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\TeacherAssignmentAccessService;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CommunicationController extends Controller
 {
     public function sendStudentMessage(Request $request, Student $student, CurrentSchoolService $currentSchool, CommunicationService $communications)
     {
         $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolCommunicationSendAccess($request, $school);
         $this->authorizeStudent($student, $school);
         $this->authorizeCommunicationType($request->user(), $request->input('type'), $student, $school);
         $this->ensureRoleFeature($request, $school, 'communication.students');
@@ -51,141 +48,14 @@ class CommunicationController extends Controller
             ]
         );
 
-        return back()->with('success', 'Communication has been processed. Check history for delivery status.');
-    }
-
-    public function history(Request $request, CurrentSchoolService $currentSchool)
-    {
-        $school = $this->currentSchoolOrFail($currentSchool);
-
-        if (! Schema::hasTable('communication_logs')) {
-            return view('school.communications.history', [
-                'school' => $school,
-                'logs' => new LengthAwarePaginator([], 0, 20),
-                'status' => $request->input('status'),
-                'type' => $request->input('type'),
-                'recipient' => $request->input('recipient'),
-            ])->with('error', 'Communication logs table is not ready yet. Run migrations.');
-        }
-
-        $logs = CommunicationLog::where('school_id', $school->id)
-            ->with('sender')
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
-            ->when($request->filled('type'), fn ($query) => $query->where('type', $request->input('type')))
-            ->when($request->filled('recipient'), fn ($query) => $query->where('recipient', 'like', '%'.$request->input('recipient').'%'))
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('school.communications.history', [
-            'school' => $school,
-            'logs' => $logs,
-            'status' => $request->input('status'),
-            'type' => $request->input('type'),
-            'recipient' => $request->input('recipient'),
-        ]);
-    }
-
-    public function failed(Request $request, CurrentSchoolService $currentSchool)
-    {
-        $request->merge(['status' => 'failed']);
-
-        return $this->history($request, $currentSchool);
-    }
-
-    public function resend(CommunicationLog $communicationLog, CurrentSchoolService $currentSchool, CommunicationService $communications)
-    {
-        $school = $this->currentSchoolOrFail($currentSchool);
-
-        if (! Schema::hasTable('communication_logs')) {
-            return back()->with('error', 'Communication logs table is not ready yet. Run migrations.');
-        }
-
-        if ((int) $communicationLog->school_id !== (int) $school->id) {
-            abort(403);
-        }
-
-        $communications->sendSchoolEmail(
-            $school,
-            $communicationLog->recipient,
-            $communicationLog->subject,
-            'Resent communication',
-            (string) data_get($communicationLog->metadata, 'original_message', 'This email was resent from communication history.'),
-            $communicationLog->type,
-            array_merge($communicationLog->metadata ?? [], ['resend_of' => $communicationLog->id])
-        );
-
-        return back()->with('success', 'Resend request submitted.');
-    }
-
-    public function retryFailed(Request $request, CurrentSchoolService $currentSchool, CommunicationService $communications)
-    {
-        $school = $this->currentSchoolOrFail($currentSchool);
-
-        if (! Schema::hasTable('communication_logs')) {
-            return back()->with('error', 'Communication logs table is not ready yet. Run migrations.');
-        }
-
-        CommunicationLog::where('school_id', $school->id)
-            ->where('status', 'failed')
-            ->latest('id')
-            ->limit(200)
-            ->get()
-            ->each(function ($log) use ($school, $communications) {
-                $communications->sendSchoolEmail(
-                    $school,
-                    $log->recipient,
-                    $log->subject,
-                    'Retry failed communication',
-                    (string) data_get($log->metadata, 'original_message', 'Retry from failed queue.'),
-                    $log->type,
-                    array_merge($log->metadata ?? [], ['retry_of' => $log->id])
-                );
-            });
-
-        return back()->with('success', 'Failed emails retry initiated.');
-    }
-
-    public function export(Request $request, CurrentSchoolService $currentSchool): StreamedResponse
-    {
-        $school = $this->currentSchoolOrFail($currentSchool);
-        if (! Schema::hasTable('communication_logs')) {
-            abort(404, 'Communication logs table is not ready yet.');
-        }
-
-        $fileName = 'school-communication-logs-'.$school->id.'-'.now()->format('Ymd-His').'.csv';
-
-        return response()->streamDownload(function () use ($school, $request) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['ID', 'Recipient', 'Subject', 'Type', 'Status', 'Failure Reason', 'Sent At', 'Created At']);
-
-            CommunicationLog::where('school_id', $school->id)
-                ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
-                ->when($request->filled('type'), fn ($query) => $query->where('type', $request->input('type')))
-                ->orderByDesc('id')
-                ->chunk(300, function ($rows) use ($handle) {
-                    foreach ($rows as $row) {
-                        fputcsv($handle, [
-                            $row->id,
-                            $row->recipient,
-                            $row->subject,
-                            $row->type,
-                            $row->status,
-                            $row->failure_reason,
-                            $row->sent_at?->toDateTimeString(),
-                            $row->created_at?->toDateTimeString(),
-                        ]);
-                    }
-                });
-
-            fclose($handle);
-        }, $fileName, ['Content-Type' => 'text/csv']);
+        return back()->with('success', 'Communication has been queued for delivery.');
     }
 
     public function bulkForm(CurrentSchoolService $currentSchool)
     {
         $school = $this->currentSchoolOrFail($currentSchool);
         $user = auth()->user();
+        $this->authorizeSchoolAdminRole(request());
         $roleContext = $currentSchool->roleContext($user);
 
         return view('school.communications.bulk', [
@@ -208,6 +78,7 @@ class CommunicationController extends Controller
     {
         $school = $this->currentSchoolOrFail($currentSchool);
         $user = $request->user();
+        $this->authorizeSchoolAdminRole($request);
         $roleContext = $currentSchool->roleContext($user);
         $this->ensureRoleFeature($request, $school, 'communication.bulk');
 
@@ -260,6 +131,7 @@ class CommunicationController extends Controller
         BulkCommunicationService $bulkCommunications
     ) {
         $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
         $this->ensureRoleFeature($request, $school, 'communication.bulk');
         $this->authorizeBulkBatch($bulkCommunicationBatch, $school);
 
@@ -275,6 +147,7 @@ class CommunicationController extends Controller
         BulkCommunicationService $bulkCommunications
     ) {
         $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
         $this->ensureRoleFeature($request, $school, 'communication.bulk');
         $this->authorizeBulkBatch($bulkCommunicationBatch, $school);
 
@@ -356,6 +229,24 @@ class CommunicationController extends Controller
         }
 
         abort(403, 'You are not allowed to send this communication.');
+    }
+
+    private function authorizeSchoolAdminRole(Request $request): void
+    {
+        $user = $request->user();
+
+        if (! $user || app(CurrentSchoolService::class)->roleContext($user) !== 'school_admin') {
+            abort(403, 'Communication tools are restricted to authorized school administrators.');
+        }
+    }
+
+    private function authorizeSchoolCommunicationSendAccess(Request $request, School $school): void
+    {
+        $this->authorizeSchoolAdminRole($request);
+
+        if (! app(SchoolAuthorizationService::class)->can($request->user(), $school, 'communication.send')) {
+            abort(403, 'Communication sending is disabled for this school administrator.');
+        }
     }
 
     private function ensureRoleFeature(Request $request, School $school, string $featureKey): void

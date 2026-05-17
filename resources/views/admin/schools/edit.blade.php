@@ -96,9 +96,9 @@
                             <label class="block text-sm font-medium text-gray-700">Default Language</label>
                             <select name="default_language"
                                     class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
-                                <option value="en" @selected(old('default_language', $school->default_language) === 'en')>English</option>
-                                <option value="fr" @selected(old('default_language', $school->default_language) === 'fr')>French</option>
-                                <option value="ar" @selected(old('default_language', $school->default_language) === 'ar')>Arabic</option>
+                                @foreach ($supportedLanguages as $code => $language)
+                                    <option value="{{ $code }}" @selected(old('default_language', $school->default_language) === $code)>{{ $language['label'] }}</option>
+                                @endforeach
                             </select>
                             @error('default_language')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

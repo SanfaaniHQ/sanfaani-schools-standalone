@@ -23,6 +23,7 @@ class StudentResult extends Model
         ResultWorkflowStatus::Unpublished->value,
         ResultWorkflowStatus::Voided->value,
         ResultWorkflowStatus::Archived->value,
+        ResultWorkflowStatus::Locked->value,
     ];
 
     protected $fillable = [
@@ -48,6 +49,9 @@ class StudentResult extends Model
         'unpublished_by',
         'unpublish_reason',
         'recorded_by',
+        'updated_by',
+        'approved_by',
+        'result_version',
         'teacher_result_submission_id',
     ];
 
@@ -57,6 +61,7 @@ class StudentResult extends Model
         'total_score' => 'decimal:2',
         'published_at' => 'datetime',
         'unpublished_at' => 'datetime',
+        'result_version' => 'integer',
     ];
 
     public function school(): BelongsTo
@@ -104,6 +109,16 @@ class StudentResult extends Model
         return $this->belongsTo(User::class, 'recorded_by');
     }
 
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function teacherResultSubmission(): BelongsTo
     {
         return $this->belongsTo(TeacherResultSubmission::class);
@@ -122,5 +137,24 @@ class StudentResult extends Model
     public function canTransitionTo(ResultWorkflowStatus $target): bool
     {
         return (bool) $this->workflowStatus()?->canTransitionTo($target);
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (StudentResult $result): bool {
+            $actor = auth()->user();
+
+            $originalStatus = ResultWorkflowStatus::fromValue((string) $result->getOriginal('status'));
+
+            if ($actor?->hasRole('teacher') && $originalStatus?->isLockedAfterApproval()) {
+                return false;
+            }
+
+            if (! $result->isDirty('result_version')) {
+                $result->result_version = max(1, (int) $result->getOriginal('result_version')) + 1;
+            }
+
+            return true;
+        });
     }
 }

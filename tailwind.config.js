@@ -33,8 +33,8 @@ export default {
                     muted: 'var(--color-text-muted)',
                 },
                 brand: {
-                    primary: 'var(--color-indigo)',
-                    hover: 'var(--color-indigo-muted)',
+                    primary: 'var(--color-brand-primary)',
+                    hover: 'var(--color-brand-hover)',
                     success: 'var(--color-emerald)',
                     warning: 'var(--color-amber)',
                     danger: 'var(--color-rose)',
@@ -51,9 +51,9 @@ export default {
                 base: ['var(--text-base)', { lineHeight: '1.6', letterSpacing: '0' }],
                 lg: ['var(--text-lg)', { lineHeight: '1.3', letterSpacing: '0' }],
                 xl: ['var(--text-xl)', { lineHeight: '1.2', letterSpacing: '0' }],
-                '2xl': ['var(--text-2xl)', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
-                '3xl': ['var(--text-3xl)', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
-                '4xl': ['var(--text-4xl)', { lineHeight: '1', letterSpacing: '-0.02em' }],
+                '2xl': ['var(--text-2xl)', { lineHeight: '1.15', letterSpacing: '0' }],
+                '3xl': ['var(--text-3xl)', { lineHeight: '1.15', letterSpacing: '0' }],
+                '4xl': ['var(--text-4xl)', { lineHeight: '1.1', letterSpacing: '0' }],
             },
             maxWidth: {
                 dashboard: '1600px',

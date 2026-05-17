@@ -19,7 +19,6 @@ use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
 use App\Http\Controllers\Admin\SystemMaintenanceController;
-use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -307,12 +306,6 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::post('/lead-requests/{leadRequest}/convert', [LeadRequestController::class, 'convert'])
             ->name('lead-requests.convert');
 
-        Route::get('/system-updates', [SystemUpdateController::class, 'index'])
-            ->name('system-updates.index');
-
-        Route::post('/system-updates/upload', [SystemUpdateController::class, 'upload'])
-            ->name('system-updates.upload');
-
         Route::get('/system-maintenance', [SystemMaintenanceController::class, 'index'])
             ->name('system-maintenance.index');
 
@@ -336,6 +329,16 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::post('/system-maintenance/storage-link', [SystemMaintenanceController::class, 'storageLink'])
             ->name('system-maintenance.storage-link');
+
+        Route::post('/system-maintenance/backups', [SystemMaintenanceController::class, 'createBackup'])
+            ->name('system-maintenance.backups.create');
+
+        Route::post('/system-maintenance/backups/cleanup', [SystemMaintenanceController::class, 'cleanupBackups'])
+            ->name('system-maintenance.backups.cleanup');
+
+        Route::get('/system-maintenance/backups/{fileName}', [SystemMaintenanceController::class, 'downloadBackup'])
+            ->where('fileName', '[A-Za-z0-9._-]+')
+            ->name('system-maintenance.backups.download');
 
         Route::get('/payments', [PaymentController::class, 'index'])
             ->name('payments.index');
@@ -633,8 +636,26 @@ Route::middleware(['auth', 'school.context'])
                     ->parameters(['sessions' => 'academicSession'])
                     ->except(['show', 'destroy']);
 
+                Route::post('/sessions/{academicSession}/activate', [AcademicSessionController::class, 'activate'])
+                    ->name('sessions.activate');
+
+                Route::post('/sessions/{academicSession}/archive', [AcademicSessionController::class, 'archive'])
+                    ->name('sessions.archive');
+
+                Route::post('/sessions/{academicSession}/restore', [AcademicSessionController::class, 'restore'])
+                    ->name('sessions.restore');
+
                 Route::resource('terms', TermController::class)
                     ->except(['show', 'destroy']);
+
+                Route::post('/terms/{term}/activate', [TermController::class, 'activate'])
+                    ->name('terms.activate');
+
+                Route::post('/terms/{term}/archive', [TermController::class, 'archive'])
+                    ->name('terms.archive');
+
+                Route::post('/terms/{term}/restore', [TermController::class, 'restore'])
+                    ->name('terms.restore');
 
                 Route::get('/admission-number-settings', [AdmissionNumberSettingController::class, 'edit'])
                     ->name('admission-number-settings.edit');
@@ -743,6 +764,10 @@ Route::middleware(['auth', 'school.context'])
                         Route::delete('/manual/{studentResult}', [ManualResultController::class, 'destroy'])
                             ->middleware('feature.school:results.manual_entry')
                             ->name('manual.destroy');
+
+                        Route::patch('/manual/{studentResult}/inline', [ManualResultController::class, 'inlineUpdate'])
+                            ->middleware('feature.school:results.manual_entry')
+                            ->name('manual.inline-update');
                     });
             });
 
@@ -758,6 +783,10 @@ Route::middleware(['auth', 'school.context'])
                         Route::post('/publishing/unpublish', [ResultPublishingController::class, 'unpublish'])
                             ->middleware('feature.school:results.publish')
                             ->name('publishing.unpublish');
+
+                        Route::post('/publishing/{studentResult}/unpublish', [ResultPublishingController::class, 'unpublishSingle'])
+                            ->middleware('feature.school:results.publish')
+                            ->name('publishing.unpublish-single');
                     });
 
                 Route::get('/result-reviews', [TeacherResultReviewController::class, 'index'])
@@ -789,35 +818,33 @@ Route::middleware(['auth', 'school.context'])
                     ->name('result-reviews.void');
             });
 
-        Route::middleware(['role:school_admin|result_officer|teacher|super_admin', 'feature.communication:communication.send'])
+        Route::middleware(['role:school_admin'])
             ->group(function () {
                 Route::post('/students/{student}/communication/send', [SchoolCommunicationController::class, 'sendStudentMessage'])
+                    ->middleware('feature.communication:communication.send')
                     ->name('communications.students.send');
-                Route::get('/communications/history', [SchoolCommunicationController::class, 'history'])
-                    ->name('communications.history');
-                Route::get('/communications/failed', [SchoolCommunicationController::class, 'failed'])
-                    ->name('communications.failed');
-                Route::post('/communications/{communicationLog}/resend', [SchoolCommunicationController::class, 'resend'])
-                    ->name('communications.resend');
-                Route::post('/communications/retry-failed', [SchoolCommunicationController::class, 'retryFailed'])
-                    ->name('communications.retry-failed');
-                Route::get('/communications/export', [SchoolCommunicationController::class, 'export'])
-                    ->name('communications.export');
-            });
-        Route::middleware(['role:school_admin|result_officer|teacher|super_admin', 'feature.communication:communication.bulk'])
-            ->group(function () {
+
                 Route::get('/communications/bulk', [SchoolCommunicationController::class, 'bulkForm'])
+                    ->middleware('feature.communication:communication.bulk')
                     ->name('communications.bulk');
                 Route::post('/communications/bulk/send', [SchoolCommunicationController::class, 'sendBulk'])
+                    ->middleware('feature.communication:communication.bulk')
                     ->name('communications.bulk.send');
                 Route::post('/communications/bulk/batches/{bulkCommunicationBatch}/process', [SchoolCommunicationController::class, 'processBulkBatch'])
+                    ->middleware('feature.communication:communication.bulk')
                     ->name('communications.bulk.process');
                 Route::post('/communications/bulk/batches/{bulkCommunicationBatch}/retry-failed', [SchoolCommunicationController::class, 'retryBulkBatchFailures'])
+                    ->middleware('feature.communication:communication.bulk')
                     ->name('communications.bulk.retry-failed');
             });
 
         Route::middleware('role:school_admin|result_officer|teacher|super_admin')
             ->group(function () {
+                Route::get('/students/{student}/results', StudentResultWorkspaceController::class)
+                    ->middleware('feature.school:students.view,students.view_assigned')
+                    ->name('students.results')
+                    ->withTrashed();
+
                 Route::get('/students/{student}/results/workspace', StudentResultWorkspaceController::class)
                     ->middleware('feature.school:students.view,students.view_assigned')
                     ->name('students.results.workspace')

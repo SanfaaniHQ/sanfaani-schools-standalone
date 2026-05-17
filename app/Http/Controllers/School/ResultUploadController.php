@@ -49,10 +49,7 @@ class ResultUploadController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        $fallbackSubjects = Subject::where('school_id', $school->id)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
+        $fallbackSubjects = collect();
 
         $fileName = 'result-template-'
             .str($schoolClass->name)->slug()

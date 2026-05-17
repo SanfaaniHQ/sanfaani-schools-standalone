@@ -473,8 +473,16 @@ class StudentResultWorkspaceService
             }))
             ->with([
                 'academicSession:id,name',
+                'publishedBy:id,name',
+                'recordedBy:id,name',
+                'updatedBy:id,name',
+                'approvedBy:id,name',
                 'schoolClass:id,name,section',
                 'subject:id,school_id,name,code,status',
+                'teacherResultSubmission.teacher:id,name',
+                'teacherResultSubmission.reviewer:id,name',
+                'teacherResultSubmission.approver:id,name',
+                'teacherResultSubmission.publisher:id,name',
                 'term:id,name',
             ])
             ->latest('updated_at')
@@ -499,6 +507,10 @@ class StudentResultWorkspaceService
             ->with([
                 'subject:id,school_id,name,code,status',
                 'teacher:id,name',
+                'reviewer:id,name',
+                'approver:id,name',
+                'publisher:id,name',
+                'returnedBy:id,name',
                 'schoolClass:id,name,section',
                 'academicSession:id,name',
                 'term:id,name',

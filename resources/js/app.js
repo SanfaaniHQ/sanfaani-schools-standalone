@@ -14,6 +14,12 @@ const applyTheme = (theme) => {
     localStorage.setItem('sanfaani-theme', normalizedTheme);
 };
 
+const storedTheme = localStorage.getItem('sanfaani-theme');
+
+if (!storedTheme) {
+    applyTheme('light');
+}
+
 document.querySelectorAll('[data-theme-toggle]').forEach((toggle) => {
     toggle.addEventListener('click', () => {
         applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
@@ -179,8 +185,11 @@ document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
         }
 
         const showPassword = input.type === 'password';
+        const showLabel = toggle.dataset.showLabel || 'Show';
+        const hideLabel = toggle.dataset.hideLabel || 'Hide';
+
         input.type = showPassword ? 'text' : 'password';
-        toggle.textContent = showPassword ? 'Hide' : 'Show';
+        toggle.textContent = showPassword ? hideLabel : showLabel;
         toggle.setAttribute('aria-pressed', String(showPassword));
     });
 });
@@ -230,6 +239,95 @@ document.querySelectorAll('[data-result-workspace]').forEach((workspace) => {
 
         row.querySelectorAll('[data-score-field]').forEach((input) => {
             input.addEventListener('input', () => syncRow(row));
+        });
+    });
+});
+
+const inlineResultTimers = new WeakMap();
+
+const collectInlineResultPayload = (row) => {
+    const payload = {};
+
+    row.querySelectorAll('[data-inline-result-field]').forEach((field) => {
+        payload[field.dataset.inlineResultField] = field.value;
+    });
+
+    return payload;
+};
+
+const setInlineResultState = (row, state) => {
+    row.dataset.inlineResultState = state;
+
+    row.querySelectorAll('[data-inline-result-save]').forEach((button) => {
+        button.textContent = state === 'saving' ? 'Saving...' : state === 'saved' ? 'Saved' : 'Save Draft';
+        button.disabled = state === 'saving';
+    });
+};
+
+const saveInlineResultRow = async (row) => {
+    const url = row.dataset.inlineResultUrl;
+
+    if (!url) {
+        return;
+    }
+
+    setInlineResultState(row, 'saving');
+
+    const response = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': row.dataset.csrf || '',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify(collectInlineResultPayload(row)),
+    });
+
+    if (!response.ok) {
+        setInlineResultState(row, 'error');
+        throw new Error(`Autosave failed with HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const setText = (selector, value) => {
+        const target = row.querySelector(selector);
+
+        if (target) {
+            target.textContent = value || 'N/A';
+        }
+    };
+
+    setText('[data-inline-result-total]', data.total_score);
+    setText('[data-inline-result-grade]', data.grade);
+    setText('[data-inline-result-pass-fail]', data.pass_fail);
+    setText('[data-inline-result-remark]', data.remark);
+    setText('[data-inline-result-updated-by]', data.updated_by);
+    setText('[data-inline-result-last-edited]', data.last_edited);
+    setText('[data-inline-result-version]', data.result_version);
+    setInlineResultState(row, 'saved');
+
+    window.setTimeout(() => {
+        if (row.dataset.inlineResultState === 'saved') {
+            setInlineResultState(row, 'idle');
+        }
+    }, 1800);
+};
+
+document.querySelectorAll('[data-inline-result-row]').forEach((row) => {
+    row.querySelectorAll('[data-inline-result-field]').forEach((field) => {
+        field.addEventListener('input', () => {
+            window.clearTimeout(inlineResultTimers.get(row));
+            inlineResultTimers.set(row, window.setTimeout(() => {
+                saveInlineResultRow(row).catch(() => {});
+            }, 900));
+        });
+    });
+
+    row.querySelectorAll('[data-inline-result-save]').forEach((button) => {
+        button.addEventListener('click', () => {
+            window.clearTimeout(inlineResultTimers.get(row));
+            saveInlineResultRow(row).catch(() => {});
         });
     });
 });

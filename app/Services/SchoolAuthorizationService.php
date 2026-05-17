@@ -134,7 +134,16 @@ class SchoolAuthorizationService
 
     private function resolve(User $user, School $school, string $featureKey): bool
     {
+        if ($featureKey === 'communication.logs.view') {
+            return false;
+        }
+
         if (! $this->userBelongsToSchool($user, $school)) {
+            return false;
+        }
+
+        if ($this->schoolFeatureMustBeExplicitlyEnabled($featureKey)
+            && ! $this->schoolFeatureIsExplicitlyEnabled($school, $featureKey)) {
             return false;
         }
 
@@ -157,6 +166,28 @@ class SchoolAuthorizationService
         }
 
         return $this->roleFeatures->enabled($school->id, $role, $featureKey);
+    }
+
+    private function schoolFeatureMustBeExplicitlyEnabled(string $featureKey): bool
+    {
+        return false;
+    }
+
+    private function schoolFeatureIsExplicitlyEnabled(School $school, string $featureKey): bool
+    {
+        foreach ($this->schoolFeatureKeys($featureKey) as $candidateKey) {
+            $cacheKey = $school->getKey().':'.$candidateKey;
+
+            if (! array_key_exists($cacheKey, $this->planDecisionCache)) {
+                $this->planDecisionCache[$cacheKey] = $this->planFeatures->explicitAccess($school, $candidateKey);
+            }
+
+            if ($this->planDecisionCache[$cacheKey] === true) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function userBelongsToSchool(User $user, School $school): bool

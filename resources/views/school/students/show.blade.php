@@ -29,6 +29,12 @@
             ->filter(fn ($value) => filled($value))
             ->all();
         $downloadProfileUrl = route('school.students.show', array_merge(['student' => $student], $profileQuery, ['print' => 1]));
+        $resultWorkspaceQuery = collect([
+            'session' => $contextSession?->id,
+            'term' => $contextTerm?->id,
+            'result_type' => 'term_result',
+        ])->filter(fn ($value) => filled($value))->all();
+        $resultWorkspaceUrl = route('school.students.results', array_merge(['student' => $student], $resultWorkspaceQuery));
         $enterResultUrl = $canEnterManualResult
             ? route('school.results.manual.create', ['student_id' => $student->id])
             : ($canEnterTeacherResult
@@ -156,7 +162,7 @@
 
     <div class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="no-print sticky top-0 z-30 -mx-4 mb-6 border-b border-gray-200 bg-slate-50/95 px-4 py-3 shadow-sm backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+            <div class="no-print sticky top-16 z-10 -mx-4 mb-6 border-b border-border-subtle bg-bg-primary/95 px-4 py-3 shadow-sm backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
                 <div class="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <a href="{{ route('school.students.index') }}" class="{{ $secondaryActionClass }}">
                         Back
@@ -175,7 +181,7 @@
                             </a>
                         @endif
 
-                        <a href="{{ route('school.students.results.workspace', $student) }}" class="{{ $secondaryActionClass }}">
+                        <a href="{{ $resultWorkspaceUrl }}" class="{{ $secondaryActionClass }}">
                             Result Workspace
                         </a>
 
@@ -288,7 +294,7 @@
             @endphp
 
             <!-- Student 360 Summary Cards -->
-            <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($summaryCards as $card)
                     @php
                         $barClass = match ($card['tone']) {
@@ -305,22 +311,22 @@
                         $percentage = max(0, min(100, (int) $card['percentage']));
                     @endphp
 
-                    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="rounded-lg border border-border-subtle bg-bg-secondary p-4 shadow-sm">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
-                                <p class="text-sm font-medium text-gray-500">{{ $card['label'] }}</p>
-                                <p class="mt-2 truncate text-xl font-semibold text-gray-900">{{ $card['value'] }}</p>
+                                <p class="text-sm font-medium text-text-secondary">{{ $card['label'] }}</p>
+                                <p class="mt-2 truncate text-xl font-semibold text-text-primary">{{ $card['value'] }}</p>
                             </div>
-                            <span class="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                            <span class="shrink-0 rounded-full bg-bg-primary px-2 py-1 text-xs font-semibold text-text-secondary ring-1 ring-border-subtle">
                                 {{ $percentage }}%
                             </span>
                         </div>
 
-                        <p class="mt-2 truncate text-xs text-gray-500">{{ $card['detail'] }}</p>
+                        <p class="mt-2 truncate text-xs text-text-tertiary">{{ $card['detail'] }}</p>
 
                         <div class="mt-4 grid grid-cols-10 gap-1" aria-label="{{ $card['label'] }} progress {{ $percentage }}%">
                             @for ($step = 1; $step <= 10; $step++)
-                                <span class="h-1.5 rounded-full {{ $percentage >= ($step * 10) ? $barClass : 'bg-gray-100' }}"></span>
+                                <span class="h-1.5 rounded-full {{ $percentage >= ($step * 10) ? $barClass : 'bg-bg-tertiary' }}"></span>
                             @endfor
                         </div>
                     </div>
@@ -328,57 +334,66 @@
             </div>
 
             <!-- Quick Navigation -->
-            <div class="no-print mb-6 flex flex-wrap gap-2">
+            <nav class="no-print mb-6 overflow-x-auto rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-sm" aria-label="Student 360 sections">
+                <div class="flex min-w-max gap-1">
                 <a href="#personal-profile"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
                     Overview
                 </a>
 
                 <a href="#academic-profile"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
                     Academic Records
                 </a>
 
+                <a href="{{ $resultWorkspaceUrl }}"
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                    Result Workspace
+                </a>
+
                 <a href="#result-profile"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    Results
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                    Report Cards
                 </a>
 
                 <a href="#elective-subjects"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
                     Elective Subjects
                 </a>
 
                 <a href="#class-history"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
                     Class History
                 </a>
 
                 <a href="#promotion-history"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    Promotions
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                    Promotion/Demotion
                 </a>
 
                 <a href="#scratch-card-usage"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    Result Access
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                    Scratch Card Access
                 </a>
 
                 <a href="#activity-timeline"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    Timeline
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                    Activity Timeline
                 </a>
 
-                <a href="#communication-center"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    Communication
-                </a>
+                @if ($canManageCommunication ?? false)
+                    <a href="#communication-center"
+                       class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                        Communication
+                    </a>
+                @endif
 
                 <a href="#documents"
-                   class="rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50">
-                    Documents
+                   class="rounded-md px-3 py-2 text-sm font-semibold text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary">
+                    Documents/Notes
                 </a>
-            </div>
+                </div>
+            </nav>
 
             <!-- Personal Profile Section -->
             <div id="personal-profile" class="mb-6 rounded-2xl bg-white p-6 shadow-sm">
@@ -585,7 +600,7 @@
                                 {{ $subject->name }}{{ $subject->code ? ' - ' . $subject->code : '' }}
                             </span>
                         @empty
-                            <span class="text-sm text-gray-500">No active subjects have been created yet.</span>
+                            <span class="text-sm text-gray-500">No enrollment-aware subjects match this session and term yet.</span>
                         @endforelse
                     </div>
                 </div>
@@ -729,7 +744,7 @@
                         @csrf
                         <select name="subject_id" class="rounded-xl border-gray-300 text-sm shadow-sm">
                             <option value="">Select elective subject</option>
-                            @foreach ($subjects as $subject)
+                            @foreach ($subjectOptions as $subject)
                                 <option value="{{ $subject->id }}">{{ $subject->name }}{{ $subject->code ? ' - '.$subject->code : '' }}</option>
                             @endforeach
                         </select>
@@ -878,58 +893,64 @@
                 </div>
             </div>
 
+            @if ($canManageCommunication ?? false)
             <div id="communication-center" class="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm">
                 <div class="border-b border-gray-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-gray-900">Communication</h3>
-                    <p class="mt-1 text-sm text-gray-500">Send school-scoped email updates to the guardian and review recent communication.</p>
+                    <p class="mt-1 text-sm text-gray-500">Send permitted school-scoped email updates and review authorized communication history.</p>
                 </div>
 
-                <div class="grid gap-6 border-b border-gray-100 px-6 py-6 lg:grid-cols-2">
-                    <div>
-                        <p class="text-sm font-medium text-gray-700">Recipient</p>
-                        <p class="mt-1 text-sm text-gray-600">{{ $student->guardian_email ?: 'No guardian email available' }}</p>
+                @if ($canSendCommunication ?? false)
+                    <div class="grid gap-6 border-b border-gray-100 px-6 py-6 lg:grid-cols-2">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Recipient</p>
+                            <p class="mt-1 text-sm text-gray-600">{{ $student->guardian_email ?: 'No guardian email available' }}</p>
+                        </div>
+                        <form method="POST" action="{{ route('school.communications.students.send', $student) }}" class="space-y-3">
+                            @csrf
+                            <select name="type" class="w-full rounded-xl border-gray-300 text-sm">
+                                <option value="result_notification">Result Notification</option>
+                                <option value="report_card">Report Card</option>
+                                <option value="scratch_card">Scratch Card Details</option>
+                                <option value="payment_reminder">Payment Reminder</option>
+                                <option value="attendance_warning">Attendance Warning</option>
+                                <option value="custom_message">Custom Message</option>
+                            </select>
+                            <input name="subject" placeholder="Email subject" class="w-full rounded-xl border-gray-300 text-sm">
+                            <textarea name="message" rows="4" placeholder="Write message..." class="w-full rounded-xl border-gray-300 text-sm"></textarea>
+                            <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Send Email</button>
+                        </form>
                     </div>
-                    <form method="POST" action="{{ route('school.communications.students.send', $student) }}" class="space-y-3">
-                        @csrf
-                        <select name="type" class="w-full rounded-xl border-gray-300 text-sm">
-                            <option value="result_notification">Result Notification</option>
-                            <option value="report_card">Report Card</option>
-                            <option value="scratch_card">Scratch Card Details</option>
-                            <option value="payment_reminder">Payment Reminder</option>
-                            <option value="attendance_warning">Attendance Warning</option>
-                            <option value="custom_message">Custom Message</option>
-                        </select>
-                        <input name="subject" placeholder="Email subject" class="w-full rounded-xl border-gray-300 text-sm">
-                        <textarea name="message" rows="4" placeholder="Write message..." class="w-full rounded-xl border-gray-300 text-sm"></textarea>
-                        <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Send Email</button>
-                    </form>
-                </div>
+                @endif
 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Subject</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Type</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Time</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 bg-white">
-                            @forelse ($recentCommunications as $entry)
+                @if ($canViewCommunicationLogs ?? false)
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-100">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $entry->subject }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $entry->type }}</td>
-                                    <td class="px-6 py-4"><x-status-badge :status="$entry->status" /></td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $entry->created_at?->format('d M Y, h:i A') }}</td>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Subject</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Time</th>
                                 </tr>
-                            @empty
-                                <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No communication history for this student.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 bg-white">
+                                @forelse ($recentCommunications as $entry)
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $entry->subject }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">{{ $entry->type }}</td>
+                                        <td class="px-6 py-4"><x-status-badge :status="$entry->status" /></td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">{{ $entry->created_at?->format('d M Y, h:i A') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No communication history for this student.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
+            @endif
 
             <!-- Activity Timeline Section -->
             <div id="activity-timeline" class="overflow-hidden rounded-2xl bg-white shadow-sm">

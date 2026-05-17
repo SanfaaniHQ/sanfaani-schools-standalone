@@ -68,6 +68,21 @@ class ResultPublishingController extends Controller
                 ->with('publishing_error', 'No reviewed, approved, or unpublished results were found for the selected class, session, term, and scope.');
         }
 
+        $incompleteResults = (clone $query)
+            ->where(function ($query) {
+                $query->whereNull('ca_score')
+                    ->orWhereNull('exam_score')
+                    ->orWhereNull('total_score')
+                    ->orWhereNull('grade');
+            })
+            ->count();
+
+        if ($incompleteResults > 0) {
+            return back()
+                ->withInput()
+                ->with('publishing_error', "Publishing blocked: {$incompleteResults} result record(s) are incomplete or ungraded.");
+        }
+
         $sourceStatuses = (clone $query)
             ->pluck('status')
             ->countBy()
@@ -89,6 +104,8 @@ class ResultPublishingController extends Controller
                 'unpublished_at' => null,
                 'unpublished_by' => null,
                 'unpublish_reason' => null,
+                'updated_by' => auth()->id(),
+                'result_version' => DB::raw('result_version + 1'),
             ]);
 
             ResultPublication::create([
@@ -153,6 +170,8 @@ class ResultPublishingController extends Controller
                 'unpublished_at' => $now,
                 'unpublished_by' => auth()->id(),
                 'unpublish_reason' => $data['unpublish_reason'],
+                'updated_by' => auth()->id(),
+                'result_version' => DB::raw('result_version + 1'),
             ]);
 
             ResultPublication::create([
@@ -188,6 +207,76 @@ class ResultPublishingController extends Controller
         ], request: $request);
 
         return back()->with('success', "Results unpublished successfully. Total records affected: {$totalResults}.");
+    }
+
+    public function unpublishSingle(Request $request, StudentResult $studentResult)
+    {
+        $school = $this->currentSchoolOrFail();
+        Gate::authorize('unpublish', [StudentResult::class, $school]);
+
+        $this->authorizeResult($studentResult, $school);
+
+        $data = $request->validate([
+            'unpublish_reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        if ($studentResult->status !== ResultWorkflowStatus::Published->value) {
+            return back()->with('publishing_error', 'This result is not currently published.');
+        }
+
+        $schoolClassId = $studentResult->school_class_id
+            ?: Student::where('school_id', $school->id)->whereKey($studentResult->student_id)->value('school_class_id');
+
+        if (! $schoolClassId) {
+            return back()->with('publishing_error', 'This result is missing a class context and cannot be safely unpublished.');
+        }
+
+        DB::transaction(function () use ($studentResult, $school, $data, $schoolClassId) {
+            $now = now();
+
+            $studentResult->update([
+                'status' => ResultWorkflowStatus::Unpublished->value,
+                'unpublished_at' => $now,
+                'unpublished_by' => auth()->id(),
+                'unpublish_reason' => $data['unpublish_reason'],
+                'updated_by' => auth()->id(),
+            ]);
+
+            ResultPublication::create([
+                'school_id' => $school->id,
+                'school_class_id' => $schoolClassId,
+                'academic_session_id' => $studentResult->academic_session_id,
+                'term_id' => $studentResult->term_id,
+                'result_type' => $studentResult->result_type,
+                'scope_type' => 'student_result',
+                'subject_id' => $studentResult->subject_id,
+                'student_id' => $studentResult->student_id,
+                'status' => 'revoked',
+                'scheduled_publish_at' => null,
+                'published_at' => null,
+                'published_by' => null,
+                'unpublished_at' => $now,
+                'unpublished_by' => auth()->id(),
+                'unpublish_reason' => $data['unpublish_reason'],
+                'created_by' => auth()->id(),
+            ]);
+        });
+
+        app(AuditLogService::class)->log('result_unpublished', $studentResult->fresh(), $school, metadata: [
+            'scope_type' => 'student_result',
+            'student_result_id' => $studentResult->id,
+            'student_id' => $studentResult->student_id,
+            'subject_id' => $studentResult->subject_id,
+            'school_class_id' => $schoolClassId,
+            'academic_session_id' => $studentResult->academic_session_id,
+            'term_id' => $studentResult->term_id,
+            'result_type' => $studentResult->result_type,
+            'reason' => $data['unpublish_reason'],
+            'from_status' => ResultWorkflowStatus::Published->value,
+            'to_status' => ResultWorkflowStatus::Unpublished->value,
+        ], request: $request);
+
+        return back()->with('success', 'Result unpublished successfully.');
     }
 
     private function validatePublishingRequest(Request $request, School $school): array
@@ -254,6 +343,13 @@ class ResultPublishingController extends Controller
         return $query;
     }
 
+    private function authorizeResult(StudentResult $studentResult, School $school): void
+    {
+        if ((int) $studentResult->school_id !== (int) $school->id) {
+            abort(403, 'You cannot access this result.');
+        }
+    }
+
     private function currentSchoolOrFail(): School
     {
         $school = app(CurrentSchoolService::class)->get();
@@ -293,7 +389,20 @@ class ResultPublishingController extends Controller
 
     private function subjectsForSchool(School $school)
     {
+        $subjectIds = StudentResult::query()
+            ->where('school_id', $school->id)
+            ->whereNotNull('subject_id')
+            ->pluck('subject_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($subjectIds->isEmpty()) {
+            return collect();
+        }
+
         return Subject::where('school_id', $school->id)
+            ->whereIn('id', $subjectIds)
             ->where('status', 'active')
             ->orderBy('name')
             ->get();
@@ -326,9 +435,7 @@ class ResultPublishingController extends Controller
             ->with('school')
             ->chunkById(100, function ($students) use ($academicSession, $term, $data) {
                 foreach ($students as $student) {
-                    StudentTransactionalEmailRequested::dispatch(
-                        StudentTransactionalEmailRequested::resultPublished($student, $academicSession, $term, $data)
-                    );
+                    event(StudentTransactionalEmailRequested::resultPublished($student, $academicSession, $term, $data));
                 }
             });
     }

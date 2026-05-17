@@ -112,10 +112,6 @@ class SchoolRoleFeatureService
                 'classes.view' => 'View Classes',
                 'support.manage' => 'Support Access',
                 'support.direct_escalation' => 'Direct Support Escalation',
-                'communication.send' => 'Send Communication',
-                'communication.bulk' => 'Bulk Communication',
-                'communication.results' => 'Result Communication',
-                'communication.students' => 'Student Communication',
             ],
             'teacher' => [
                 'teacher.assignments.view' => 'View Assignments',
@@ -124,9 +120,6 @@ class SchoolRoleFeatureService
                 'students.view_assigned' => 'View Assigned Students',
                 'support.manage' => 'Support Access',
                 'support.direct_escalation' => 'Direct Support Escalation',
-                'communication.send' => 'Send Communication',
-                'communication.bulk' => 'Bulk Communication',
-                'communication.students' => 'Student Communication',
             ],
         ];
 

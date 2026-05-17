@@ -1,0 +1,111 @@
+name: Deploy to Namecheap
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, tag, or branch to deploy
+        required: true
+        default: main
+      environment:
+        description: Protected GitHub environment to deploy through
+        required: true
+        default: production
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    name: Build, test, and upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout selected ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, exif, gd, intl, mbstring, pdo_mysql, pdo_sqlite, zip
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install PHP dependencies for test gate
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Write test environment
+        run: |
+          cat > .env <<'EOF'
+          APP_NAME="Sanfaani Schools"
+          APP_ENV=testing
+          APP_KEY=base64:6B51G2yW9oVncbGTPK/T5yJ4U4K7KBlpS7Mxfq/0slE=
+          APP_DEBUG=true
+          APP_URL=http://localhost
+          APP_LOCALE=en
+          APP_FALLBACK_LOCALE=en
+          LOG_CHANNEL=stack
+          LOG_LEVEL=debug
+          DB_CONNECTION=sqlite
+          DB_DATABASE=database/database.sqlite
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          MAIL_MAILER=array
+          BCRYPT_ROUNDS=4
+          EOF
+          touch database/database.sqlite
+
+      - name: Run test gate
+        run: |
+          php artisan optimize:clear
+          php artisan view:cache
+          npm run build
+          php artisan test --testsuite=Unit
+          php artisan test --testsuite=Feature
+          composer audit --locked --no-interaction --abandoned=report
+
+      - name: Prepare production vendor
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      - name: Remove local-only files before upload
+        run: |
+          rm -f .env
+          rm -f database/database.sqlite
+          rm -rf storage/logs/*
+          rm -rf storage/framework/cache/*
+          rm -rf storage/framework/testing/*
+
+      - name: Upload to Namecheap by FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.github/**
+            **/.env*
+            **/.codex/**
+            **/.cursor/**
+            **/node_modules/**
+            **/tests/**
+            **/storage/logs/**
+            **/storage/framework/cache/**
+            **/storage/framework/testing/**

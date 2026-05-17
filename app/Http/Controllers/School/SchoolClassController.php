@@ -136,7 +136,7 @@ class SchoolClassController extends Controller
             ],
             'section' => ['nullable', 'string', 'max:100'],
             'status' => ['required', Rule::in(['active', 'inactive'])],
-            'language_code' => ['nullable', Rule::in(['en', 'fr', 'ar'])],
+            'language_code' => ['nullable', Rule::in(config('sanfaani.supported_languages', ['en', 'ar', 'fr', 'yo', 'ha']))],
         ]);
 
         $languageCode = $data['language_code'] ?? null;

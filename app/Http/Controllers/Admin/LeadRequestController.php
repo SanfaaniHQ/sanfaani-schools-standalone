@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LeadRequest;
 use App\Models\User;
+use App\Services\CommunicationService;
 use App\Services\LeadCrmService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -124,7 +125,12 @@ class LeadRequestController extends Controller
         return back()->with('success', 'Internal note added.');
     }
 
-    public function storeCommunication(Request $request, LeadRequest $leadRequest, LeadCrmService $leadCrm)
+    public function storeCommunication(
+        Request $request,
+        LeadRequest $leadRequest,
+        LeadCrmService $leadCrm,
+        CommunicationService $communications
+    )
     {
         $data = $request->validate([
             'channel' => ['required', Rule::in(['email', 'phone', 'sms', 'whatsapp', 'in_app', 'manual'])],
@@ -134,7 +140,44 @@ class LeadRequestController extends Controller
             'body' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::in(['recorded', 'sent', 'failed', 'pending'])],
             'communicated_at' => ['nullable', 'date'],
+            'send_now' => ['nullable', 'boolean'],
         ]);
+
+        $sendNow = $request->boolean('send_now');
+
+        if ($sendNow) {
+            if ($data['channel'] !== 'email' || $data['direction'] !== 'outbound') {
+                return back()
+                    ->withInput()
+                    ->withErrors(['send_now' => 'Only outbound email can be sent directly from the lead workspace.']);
+            }
+
+            $emailData = $request->validate([
+                'recipient' => ['required', 'email', 'max:255'],
+                'subject' => ['required', 'string', 'max:255'],
+                'body' => ['required', 'string', 'max:5000'],
+            ]);
+
+            $log = $communications->sendPlatformEmail(
+                $emailData['recipient'],
+                $emailData['subject'],
+                'Lead follow-up',
+                $emailData['body'],
+                'lead_followup',
+                ['lead_id' => $leadRequest->id, 'source' => 'lead_workspace'],
+                CommunicationService::CATEGORY_PLATFORM_TRANSACTIONAL,
+                $request->user()
+            );
+
+            $data['status'] = $log->status;
+            $data['communicated_at'] = $log->sent_at ?: now();
+
+            $leadCrm->recordCommunication($leadRequest, $request->user(), $data, $log, $request);
+
+            return back()->with('success', $log->status === 'sent'
+                ? 'Lead email sent and communication history recorded.'
+                : 'Lead email attempted and communication history recorded.');
+        }
 
         $leadCrm->recordCommunication($leadRequest, $request->user(), $data, null, $request);
 

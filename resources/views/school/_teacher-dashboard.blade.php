@@ -1,169 +1,72 @@
-{{-- Teacher Dashboard Partial --}}
+@php
+    $attentionItems = collect([
+        ['label' => 'Returned for correction', 'value' => $returnedResults, 'href' => route('school.teacher-results.index', ['status' => 'returned'])],
+        ['label' => 'Draft submissions', 'value' => $draftResults, 'href' => route('school.teacher-results.index', ['status' => 'draft'])],
+        ['label' => 'Submitted for review', 'value' => $submittedResults, 'href' => route('school.teacher-results.index', ['status' => 'submitted'])],
+    ])->filter(fn ($item) => (int) $item['value'] > 0);
+@endphp
 
-<div class="py-8">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-
-        {{-- Welcome Card --}}
-        <x-ui.panel class="mb-8">
-            <h3 class="text-lg font-semibold text-gray-900">
-                Welcome back, {{ auth()->user()->name }}
-            </h3>
-            <p class="mt-2 text-sm text-gray-600">
-                You can only access assigned classes, subjects, and result submissions.
+<div class="space-y-6">
+    <section class="grid gap-4 lg:grid-cols-[1fr_24rem]">
+        <x-ui.panel>
+            <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Assigned academic work</p>
+            <h3 class="mt-2 text-2xl font-semibold text-text-primary">Welcome back, {{ auth()->user()->name }}</h3>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
+                Your workspace is limited to assigned classes, assigned subjects, and result submissions you are allowed to act on.
             </p>
         </x-ui.panel>
 
-        {{-- Summary Cards --}}
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <x-ui.stat-card label="Assigned Classes" :value="$totalAssignedClasses" :meta="$totalAssignedStudents . ' students'" />
-            <x-ui.stat-card label="Assigned Subjects" :value="$totalAssignedSubjects" meta="Active assignments" />
-            <x-ui.stat-card label="Draft Results" :value="$draftResults" meta="Saved drafts" />
-            <x-ui.stat-card label="Submitted Results" :value="$submittedResults" meta="Under review" />
-        </div>
+        <x-ui.panel>
+            <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Current period</p>
+            <p class="mt-3 text-lg font-semibold text-text-primary">{{ $activeTerm?->name ?? 'No active term' }}</p>
+            <p class="mt-1 text-sm text-text-secondary">{{ $activeSession?->name ?? 'No active session' }}</p>
+        </x-ui.panel>
+    </section>
 
-        {{-- Additional Stats --}}
-        <div class="mt-6 grid gap-6 lg:grid-cols-3">
-            <x-ui.panel>
-                <p class="text-sm font-medium text-gray-500">Returned for Correction</p>
-                <p class="mt-3 text-2xl font-semibold text-gray-900">{{ $returnedResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">Needs your attention</p>
-            </x-ui.panel>
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-ui.stat-card label="Assigned Classes" :value="$totalAssignedClasses" :meta="$totalAssignedStudents . ' students'" />
+        <x-ui.stat-card label="Assigned Subjects" :value="$totalAssignedSubjects" meta="Active assignments" />
+        <x-ui.stat-card label="Draft Results" :value="$draftResults" meta="Saved drafts" tone="warning" />
+        <x-ui.stat-card label="Submitted Results" :value="$submittedResults" meta="Under review" tone="info" />
+    </section>
 
-            <x-ui.panel>
-                <p class="text-sm font-medium text-gray-500">Approved / Published</p>
-                <p class="mt-3 text-2xl font-semibold text-gray-900">{{ $approvedResults }}</p>
-                <p class="mt-1 text-sm text-gray-500">Completed submissions</p>
-            </x-ui.panel>
-
-            <x-ui.panel>
-                <p class="text-sm font-medium text-gray-500">Current Term</p>
-                <p class="mt-3 text-lg font-semibold text-gray-900">
-                    {{ $activeTerm?->name ?? 'Not set' }}
-                </p>
-                <p class="mt-1 text-sm text-gray-500">{{ $activeSession?->name ?? 'No active session' }}</p>
-            </x-ui.panel>
-        </div>
-
-        {{-- My Work Section --}}
-        <div class="mt-10 space-y-8">
-            <section>
-                <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">My Work</h3>
-                    <p class="mt-1 text-sm text-gray-500">Access your assignments and result submissions.</p>
-                </div>
-
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    @if(($features['teacher.assignments.view']['enabled'] ?? true))
-                        <a href="{{ route('school.teacher-assignments.my') }}"
-                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                            <h4 class="text-base font-semibold text-gray-900">My Assigned Classes</h4>
-                            <p class="mt-2 text-sm text-gray-600">Review your active class and subject assignments.</p>
-                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                        </a>
-                    @endif
-
-                    @if(($features['students.view_assigned']['enabled'] ?? true))
-                        <a href="{{ route('school.students.index') }}"
-                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                            <h4 class="text-base font-semibold text-gray-900">Assigned Students</h4>
-                            <p class="mt-2 text-sm text-gray-600">View students connected to your assigned classes.</p>
-                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                        </a>
-                    @endif
-
-                    @if(($features['teacher.results.create']['enabled'] ?? true))
-                        <a href="{{ route('school.teacher-results.create') }}"
-                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                            <h4 class="text-base font-semibold text-gray-900">Enter Results</h4>
-                            <p class="mt-2 text-sm text-gray-600">Enter scores only for assigned classes and subjects.</p>
-                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                        </a>
-                    @endif
-
-                    @if(($features['teacher.results.submit']['enabled'] ?? true))
-                        <a href="{{ route('school.teacher-results.index', ['status' => 'draft']) }}"
-                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                            <h4 class="text-base font-semibold text-gray-900">Continue Drafts</h4>
-                            <p class="mt-2 text-sm text-gray-600">Continue saved result drafts.</p>
-                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                        </a>
-                    @endif
-
-                    @if(($features['teacher.results.submit']['enabled'] ?? true))
-                        <a href="{{ route('school.teacher-results.index', ['status' => 'returned']) }}"
-                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                            <h4 class="text-base font-semibold text-gray-900">Returned for Correction</h4>
-                            <p class="mt-2 text-sm text-gray-600">Correct results returned by the reviewer.</p>
-                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                        </a>
-                    @endif
-
-                    @if(($features['teacher.results.submit']['enabled'] ?? true))
-                        <a href="{{ route('school.teacher-results.index') }}"
-                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                            <h4 class="text-base font-semibold text-gray-900">My Submissions</h4>
-                            <p class="mt-2 text-sm text-gray-600">Track submitted, approved, and published results.</p>
-                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                        </a>
-                    @endif
-                </div>
-            </section>
-
-            {{-- Support & Account Section --}}
-            <section>
-                <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900">Support & Account</h3>
-                    <p class="mt-1 text-sm text-gray-500">Get help and manage your profile.</p>
-                </div>
-
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    @if(($features['support.manage']['enabled'] ?? true))
-                        <a href="{{ route('school.support.index') }}"
-                           class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                            <h4 class="text-base font-semibold text-gray-900">Support</h4>
-                            <p class="mt-2 text-sm text-gray-600">Contact school/platform support.</p>
-                            <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
-                        </a>
-                    @endif
-
-                    <a href="{{ route('profile.edit') }}"
-                       class="block rounded-2xl bg-white p-5 shadow-sm transition hover:shadow-md">
-                        <h4 class="text-base font-semibold text-gray-900">My Profile</h4>
-                        <p class="mt-2 text-sm text-gray-600">Update your personal account details.</p>
-                        <p class="mt-4 text-xs font-medium uppercase tracking-wide text-gray-400">Open module</p>
+    <section class="grid gap-4 lg:grid-cols-3">
+        <x-ui.panel class="lg:col-span-1">
+            <h3 class="text-base font-semibold text-text-primary">Attention queue</h3>
+            <div class="mt-4 space-y-3">
+                @forelse ($attentionItems as $item)
+                    <a href="{{ $item['href'] }}" class="flex items-center justify-between rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-sm transition hover:border-border-hover hover:bg-bg-tertiary">
+                        <span class="font-medium text-text-primary">{{ $item['label'] }}</span>
+                        <span class="font-mono text-base font-semibold text-brand-primary">{{ $item['value'] }}</span>
                     </a>
-                </div>
-            </section>
+                @empty
+                    <p class="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-text-secondary">No returned or pending result work is visible.</p>
+                @endforelse
+            </div>
+        </x-ui.panel>
 
-            {{-- How Result Submission Works --}}
-            <section>
-                <div class="rounded-2xl bg-blue-50 p-6">
-                    <h3 class="text-base font-semibold text-blue-900">How result submission works</h3>
-                    <ol class="mt-4 space-y-2 text-sm text-blue-800">
-                        <li class="flex items-start">
-                            <span class="mr-2 font-semibold">1.</span>
-                            <span>Select assigned class and subject.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="mr-2 font-semibold">2.</span>
-                            <span>Enter scores and teacher remarks.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="mr-2 font-semibold">3.</span>
-                            <span>Save as draft or submit for review.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="mr-2 font-semibold">4.</span>
-                            <span>School Admin or Result Officer reviews.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <span class="mr-2 font-semibold">5.</span>
-                            <span>Published results become visible through approved result access.</span>
-                        </li>
-                    </ol>
-                </div>
-            </section>
-        </div>
-
-    </div>
+        <x-ui.panel class="lg:col-span-2">
+            <h3 class="text-base font-semibold text-text-primary">Teacher tools</h3>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                @if(($features['teacher.assignments.view']['enabled'] ?? true))
+                    <a href="{{ route('school.teacher-assignments.my') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">My Classes & Subjects</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Review current class and subject assignments.</span>
+                    </a>
+                @endif
+                @if(($features['teacher.results.create']['enabled'] ?? true))
+                    <a href="{{ route('school.teacher-results.create') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">Enter Results</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Create scores only for assigned scopes.</span>
+                    </a>
+                @endif
+                @if(($features['students.view_assigned']['enabled'] ?? true))
+                    <a href="{{ route('school.students.index') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">Assigned Students</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Open Student 360 for visible classes.</span>
+                    </a>
+                @endif
+            </div>
+        </x-ui.panel>
+    </section>
 </div>

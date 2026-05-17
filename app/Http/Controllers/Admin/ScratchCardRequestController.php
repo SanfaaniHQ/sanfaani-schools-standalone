@@ -319,9 +319,7 @@ class ScratchCardRequestController extends Controller
             ->with('school')
             ->chunkById(100, function ($students) use ($batch) {
                 foreach ($students as $student) {
-                    StudentTransactionalEmailRequested::dispatch(
-                        StudentTransactionalEmailRequested::scratchCardGenerated($student, $batch)
-                    );
+                    event(StudentTransactionalEmailRequested::scratchCardGenerated($student, $batch));
                 }
             });
     }

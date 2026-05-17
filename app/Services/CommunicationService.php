@@ -230,6 +230,15 @@ class CommunicationService
 
     private function deliverWithFallback(?School $school, callable $callback): array
     {
+        if ($school && ! $this->mailSettings->hasEnabledSchoolMailer($school)) {
+            $this->mailSettings->withPlatformMailContext($callback);
+
+            return [
+                'fallback_used' => true,
+                'primary_error' => 'school_mailer_unavailable_or_disabled',
+            ];
+        }
+
         try {
             $this->mailSettings->withSchoolMailContext($school, $callback);
 

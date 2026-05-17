@@ -9,6 +9,8 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\SchoolReportCardSetting;
 use App\Models\Student;
+use App\Models\StudentResult;
+use App\Models\Subject;
 use App\Models\Term;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -98,7 +100,7 @@ class ReportCardService
             : $results;
         $total = $this->calculateTotalScore($safeResults);
         $average = $this->calculateAverageScore($safeResults);
-        $resultClass = $safeResults->first()?->schoolClass;
+        $resultClass = data_get($safeResults->first(), 'schoolClass');
 
         if (! $resultClass) {
             $resultClassId = app(StudentClassEnrollmentService::class)
@@ -139,14 +141,15 @@ class ReportCardService
             'admission_number' => 'SS/2026/001',
             'status' => 'active',
         ]);
-        $student->setRelation('schoolClass', new SchoolClass(['name' => 'Basic 5', 'section' => 'A']));
-
         $session = new AcademicSession(['name' => '2025/2026']);
         $term = new Term(['name' => 'First Term']);
+        $resultClass = new SchoolClass(['name' => 'Basic 5', 'section' => 'A']);
+        $student->setRelation('schoolClass', $resultClass);
+
         $results = collect([
-            (object) ['subject' => (object) ['name' => 'Mathematics'], 'ca_score' => 28, 'exam_score' => 61, 'total_score' => 89, 'grade' => 'A', 'remark' => 'Excellent', 'teacher_remark' => 'Strong performance.', 'status' => 'published', 'published_at' => now()],
-            (object) ['subject' => (object) ['name' => 'English Language'], 'ca_score' => 24, 'exam_score' => 58, 'total_score' => 82, 'grade' => 'A', 'remark' => 'Excellent', 'teacher_remark' => 'Reads confidently.', 'status' => 'published', 'published_at' => now()],
-            (object) ['subject' => (object) ['name' => 'Basic Science'], 'ca_score' => 25, 'exam_score' => 55, 'total_score' => 80, 'grade' => 'A', 'remark' => 'Excellent', 'teacher_remark' => 'Good practical understanding.', 'status' => 'published', 'published_at' => now()],
+            $this->sampleResult('Mathematics', 28, 61, 89, 'A', 'Excellent', 'Strong performance.', $resultClass),
+            $this->sampleResult('English Language', 24, 58, 82, 'A', 'Excellent', 'Reads confidently.', $resultClass),
+            $this->sampleResult('Basic Science', 25, 55, 80, 'A', 'Excellent', 'Good practical understanding.', $resultClass),
         ]);
 
         return $this->displayData($school, $student, $session, $term, $results, true);
@@ -163,5 +166,32 @@ class ReportCardService
         }
 
         return Storage::disk('public')->url($path);
+    }
+
+    private function sampleResult(
+        string $subjectName,
+        float $caScore,
+        float $examScore,
+        float $totalScore,
+        string $grade,
+        string $remark,
+        string $teacherRemark,
+        SchoolClass $schoolClass
+    ): StudentResult {
+        $result = new StudentResult([
+            'ca_score' => $caScore,
+            'exam_score' => $examScore,
+            'total_score' => $totalScore,
+            'grade' => $grade,
+            'remark' => $remark,
+            'teacher_remark' => $teacherRemark,
+            'status' => 'published',
+            'published_at' => now(),
+        ]);
+
+        $result->setRelation('subject', new Subject(['name' => $subjectName]));
+        $result->setRelation('schoolClass', $schoolClass);
+
+        return $result;
     }
 }

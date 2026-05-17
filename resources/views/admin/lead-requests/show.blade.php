@@ -128,7 +128,11 @@
                         </select>
                         <input type="datetime-local" name="communicated_at" value="{{ old('communicated_at', now()->format('Y-m-d\\TH:i')) }}" class="rounded-xl border-gray-300">
                         <textarea name="body" rows="4" class="rounded-xl border-gray-300 sm:col-span-2" placeholder="Communication summary">{{ old('body') }}</textarea>
-                        <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white sm:col-span-2">Record Communication</button>
+                        <label class="flex items-center gap-2 text-sm text-gray-700 sm:col-span-2">
+                            <input type="checkbox" name="send_now" value="1" class="rounded border-gray-300">
+                            Send outbound email now and record the result
+                        </label>
+                        <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white sm:col-span-2">Save Communication</button>
                     </form>
                     <div class="mt-5 space-y-4">
                         @forelse ($lead->communicationRecords->sortByDesc('communicated_at') as $record)

@@ -3,7 +3,7 @@
     $navBrandName = data_get($schoolBranding ?? null, 'name') ?: ($platformSettings->platform_name ?? config('app.name', 'Sanfaani Schools'));
     $navLogoUrl = data_get($schoolBranding ?? null, 'logo_url') ?: ($platformLogoUrl ?? null);
     $navInitials = data_get($schoolBranding ?? null, 'initials') ?: ($platformInitials ?? 'SS');
-    $navColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#4f46e5';
+    $navColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#047857';
 @endphp
 <nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
     <!-- Primary Navigation Menu -->
@@ -41,9 +41,17 @@
                             Admission Numbers
                         </x-nav-link>
 
-                        @schoolFeature('communication.send')
-                            <x-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
-                                Communication
+                        <x-nav-link :href="route('school.sessions.index')" :active="request()->routeIs('school.sessions.*')">
+                            Sessions
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('school.terms.index')" :active="request()->routeIs('school.terms.*')">
+                            Terms
+                        </x-nav-link>
+
+                        @schoolFeature('communication.bulk')
+                            <x-nav-link :href="route('school.communications.bulk')" :active="request()->routeIs('school.communications.bulk*')">
+                                Bulk Communication
                             </x-nav-link>
                         @endschoolFeature
                     @endif
@@ -130,9 +138,15 @@
                 <x-responsive-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
                     Admission Numbers
                 </x-responsive-nav-link>
-                @schoolFeature('communication.send')
-                    <x-responsive-nav-link :href="route('school.communications.history')" :active="request()->routeIs('school.communications.*')">
-                        Communication
+                <x-responsive-nav-link :href="route('school.sessions.index')" :active="request()->routeIs('school.sessions.*')">
+                    Sessions
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('school.terms.index')" :active="request()->routeIs('school.terms.*')">
+                    Terms
+                </x-responsive-nav-link>
+                @schoolFeature('communication.bulk')
+                    <x-responsive-nav-link :href="route('school.communications.bulk')" :active="request()->routeIs('school.communications.bulk*')">
+                        Bulk Communication
                     </x-responsive-nav-link>
                 @endschoolFeature
             @endif

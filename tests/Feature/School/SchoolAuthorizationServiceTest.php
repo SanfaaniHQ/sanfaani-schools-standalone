@@ -37,7 +37,7 @@ class SchoolAuthorizationServiceTest extends TestCase
 
         $authorization = app(SchoolAuthorizationService::class);
 
-        $this->assertTrue($authorization->can($teacher, $school, 'communication.bulk'));
+        $this->assertFalse($authorization->can($teacher, $school, 'communication.bulk'));
         $this->assertFalse($authorization->can($teacher, $school, 'results.publish'));
 
         app(SchoolRoleFeatureService::class)->setFeature($school->id, 'teacher', 'support.access', false);

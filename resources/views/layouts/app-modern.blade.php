@@ -1,6 +1,6 @@
 @php
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
-    $brandColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#4f46e5';
+    $brandColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#047857';
 @endphp
 
 <!DOCTYPE html>

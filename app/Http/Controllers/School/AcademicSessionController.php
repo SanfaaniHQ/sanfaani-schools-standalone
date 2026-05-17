@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\School;
 use App\Services\CurrentSchoolService;
+use App\Services\AuditLogService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -16,6 +17,15 @@ class AcademicSessionController extends Controller
         $school = $this->currentSchoolOrFail();
 
         $sessions = $school->academicSessions()
+            ->withCount([
+                'terms',
+                'studentClassEnrollments',
+                'studentResults',
+                'resultPublications',
+                'reportCardSnapshots',
+                'teacherResultSubmissions',
+            ])
+            ->orderByDesc('is_active')
             ->latest()
             ->paginate(10);
 
@@ -113,6 +123,74 @@ class AcademicSessionController extends Controller
         return redirect()
             ->route('school.sessions.index')
             ->with('success', 'Academic session updated successfully.');
+    }
+
+    public function activate(Request $request, AcademicSession $academicSession, AuditLogService $auditLog)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeAcademicSession($academicSession, $school);
+
+        $oldValues = $academicSession->only(['status', 'is_active']);
+
+        $school->academicSessions()
+            ->whereKeyNot($academicSession->id)
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        $academicSession->update([
+            'status' => 'active',
+            'is_active' => true,
+        ]);
+
+        $auditLog->log('academic_session_activated', $academicSession, $school, $oldValues, $academicSession->only([
+            'status',
+            'is_active',
+        ]), request: $request);
+
+        return back()->with('success', 'Academic session activated successfully.');
+    }
+
+    public function archive(Request $request, AcademicSession $academicSession, AuditLogService $auditLog)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeAcademicSession($academicSession, $school);
+
+        $oldValues = $academicSession->only(['status', 'is_active']);
+
+        $academicSession->update([
+            'status' => 'archived',
+            'is_active' => false,
+        ]);
+
+        $auditLog->log('academic_session_archived', $academicSession, $school, $oldValues, $academicSession->only([
+            'status',
+            'is_active',
+        ]), request: $request);
+
+        return back()->with('success', 'Academic session archived. Historical results and enrollments remain intact.');
+    }
+
+    public function restore(Request $request, AcademicSession $academicSession, AuditLogService $auditLog)
+    {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeAcademicSession($academicSession, $school);
+
+        $oldValues = $academicSession->only(['status', 'is_active']);
+
+        $academicSession->update([
+            'status' => 'inactive',
+            'is_active' => false,
+        ]);
+
+        $auditLog->log('academic_session_restored', $academicSession, $school, $oldValues, $academicSession->only([
+            'status',
+            'is_active',
+        ]), request: $request);
+
+        return back()->with('success', 'Academic session restored as inactive.');
     }
 
     private function currentSchoolOrFail(): School
