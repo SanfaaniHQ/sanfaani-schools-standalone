@@ -16,6 +16,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Throwable;
@@ -40,7 +41,8 @@ class CommunicationService
 
     public function __construct(
         private MailSettingService $mailSettings,
-        private AuditLogService $auditLog
+        private AuditLogService $auditLog,
+        private SystemNotificationService $notifications
     ) {}
 
     public function sendSchoolEmail(
@@ -130,7 +132,10 @@ class CommunicationService
 
         try {
             $delivery = $this->deliverWithFallback($school, function () use ($recipient, $subject, $headline, $body, $school, $metadata, $category) {
-                Mail::to($recipient)->send($this->mailableForCategory($category, $subject, $headline, $body, $school, $metadata));
+                Mail::to($recipient)->send($this->attachFiles(
+                    $this->mailableForCategory($category, $subject, $headline, $body, $school, $metadata),
+                    $metadata
+                ));
             });
 
             $this->markSent($log, $delivery);
@@ -155,6 +160,8 @@ class CommunicationService
                 'type' => $type,
                 'message' => $exception->getMessage(),
             ]);
+
+            $this->notifyFailure($log, $school, $recipient, $type, $exception);
         }
 
         return $log->exists ? ($log->fresh() ?? $log) : $log;
@@ -269,7 +276,8 @@ class CommunicationService
 
     private function shouldTryPlatformFallback(?School $school): bool
     {
-        return $this->mailSettings->hasEnabledSchoolMailer($school);
+        return $this->mailSettings->hasEnabledSchoolMailer($school)
+            && $this->mailSettings->platformFallbackEnabled();
     }
 
     private function markSent(CommunicationLog $log, array $delivery): void
@@ -324,6 +332,40 @@ class CommunicationService
         }
     }
 
+    private function notifyFailure(CommunicationLog $log, ?School $school, string $recipient, string $type, Throwable $exception): void
+    {
+        try {
+            $payload = [
+                'title' => $school ? 'School mail delivery failed' : 'Platform mail delivery failed',
+                'body' => 'Mail to '.$recipient.' failed for '.$type.'.',
+                'category' => 'mail',
+                'event' => $school ? 'school.mail.failed' : 'platform.mail.failed',
+                'severity' => 'warning',
+                'action_url' => $school
+                    ? (Route::has('school.communications.bulk') ? route('school.communications.bulk') : null)
+                    : (Route::has('admin.communications.index') ? route('admin.communications.index', ['status' => 'failed']) : null),
+                'school_id' => $school?->id,
+                'metadata' => [
+                    'communication_log_id' => $log->id,
+                    'recipient' => $recipient,
+                    'type' => $type,
+                    'error' => $exception->getMessage(),
+                ],
+            ];
+
+            if ($school) {
+                $this->notifications->notifySchoolRoles($school, ['school_admin'], $payload);
+            } else {
+                $this->notifications->notifySuperAdmins($payload);
+            }
+        } catch (Throwable $notificationException) {
+            Log::warning('Communication failure notification failed.', [
+                'communication_log_id' => $log->id,
+                'message' => $notificationException->getMessage(),
+            ]);
+        }
+    }
+
     private function mailableForCategory(
         string $category,
         string $subject,
@@ -342,5 +384,24 @@ class CommunicationService
             self::CATEGORY_ANNOUNCEMENT => new AnnouncementMail($subject, $headline, $body, $school, $metadata),
             default => new CommunicationMail($subject, $headline, $body, $school, $metadata),
         };
+    }
+
+    private function attachFiles(Mailable $mailable, array $metadata): Mailable
+    {
+        foreach ((array) data_get($metadata, 'attachments', []) as $attachment) {
+            $path = data_get($attachment, 'path');
+
+            if (! filled($path)) {
+                continue;
+            }
+
+            $mailable->attachFromStorageDisk(
+                data_get($attachment, 'disk', 'local'),
+                $path,
+                data_get($attachment, 'name')
+            );
+        }
+
+        return $mailable;
     }
 }

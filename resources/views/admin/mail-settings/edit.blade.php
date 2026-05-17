@@ -84,6 +84,33 @@
                         </div>
                     </div>
 
+                    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <h3 class="text-sm font-semibold text-gray-900">School Mail Governance</h3>
+                        <div class="mt-4 grid gap-3 md:grid-cols-3">
+                            <label class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                                <input type="checkbox" name="school_custom_smtp_enabled" value="1" @checked(old('school_custom_smtp_enabled', data_get($mailGovernance, 'school_custom_smtp_enabled', true))) class="mt-1 rounded border-gray-300">
+                                <span>
+                                    <span class="block font-semibold text-gray-900">Allow school SMTP</span>
+                                    <span class="mt-1 block text-xs text-gray-500">Schools can configure encrypted SMTP credentials.</span>
+                                </span>
+                            </label>
+                            <label class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                                <input type="checkbox" name="force_platform_mailer" value="1" @checked(old('force_platform_mailer', data_get($mailGovernance, 'force_platform_mailer', false))) class="mt-1 rounded border-gray-300">
+                                <span>
+                                    <span class="block font-semibold text-gray-900">Platform SMTP only</span>
+                                    <span class="mt-1 block text-xs text-gray-500">Force all school delivery through platform settings.</span>
+                                </span>
+                            </label>
+                            <label class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700">
+                                <input type="checkbox" name="platform_fallback_enabled" value="1" @checked(old('platform_fallback_enabled', data_get($mailGovernance, 'platform_fallback_enabled', true))) class="mt-1 rounded border-gray-300">
+                                <span>
+                                    <span class="block font-semibold text-gray-900">Enable fallback</span>
+                                    <span class="mt-1 block text-xs text-gray-500">Retry school SMTP failures through platform mail.</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
                     @if ($errors->any())
                         <div class="rounded-xl bg-red-50 p-4 text-sm text-red-700">Please fix the highlighted fields.</div>
                     @endif

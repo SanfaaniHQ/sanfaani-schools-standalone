@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-xl font-semibold leading-tight text-gray-900">Audit Logs</h2>
-            <p class="mt-1 text-sm text-gray-500">Search security and support activity. Try: result_published, support_access_started, scratch_card_generated, school_archived.</p>
+            <p class="mt-1 text-sm text-gray-500">Search operational activity, actor history, result actions, mail events, support changes, and impersonation records.</p>
         </div>
     </x-slot>
 
@@ -48,6 +48,7 @@
                 <div class="flex gap-2 md:col-span-4">
                     <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Search</button>
                     <a href="{{ route('admin.audit-logs.index') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Clear filter</a>
+                    <a href="{{ route('admin.audit-logs.export', request()->query()) }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Export CSV</a>
                 </div>
             </form>
 

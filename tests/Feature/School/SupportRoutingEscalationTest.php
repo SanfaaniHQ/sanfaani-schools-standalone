@@ -6,12 +6,15 @@ use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\SupportEscalationHistory;
 use App\Models\SupportMessage;
+use App\Models\SupportMessageAttachment;
 use App\Models\SupportThread;
 use App\Models\SupportThreadEvent;
 use App\Models\User;
 use App\Models\UserSchoolRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -123,6 +126,34 @@ class SupportRoutingEscalationTest extends TestCase
 
         $this->actingAs($superAdmin);
         $this->get(route('admin.support-threads.index'))->assertOk()->assertSee($thread->subject);
+    }
+
+    public function test_support_replies_persist_and_protect_attachments(): void
+    {
+        Storage::fake('local');
+
+        $school = $this->school();
+        $teacher = $this->schoolUser($school, 'teacher', 'teacher@example.test');
+        $schoolAdmin = $this->schoolUser($school, 'school_admin', 'school.admin@example.test');
+        $thread = $this->internalThread($school, $teacher);
+
+        $this->actAsSchoolRole($teacher, $school, 'teacher');
+        $this->post(route('school.support.reply', $thread), [
+            'message' => 'Here is the screenshot.',
+            'attachments' => [UploadedFile::fake()->create('support-proof.pdf', 64, 'application/pdf')],
+        ])->assertRedirect();
+
+        $attachment = SupportMessageAttachment::firstOrFail();
+
+        Storage::disk($attachment->disk)->assertExists($attachment->path);
+
+        $this->get(route('school.support-attachments.download', $attachment))
+            ->assertOk();
+
+        $this->actAsSchoolRole($schoolAdmin, $school, 'school_admin');
+        $this->get(route('school.support.show', $thread))
+            ->assertOk()
+            ->assertSee('support-proof.pdf');
     }
 
     public function test_school_admin_created_support_request_preserves_platform_support_workflow(): void

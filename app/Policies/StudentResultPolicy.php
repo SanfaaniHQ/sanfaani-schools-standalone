@@ -51,6 +51,30 @@ class StudentResultPolicy
             && $result->canTransitionTo(ResultWorkflowStatus::Archived);
     }
 
+    public function submit(User $user, StudentResult $result): bool
+    {
+        return $this->belongsToCurrentSchool($result)
+            && $this->canManageResults($user)
+            && $this->featureEnabled($user, $result->school_id, 'results.manual_entry')
+            && $result->canTransitionTo(ResultWorkflowStatus::Submitted);
+    }
+
+    public function returnForCorrection(User $user, StudentResult $result): bool
+    {
+        return $this->belongsToCurrentSchool($result)
+            && $this->canManageResults($user)
+            && $this->featureEnabled($user, $result->school_id, 'results.review')
+            && $result->canTransitionTo(ResultWorkflowStatus::Returned);
+    }
+
+    public function approve(User $user, StudentResult $result): bool
+    {
+        return $this->belongsToCurrentSchool($result)
+            && $this->canManageResults($user)
+            && $this->featureEnabled($user, $result->school_id, 'results.review')
+            && $result->canTransitionTo(ResultWorkflowStatus::Approved);
+    }
+
     public function publish(User $user, ?School $school = null): bool
     {
         if (! $school) {

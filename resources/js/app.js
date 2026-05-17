@@ -51,6 +51,383 @@ document.addEventListener('click', (event) => {
     button.setAttribute('data-submit-clicked', 'true');
 });
 
+const ensureToastRegion = () => {
+    let region = document.querySelector('[data-toast-region]');
+
+    if (region) {
+        return region;
+    }
+
+    region = document.createElement('div');
+    region.dataset.toastRegion = 'true';
+    region.className = 'fixed right-4 top-20 z-[80] flex w-[min(24rem,calc(100vw-2rem))] flex-col gap-3';
+    region.setAttribute('aria-live', 'polite');
+    region.setAttribute('aria-atomic', 'true');
+    document.body.appendChild(region);
+
+    return region;
+};
+
+const showToast = (message, tone = 'success') => {
+    const region = ensureToastRegion();
+    const toast = document.createElement('div');
+    const toneClass = tone === 'error'
+        ? 'border-red-300 bg-red-50 text-red-800 dark:border-red-500/40 dark:bg-red-500/15 dark:text-red-200'
+        : 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200';
+
+    toast.className = `rounded-lg border px-4 py-3 text-sm font-semibold shadow-lg transition ${toneClass}`;
+    toast.textContent = message;
+    region.appendChild(toast);
+
+    window.setTimeout(() => {
+        toast.classList.add('opacity-0');
+        window.setTimeout(() => toast.remove(), 250);
+    }, 4200);
+};
+
+const escapeHtml = (value) => String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+
+const updateResultState = (result) => {
+    if (!result?.id) {
+        return;
+    }
+
+    document.querySelectorAll(`[data-result-row-id="${result.id}"]`).forEach((row) => {
+        row.dataset.resultStatus = result.status || '';
+
+        const statusBadge = row.querySelector('[data-result-status-badge]');
+        if (statusBadge) {
+            statusBadge.textContent = result.status_label || result.status || 'Updated';
+            statusBadge.className = 'inline-flex rounded-full border border-border-subtle bg-bg-secondary px-2.5 py-1 text-xs font-medium text-text-secondary';
+        }
+
+        const publishedLabel = row.querySelector('[data-result-published-label]');
+        if (publishedLabel) {
+            publishedLabel.innerHTML = result.is_published
+                ? `<span class="block font-semibold text-emerald-700 dark:text-emerald-300">Published</span><span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">${escapeHtml(result.published_at_label)}</span>`
+                : 'Not published';
+        }
+
+        row.querySelectorAll('[data-result-published-by]').forEach((node) => {
+            node.textContent = result.published_by || 'N/A';
+        });
+
+        row.querySelectorAll('[data-result-published-at]').forEach((node) => {
+            node.textContent = result.is_published ? (result.published_at_label || 'Published') : 'N/A';
+        });
+
+        row.querySelectorAll('[data-result-version]').forEach((node) => {
+            node.textContent = result.result_version || '';
+        });
+    });
+};
+
+const setSubmitterLoading = (form, submitter) => {
+    if (!submitter) {
+        return;
+    }
+
+    const loadingText = submitter.dataset.loadingText || form.dataset.loadingText || 'Processing...';
+
+    submitter.disabled = true;
+
+    if (submitter.tagName === 'INPUT') {
+        submitter.dataset.originalValue = submitter.value;
+        submitter.value = loadingText;
+        return;
+    }
+
+    submitter.dataset.originalHtml = submitter.innerHTML;
+    submitter.innerHTML = `
+        <span class="inline-flex items-center gap-2">
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+            <span>${loadingText}</span>
+        </span>
+    `;
+};
+
+const restoreSubmitter = (form, submitter) => {
+    delete form.dataset.submitting;
+    submitter?.removeAttribute('data-submit-clicked');
+
+    if (!submitter) {
+        return;
+    }
+
+    submitter.disabled = false;
+
+    if (submitter.tagName === 'INPUT' && submitter.dataset.originalValue) {
+        submitter.value = submitter.dataset.originalValue;
+        return;
+    }
+
+    if (submitter.dataset.originalHtml) {
+        submitter.innerHTML = submitter.dataset.originalHtml;
+    }
+};
+
+const submitResultAction = async (form, submitter) => {
+    const payload = new FormData(form);
+
+    if (!payload.has('_return_url')) {
+        payload.append('_return_url', window.location.href);
+    }
+
+    const csrf = form.querySelector('input[name="_token"]')?.value
+        || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        || '';
+
+    try {
+        const response = await fetch(form.action, {
+            method: (form.method || 'POST').toUpperCase(),
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: payload,
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || data.success === false) {
+            throw new Error(data.message || `Request failed with HTTP ${response.status}`);
+        }
+
+        showToast(data.message || 'Action completed successfully.');
+        updateResultState(data.result);
+        window.dispatchEvent(new CustomEvent('sanfaani:result-action-completed', { detail: data }));
+
+        if (data.reload !== false) {
+            window.setTimeout(() => {
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                    return;
+                }
+
+                window.location.reload();
+            }, 650);
+        } else {
+            restoreSubmitter(form, submitter);
+        }
+    } catch (error) {
+        showToast(error.message || 'The action could not be completed.', 'error');
+        restoreSubmitter(form, submitter);
+    }
+};
+
+const initGlobalSearch = () => {
+    document.querySelectorAll('[data-global-search-root]').forEach((root) => {
+        const input = root.querySelector('[data-global-search-input]');
+        const results = root.querySelector('[data-global-search-results]');
+        const status = root.querySelector('[data-global-search-status]');
+        const defaults = root.querySelector('[data-command-default-results]');
+        const searchUrl = root.dataset.searchUrl;
+
+        if (!(input instanceof HTMLInputElement) || !results || !status || !defaults || !searchUrl) {
+            return;
+        }
+
+        let timer = null;
+        let controller = null;
+
+        const setStatus = (message, visible = true) => {
+            status.textContent = message;
+            status.classList.toggle('hidden', !visible);
+        };
+
+        const resetSearch = () => {
+            controller?.abort();
+            results.innerHTML = '';
+            defaults.hidden = false;
+            setStatus('', false);
+        };
+
+        const renderGroups = (groups) => {
+            const visibleGroups = (groups || []).filter((group) => Array.isArray(group.items) && group.items.length > 0);
+
+            if (visibleGroups.length === 0) {
+                results.innerHTML = '';
+                setStatus('No matching records found.');
+                return;
+            }
+
+            setStatus('', false);
+            results.innerHTML = visibleGroups.map((group) => `
+                <section>
+                    <p class="px-3 py-2 text-xs font-semibold uppercase tracking-normal text-text-tertiary">${escapeHtml(group.label)}</p>
+                    <div class="space-y-1">
+                        ${group.items.map((item) => `
+                            <a href="${escapeHtml(item.url)}" class="flex items-center gap-3 rounded-lg px-3 py-3 text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:bg-bg-tertiary focus:outline-none">
+                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-bg-primary text-xs font-semibold text-brand-primary">${escapeHtml((item.type || '?').slice(0, 1))}</span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block truncate font-medium text-text-primary">${escapeHtml(item.title)}</span>
+                                    <span class="block truncate text-xs text-text-tertiary">${escapeHtml(item.subtitle)}</span>
+                                </span>
+                                <span class="hidden text-xs font-semibold text-text-muted sm:inline">${escapeHtml(item.type)}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                </section>
+            `).join('');
+        };
+
+        const runSearch = async () => {
+            const query = input.value.trim();
+
+            if (query.length < 2) {
+                resetSearch();
+                return;
+            }
+
+            defaults.hidden = true;
+            results.innerHTML = '';
+            setStatus('Searching...');
+
+            controller?.abort();
+            controller = new AbortController();
+
+            try {
+                const response = await fetch(`${searchUrl}?q=${encodeURIComponent(query)}`, {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    signal: controller.signal,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Search failed with HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                renderGroups(data.groups);
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    return;
+                }
+
+                results.innerHTML = '';
+                setStatus('Search is temporarily unavailable.');
+            }
+        };
+
+        input.addEventListener('input', () => {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(runSearch, 250);
+        });
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') {
+                return;
+            }
+
+            const firstResult = results.querySelector('a[href]');
+            if (firstResult) {
+                event.preventDefault();
+                firstResult.click();
+            }
+        });
+    });
+};
+
+const initNotificationPolling = () => {
+    document.querySelectorAll('[data-notification-root]').forEach((root) => {
+        const feedUrl = root.dataset.feedUrl;
+        const readUrlTemplate = root.dataset.readUrlTemplate;
+        const indexUrl = root.dataset.indexUrl;
+        const csrf = root.dataset.csrf || '';
+        const list = root.querySelector('[data-notification-list]');
+        const button = root.querySelector('button[aria-label="Open notifications"]');
+
+        if (!feedUrl || !readUrlTemplate || !indexUrl || !list || !button) {
+            return;
+        }
+
+        const syncCount = (count) => {
+            const normalized = Number(count) || 0;
+            let badge = root.querySelector('[data-notification-count]');
+
+            if (normalized <= 0) {
+                badge?.remove();
+                return;
+            }
+
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.dataset.notificationCount = 'true';
+                badge.className = 'absolute right-1.5 top-1.5 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white';
+                button.appendChild(badge);
+            }
+
+            badge.textContent = normalized > 9 ? '9+' : String(normalized);
+        };
+
+        const syncList = (notifications) => {
+            if (!Array.isArray(notifications) || notifications.length === 0) {
+                list.innerHTML = '<div class="px-4 py-6 text-sm text-text-secondary">No notifications yet.</div>';
+                return;
+            }
+
+            list.innerHTML = notifications.map((notification) => {
+                const readUrl = readUrlTemplate.replace('__ID__', encodeURIComponent(notification.id));
+                const unreadClass = notification.read
+                    ? 'border-transparent'
+                    : 'border-brand-primary bg-bg-tertiary/50';
+
+                return `
+                    <form method="POST" action="${escapeHtml(readUrl)}">
+                        <input type="hidden" name="_token" value="${escapeHtml(csrf)}">
+                        <input type="hidden" name="redirect" value="${escapeHtml(notification.action_url || indexUrl)}">
+                        <button type="submit" class="block w-full border-s-2 px-4 py-3 text-start text-sm transition hover:bg-bg-tertiary ${unreadClass}" data-loading-text="Opening...">
+                            <span class="block font-semibold text-text-primary">${escapeHtml(notification.title)}</span>
+                            ${notification.body ? `<span class="mt-1 block text-xs text-text-secondary">${escapeHtml(notification.body)}</span>` : ''}
+                            <span class="mt-2 block text-xs text-text-tertiary">${escapeHtml(notification.created_at)}</span>
+                        </button>
+                    </form>
+                `;
+            }).join('');
+        };
+
+        const refresh = async () => {
+            try {
+                const response = await fetch(feedUrl, {
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                syncCount(data.unread_count);
+                syncList(data.notifications);
+            } catch (error) {
+                // Polling failures should not interrupt the active workflow.
+            }
+        };
+
+        window.setInterval(refresh, 45000);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                refresh();
+            }
+        });
+        window.addEventListener('sanfaani:result-action-completed', refresh);
+    });
+};
+
+initGlobalSearch();
+initNotificationPolling();
+
 document.addEventListener('submit', (event) => {
     const form = event.target;
 
@@ -78,27 +455,13 @@ document.addEventListener('submit', (event) => {
 
     form.dataset.submitting = 'true';
 
-    if (!submitter) {
+    setSubmitterLoading(form, submitter);
+
+    if (form.matches('[data-result-action-form]')) {
+        event.preventDefault();
+        submitResultAction(form, submitter);
         return;
     }
-
-    const loadingText = submitter.dataset.loadingText || form.dataset.loadingText || 'Processing...';
-
-    submitter.disabled = true;
-
-    if (submitter.tagName === 'INPUT') {
-        submitter.dataset.originalValue = submitter.value;
-        submitter.value = loadingText;
-        return;
-    }
-
-    submitter.dataset.originalHtml = submitter.innerHTML;
-    submitter.innerHTML = `
-        <span class="inline-flex items-center gap-2">
-            <span class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-            <span>${loadingText}</span>
-        </span>
-    `;
 });
 
 document.addEventListener('click', (event) => {

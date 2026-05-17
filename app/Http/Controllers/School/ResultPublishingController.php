@@ -14,6 +14,7 @@ use App\Models\Subject;
 use App\Models\Term;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
+use App\Services\SystemNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -63,9 +64,7 @@ class ResultPublishingController extends Controller
         $totalResults = (clone $query)->count();
 
         if ($totalResults === 0) {
-            return back()
-                ->withInput()
-                ->with('publishing_error', 'No reviewed, approved, or unpublished results were found for the selected class, session, term, and scope.');
+            return $this->workflowError($request, 'No reviewed, approved, or unpublished results were found for the selected class, session, term, and scope.');
         }
 
         $incompleteResults = (clone $query)
@@ -78,9 +77,7 @@ class ResultPublishingController extends Controller
             ->count();
 
         if ($incompleteResults > 0) {
-            return back()
-                ->withInput()
-                ->with('publishing_error', "Publishing blocked: {$incompleteResults} result record(s) are incomplete or ungraded.");
+            return $this->workflowError($request, "Publishing blocked: {$incompleteResults} result record(s) are incomplete or ungraded.");
         }
 
         $sourceStatuses = (clone $query)
@@ -140,8 +137,16 @@ class ResultPublishingController extends Controller
         ], request: $request);
 
         $this->notifyGuardians($school, $data, $studentIds);
+        $this->notifyWorkflowUsers($school, 'Results published', "Published {$totalResults} result record(s).", 'result.published', [
+            'scope_type' => $data['scope_type'],
+            'records' => $totalResults,
+            'student_ids' => $studentIds,
+        ], 'success');
 
-        return back()->with('success', "Results published successfully. Total records affected: {$totalResults}.");
+        return $this->workflowSuccess($request, "Results published successfully. Total records affected: {$totalResults}.", [
+            'affected_records' => $totalResults,
+            'reload' => true,
+        ]);
     }
 
     public function unpublish(Request $request)
@@ -157,9 +162,7 @@ class ResultPublishingController extends Controller
         $totalResults = (clone $query)->count();
 
         if ($totalResults === 0) {
-            return back()
-                ->withInput()
-                ->with('publishing_error', 'No published results were found for the selected class, session, term, and scope.');
+            return $this->workflowError($request, 'No published results were found for the selected class, session, term, and scope.');
         }
 
         DB::transaction(function () use ($query, $school, $data) {
@@ -167,6 +170,8 @@ class ResultPublishingController extends Controller
 
             $query->update([
                 'status' => ResultWorkflowStatus::Unpublished->value,
+                'published_at' => null,
+                'published_by' => null,
                 'unpublished_at' => $now,
                 'unpublished_by' => auth()->id(),
                 'unpublish_reason' => $data['unpublish_reason'],
@@ -205,8 +210,109 @@ class ResultPublishingController extends Controller
             'from_status' => ResultWorkflowStatus::Published->value,
             'to_status' => ResultWorkflowStatus::Unpublished->value,
         ], request: $request);
+        $this->notifyWorkflowUsers($school, 'Results unpublished', "Unpublished {$totalResults} result record(s).", 'result.unpublished', [
+            'scope_type' => $data['scope_type'],
+            'records' => $totalResults,
+            'reason' => $data['unpublish_reason'],
+        ], 'warning');
 
-        return back()->with('success', "Results unpublished successfully. Total records affected: {$totalResults}.");
+        return $this->workflowSuccess($request, "Results unpublished successfully. Total records affected: {$totalResults}.", [
+            'affected_records' => $totalResults,
+            'reload' => true,
+        ]);
+    }
+
+    public function publishSingle(Request $request, StudentResult $studentResult)
+    {
+        $school = $this->currentSchoolOrFail();
+        Gate::authorize('publish', [StudentResult::class, $school]);
+
+        $this->authorizeResult($studentResult, $school);
+
+        if (! in_array($studentResult->status, ResultWorkflowStatus::publishableStudentResultValues(), true)) {
+            return $this->workflowError($request, 'This result is not ready for publishing.');
+        }
+
+        if ($this->resultIsIncomplete($studentResult)) {
+            return $this->workflowError($request, 'Publishing blocked: this result is incomplete or ungraded.');
+        }
+
+        $schoolClassId = $studentResult->school_class_id
+            ?: Student::where('school_id', $school->id)->whereKey($studentResult->student_id)->value('school_class_id');
+
+        if (! $schoolClassId) {
+            return $this->workflowError($request, 'This result is missing a class context and cannot be safely published.');
+        }
+
+        $oldStatus = $studentResult->status;
+
+        DB::transaction(function () use ($studentResult, $school, $schoolClassId) {
+            $now = now();
+
+            $studentResult->update([
+                'school_class_id' => $schoolClassId,
+                'status' => ResultWorkflowStatus::Published->value,
+                'published_at' => $now,
+                'published_by' => auth()->id(),
+                'unpublished_at' => null,
+                'unpublished_by' => null,
+                'unpublish_reason' => null,
+                'updated_by' => auth()->id(),
+            ]);
+
+            ResultPublication::create([
+                'school_id' => $school->id,
+                'school_class_id' => $schoolClassId,
+                'academic_session_id' => $studentResult->academic_session_id,
+                'term_id' => $studentResult->term_id,
+                'result_type' => $studentResult->result_type,
+                'scope_type' => 'student_result',
+                'subject_id' => $studentResult->subject_id,
+                'student_id' => $studentResult->student_id,
+                'status' => 'published',
+                'scheduled_publish_at' => null,
+                'published_at' => $now,
+                'published_by' => auth()->id(),
+                'unpublished_at' => null,
+                'unpublished_by' => null,
+                'unpublish_reason' => null,
+                'created_by' => auth()->id(),
+            ]);
+        });
+
+        $freshResult = $studentResult->fresh(['student', 'subject', 'publishedBy', 'unpublishedBy']);
+
+        app(AuditLogService::class)->log('result_published', $freshResult, $school, metadata: [
+            'scope_type' => 'student_result',
+            'student_result_id' => $freshResult->id,
+            'student_id' => $freshResult->student_id,
+            'subject_id' => $freshResult->subject_id,
+            'school_class_id' => $schoolClassId,
+            'academic_session_id' => $freshResult->academic_session_id,
+            'term_id' => $freshResult->term_id,
+            'result_type' => $freshResult->result_type,
+            'from_status' => $oldStatus,
+            'to_status' => ResultWorkflowStatus::Published->value,
+        ], request: $request);
+
+        $this->notifyGuardians($school, [
+            'academic_session_id' => $freshResult->academic_session_id,
+            'term_id' => $freshResult->term_id,
+            'result_type' => $freshResult->result_type,
+            'scope_type' => 'student_result',
+            'student_result_id' => $freshResult->id,
+            'subject_id' => $freshResult->subject_id,
+        ], [$freshResult->student_id]);
+        $this->notifyWorkflowUsers($school, 'Result published', 'A single student result was published.', 'result.published', [
+            'student_result_id' => $freshResult->id,
+            'student_id' => $freshResult->student_id,
+            'subject_id' => $freshResult->subject_id,
+        ], 'success');
+
+        return $this->workflowSuccess($request, 'Result published successfully.', [
+            'result' => $this->resultStatePayload($freshResult),
+            'reload' => true,
+        ]);
     }
 
     public function unpublishSingle(Request $request, StudentResult $studentResult)
@@ -221,14 +327,14 @@ class ResultPublishingController extends Controller
         ]);
 
         if ($studentResult->status !== ResultWorkflowStatus::Published->value) {
-            return back()->with('publishing_error', 'This result is not currently published.');
+            return $this->workflowError($request, 'This result is not currently published.');
         }
 
         $schoolClassId = $studentResult->school_class_id
             ?: Student::where('school_id', $school->id)->whereKey($studentResult->student_id)->value('school_class_id');
 
         if (! $schoolClassId) {
-            return back()->with('publishing_error', 'This result is missing a class context and cannot be safely unpublished.');
+            return $this->workflowError($request, 'This result is missing a class context and cannot be safely unpublished.');
         }
 
         DB::transaction(function () use ($studentResult, $school, $data, $schoolClassId) {
@@ -236,6 +342,8 @@ class ResultPublishingController extends Controller
 
             $studentResult->update([
                 'status' => ResultWorkflowStatus::Unpublished->value,
+                'published_at' => null,
+                'published_by' => null,
                 'unpublished_at' => $now,
                 'unpublished_by' => auth()->id(),
                 'unpublish_reason' => $data['unpublish_reason'],
@@ -275,8 +383,17 @@ class ResultPublishingController extends Controller
             'from_status' => ResultWorkflowStatus::Published->value,
             'to_status' => ResultWorkflowStatus::Unpublished->value,
         ], request: $request);
+        $this->notifyWorkflowUsers($school, 'Result unpublished', 'A single student result was unpublished.', 'result.unpublished', [
+            'student_result_id' => $studentResult->id,
+            'student_id' => $studentResult->student_id,
+            'subject_id' => $studentResult->subject_id,
+            'reason' => $data['unpublish_reason'],
+        ], 'warning');
 
-        return back()->with('success', 'Result unpublished successfully.');
+        return $this->workflowSuccess($request, 'Result unpublished successfully.', [
+            'result' => $this->resultStatePayload($studentResult->fresh(['student', 'subject', 'publishedBy', 'unpublishedBy'])),
+            'reload' => true,
+        ]);
     }
 
     private function validatePublishingRequest(Request $request, School $school): array
@@ -341,6 +458,14 @@ class ResultPublishingController extends Controller
         }
 
         return $query;
+    }
+
+    private function resultIsIncomplete(StudentResult $result): bool
+    {
+        return blank($result->ca_score)
+            || blank($result->exam_score)
+            || blank($result->total_score)
+            || blank($result->grade);
     }
 
     private function authorizeResult(StudentResult $studentResult, School $school): void
@@ -438,5 +563,107 @@ class ResultPublishingController extends Controller
                     event(StudentTransactionalEmailRequested::resultPublished($student, $academicSession, $term, $data));
                 }
             });
+    }
+
+    private function notifyWorkflowUsers(
+        School $school,
+        string $title,
+        string $body,
+        string $event,
+        array $metadata = [],
+        string $severity = 'info'
+    ): void {
+        try {
+            app(SystemNotificationService::class)->notifySchoolRoles($school, ['school_admin', 'result_officer'], [
+                'title' => $title,
+                'body' => $body,
+                'category' => 'results',
+                'event' => $event,
+                'severity' => $severity,
+                'action_url' => route('school.results.publishing.index'),
+                'metadata' => $metadata,
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    private function workflowSuccess(Request $request, string $message, array $payload = [])
+    {
+        if ($this->expectsJsonResponse($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => $this->safeReturnUrl($request),
+                ...$payload,
+            ]);
+        }
+
+        $redirect = $this->safeReturnUrl($request);
+
+        return ($redirect ? redirect()->to($redirect) : back())
+            ->with('success', $message);
+    }
+
+    private function workflowError(Request $request, string $message)
+    {
+        if ($this->expectsJsonResponse($request)) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], 422);
+        }
+
+        return back()
+            ->withInput()
+            ->with('publishing_error', $message);
+    }
+
+    private function expectsJsonResponse(Request $request): bool
+    {
+        return $request->expectsJson() || $request->ajax();
+    }
+
+    private function safeReturnUrl(Request $request): ?string
+    {
+        $returnUrl = trim((string) $request->input('_return_url'));
+
+        if ($returnUrl === '') {
+            return null;
+        }
+
+        if (str_starts_with($returnUrl, '/')) {
+            return $returnUrl;
+        }
+
+        if (! filter_var($returnUrl, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        $returnHost = parse_url($returnUrl, PHP_URL_HOST);
+        $requestHost = $request->getHost();
+
+        return $returnHost === $requestHost ? $returnUrl : null;
+    }
+
+    private function resultStatePayload(StudentResult $result): array
+    {
+        $isPublished = $result->status === ResultWorkflowStatus::Published->value
+            && filled($result->published_at)
+            && blank($result->unpublished_at);
+
+        return [
+            'id' => $result->id,
+            'status' => $result->status,
+            'status_label' => $result->workflowStatus()?->label() ?? str($result->status)->title()->toString(),
+            'is_published' => $isPublished,
+            'published_at' => $isPublished ? $result->published_at?->toDateTimeString() : null,
+            'published_at_label' => $isPublished ? $result->published_at?->format('d M Y, h:i A') : 'Not published',
+            'published_by' => $isPublished ? $result->publishedBy?->name : null,
+            'unpublished_at' => $result->unpublished_at?->toDateTimeString(),
+            'unpublished_at_label' => $result->unpublished_at?->format('d M Y, h:i A'),
+            'unpublished_by' => $result->unpublishedBy?->name,
+            'result_version' => 'v'.max(1, (int) $result->result_version),
+        ];
     }
 }

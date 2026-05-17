@@ -7,6 +7,7 @@ use App\Models\CommunicationLog;
 use App\Models\School;
 use App\Models\SupportEscalationHistory;
 use App\Models\SupportMessage;
+use App\Models\SupportMessageAttachment;
 use App\Models\SupportThread;
 use App\Models\SupportThreadEvent;
 use App\Models\User;
@@ -83,7 +84,7 @@ class SupportRoutingService
                 ],
             ]);
 
-            SupportMessage::create([
+            $message = SupportMessage::create([
                 'support_thread_id' => $thread->id,
                 'school_id' => $school->id,
                 'sender_id' => $actor->id,
@@ -91,6 +92,7 @@ class SupportRoutingService
                 'message' => $data['message'],
                 'is_internal_note' => false,
             ]);
+            $this->storeAttachments($message, $actor, $data['attachments'] ?? []);
 
             $this->event($thread, $actor, $actorRole, 'created', 'Ticket created', $thread->subject, [], [
                 'status' => $status,
@@ -120,9 +122,10 @@ class SupportRoutingService
         string $actorRole,
         string $message,
         bool $isInternalNote = false,
-        ?Request $request = null
+        ?Request $request = null,
+        array $attachments = []
     ): SupportMessage {
-        return DB::transaction(function () use ($thread, $actor, $actorRole, $message, $isInternalNote, $request) {
+        return DB::transaction(function () use ($thread, $actor, $actorRole, $message, $isInternalNote, $request, $attachments) {
             $thread = SupportThread::whereKey($thread->getKey())->lockForUpdate()->firstOrFail();
 
             $supportMessage = SupportMessage::create([
@@ -134,6 +137,7 @@ class SupportRoutingService
                 'is_internal_note' => $isInternalNote,
                 'metadata' => ['notification_ready' => ! $isInternalNote],
             ]);
+            $this->storeAttachments($supportMessage, $actor, $attachments);
 
             $oldStatus = $thread->status;
             $newStatus = $isInternalNote ? $thread->status : $this->statusAfterReply($thread, $actorRole);
@@ -164,6 +168,30 @@ class SupportRoutingService
 
             return $supportMessage;
         });
+    }
+
+    private function storeAttachments(SupportMessage $message, User $actor, array $attachments): void
+    {
+        if (! $this->tableIsReady('support_message_attachments')) {
+            return;
+        }
+
+        foreach ($attachments as $attachment) {
+            if (! filled($attachment['path'] ?? null)) {
+                continue;
+            }
+
+            SupportMessageAttachment::create([
+                'support_message_id' => $message->id,
+                'school_id' => $message->school_id,
+                'uploaded_by' => $actor->id,
+                'disk' => $attachment['disk'] ?? 'local',
+                'path' => $attachment['path'],
+                'original_name' => $attachment['name'] ?? basename($attachment['path']),
+                'mime_type' => $attachment['mime'] ?? null,
+                'size' => (int) ($attachment['size'] ?? 0),
+            ]);
+        }
     }
 
     public function updateStatus(

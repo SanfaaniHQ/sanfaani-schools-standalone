@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditLogService;
+use App\Services\SystemNotificationService;
 use App\Services\UserWorkspaceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,7 +24,12 @@ class AdminAuthenticatedSessionController extends Controller
         return view('auth.admin-login');
     }
 
-    public function store(Request $request, UserWorkspaceService $workspaces): RedirectResponse
+    public function store(
+        Request $request,
+        UserWorkspaceService $workspaces,
+        AuditLogService $auditLog,
+        SystemNotificationService $notifications
+    ): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'email', 'max:255'],
@@ -33,6 +40,23 @@ class AdminAuthenticatedSessionController extends Controller
             Log::notice('Super Admin login failed.', [
                 'email' => $credentials['email'],
                 'ip' => $request->ip(),
+            ]);
+            $auditLog->log('super_admin_login_failed', null, null, metadata: [
+                'email' => $credentials['email'],
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ], request: $request);
+            $notifications->notifySuperAdmins([
+                'title' => 'Super Admin login failed',
+                'body' => 'A failed Super Admin login attempt was recorded for '.$credentials['email'].'.',
+                'category' => 'security',
+                'event' => 'security.super_admin_login_failed',
+                'severity' => 'warning',
+                'action_url' => route('admin.security.index'),
+                'metadata' => [
+                    'email' => $credentials['email'],
+                    'ip' => $request->ip(),
+                ],
             ]);
 
             throw ValidationException::withMessages([
@@ -45,6 +69,23 @@ class AdminAuthenticatedSessionController extends Controller
                 'user_id' => $request->user()->id,
                 'school_id' => $request->user()->school_id,
                 'ip' => $request->ip(),
+            ]);
+            $auditLog->log('super_admin_login_blocked_non_admin', $request->user(), $request->user()->school, metadata: [
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ], request: $request);
+            $notifications->notifySuperAdmins([
+                'title' => 'Blocked Super Admin login',
+                'body' => 'A non-admin account attempted to use the Super Admin login area.',
+                'category' => 'security',
+                'event' => 'security.super_admin_login_blocked',
+                'severity' => 'critical',
+                'action_url' => route('admin.security.index'),
+                'metadata' => [
+                    'user_id' => $request->user()->id,
+                    'school_id' => $request->user()->school_id,
+                    'ip' => $request->ip(),
+                ],
             ]);
 
             Auth::guard('web')->logout();
@@ -63,6 +104,10 @@ class AdminAuthenticatedSessionController extends Controller
             'user_id' => $request->user()->id,
             'ip' => $request->ip(),
         ]);
+        $auditLog->log('super_admin_login_succeeded', $request->user(), null, metadata: [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ], request: $request);
 
         return redirect()->intended(route('admin.dashboard'));
     }

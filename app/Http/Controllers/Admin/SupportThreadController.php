@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\SupportMessageAttachment;
 use App\Models\SupportThread;
 use App\Models\User;
 use App\Services\SupportRoutingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class SupportThreadController extends Controller
@@ -55,6 +57,7 @@ class SupportThreadController extends Controller
             'assignedUser',
             'escalatedBy',
             'messages.sender',
+            'messages.attachments',
             'events.actor',
             'escalationHistories.escalatedBy',
         ]);
@@ -75,11 +78,23 @@ class SupportThreadController extends Controller
         $data = $request->validate([
             'message' => ['required', 'string', 'max:5000'],
             'is_internal_note' => ['nullable', 'boolean'],
+            'attachments' => ['nullable', 'array', 'max:3'],
+            'attachments.*' => ['file', 'max:5120'],
         ]);
 
-        $support->addReply($thread, $request->user(), 'super_admin', $data['message'], (bool) ($data['is_internal_note'] ?? false), $request);
+        $support->addReply($thread, $request->user(), 'super_admin', $data['message'], (bool) ($data['is_internal_note'] ?? false), $request, $this->storeAttachments($request));
 
         return back()->with('success', 'Reply sent successfully.');
+    }
+
+    public function downloadAttachment(SupportMessageAttachment $attachment, Request $request, SupportRoutingService $support)
+    {
+        $thread = $attachment->message?->thread;
+
+        abort_unless($thread, 404);
+        abort_unless($support->visiblePlatformThreadsQuery()->whereKey($thread->getKey())->exists(), 403);
+
+        return Storage::disk($attachment->disk)->download($attachment->path, $attachment->original_name);
     }
 
     public function status(Request $request, SupportThread $thread, SupportRoutingService $support)
@@ -112,5 +127,22 @@ class SupportThreadController extends Controller
         $support->assign($thread, $request->user(), 'super_admin', $assignee, $request);
 
         return back()->with('success', 'Thread assignment updated.');
+    }
+
+    private function storeAttachments(Request $request): array
+    {
+        return collect($request->file('attachments', []))
+            ->filter()
+            ->map(function ($file) {
+                return [
+                    'disk' => 'local',
+                    'path' => $file->store('support-attachments'),
+                    'name' => $file->getClientOriginalName(),
+                    'mime' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

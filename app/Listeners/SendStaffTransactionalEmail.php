@@ -3,12 +3,14 @@
 namespace App\Listeners;
 
 use App\Events\StaffTransactionalEmailRequested;
+use App\Notifications\SystemDatabaseNotification;
 use App\Services\AuditLogService;
 use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class SendStaffTransactionalEmail implements ShouldQueue
@@ -36,36 +38,46 @@ class SendStaffTransactionalEmail implements ShouldQueue
                 return;
             }
 
-            if (
-                $event->respectPreferences
-                && ! $this->emailEnabled($event)
-            ) {
+            $channels = $event->respectPreferences
+                ? $this->preferences->channelsFor($event->eventKey, $event->school, $event->staff, $event->role)
+                : ['mail', 'database'];
+            $emailEnabled = (bool) array_intersect($channels, ['mail', 'email'])
+                && (! $event->respectPreferences || $this->emailEnabled($event));
+            $databaseEnabled = (bool) array_intersect($channels, ['database', 'in_app']);
+
+            if (! $emailEnabled && ! $databaseEnabled) {
                 $this->auditSkipped($event, 'preference_disabled');
 
                 return;
             }
 
-            $log = $this->communications->sendTransactionalEmail(
-                $event->school,
-                $event->recipient,
-                $event->subject,
-                $event->headline,
-                $event->body,
-                $event->type,
-                array_merge($event->metadata, [
-                    'event_key' => $event->eventKey,
-                    'staff_id' => $event->staff->id,
-                    'role' => $event->role,
-                ]),
-                CommunicationService::CATEGORY_STAFF_LIFECYCLE
-            );
+            if ($databaseEnabled) {
+                $this->notifyDatabase($event);
+            }
 
-            $this->auditLog->log('staff_transactional_email_dispatched', $event->staff, $event->school, metadata: [
-                'event_key' => $event->eventKey,
-                'recipient' => $event->recipient,
-                'communication_log_id' => $log->id,
-                'communication_status' => $log->status,
-            ]);
+            if ($emailEnabled) {
+                $log = $this->communications->sendTransactionalEmail(
+                    $event->school,
+                    $event->recipient,
+                    $event->subject,
+                    $event->headline,
+                    $event->body,
+                    $event->type,
+                    array_merge($event->metadata, [
+                        'event_key' => $event->eventKey,
+                        'staff_id' => $event->staff->id,
+                        'role' => $event->role,
+                    ]),
+                    CommunicationService::CATEGORY_STAFF_LIFECYCLE
+                );
+
+                $this->auditLog->log('staff_transactional_email_dispatched', $event->staff, $event->school, metadata: [
+                    'event_key' => $event->eventKey,
+                    'recipient' => $event->recipient,
+                    'communication_log_id' => $log->id,
+                    'communication_status' => $log->status,
+                ]);
+            }
         } catch (Throwable $exception) {
             Log::warning('Staff transactional email listener failed.', [
                 'event_key' => $event->eventKey,
@@ -86,6 +98,52 @@ class SendStaffTransactionalEmail implements ShouldQueue
                     'message' => $auditException->getMessage(),
                 ]);
             }
+        }
+    }
+
+    private function notifyDatabase(StaffTransactionalEmailRequested $event): void
+    {
+        if (! $this->notificationsAreReady()) {
+            return;
+        }
+
+        try {
+            $event->staff->notify(new SystemDatabaseNotification([
+                'title' => $event->subject,
+                'body' => $event->headline."\n".$event->body,
+                'category' => 'staff',
+                'event' => $event->eventKey,
+                'severity' => $event->metadata['severity'] ?? 'info',
+                'action_url' => $event->metadata['action_url'] ?? null,
+                'school_id' => $event->school->id,
+                'role' => $event->role,
+                'metadata' => array_merge($event->metadata, [
+                    'staff_id' => $event->staff->id,
+                    'role' => $event->role,
+                ]),
+            ]));
+
+            $this->auditLog->log('staff_transactional_database_dispatched', $event->staff, $event->school, metadata: [
+                'event_key' => $event->eventKey,
+                'staff_id' => $event->staff->id,
+                'role' => $event->role,
+            ]);
+        } catch (Throwable $exception) {
+            Log::warning('Staff database notification failed.', [
+                'event_key' => $event->eventKey,
+                'school_id' => $event->school->id,
+                'staff_id' => $event->staff->id,
+                'message' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function notificationsAreReady(): bool
+    {
+        try {
+            return Schema::hasTable('notifications');
+        } catch (Throwable) {
+            return false;
         }
     }
 

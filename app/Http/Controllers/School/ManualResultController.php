@@ -247,6 +247,49 @@ class ManualResultController extends Controller
         ]);
     }
 
+    public function submit(Request $request, StudentResult $studentResult, AuditLogService $auditLog)
+    {
+        return $this->transitionResult(
+            $request,
+            $studentResult,
+            $auditLog,
+            'submit',
+            ResultWorkflowStatus::Submitted,
+            'result_submitted',
+            'Result submitted successfully.'
+        );
+    }
+
+    public function returnForCorrection(Request $request, StudentResult $studentResult, AuditLogService $auditLog)
+    {
+        $request->validate([
+            'return_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        return $this->transitionResult(
+            $request,
+            $studentResult,
+            $auditLog,
+            'returnForCorrection',
+            ResultWorkflowStatus::Returned,
+            'result_returned',
+            'Result returned for correction.'
+        );
+    }
+
+    public function approve(Request $request, StudentResult $studentResult, AuditLogService $auditLog)
+    {
+        return $this->transitionResult(
+            $request,
+            $studentResult,
+            $auditLog,
+            'approve',
+            ResultWorkflowStatus::Approved,
+            'result_approved',
+            'Result approved successfully.'
+        );
+    }
+
     public function destroy(Request $request, StudentResult $studentResult)
     {
         $school = $this->currentSchoolOrFail();
@@ -317,6 +360,56 @@ class ManualResultController extends Controller
         return $data;
     }
 
+    private function transitionResult(
+        Request $request,
+        StudentResult $studentResult,
+        AuditLogService $auditLog,
+        string $ability,
+        ResultWorkflowStatus $target,
+        string $auditAction,
+        string $message
+    ) {
+        $school = $this->currentSchoolOrFail();
+
+        $this->authorizeResult($studentResult, $school);
+        Gate::authorize($ability, $studentResult);
+
+        if (! $studentResult->canTransitionTo($target)) {
+            return $this->workflowActionError($request, 'This result cannot move from '.str_replace('_', ' ', $studentResult->status).' to '.$target->label().'.');
+        }
+
+        $oldValues = $studentResult->only(['status', 'updated_by', 'approved_by', 'result_version']);
+        $update = [
+            'status' => $target->value,
+            'updated_by' => auth()->id(),
+        ];
+
+        if ($target === ResultWorkflowStatus::Approved) {
+            $update['approved_by'] = auth()->id();
+        }
+
+        $studentResult->update($update);
+        $studentResult->refresh()->load(['updatedBy:id,name', 'approvedBy:id,name', 'publishedBy:id,name']);
+
+        $auditLog->log($auditAction, $studentResult, $school, $oldValues, $studentResult->only([
+            'status',
+            'updated_by',
+            'approved_by',
+            'result_version',
+        ]), metadata: [
+            'student_id' => $studentResult->student_id,
+            'subject_id' => $studentResult->subject_id,
+            'from_status' => $oldValues['status'] ?? null,
+            'to_status' => $target->value,
+            'reason' => $request->input('return_reason'),
+        ], request: $request);
+
+        return $this->workflowActionSuccess($request, $message, [
+            'result' => $this->resultStatePayload($studentResult),
+            'reload' => true,
+        ]);
+    }
+
     private function resolveResultClassId(
         School $school,
         Student $student,
@@ -352,6 +445,74 @@ class ManualResultController extends Controller
         }
 
         return $school;
+    }
+
+    private function workflowActionSuccess(Request $request, string $message, array $payload = [])
+    {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'redirect_url' => $this->safeReturnUrl($request),
+                ...$payload,
+            ]);
+        }
+
+        $redirect = $this->safeReturnUrl($request);
+
+        return ($redirect ? redirect()->to($redirect) : back())
+            ->with('success', $message);
+    }
+
+    private function workflowActionError(Request $request, string $message)
+    {
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], 422);
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', $message);
+    }
+
+    private function safeReturnUrl(Request $request): ?string
+    {
+        $returnUrl = trim((string) $request->input('_return_url'));
+
+        if ($returnUrl === '') {
+            return null;
+        }
+
+        if (str_starts_with($returnUrl, '/')) {
+            return $returnUrl;
+        }
+
+        if (! filter_var($returnUrl, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        return parse_url($returnUrl, PHP_URL_HOST) === $request->getHost()
+            ? $returnUrl
+            : null;
+    }
+
+    private function resultStatePayload(StudentResult $result): array
+    {
+        return [
+            'id' => $result->id,
+            'status' => $result->status,
+            'status_label' => $result->workflowStatus()?->label() ?? str($result->status)->title()->toString(),
+            'is_published' => $result->status === ResultWorkflowStatus::Published->value
+                && filled($result->published_at)
+                && blank($result->unpublished_at),
+            'published_at_label' => $result->published_at?->format('d M Y, h:i A') ?? 'Not published',
+            'updated_by' => $result->updatedBy?->name,
+            'approved_by' => $result->approvedBy?->name,
+            'result_version' => 'v'.max(1, (int) $result->result_version),
+        ];
     }
 
     private function authorizeResult(StudentResult $studentResult, School $school): void

@@ -7,6 +7,8 @@ use App\Models\School;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class AuditLogService
 {
@@ -19,11 +21,21 @@ class AuditLogService
         array $metadata = [],
         ?Request $request = null
     ): AuditLog {
-        return AuditLog::create([
-            'user_id' => Auth::id(),
+        $request ??= request();
+        $actorId = Auth::id();
+        $tag = $this->tagFor($action);
+        $sanitizedMetadata = $this->sanitize($metadata);
+
+        return AuditLog::create($this->existingColumnsOnly([
+            'user_id' => $actorId,
             'school_id' => $school?->id ?? $auditable?->school_id ?? null,
+            'actor_id' => $actorId,
+            'actor_type' => $this->actorType($actorId),
+            'category' => $tag,
+            'event' => $action,
+            'payload' => $sanitizedMetadata ?: null,
             'action' => $action,
-            'action_tag' => $this->tagFor($action),
+            'action_tag' => $tag,
             'severity' => $this->severityFor($action),
             'auditable_type' => $auditable ? $auditable::class : null,
             'auditable_id' => $auditable?->getKey(),
@@ -31,8 +43,8 @@ class AuditLogService
             'new_values' => $this->sanitize($newValues) ?: null,
             'ip_address' => $request?->ip(),
             'user_agent' => $request ? (string) $request->userAgent() : null,
-            'metadata' => $this->sanitize($metadata) ?: null,
-        ]);
+            'metadata' => $sanitizedMetadata ?: null,
+        ]));
     }
 
     private function sanitize(array $metadata): array
@@ -52,6 +64,30 @@ class AuditLogService
         );
 
         return $metadata;
+    }
+
+    private function actorType(?int $actorId): string
+    {
+        try {
+            if (session('is_support_session')) {
+                return 'support';
+            }
+        } catch (Throwable) {
+            //
+        }
+
+        return $actorId ? 'user' : 'system';
+    }
+
+    private function existingColumnsOnly(array $attributes): array
+    {
+        try {
+            return collect($attributes)
+                ->filter(fn ($value, $column) => Schema::hasColumn('audit_logs', $column))
+                ->all();
+        } catch (Throwable) {
+            return $attributes;
+        }
     }
 
     private function tagFor(string $action): string

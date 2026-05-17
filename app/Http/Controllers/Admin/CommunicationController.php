@@ -19,11 +19,36 @@ class CommunicationController extends Controller
 {
     public function index(Request $request)
     {
+        return $this->renderIndex($request, 'center');
+    }
+
+    public function logs(Request $request)
+    {
+        return $this->renderIndex($request, 'logs');
+    }
+
+    private function renderIndex(Request $request, string $mode)
+    {
         $logs = new LengthAwarePaginator([], 0, 20);
+        $summary = [
+            'sent' => 0,
+            'failed' => 0,
+            'pending' => 0,
+        ];
+
         if (Schema::hasTable('communication_logs')) {
-            $logs = CommunicationLog::whereNull('school_id')
+            $query = CommunicationLog::whereNull('school_id')
                 ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
                 ->when($request->filled('type'), fn ($query) => $query->where('type', $request->input('type')))
+                ->when($request->filled('search'), fn ($query) => $query->search($request->input('search')));
+
+            $summary = [
+                'sent' => (clone $query)->where('status', CommunicationLog::STATUS_SENT)->count(),
+                'failed' => (clone $query)->where('status', CommunicationLog::STATUS_FAILED)->count(),
+                'pending' => (clone $query)->where('status', CommunicationLog::STATUS_PENDING)->count(),
+            ];
+
+            $logs = $query
                 ->latest()
                 ->paginate(20)
                 ->withQueryString();
@@ -35,6 +60,9 @@ class CommunicationController extends Controller
             'leads' => LeadRequest::latest()->limit(50)->get(['id', 'email', 'name', 'status']),
             'status' => $request->input('status'),
             'type' => $request->input('type'),
+            'search' => $request->input('search'),
+            'mode' => $mode,
+            'summary' => $summary,
         ]);
     }
 
@@ -49,28 +77,33 @@ class CommunicationController extends Controller
             'include_school_contact' => ['nullable', 'boolean'],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
+            'attachments' => ['nullable', 'array', 'max:3'],
+            'attachments.*' => ['file', 'max:5120'],
         ]);
 
         $targetRoles = $this->targetRoles($data['target_roles'] ?? []);
         $includeSchoolContact = $request->boolean('include_school_contact');
+        $metadata = [
+            'attachments' => $this->storeAttachments($request),
+        ];
 
         if ($data['target'] === 'school' && filled($data['school_id'] ?? null)) {
             $school = School::findOrFail($data['school_id']);
-            event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'single_school'));
+            event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'single_school', $metadata));
         }
 
         if ($data['target'] === 'trial_schools') {
-            School::where('subscription_status', 'trial')->chunkById(50, function ($schools) use ($data, $targetRoles, $includeSchoolContact) {
+            School::where('subscription_status', 'trial')->chunkById(50, function ($schools) use ($data, $targetRoles, $includeSchoolContact, $metadata) {
                 foreach ($schools as $school) {
-                    event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'trial_schools'));
+                    event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'trial_schools', $metadata));
                 }
             });
         }
 
         if ($data['target'] === 'expired_schools') {
-            School::where('subscription_status', 'expired')->chunkById(50, function ($schools) use ($data, $targetRoles, $includeSchoolContact) {
+            School::where('subscription_status', 'expired')->chunkById(50, function ($schools) use ($data, $targetRoles, $includeSchoolContact, $metadata) {
                 foreach ($schools as $school) {
-                    event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'expired_schools'));
+                    event(SchoolNotificationRequested::systemAnnouncement($school, $data['subject'], $data['message'], $targetRoles, $includeSchoolContact, 'expired_schools', $metadata));
                 }
             });
         }
@@ -78,7 +111,7 @@ class CommunicationController extends Controller
         if ($data['target'] === 'lead' && filled($data['lead_id'] ?? null)) {
             $lead = LeadRequest::findOrFail($data['lead_id']);
             if (filled($lead->email)) {
-                $log = $communications->sendPlatformEmail($lead->email, $data['subject'], 'Lead follow-up', $data['message'], 'lead_followup', ['lead_id' => $lead->id], 'platform_transactional', $request->user());
+                $log = $communications->sendPlatformEmail($lead->email, $data['subject'], 'Lead follow-up', $data['message'], 'lead_followup', array_merge(['lead_id' => $lead->id], $metadata), 'platform_transactional', $request->user());
                 $leadCrm->recordCommunication($lead, $request->user(), [
                     'channel' => 'email',
                     'direction' => 'outbound',
@@ -92,6 +125,23 @@ class CommunicationController extends Controller
         }
 
         return back()->with('success', 'Communication dispatch completed.');
+    }
+
+    private function storeAttachments(Request $request): array
+    {
+        return collect($request->file('attachments', []))
+            ->filter()
+            ->map(function ($file) {
+                return [
+                    'disk' => 'local',
+                    'path' => $file->store('communication-attachments'),
+                    'name' => $file->getClientOriginalName(),
+                    'mime' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     private function targetRoles(array $roles): array
@@ -167,6 +217,7 @@ class CommunicationController extends Controller
             CommunicationLog::whereNull('school_id')
                 ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')))
                 ->when($request->filled('type'), fn ($query) => $query->where('type', $request->input('type')))
+                ->when($request->filled('search'), fn ($query) => $query->search($request->input('search')))
                 ->orderByDesc('id')
                 ->chunk(300, function ($rows) use ($handle) {
                     foreach ($rows as $row) {

@@ -109,7 +109,7 @@
                     aria-labelledby="command-palette-title"
                     x-on:click.self="commandPaletteOpen = false"
                 >
-                    <section class="w-full max-w-2xl overflow-hidden rounded-xl border border-border-subtle bg-bg-secondary shadow-xl">
+                    <section class="w-full max-w-2xl overflow-hidden rounded-xl border border-border-subtle bg-bg-secondary shadow-xl" data-global-search-root data-search-url="{{ route('search') }}">
                         <div class="border-b border-border-subtle p-4">
                             <h2 id="command-palette-title" class="sr-only">Global command palette</h2>
                             <label for="command-palette-search" class="sr-only">Search students, teachers, results, and settings</label>
@@ -124,12 +124,18 @@
                                     type="search"
                                     class="h-10 flex-1 border-0 bg-transparent p-0 text-sm text-text-primary placeholder:text-text-tertiary focus:ring-0"
                                     placeholder="Search students, teachers, results, settings..."
+                                    autocomplete="off"
+                                    data-global-search-input
                                 >
                                 <span class="hidden rounded border border-border-subtle px-2 py-1 font-mono text-xs text-text-tertiary sm:inline">ESC</span>
                             </div>
                         </div>
 
                         <div class="max-h-[60vh] overflow-y-auto p-2">
+                            <div class="hidden px-3 py-2 text-sm text-text-secondary" data-global-search-status></div>
+                            <div class="space-y-3" data-global-search-results></div>
+
+                            <div data-command-default-results>
                             <p class="px-3 py-2 text-xs font-medium uppercase tracking-wider text-text-tertiary">Core operations</p>
                             @php
                                 $user = auth()->user();
@@ -144,16 +150,21 @@
                                         ['label' => 'Platform Dashboard', 'context' => 'Global platform status', 'href' => route('admin.dashboard'), 'visible' => true],
                                         ['label' => 'Schools', 'context' => 'Institution accounts and support access', 'href' => route('admin.schools.index'), 'visible' => true],
                                         ['label' => 'Scratch Requests', 'context' => 'Card batches awaiting action', 'href' => route('admin.scratch-card-requests.index'), 'visible' => true],
+                                        ['label' => 'Communication Center', 'context' => 'Broadcasts, delivery history, and retries', 'href' => route('admin.communications.index'), 'visible' => true],
+                                        ['label' => 'Platform Mail System', 'context' => 'SMTP health and fallback policy', 'href' => route('admin.platform-mail-system.index'), 'visible' => true],
+                                        ['label' => 'Security', 'context' => 'Login, permission, and suspicious activity', 'href' => route('admin.security.index'), 'visible' => true],
                                         ['label' => 'Audit Logs', 'context' => 'Security and compliance trail', 'href' => route('admin.audit-logs.index'), 'visible' => true],
                                     ]
                                     : [
                                         ['label' => 'Dashboard', 'context' => 'School operations status', 'href' => route('school.dashboard'), 'visible' => true],
                                         ['label' => 'Students', 'context' => 'Enrollment, profiles, and lifecycle', 'href' => route('school.students.index'), 'visible' => $canCommand($roleContext === 'teacher' ? 'students.view_assigned' : 'students.view')],
                                         ['label' => 'Results', 'context' => 'Entry, review, publishing pipeline', 'href' => Route::has('school.result-system.index') ? route('school.result-system.index') : route('school.dashboard'), 'visible' => $canCommand('results.manual_entry') || $canCommand('results.review') || $canCommand('results.publish')],
-                                        ['label' => 'Sessions', 'context' => 'Academic years and current session', 'href' => route('school.sessions.index'), 'visible' => $roleContext === 'school_admin'],
-                                        ['label' => 'Terms', 'context' => 'Academic terms by session', 'href' => route('school.terms.index'), 'visible' => $roleContext === 'school_admin'],
-                                        ['label' => 'Bulk Communication', 'context' => 'Send school-scoped operational messages', 'href' => route('school.communications.bulk'), 'visible' => $roleContext === 'school_admin' && $canCommand('communication.bulk')],
-                                    ];
+                                         ['label' => 'Sessions', 'context' => 'Academic years and current session', 'href' => route('school.sessions.index'), 'visible' => $roleContext === 'school_admin'],
+                                         ['label' => 'Terms', 'context' => 'Academic terms by session', 'href' => route('school.terms.index'), 'visible' => $roleContext === 'school_admin'],
+                                         ['label' => 'Bulk Communication', 'context' => 'Send school-scoped operational messages', 'href' => route('school.communications.bulk'), 'visible' => $roleContext === 'school_admin' && $canCommand('communication.bulk')],
+                                         ['label' => 'Mail Settings', 'context' => 'School SMTP and delivery policy', 'href' => route('school.mail-settings.edit'), 'visible' => $roleContext === 'school_admin'],
+                                         ['label' => 'Audit Logs', 'context' => 'School activity and security trail', 'href' => route('school.audit-logs.index'), 'visible' => $roleContext === 'school_admin'],
+                                     ];
 
                                 $commandItems = collect($commandItems)->filter(fn ($item) => $item['visible']);
                             @endphp
@@ -173,6 +184,7 @@
                                     </span>
                                 </a>
                             @endforeach
+                            </div>
                         </div>
                     </section>
                 </div>

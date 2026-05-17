@@ -8,7 +8,7 @@
 
     <div class="py-8">
         <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-            <form method="POST" action="{{ route('school.support.store') }}" class="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
+            <form method="POST" action="{{ route('school.support.store') }}" enctype="multipart/form-data" class="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Subject</label>
@@ -50,6 +50,11 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Message</label>
                     <textarea name="message" rows="6" class="mt-1 block w-full rounded-xl border-gray-300">{{ old('message') }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Attachments</label>
+                    <input type="file" name="attachments[]" multiple class="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-700">
+                    <p class="mt-1 text-xs text-gray-500">Up to 3 files, 5 MB each.</p>
                 </div>
                 <div class="flex justify-end gap-3">
                     <a href="{{ route('school.support.index') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700">Cancel</a>

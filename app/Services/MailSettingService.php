@@ -13,6 +13,13 @@ use Throwable;
 
 class MailSettingService
 {
+    private array $baseMailConfig;
+
+    public function __construct()
+    {
+        $this->baseMailConfig = config('mail');
+    }
+
     public function tableIsReady(): bool
     {
         try {
@@ -45,9 +52,9 @@ class MailSettingService
         if (! $this->tableIsReady()) {
             return new MailSetting([
                 'school_id' => $schoolId,
-                'mailer' => config('mail.default', 'log'),
-                'from_address' => config('mail.from.address'),
-                'from_name' => config('mail.from.name'),
+                'mailer' => data_get($this->baseMailConfig, 'default', 'log'),
+                'from_address' => data_get($this->baseMailConfig, 'from.address'),
+                'from_name' => data_get($this->baseMailConfig, 'from.name'),
                 'reply_to_email' => null,
                 'is_enabled' => false,
             ]);
@@ -92,9 +99,9 @@ class MailSettingService
     private function defaultAttributes(?int $schoolId = null): array
     {
         $attributes = [
-            'mailer' => config('mail.default', 'log'),
-            'from_address' => config('mail.from.address'),
-            'from_name' => config('mail.from.name'),
+            'mailer' => data_get($this->baseMailConfig, 'default', 'log'),
+            'from_address' => data_get($this->baseMailConfig, 'from.address'),
+            'from_name' => data_get($this->baseMailConfig, 'from.name'),
             'is_enabled' => false,
         ];
 
@@ -111,11 +118,15 @@ class MailSettingService
 
     public function resolveForSchool(?School $school): MailSetting
     {
+        if ($this->forcePlatformMailer()) {
+            return $this->current();
+        }
+
         $schoolSetting = $school && $this->schoolScopeIsReady()
             ? $this->current($school->id)
             : null;
 
-        if ($schoolSetting && $schoolSetting->is_enabled) {
+        if ($schoolSetting && $schoolSetting->is_enabled && $this->schoolCustomSmtpAllowed()) {
             return $schoolSetting;
         }
 
@@ -140,6 +151,8 @@ class MailSettingService
         $setting ??= $this->current();
 
         if (! $setting->is_enabled) {
+            $this->restoreBaseMailConfig();
+
             return;
         }
 
@@ -272,7 +285,7 @@ class MailSettingService
 
     public function hasEnabledSchoolMailer(?School $school): bool
     {
-        if (! $school || ! $this->schoolScopeIsReady()) {
+        if (! $school || ! $this->schoolScopeIsReady() || ! $this->schoolCustomSmtpAllowed()) {
             return false;
         }
 
@@ -337,11 +350,48 @@ class MailSettingService
         return $data;
     }
 
+    public function schoolCustomSmtpAllowed(): bool
+    {
+        return ! $this->forcePlatformMailer()
+            && (bool) data_get($this->mailGovernance(), 'school_custom_smtp_enabled', true);
+    }
+
+    public function forcePlatformMailer(): bool
+    {
+        return (bool) data_get($this->mailGovernance(), 'force_platform_mailer', false);
+    }
+
+    public function platformFallbackEnabled(): bool
+    {
+        return (bool) data_get($this->mailGovernance(), 'platform_fallback_enabled', true);
+    }
+
+    public function mailGovernance(): array
+    {
+        try {
+            $settings = app(PlatformSettingService::class)->get();
+            $governance = data_get($settings->metadata, 'mail', []);
+
+            return array_merge([
+                'school_custom_smtp_enabled' => true,
+                'force_platform_mailer' => false,
+                'platform_fallback_enabled' => true,
+            ], is_array($governance) ? $governance : []);
+        } catch (Throwable) {
+            return [
+                'school_custom_smtp_enabled' => true,
+                'force_platform_mailer' => false,
+                'platform_fallback_enabled' => true,
+            ];
+        }
+    }
+
     private function shouldTryPlatformFallback(MailSetting $setting): bool
     {
         return filled($setting->school_id)
             && $setting->is_enabled
-            && $setting->mailer === 'smtp';
+            && $setting->mailer === 'smtp'
+            && $this->platformFallbackEnabled();
     }
 
     private function smtpScheme(MailSetting $setting): ?string
@@ -370,5 +420,11 @@ class MailSettingService
         Mail::raw($brandName.' mail settings test completed successfully.', function ($message) use ($recipient, $brandName) {
             $message->to($recipient)->subject($brandName.' Mail Test');
         });
+    }
+
+    private function restoreBaseMailConfig(): void
+    {
+        Config::set('mail', $this->baseMailConfig);
+        app(MailManager::class)->forgetMailers();
     }
 }

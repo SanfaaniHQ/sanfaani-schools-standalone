@@ -99,6 +99,8 @@ class Student extends Model
 
     public function fullName(): string
     {
-        return trim($this->first_name.' '.$this->middle_name.' '.$this->last_name);
+        return collect([$this->first_name, $this->middle_name, $this->last_name])
+            ->filter(fn ($part) => filled($part))
+            ->implode(' ');
     }
 }

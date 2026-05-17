@@ -4,12 +4,14 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Models\School;
+use App\Models\SupportMessageAttachment;
 use App\Models\SupportThread;
 use App\Models\User;
 use App\Services\CurrentSchoolService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\SupportRoutingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class SupportThreadController extends Controller
@@ -71,7 +73,10 @@ class SupportThreadController extends Controller
             'message' => ['required', 'string', 'max:5000'],
             'route_to' => ['nullable', Rule::in([SupportThread::ROUTE_SCHOOL_ADMIN, SupportThread::ROUTE_SUPER_ADMIN])],
             'escalation_reason' => ['nullable', 'string', 'max:2000'],
+            'attachments' => ['nullable', 'array', 'max:3'],
+            'attachments.*' => ['file', 'max:5120'],
         ]);
+        $data['attachments'] = $this->storeAttachments($request);
         $data['route_to'] ??= $role === 'school_admin' ? SupportThread::ROUTE_SUPER_ADMIN : SupportThread::ROUTE_SCHOOL_ADMIN;
 
         $thread = $support->createThread($school, $request->user(), $role, $data, $request);
@@ -92,6 +97,7 @@ class SupportThreadController extends Controller
             'assignedUser',
             'escalatedBy',
             'messages.sender',
+            'messages.attachments',
             'events.actor',
             'escalationHistories.escalatedBy',
         ]);
@@ -116,12 +122,26 @@ class SupportThreadController extends Controller
         $data = $request->validate([
             'message' => ['required', 'string', 'max:5000'],
             'is_internal_note' => ['nullable', 'boolean'],
+            'attachments' => ['nullable', 'array', 'max:3'],
+            'attachments.*' => ['file', 'max:5120'],
         ]);
 
         $canUseInternalNote = $role === 'school_admin';
-        $support->addReply($thread, $request->user(), $role, $data['message'], $canUseInternalNote && (bool) ($data['is_internal_note'] ?? false), $request);
+        $support->addReply($thread, $request->user(), $role, $data['message'], $canUseInternalNote && (bool) ($data['is_internal_note'] ?? false), $request, $this->storeAttachments($request));
 
         return back()->with('success', 'Reply sent successfully.');
+    }
+
+    public function downloadAttachment(SupportMessageAttachment $attachment, Request $request, SupportRoutingService $support)
+    {
+        $school = $this->currentSchoolOrFail();
+        $role = $support->roleFor($request->user());
+        $thread = $attachment->message?->thread;
+
+        abort_unless($thread, 404);
+        $this->authorizeThread($support, $thread, $school, $request->user(), $role);
+
+        return Storage::disk($attachment->disk)->download($attachment->path, $attachment->original_name);
     }
 
     public function assign(Request $request, SupportThread $thread, SupportRoutingService $support)
@@ -176,6 +196,23 @@ class SupportThreadController extends Controller
     private function authorizeThread(SupportRoutingService $support, SupportThread $thread, School $school, User $user, string $role): void
     {
         abort_unless($support->visibleSchoolThreadsQuery($school, $user, $role)->whereKey($thread->getKey())->exists(), 403, 'You cannot access this support thread.');
+    }
+
+    private function storeAttachments(Request $request): array
+    {
+        return collect($request->file('attachments', []))
+            ->filter()
+            ->map(function ($file) {
+                return [
+                    'disk' => 'local',
+                    'path' => $file->store('support-attachments'),
+                    'name' => $file->getClientOriginalName(),
+                    'mime' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     private function currentSchoolOrFail(): School

@@ -51,6 +51,7 @@
 
                     <form method="POST"
                           action="{{ route('school.results.publishing.publish') }}"
+                          data-result-action-form
                           data-confirm="Publish these results now?"
                           data-loading-text="Publishing..."
                           class="mt-6 space-y-5">
@@ -190,6 +191,7 @@
 
                     <form method="POST"
                           action="{{ route('school.results.publishing.unpublish') }}"
+                          data-result-action-form
                           data-confirm="Unpublish these results? They will no longer show in the public result checker."
                           data-loading-text="Unpublishing..."
                           class="mt-6 space-y-5">

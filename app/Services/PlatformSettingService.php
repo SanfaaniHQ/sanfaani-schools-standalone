@@ -49,6 +49,11 @@ class PlatformSettingService
                 'public_pages_enabled' => true,
                 'public_result_checker_enabled' => true,
                 'public_page_template' => 'institutional',
+                'mail' => [
+                    'school_custom_smtp_enabled' => true,
+                    'force_platform_mailer' => false,
+                    'platform_fallback_enabled' => true,
+                ],
             ],
         ];
     }

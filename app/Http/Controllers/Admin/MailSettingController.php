@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogService;
 use App\Services\MailSettingService;
+use App\Services\PlatformSettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
@@ -16,10 +17,16 @@ class MailSettingController extends Controller
         return view('admin.mail-settings.edit', [
             'setting' => $mailSettings->current(),
             'masker' => $mailSettings,
+            'mailGovernance' => $mailSettings->mailGovernance(),
         ]);
     }
 
-    public function update(Request $request, MailSettingService $mailSettings, AuditLogService $auditLog)
+    public function update(
+        Request $request,
+        MailSettingService $mailSettings,
+        PlatformSettingService $platformSettings,
+        AuditLogService $auditLog
+    )
     {
         $setting = $mailSettings->current();
         $data = $request->validate([
@@ -33,14 +40,33 @@ class MailSettingController extends Controller
             'from_name' => ['nullable', 'string', 'max:255'],
             'reply_to_email' => ['nullable', 'email', 'max:255'],
             'is_enabled' => ['nullable', 'boolean'],
+            'school_custom_smtp_enabled' => ['nullable', 'boolean'],
+            'force_platform_mailer' => ['nullable', 'boolean'],
+            'platform_fallback_enabled' => ['nullable', 'boolean'],
         ]);
 
-        $setting->fill($mailSettings->normalizedUpdateData($data, $setting));
+        $governance = [
+            'school_custom_smtp_enabled' => (bool) ($data['school_custom_smtp_enabled'] ?? false),
+            'force_platform_mailer' => (bool) ($data['force_platform_mailer'] ?? false),
+            'platform_fallback_enabled' => (bool) ($data['platform_fallback_enabled'] ?? false),
+        ];
+
+        $settingData = collect($data)
+            ->except(['school_custom_smtp_enabled', 'force_platform_mailer', 'platform_fallback_enabled'])
+            ->all();
+
+        $setting->fill($mailSettings->normalizedUpdateData($settingData, $setting));
         $setting->save();
+
+        $platform = $platformSettings->get();
+        $metadata = $platform->metadata ?? [];
+        $metadata['mail'] = $governance;
+        $platform->update(['metadata' => $metadata]);
 
         $auditLog->log('mail_settings_updated', $setting, null, metadata: [
             'mailer' => $setting->mailer,
             'is_enabled' => $setting->is_enabled,
+            'governance' => $governance,
         ], request: $request);
 
         return back()->with('success', 'Mail settings saved successfully.');

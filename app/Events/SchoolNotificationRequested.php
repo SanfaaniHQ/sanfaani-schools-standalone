@@ -97,7 +97,8 @@ class SchoolNotificationRequested
         string $message,
         array $targetRoles = ['school_admin'],
         bool $includeSchoolContact = true,
-        string $segment = 'school'
+        string $segment = 'school',
+        array $metadata = []
     ): self {
         return new self(
             $school,
@@ -107,11 +108,11 @@ class SchoolNotificationRequested
             $message,
             $targetRoles,
             $includeSchoolContact,
-            [
+            array_merge($metadata, [
                 'segment' => $segment,
                 'target_roles' => $targetRoles,
                 'include_school_contact' => $includeSchoolContact,
-            ],
+            ]),
             'system_announcement'
         );
     }

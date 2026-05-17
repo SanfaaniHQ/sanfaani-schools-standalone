@@ -26,6 +26,9 @@ class MailSettingController extends Controller
             'setting' => $mailSettings->current($school->id),
             'platformSetting' => $mailSettings->current(),
             'schoolScopeReady' => $mailSettings->schoolScopeIsReady(),
+            'schoolCustomSmtpAllowed' => $mailSettings->schoolCustomSmtpAllowed(),
+            'forcePlatformMailer' => $mailSettings->forcePlatformMailer(),
+            'platformFallbackEnabled' => $mailSettings->platformFallbackEnabled(),
             'masker' => $mailSettings,
         ]);
     }
@@ -40,6 +43,10 @@ class MailSettingController extends Controller
 
         if (! $mailSettings->schoolScopeIsReady()) {
             return back()->with('error', 'School mail settings are not ready yet. Run migrations first.');
+        }
+
+        if (! $mailSettings->schoolCustomSmtpAllowed() && $request->boolean('is_enabled')) {
+            return back()->with('error', 'Custom school SMTP is currently disabled by the platform administrator.');
         }
 
         $setting = $mailSettings->current($school->id);
@@ -69,6 +76,10 @@ class MailSettingController extends Controller
 
         $setting = $mailSettings->current($school->id);
         $request->merge($this->settingsPayload($request, $setting));
+
+        if (! $mailSettings->schoolCustomSmtpAllowed() && $request->boolean('is_enabled')) {
+            return back()->with('error', 'Custom school SMTP is currently disabled by the platform administrator.');
+        }
 
         $data = $request->validate(array_merge($this->validationRules($request, $setting), [
             'test_email' => ['required', 'email', 'max:255'],

@@ -1,4 +1,8 @@
 <x-app-layout>
+    @php
+        $schoolMailControlsDisabled = ! $schoolScopeReady || ! $schoolCustomSmtpAllowed;
+    @endphp
+
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
@@ -22,6 +26,11 @@
                 @if (! $schoolScopeReady)
                     <div class="mb-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">School scoped mail settings are not ready. Run migrations before saving changes.</div>
                 @endif
+                @if (! $schoolCustomSmtpAllowed)
+                    <div class="mb-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
+                        Custom school SMTP is currently disabled by the platform administrator. Outgoing school mail will use the platform mail system.
+                    </div>
+                @endif
                 @if ($errors->any())
                     <div class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">Please fix the highlighted fields.</div>
                 @endif
@@ -33,7 +42,7 @@
                     <div class="grid gap-6 md:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Mailer</label>
-                            <select name="mailer" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <select name="mailer" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                                 <option value="log" @selected(old('mailer', $setting->mailer) === 'log')>Log</option>
                                 <option value="smtp" @selected(old('mailer', $setting->mailer) === 'smtp')>SMTP</option>
                             </select>
@@ -43,7 +52,7 @@
                         </div>
 
                         <label class="mt-6 flex items-center gap-3 rounded-lg border border-gray-200 p-4 text-sm text-gray-700">
-                            <input type="checkbox" name="is_enabled" value="1" @checked(old('is_enabled', $setting->is_enabled)) @disabled(! $schoolScopeReady) class="rounded border-gray-300">
+                            <input type="checkbox" name="is_enabled" value="1" @checked(old('is_enabled', $setting->is_enabled)) @disabled($schoolMailControlsDisabled) class="rounded border-gray-300">
                             Enable school SMTP override
                         </label>
                     </div>
@@ -51,14 +60,14 @@
                     <div class="grid gap-6 md:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Host</label>
-                            <input name="host" value="{{ old('host', $setting->host) }}" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <input name="host" value="{{ old('host', $setting->host) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                             @error('host')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Port</label>
-                            <input name="port" type="number" value="{{ old('port', $setting->port) }}" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <input name="port" type="number" value="{{ old('port', $setting->port) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                             @error('port')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
@@ -68,14 +77,14 @@
                     <div class="grid gap-6 md:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Username</label>
-                            <input name="username" value="{{ old('username', $setting->username) }}" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <input name="username" value="{{ old('username', $setting->username) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                             @error('username')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Password</label>
-                            <input name="password" type="password" placeholder="{{ $masker->maskedPassword($setting) }}" autocomplete="new-password" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <input name="password" type="password" placeholder="{{ $masker->maskedPassword($setting) }}" autocomplete="new-password" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                             <p class="mt-1 text-xs text-gray-500">Leave empty to keep the current encrypted password.</p>
                             @error('password')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -86,7 +95,7 @@
                     <div class="grid gap-6 md:grid-cols-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Encryption</label>
-                            <select name="encryption" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <select name="encryption" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                                 <option value="">None</option>
                                 <option value="tls" @selected(old('encryption', $setting->encryption) === 'tls')>TLS</option>
                                 <option value="ssl" @selected(old('encryption', $setting->encryption) === 'ssl')>SSL</option>
@@ -97,14 +106,14 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">From Address</label>
-                            <input name="from_address" value="{{ old('from_address', $setting->from_address) }}" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <input name="from_address" value="{{ old('from_address', $setting->from_address) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                             @error('from_address')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">From Name</label>
-                            <input name="from_name" value="{{ old('from_name', $setting->from_name) }}" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                            <input name="from_name" value="{{ old('from_name', $setting->from_name) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                             @error('from_name')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
@@ -113,14 +122,14 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Reply-To Email</label>
-                        <input name="reply_to_email" value="{{ old('reply_to_email', $setting->reply_to_email) }}" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                        <input name="reply_to_email" value="{{ old('reply_to_email', $setting->reply_to_email) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                         @error('reply_to_email')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div class="flex justify-end">
-                        <button @disabled(! $schoolScopeReady) class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Save Settings</button>
+                        <button @disabled($schoolMailControlsDisabled) class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Save Settings</button>
                     </div>
                 </form>
             </div>
@@ -135,7 +144,11 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt>Platform fallback</dt>
-                            <dd class="font-medium {{ $platformSetting->is_enabled ? 'text-green-700' : 'text-gray-700' }}">{{ $platformSetting->is_enabled ? 'Configured' : 'Default' }}</dd>
+                            <dd class="font-medium {{ $platformFallbackEnabled ? 'text-green-700' : 'text-gray-700' }}">{{ $platformFallbackEnabled ? ($platformSetting->is_enabled ? 'Configured' : 'Default') : 'Disabled' }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt>Platform-only mode</dt>
+                            <dd class="font-medium {{ $forcePlatformMailer ? 'text-amber-700' : 'text-gray-700' }}">{{ $forcePlatformMailer ? 'Enabled' : 'Off' }}</dd>
                         </div>
                     </dl>
                 </div>
@@ -145,11 +158,11 @@
                     <h3 class="text-base font-semibold text-gray-900">Send Test Email</h3>
                     <div id="school-mail-test-payload"></div>
                     <label class="mt-4 block text-sm font-medium text-gray-700">Recipient</label>
-                    <input name="test_email" value="{{ old('test_email', auth()->user()->email) }}" @disabled(! $schoolScopeReady) class="mt-1 block w-full rounded-lg border-gray-300">
+                    <input name="test_email" value="{{ old('test_email', auth()->user()->email) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                     @error('test_email')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
-                    <button @disabled(! $schoolScopeReady) class="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Send Test</button>
+                    <button @disabled($schoolMailControlsDisabled) class="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Send Test</button>
                 </form>
             </div>
         </div>

@@ -3,6 +3,13 @@
     $workspaceLabel = auth()->check() && auth()->user()->hasRole('super_admin') ? 'Platform workspace' : 'School workspace';
     $routeName = request()->route()?->getName();
     $breadcrumbLabel = $routeName ? str($routeName)->replace(['.', '-'], ' ')->title()->toString() : 'Workspace';
+    $notificationsTableReady = auth()->check() && \Illuminate\Support\Facades\Schema::hasTable('notifications');
+    $topbarNotifications = $notificationsTableReady
+        ? auth()->user()->notifications()->latest()->take(6)->get()
+        : collect();
+    $unreadNotificationCount = $notificationsTableReady
+        ? auth()->user()->unreadNotifications()->count()
+        : 0;
 @endphp
 
 <header class="sticky top-0 z-20 border-b border-border-subtle bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/85">
@@ -72,30 +79,64 @@
                     </svg>
                 </button>
 
-                <div x-data="{ open: false }" class="relative">
+                <div
+                    x-data="{ open: false }"
+                    class="relative"
+                    data-notification-root
+                    data-feed-url="{{ route('notifications.feed') }}"
+                    data-read-url-template="{{ route('notifications.read', ['notification' => '__ID__']) }}"
+                    data-index-url="{{ route('notifications.index') }}"
+                    data-csrf="{{ csrf_token() }}"
+                >
                     <button type="button" @click="open = ! open" class="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary" aria-label="Open notifications" :aria-expanded="open.toString()">
                         <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M10.27 21a2 2 0 0 0 3.46 0"></path>
                             <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
                         </svg>
-                        <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-amber-500"></span>
+                        @if ($unreadNotificationCount > 0)
+                            <span class="absolute right-1.5 top-1.5 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white" data-notification-count>
+                                {{ $unreadNotificationCount > 9 ? '9+' : $unreadNotificationCount }}
+                            </span>
+                        @endif
                     </button>
 
                     <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary shadow-lg">
                         <div class="flex items-center justify-between border-b border-border-subtle px-4 py-3">
                             <p class="text-sm font-semibold text-text-primary">Notifications</p>
-                            <a href="{{ route('dashboard') }}" class="text-xs font-semibold text-brand-primary hover:text-brand-hover">View all</a>
+                            <a href="{{ route('notifications.index') }}" class="text-xs font-semibold text-brand-primary hover:text-brand-hover">View all</a>
                         </div>
-                        <div class="max-h-96 divide-y divide-border-subtle overflow-y-auto">
-                            <a href="{{ route('dashboard') }}" class="block border-s-2 border-brand-primary bg-bg-tertiary/50 px-4 py-3 text-sm transition hover:bg-bg-tertiary">
-                                <span class="block font-semibold text-text-primary">System status: operational</span>
-                                <span class="mt-1 block text-xs text-text-secondary">Morning operations are ready for today.</span>
-                            </a>
-                            <a href="{{ route('dashboard') }}" class="block px-4 py-3 text-sm transition hover:bg-bg-tertiary">
-                                <span class="block font-semibold text-text-primary">Backup completed successfully</span>
-                                <span class="mt-1 block text-xs text-text-secondary">Latest institutional snapshot is available.</span>
-                            </a>
+                        <div class="max-h-96 divide-y divide-border-subtle overflow-y-auto" data-notification-list>
+                            @forelse ($topbarNotifications as $notification)
+                                @php
+                                    $notificationData = $notification->data ?? [];
+                                    $notificationTitle = data_get($notificationData, 'title', class_basename($notification->type));
+                                    $notificationBody = data_get($notificationData, 'body');
+                                    $notificationUrl = data_get($notificationData, 'action_url') ?: route('notifications.index');
+                                    $isUnreadNotification = is_null($notification->read_at);
+                                @endphp
+                                <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
+                                    @csrf
+                                    <input type="hidden" name="redirect" value="{{ $notificationUrl }}">
+                                    <button type="submit" class="block w-full border-s-2 px-4 py-3 text-start text-sm transition hover:bg-bg-tertiary {{ $isUnreadNotification ? 'border-brand-primary bg-bg-tertiary/50' : 'border-transparent' }}" data-loading-text="Opening...">
+                                        <span class="block font-semibold text-text-primary">{{ $notificationTitle }}</span>
+                                        @if ($notificationBody)
+                                            <span class="mt-1 block text-xs text-text-secondary">{{ $notificationBody }}</span>
+                                        @endif
+                                        <span class="mt-2 block text-xs text-text-tertiary">{{ $notification->created_at?->diffForHumans() }}</span>
+                                    </button>
+                                </form>
+                            @empty
+                                <div class="px-4 py-6 text-sm text-text-secondary">
+                                    No notifications yet.
+                                </div>
+                            @endforelse
                         </div>
+                        @if ($unreadNotificationCount > 0)
+                            <form method="POST" action="{{ route('notifications.read-all') }}" class="border-t border-border-subtle px-4 py-3">
+                                @csrf
+                                <button type="submit" class="text-xs font-semibold text-brand-primary hover:text-brand-hover" data-loading-text="Updating...">Mark all as read</button>
+                            </form>
+                        @endif
                     </div>
                 </div>
 

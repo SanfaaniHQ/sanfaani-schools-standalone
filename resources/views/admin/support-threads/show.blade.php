@@ -43,16 +43,27 @@
                                 @endif
                             </div>
                             <p class="mt-2 text-sm text-gray-800">{{ $message->message }}</p>
+                            @if ($message->attachments->isNotEmpty())
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    @foreach ($message->attachments as $attachment)
+                                        <a href="{{ route('admin.support-attachments.download', $attachment) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
+                                            {{ $attachment->original_name }} ({{ number_format($attachment->size / 1024, 1) }} KB)
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @empty
                         <p class="text-sm text-gray-600">No messages yet.</p>
                     @endforelse
                 </div>
 
-                <form method="POST" action="{{ route('admin.support-threads.reply', $thread) }}" class="rounded-2xl bg-white p-6 shadow-sm">
+                <form method="POST" action="{{ route('admin.support-threads.reply', $thread) }}" enctype="multipart/form-data" class="rounded-2xl bg-white p-6 shadow-sm">
                     @csrf
                     <label class="block text-sm font-medium text-gray-700">Reply</label>
                     <textarea name="message" rows="4" class="mt-1 block w-full rounded-xl border-gray-300">{{ old('message') }}</textarea>
+                    <label class="mt-3 block text-sm font-medium text-gray-700">Attachments</label>
+                    <input type="file" name="attachments[]" multiple class="mt-1 block w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-700">
                     <label class="mt-3 flex items-center gap-2 text-sm text-gray-700">
                         <input type="checkbox" name="is_internal_note" value="1" class="rounded border-gray-300">
                         Internal note

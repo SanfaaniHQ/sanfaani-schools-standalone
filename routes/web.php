@@ -7,14 +7,17 @@ use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentGatewaySettingController;
 use App\Http\Controllers\Admin\PlatformSettingController;
+use App\Http\Controllers\Admin\PlatformMailSystemController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
 use App\Http\Controllers\Admin\ResultSystemController as AdminResultSystemController;
+use App\Http\Controllers\Admin\RolePermissionController;
 use App\Http\Controllers\Admin\SchoolAdminUserController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
 use App\Http\Controllers\Admin\SchoolPublicPageController as AdminSchoolPublicPageController;
 use App\Http\Controllers\Admin\SchoolSubscriptionController;
 use App\Http\Controllers\Admin\ScratchCardRequestController;
+use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
@@ -24,7 +27,9 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Public\LandingPageController;
 use App\Http\Controllers\Public\ResultCheckerController;
 use App\Http\Controllers\Public\ResultCheckerPaymentController;
@@ -33,6 +38,7 @@ use App\Http\Controllers\Public\SchoolPublicPageController as PublicSchoolPublic
 use App\Http\Controllers\PublicResultController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
+use App\Http\Controllers\School\AuditLogController as SchoolAuditLogController;
 use App\Http\Controllers\School\ClassUploadController;
 use App\Http\Controllers\School\CommunicationController as SchoolCommunicationController;
 use App\Http\Controllers\School\GradingScaleController;
@@ -297,6 +303,9 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/result-system', [AdminResultSystemController::class, 'index'])
             ->name('result-system.index');
 
+        Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
+            ->name('roles-permissions.index');
+
         Route::resource('lead-requests', LeadRequestController::class)
             ->only(['index', 'show', 'update']);
         Route::post('/lead-requests/{leadRequest}/notes', [LeadRequestController::class, 'storeNote'])
@@ -355,6 +364,9 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/mail-settings', [MailSettingController::class, 'edit'])
             ->name('mail-settings.edit');
 
+        Route::get('/platform-mail-system', [PlatformMailSystemController::class, 'index'])
+            ->name('platform-mail-system.index');
+
         Route::patch('/mail-settings', [MailSettingController::class, 'update'])
             ->name('mail-settings.update');
 
@@ -363,9 +375,16 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index');
+        Route::get('/audit-logs/export', [AuditLogController::class, 'export'])
+            ->name('audit-logs.export');
+
+        Route::get('/security', [SecurityController::class, 'index'])
+            ->name('security.index');
 
         Route::get('/communications', [AdminCommunicationController::class, 'index'])
             ->name('communications.index');
+        Route::get('/communications/logs', [AdminCommunicationController::class, 'logs'])
+            ->name('communications.logs');
         Route::post('/communications/send', [AdminCommunicationController::class, 'send'])
             ->name('communications.send');
         Route::post('/communications/{communicationLog}/resend', [AdminCommunicationController::class, 'resend'])
@@ -380,6 +399,9 @@ Route::middleware(['auth', 'role:super_admin'])
 
         Route::get('/support-threads/{thread}', [AdminSupportThreadController::class, 'show'])
             ->name('support-threads.show');
+
+        Route::get('/support-attachments/{attachment}', [AdminSupportThreadController::class, 'downloadAttachment'])
+            ->name('support-attachments.download');
 
         Route::post('/support-threads/{thread}/reply', [AdminSupportThreadController::class, 'reply'])
             ->name('support-threads.reply');
@@ -448,6 +470,12 @@ Route::middleware(['auth', 'school.context'])
 
                         Route::post('/mail-settings/test', [SchoolMailSettingController::class, 'test'])
                             ->name('mail-settings.test');
+
+                        Route::get('/audit-logs', [SchoolAuditLogController::class, 'index'])
+                            ->name('audit-logs.index');
+
+                        Route::get('/audit-logs/export', [SchoolAuditLogController::class, 'export'])
+                            ->name('audit-logs.export');
                     });
 
                 Route::middleware('role:school_admin|result_officer|super_admin')
@@ -532,6 +560,10 @@ Route::middleware(['auth', 'school.context'])
                 Route::get('/support/{thread}', [SchoolSupportThreadController::class, 'show'])
                     ->middleware('feature.school:support.manage')
                     ->name('support.show');
+
+                Route::get('/support-attachments/{attachment}', [SchoolSupportThreadController::class, 'downloadAttachment'])
+                    ->middleware('feature.school:support.manage')
+                    ->name('support-attachments.download');
 
                 Route::post('/support/{thread}/reply', [SchoolSupportThreadController::class, 'reply'])
                     ->middleware('feature.school:support.manage')
@@ -768,6 +800,18 @@ Route::middleware(['auth', 'school.context'])
                         Route::patch('/manual/{studentResult}/inline', [ManualResultController::class, 'inlineUpdate'])
                             ->middleware('feature.school:results.manual_entry')
                             ->name('manual.inline-update');
+
+                        Route::post('/manual/{studentResult}/submit', [ManualResultController::class, 'submit'])
+                            ->middleware('feature.school:results.manual_entry,results.review')
+                            ->name('manual.submit');
+
+                        Route::post('/manual/{studentResult}/return', [ManualResultController::class, 'returnForCorrection'])
+                            ->middleware('feature.school:results.review')
+                            ->name('manual.return');
+
+                        Route::post('/manual/{studentResult}/approve', [ManualResultController::class, 'approve'])
+                            ->middleware('feature.school:results.review')
+                            ->name('manual.approve');
                     });
             });
 
@@ -779,6 +823,10 @@ Route::middleware(['auth', 'school.context'])
                         Route::post('/publishing/publish', [ResultPublishingController::class, 'publish'])
                             ->middleware('feature.school:results.publish')
                             ->name('publishing.publish');
+
+                        Route::post('/publishing/{studentResult}/publish', [ResultPublishingController::class, 'publishSingle'])
+                            ->middleware('feature.school:results.publish')
+                            ->name('publishing.publish-single');
 
                         Route::post('/publishing/unpublish', [ResultPublishingController::class, 'unpublish'])
                             ->middleware('feature.school:results.publish')
@@ -858,6 +906,21 @@ Route::middleware(['auth', 'school.context'])
     });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/search', SearchController::class)
+        ->name('search');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
+    Route::get('/notifications/feed', [NotificationController::class, 'feed'])
+        ->name('notifications.feed');
+
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])
+        ->name('notifications.read');
+
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.read-all');
+
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 

@@ -22,25 +22,31 @@
     if ($isSuperAdmin) {
         $navSections = [
             'Platform' => [
-                $item('Platform Dashboard', 'admin.dashboard', 'admin.dashboard', 'home'),
+                $item('Dashboard', 'admin.dashboard', 'admin.dashboard', 'home'),
                 $item('Schools', 'admin.schools.index', 'admin.schools.*', 'users'),
-                $item('School Subscriptions', 'admin.school-subscriptions.index', 'admin.school-subscriptions.*', 'wallet'),
                 $item('Plans', 'admin.subscription-plans.index', 'admin.subscription-plans.*', 'layout-grid'),
+                $item('Subscriptions', 'admin.school-subscriptions.index', 'admin.school-subscriptions.*', 'wallet'),
                 $item('Global Analytics', 'admin.result-system.index', 'admin.result-system.*', 'bar-chart'),
             ],
             'Operations' => [
                 $item('Scratch Card Requests', 'admin.scratch-card-requests.index', 'admin.scratch-card-requests.*', 'credit-card'),
                 $item('Leads', 'admin.lead-requests.index', 'admin.lead-requests.*', 'activity'),
-                $item('Support Access', 'admin.support-threads.index', 'admin.support-threads.*', 'mail'),
+                $item('Communication Center', 'admin.communications.index', 'admin.communications.index', 'mail'),
+                $item('Communication Logs', 'admin.communications.logs', 'admin.communications.logs', 'clipboard-list'),
+                $item('Platform Mail System', 'admin.platform-mail-system.index', 'admin.platform-mail-system.*', 'mail'),
+                $item('Support Escalation', 'admin.support-threads.index', 'admin.support-threads.*', 'activity'),
                 $item('Backups', 'admin.system-maintenance.index', 'admin.system-maintenance.*', 'archive'),
             ],
             'Governance' => [
                 $item('Audit Logs', 'admin.audit-logs.index', 'admin.audit-logs.*', 'clipboard-list'),
-                $item('System Settings', 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings'),
+                $item('Security', 'admin.security.index', 'admin.security.*', 'shield'),
+                $item('Roles & Permissions', 'admin.roles-permissions.index', 'admin.roles-permissions.*', 'shield'),
+                $item('Result Access Policies', 'admin.result-access-policies.index', 'admin.result-access-policies.*', 'file-text'),
                 $item('Mail Settings', 'admin.mail-settings.edit', 'admin.mail-settings.*', 'mail'),
-                $item('Security', 'admin.audit-logs.index', 'admin.audit-logs.*', 'shield'),
+                $item('System Settings', 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings'),
                 $item('Website Management', 'admin.platform-settings.edit', 'admin.platform-settings.*', 'layout-grid'),
                 $item('Legal Pages', 'legal.privacy', 'legal.*', 'file-text'),
+                $item('Notifications', 'notifications.index', 'notifications.*', 'activity'),
             ],
         ];
     } elseif ($roleContext === 'teacher') {
@@ -96,8 +102,10 @@
             'Administration' => [
                 $item('Finance', 'school.subscription.show', 'school.subscription.*', 'wallet'),
                 $item('Bulk Communication', 'school.communications.bulk', 'school.communications.bulk*', 'mail', 'communication.bulk'),
+                $item('Mail Settings', 'school.mail-settings.edit', 'school.mail-settings.*', 'mail'),
                 $item('Settings', 'school.profile.edit', 'school.profile.*', 'settings'),
                 $item('User Management', 'school.staff.index', 'school.staff.*', 'shield'),
+                $item('Audit Logs', 'school.audit-logs.index', 'school.audit-logs.*', 'clipboard-list'),
                 $item('Analytics', 'school.result-system.index', 'school.result-system.*', 'bar-chart', 'results.review'),
                 $item('Support', 'school.support.index', 'school.support.*', 'activity', 'support.manage'),
             ],

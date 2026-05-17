@@ -28,6 +28,7 @@
         $profileQuery = collect(request()->only(['academic_session_id', 'term_id']))
             ->filter(fn ($value) => filled($value))
             ->all();
+        $studentProfileUrl = route('school.students.show', array_merge(['student' => $student], $profileQuery));
         $downloadProfileUrl = route('school.students.show', array_merge(['student' => $student], $profileQuery, ['print' => 1]));
         $resultWorkspaceQuery = collect([
             'session' => $contextSession?->id,
@@ -828,6 +829,11 @@
                     :results="$results"
                     :show-status="true"
                     :show-published="true"
+                    :show-actions="true"
+                    :school="$school"
+                    :student="$student"
+                    :student-profile-url="$studentProfileUrl"
+                    notify-url="#communication-center"
                     class="rounded-none border-0 shadow-none"
                     empty-title="No results found for this selection."
                     empty-description="Change the session or term filter, or add results for this student."
