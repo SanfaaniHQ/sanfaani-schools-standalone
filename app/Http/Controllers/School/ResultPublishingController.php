@@ -657,11 +657,12 @@ class ResultPublishingController extends Controller
             && ! $this->resultIsIncomplete($result);
         $canUnpublish = auth()->user()?->can('unpublish', [StudentResult::class, $school])
             && $isPublished;
+        $statusLabel = __("status.{$result->status}");
 
         return [
             'id' => $result->id,
             'status' => $result->status,
-            'status_label' => $result->workflowStatus()?->label() ?? str($result->status)->title()->toString(),
+            'status_label' => $statusLabel !== "status.{$result->status}" ? $statusLabel : ($result->workflowStatus()?->label() ?? str($result->status)->title()->toString()),
             'is_published' => $isPublished,
             'published_at' => $isPublished ? $result->published_at?->toDateTimeString() : null,
             'published_at_label' => $isPublished ? $result->published_at?->format('d M Y, h:i A') : 'Not published',

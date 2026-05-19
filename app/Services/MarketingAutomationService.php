@@ -11,6 +11,7 @@ use App\Models\MarketingCampaignRecipient;
 use App\Models\MarketingDeliveryEvent;
 use App\Models\MarketingSuppression;
 use App\Models\User;
+use App\Support\MailSecurity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -106,6 +107,7 @@ class MarketingAutomationService
                             ],
                         ]
                     );
+                    $this->ensureTrackingToken($recipient);
 
                     if ($recipient->wasRecentlyCreated || $recipient->status === MarketingCampaignRecipient::STATUS_QUEUED) {
                         SendMarketingCampaignEmail::dispatch($recipient->id)
@@ -147,6 +149,8 @@ class MarketingAutomationService
         }
 
         try {
+            $this->ensureTrackingToken($recipient);
+
             $this->mailSettings->withPlatformMailContext(function () use ($campaign, $recipient) {
                 Mail::to($recipient->email)->send(new MarketingCampaignMail(
                     $campaign,
@@ -174,11 +178,11 @@ class MarketingAutomationService
         } catch (Throwable $exception) {
             $recipient->forceFill([
                 'status' => MarketingCampaignRecipient::STATUS_FAILED,
-                'failure_reason' => Str::limit($exception->getMessage(), 4000, ''),
+                'failure_reason' => MailSecurity::sanitizeError($exception, 1000),
             ])->save();
 
             $this->recordEvent($campaign, $recipient, 'failed', $recipient->email, metadata: [
-                'error' => $exception->getMessage(),
+                'error' => MailSecurity::sanitizeError($exception),
             ]);
         } finally {
             $this->markCampaignFinishedIfComplete($campaign);
@@ -263,19 +267,21 @@ class MarketingAutomationService
 
     public function renderBody(MarketingCampaign $campaign, MarketingCampaignRecipient $recipient): string
     {
-        return $this->replacePlaceholders($campaign->body, $campaign, $recipient);
+        return MailSecurity::sanitizeHtml($this->replacePlaceholders($campaign->body, $campaign, $recipient));
     }
 
     public function trackingUrls(MarketingCampaignRecipient $recipient): array
     {
         $demoUrl = config('sanfaani.product_url');
+        $this->ensureTrackingToken($recipient);
+        $clickUrl = Route::has('marketing.track.click')
+            ? $this->signedTrackingUrl('marketing.track.click', ['token' => $recipient->tracking_token, 'url' => $demoUrl])
+            : null;
 
         return [
-            'open_url' => Route::has('marketing.track.open') ? URL::signedRoute('marketing.track.open', $recipient) : null,
-            'unsubscribe_url' => Route::has('marketing.unsubscribe') ? URL::signedRoute('marketing.unsubscribe', $recipient) : null,
-            'demo_link' => Route::has('marketing.track.click')
-                ? URL::signedRoute('marketing.track.click', ['recipient' => $recipient, 'url' => $demoUrl])
-                : $demoUrl,
+            'open_url' => $this->signedTrackingUrl('marketing.track.open', ['token' => $recipient->tracking_token]),
+            'unsubscribe_url' => $this->signedTrackingUrl('marketing.unsubscribe', ['token' => $recipient->tracking_token]),
+            'demo_link' => $clickUrl ?: $demoUrl,
         ];
     }
 
@@ -371,6 +377,28 @@ class MarketingAutomationService
             'metadata' => $metadata,
             'occurred_at' => now(),
         ]);
+    }
+
+    private function ensureTrackingToken(MarketingCampaignRecipient $recipient): void
+    {
+        if (! Schema::hasColumn('marketing_campaign_recipients', 'tracking_token') || filled($recipient->tracking_token)) {
+            return;
+        }
+
+        $recipient->forceFill([
+            'tracking_token' => MailSecurity::trackingToken($recipient),
+        ])->saveQuietly();
+    }
+
+    private function signedTrackingUrl(string $route, array $parameters): ?string
+    {
+        if (! Route::has($route) || blank($parameters['token'] ?? null)) {
+            return null;
+        }
+
+        $ttlDays = max(1, (int) config('sanfaani.marketing.tracking_url_ttl_days', 30));
+
+        return URL::temporarySignedRoute($route, now()->addDays($ttlDays), $parameters);
     }
 
     private function markCampaignFinishedIfComplete(MarketingCampaign $campaign): void

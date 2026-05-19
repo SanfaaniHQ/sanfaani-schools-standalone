@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\User;
 use App\Services\MarketingAutomationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -21,6 +22,6 @@ class RunMarketingAutomations implements ShouldQueue
 
     public function handle(MarketingAutomationService $marketing): void
     {
-        $marketing->runAutomations();
+        $marketing->runAutomations($this->actorId ? User::find($this->actorId) : null);
     }
 }

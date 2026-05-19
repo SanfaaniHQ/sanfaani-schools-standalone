@@ -59,6 +59,13 @@ class EnsureValidSchoolContext
                 ->with('error', 'Your school context is no longer valid.');
         }
 
+        if (! $this->roleBelongsToSchoolContext($user, $roleName, (int) $schoolId)) {
+            TenantContext::clear();
+
+            return redirect()->route('workspace.create')
+                ->with('error', 'Choose a valid role for this school workspace.');
+        }
+
         TenantContext::set($school->id, $roleName);
         SchoolMailConfigService::configure($school->id);
 
@@ -78,6 +85,19 @@ class EnsureValidSchoolContext
         }
 
         return $user->roles()->pluck('name')->first();
+    }
+
+    private function roleBelongsToSchoolContext($user, string $roleName, int $schoolId): bool
+    {
+        if ($roleName === 'super_admin') {
+            return $user->hasRole('super_admin');
+        }
+
+        return $user->activeSchoolRoles()
+            ->where('school_id', $schoolId)
+            ->where('role_name', $roleName)
+            ->exists()
+            || ((int) $user->school_id === $schoolId && $user->hasRole($roleName));
     }
 
     private function clearSupportSession(): void

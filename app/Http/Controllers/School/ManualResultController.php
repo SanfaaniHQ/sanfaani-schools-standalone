@@ -501,10 +501,12 @@ class ManualResultController extends Controller
 
     private function resultStatePayload(StudentResult $result): array
     {
+        $statusLabel = __("status.{$result->status}");
+
         return [
             'id' => $result->id,
             'status' => $result->status,
-            'status_label' => $result->workflowStatus()?->label() ?? str($result->status)->title()->toString(),
+            'status_label' => $statusLabel !== "status.{$result->status}" ? $statusLabel : ($result->workflowStatus()?->label() ?? str($result->status)->title()->toString()),
             'is_published' => $result->status === ResultWorkflowStatus::Published->value
                 && filled($result->published_at)
                 && blank($result->unpublished_at),

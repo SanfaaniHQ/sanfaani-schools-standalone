@@ -128,7 +128,7 @@
 
 <aside
     class="fixed inset-y-0 start-0 z-50 flex h-dvh w-64 max-w-[85vw] ltr:-translate-x-full rtl:translate-x-full flex-col border-e border-border-subtle bg-bg-primary shadow-xl transition-transform duration-300 ease-default lg:!translate-x-0 lg:shadow-none"
-    :class="sidebarOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'"
+    :class="sidebarOpen ? '!translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'"
     :aria-hidden="(!sidebarOpen && window.innerWidth < 1024).toString()"
     aria-label="Sidebar navigation"
 >

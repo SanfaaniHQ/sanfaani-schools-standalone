@@ -360,7 +360,7 @@ const initNotificationPolling = () => {
         const csrf = root.dataset.csrf || '';
         const emptyLabel = root.dataset.emptyLabel || 'No notifications yet.';
         const list = root.querySelector('[data-notification-list]');
-        const button = root.querySelector('button[aria-label="Open notifications"]');
+        const button = root.querySelector('[data-notification-toggle]');
 
         if (!feedUrl || !readUrlTemplate || !indexUrl || !list || !button) {
             return;

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MailSetting;
 use App\Models\School;
+use App\Support\MailSecurity;
 use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
@@ -246,14 +247,14 @@ class MailSettingService
                 $this->withPlatformMailContext(fn () => $this->sendTestMessage($recipient));
             } catch (Throwable $fallbackException) {
                 throw new RuntimeException(
-                    'School SMTP test failed: '.$primaryException->getMessage().' Platform fallback failed: '.$fallbackException->getMessage(),
+                    'School SMTP test failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback failed: '.MailSecurity::sanitizeError($fallbackException),
                     previous: $fallbackException
                 );
             }
 
             return [
                 'fallback_used' => true,
-                'primary_error' => $primaryException->getMessage(),
+                'primary_error' => MailSecurity::sanitizeError($primaryException),
                 'mailer' => $setting->mailer,
             ];
         }

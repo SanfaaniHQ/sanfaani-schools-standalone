@@ -212,10 +212,15 @@
                                     ?? $latestResult?->teacherResultSubmission?->approver?->name
                                     ?? $latestSubmission?->approver?->name
                                     ?? 'N/A';
-                                $publishedBy = $latestResult?->publishedBy?->name
-                                    ?? $latestResult?->teacherResultSubmission?->publisher?->name
-                                    ?? $latestSubmission?->publisher?->name
-                                    ?? 'N/A';
+                                $latestResultIsPublished = $latestResult
+                                    && $latestResult->status === \App\Enums\ResultWorkflowStatus::Published->value
+                                    && filled($latestResult->published_at)
+                                    && blank($latestResult->unpublished_at);
+                                $publishedBy = $latestResultIsPublished
+                                    ? ($latestResult?->publishedBy?->name
+                                        ?? $latestResult?->teacherResultSubmission?->publisher?->name
+                                        ?? 'N/A')
+                                    : 'N/A';
                                 $updatedBy = $latestResult?->updatedBy?->name
                                     ?? $latestSubmission?->publisher?->name
                                     ?? $latestSubmission?->approver?->name
@@ -223,7 +228,9 @@
                                     ?? $latestSubmission?->returnedBy?->name
                                     ?? $latestResult?->recordedBy?->name
                                     ?? $enteredBy;
-                                $publishedDate = ($latestResult?->published_at ?? $latestSubmission?->published_at)?->format('d M Y, h:i A') ?? 'N/A';
+                                $publishedDate = $latestResultIsPublished
+                                    ? $latestResult?->published_at?->format('d M Y, h:i A') ?? 'N/A'
+                                    : 'N/A';
                                 $lastEdited = ($latestResult?->updated_at ?? $latestSubmission?->updated_at)?->format('d M Y, h:i A') ?? 'Not recorded';
                                 $resultVersion = $latestResult
                                     ? 'v'.max(1, (int) ($latestResult->result_version ?? 1))
@@ -238,10 +245,14 @@
                                     && filled($latestResult->exam_score)
                                     && filled($latestResult->total_score)
                                     && filled($latestResult->grade);
-                                $canPublishLatestResult = $latestResult
+                                $canPublishLatestResultPermission = $latestResult
+                                    && auth()->user()?->can('publish', [\App\Models\StudentResult::class, $school]);
+                                $canUnpublishLatestResultPermission = $latestResult
+                                    && auth()->user()?->can('unpublish', [\App\Models\StudentResult::class, $school]);
+                                $canPublishLatestResult = $canPublishLatestResultPermission
                                     && $latestResultIsComplete
                                     && in_array($latestResult->status, \App\Enums\ResultWorkflowStatus::publishableStudentResultValues(), true)
-                                    && auth()->user()?->can('publish', [\App\Models\StudentResult::class, $school]);
+                                    && ! $latestResultIsPublished;
                             @endphp
                             <tr class="{{ $row['is_expected'] && $row['result_count'] === 0 && $row['submission_count'] === 0 ? 'bg-amber-500/5' : '' }}" @if($latestResult) data-result-row-id="{{ $latestResult->id }}" data-result-status="{{ $latestResult->status }}" @endif @if($inlineUpdateUrl) data-inline-result-row data-inline-result-url="{{ $inlineUpdateUrl }}" data-csrf="{{ csrf_token() }}" @endif>
                                 <td>
@@ -373,8 +384,8 @@
                                             </form>
                                         @endif
 
-                                        @if ($canPublishLatestResult)
-                                            <form method="POST" action="{{ route('school.results.publishing.publish-single', $latestResult) }}" data-result-action-form data-confirm="Publish this student's result for {{ $subject->name }}?" data-loading-text="Publishing...">
+                                        @if ($canPublishLatestResultPermission)
+                                            <form method="POST" action="{{ route('school.results.publishing.publish-single', $latestResult) }}" data-result-action-form data-result-publish-form data-confirm="Publish this student's result for {{ $subject->name }}?" data-loading-text="Publishing..." @class(['hidden' => ! $canPublishLatestResult])>
                                                 @csrf
                                                 <button class="rounded-md border border-emerald-500/30 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-500/10">
                                                     Publish
@@ -382,8 +393,8 @@
                                             </form>
                                         @endif
 
-                                        @if ($latestResult?->status === 'published' && auth()->user()?->can('unpublish', [\App\Models\StudentResult::class, $school]))
-                                            <form method="POST" action="{{ route('school.results.publishing.unpublish-single', $latestResult) }}" data-result-action-form data-confirm="Unpublish this student's result for {{ $subject->name }}?" data-loading-text="Unpublishing...">
+                                        @if ($canUnpublishLatestResultPermission)
+                                            <form method="POST" action="{{ route('school.results.publishing.unpublish-single', $latestResult) }}" data-result-action-form data-result-unpublish-form data-confirm="Unpublish this student's result for {{ $subject->name }}?" data-loading-text="Unpublishing..." @class(['hidden' => ! $latestResultIsPublished])>
                                                 @csrf
                                                 <input type="hidden" name="unpublish_reason" value="Unpublished directly from Student 360 result workspace.">
                                                 <button class="rounded-md border border-border-subtle px-2 py-1 text-xs font-semibold text-text-secondary hover:bg-bg-tertiary">
@@ -416,15 +427,23 @@
                         $passFail = is_numeric($latestResult?->total_score)
                             ? (((float) $latestResult->total_score >= 50) ? 'Pass' : 'Fail')
                             : 'Pending';
+                        $latestResultIsPublished = $latestResult
+                            && $latestResult->status === \App\Enums\ResultWorkflowStatus::Published->value
+                            && filled($latestResult->published_at)
+                            && blank($latestResult->unpublished_at);
                         $latestResultIsComplete = $latestResult
                             && filled($latestResult->ca_score)
                             && filled($latestResult->exam_score)
                             && filled($latestResult->total_score)
                             && filled($latestResult->grade);
-                        $canPublishLatestResult = $latestResult
+                        $canPublishLatestResultPermission = $latestResult
+                            && auth()->user()?->can('publish', [\App\Models\StudentResult::class, $school]);
+                        $canUnpublishLatestResultPermission = $latestResult
+                            && auth()->user()?->can('unpublish', [\App\Models\StudentResult::class, $school]);
+                        $canPublishLatestResult = $canPublishLatestResultPermission
                             && $latestResultIsComplete
                             && in_array($latestResult->status, \App\Enums\ResultWorkflowStatus::publishableStudentResultValues(), true)
-                            && auth()->user()?->can('publish', [\App\Models\StudentResult::class, $school]);
+                            && ! $latestResultIsPublished;
                     @endphp
                     <article class="enterprise-mobile-card" @if($latestResult) data-result-row-id="{{ $latestResult->id }}" data-result-status="{{ $latestResult->status }}" @endif>
                         <div class="flex items-start justify-between gap-3">
@@ -475,16 +494,16 @@
                                     </button>
                                 </form>
                             @endif
-                            @if ($canPublishLatestResult)
-                                <form method="POST" action="{{ route('school.results.publishing.publish-single', $latestResult) }}" data-result-action-form data-confirm="Publish this student's result for {{ $subject->name }}?" data-loading-text="Publishing...">
+                            @if ($canPublishLatestResultPermission)
+                                <form method="POST" action="{{ route('school.results.publishing.publish-single', $latestResult) }}" data-result-action-form data-result-publish-form data-confirm="Publish this student's result for {{ $subject->name }}?" data-loading-text="Publishing..." @class(['hidden' => ! $canPublishLatestResult])>
                                     @csrf
                                     <button class="rounded-md border border-emerald-500/30 px-2 py-1 text-xs font-semibold text-emerald-700">
                                         Publish
                                     </button>
                                 </form>
                             @endif
-                            @if ($latestResult?->status === 'published' && auth()->user()?->can('unpublish', [\App\Models\StudentResult::class, $school]))
-                                <form method="POST" action="{{ route('school.results.publishing.unpublish-single', $latestResult) }}" data-result-action-form data-confirm="Unpublish this student's result for {{ $subject->name }}?" data-loading-text="Unpublishing...">
+                            @if ($canUnpublishLatestResultPermission)
+                                <form method="POST" action="{{ route('school.results.publishing.unpublish-single', $latestResult) }}" data-result-action-form data-result-unpublish-form data-confirm="Unpublish this student's result for {{ $subject->name }}?" data-loading-text="Unpublishing..." @class(['hidden' => ! $latestResultIsPublished])>
                                     @csrf
                                     <input type="hidden" name="unpublish_reason" value="Unpublished directly from Student 360 result workspace.">
                                     <button class="rounded-md border border-border-subtle px-2 py-1 text-xs font-semibold text-text-secondary">

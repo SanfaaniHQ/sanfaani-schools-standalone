@@ -20,14 +20,16 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('marketing_suppressions');
-        Schema::dropIfExists('marketing_delivery_events');
-        Schema::dropIfExists('marketing_automations');
-        Schema::dropIfExists('marketing_campaign_recipients');
-        Schema::dropIfExists('marketing_campaigns');
-        Schema::dropIfExists('marketing_email_templates');
+        if ((bool) config('sanfaani.marketing.allow_destructive_rollbacks', false)) {
+            Schema::dropIfExists('marketing_suppressions');
+            Schema::dropIfExists('marketing_delivery_events');
+            Schema::dropIfExists('marketing_automations');
+            Schema::dropIfExists('marketing_campaign_recipients');
+            Schema::dropIfExists('marketing_campaigns');
+            Schema::dropIfExists('marketing_email_templates');
+        }
 
-        if (! Schema::hasTable('lead_requests')) {
+        if (! (bool) config('sanfaani.marketing.allow_destructive_rollbacks', false) || ! Schema::hasTable('lead_requests')) {
             return;
         }
 
@@ -159,6 +161,7 @@ return new class extends Migration
                 $table->foreignId('marketing_campaign_id')->constrained('marketing_campaigns')->cascadeOnDelete();
                 $table->foreignId('lead_request_id')->nullable()->constrained('lead_requests')->nullOnDelete();
                 $table->string('email');
+                $table->string('tracking_token', 96)->nullable()->unique('marketing_recipients_tracking_token_unique');
                 $table->string('name')->nullable();
                 $table->string('school_name')->nullable();
                 $table->string('status', 30)->default('queued');
@@ -182,6 +185,7 @@ return new class extends Migration
         $this->addForeignIdColumn('marketing_campaign_recipients', 'marketing_campaign_id', 'marketing_campaigns', 'marketing_recipients_campaign_fk');
         $this->addForeignIdColumn('marketing_campaign_recipients', 'lead_request_id', 'lead_requests', 'marketing_recipients_lead_fk', 'null');
         $this->addColumn('marketing_campaign_recipients', 'email', fn (Blueprint $table) => $table->string('email')->default(''));
+        $this->addColumn('marketing_campaign_recipients', 'tracking_token', fn (Blueprint $table) => $table->string('tracking_token', 96)->nullable());
         $this->addColumn('marketing_campaign_recipients', 'name', fn (Blueprint $table) => $table->string('name')->nullable());
         $this->addColumn('marketing_campaign_recipients', 'school_name', fn (Blueprint $table) => $table->string('school_name')->nullable());
         $this->addColumn('marketing_campaign_recipients', 'status', fn (Blueprint $table) => $table->string('status', 30)->default('queued'));
@@ -195,6 +199,7 @@ return new class extends Migration
         $this->addTimestamps('marketing_campaign_recipients');
 
         $this->ensureIndex('marketing_campaign_recipients', ['marketing_campaign_id', 'email'], 'marketing_campaign_recipient_unique', true);
+        $this->ensureIndex('marketing_campaign_recipients', ['tracking_token'], 'marketing_recipients_tracking_token_unique', true);
         $this->ensureIndex('marketing_campaign_recipients', ['status', 'queued_at'], 'marketing_recipients_status_queue_idx');
         $this->ensureIndex('marketing_campaign_recipients', ['email', 'status'], 'marketing_recipients_email_status_idx');
     }

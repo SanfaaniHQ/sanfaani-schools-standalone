@@ -8,10 +8,10 @@ use App\Models\School;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
 use App\Services\MailSettingService;
+use App\Support\MailSecurity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Throwable;
 
@@ -198,6 +198,6 @@ class MailSettingController extends Controller
 
         $message = $error instanceof Throwable ? $error->getMessage() : (string) $error;
 
-        return Str::limit(preg_replace('/(password|secret|token)=([^\\s]+)/i', '$1=***', $message), 500);
+        return MailSecurity::sanitizeError($message);
     }
 }

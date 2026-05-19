@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 
 class MarketingCampaignMail extends Mailable
@@ -25,6 +26,15 @@ class MarketingCampaignMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(subject: $this->renderedSubject);
+    }
+
+    public function headers(): Headers
+    {
+        $unsubscribeUrl = $this->trackingUrls['unsubscribe_url'] ?? null;
+
+        return new Headers(text: array_filter([
+            'List-Unsubscribe' => $unsubscribeUrl ? '<'.$unsubscribeUrl.'>' : null,
+        ]));
     }
 
     public function content(): Content

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\School;
+use App\Support\MailSecurity;
 use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Config;
 use Throwable;
@@ -24,7 +25,7 @@ class TenantMailManager
             try {
                 $this->mailSettings->apply($this->mailSettings->current());
             } catch (Throwable) {
-                $this->useLogMailer($schoolException->getMessage());
+                $this->useLogMailer(MailSecurity::sanitizeError($schoolException));
             }
         }
     }
@@ -41,7 +42,7 @@ class TenantMailManager
             try {
                 return $this->mailSettings->withPlatformMailContext($callback);
             } catch (Throwable $platformException) {
-                $this->useLogMailer($platformException->getMessage());
+                $this->useLogMailer(MailSecurity::sanitizeError($platformException));
 
                 return $callback();
             }

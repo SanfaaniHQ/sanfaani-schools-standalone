@@ -125,7 +125,7 @@
                                     id="command-palette-search"
                                     type="search"
                                     class="h-10 flex-1 border-0 bg-transparent p-0 text-sm text-text-primary placeholder:text-text-tertiary focus:ring-0"
-                                    placeholder="Search students, teachers, results, settings..."
+                                    placeholder="{{ __('ui.search_placeholder') }}"
                                     autocomplete="off"
                                     data-global-search-input
                                 >

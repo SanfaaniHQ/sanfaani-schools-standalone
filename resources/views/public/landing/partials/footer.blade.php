@@ -1,8 +1,8 @@
-<footer class="overflow-x-clip border-t border-gray-100 bg-white">
-    <div class="mx-auto grid w-full max-w-7xl min-w-0 gap-10 px-4 py-12 sm:px-6 md:grid-cols-4 lg:px-8">
-        <div class="min-w-0 md:col-span-2">
+<footer class="max-w-full overflow-x-clip border-t border-gray-100 bg-white">
+    <div class="mx-auto grid w-full max-w-7xl min-w-0 grid-cols-1 gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 md:grid-cols-4 md:gap-10 lg:px-8">
+        <div class="min-w-0 sm:col-span-2">
             <div class="flex items-center gap-3">
-                <x-platform-logo class="h-10 w-auto object-contain" mark-class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-700 text-sm font-semibold text-white" />
+                <x-platform-logo class="h-10 max-w-full object-contain" mark-class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-700 text-sm font-semibold text-white" />
             </div>
             <p class="mt-4 max-w-md break-words text-sm leading-6 text-gray-600">
                 {{ __('ui.footer_blurb', ['platform' => $platformSettings->platform_name, 'company' => $platformSettings->company_name]) }}

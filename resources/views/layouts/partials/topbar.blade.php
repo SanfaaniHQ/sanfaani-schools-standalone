@@ -136,7 +136,7 @@
                     data-csrf="{{ csrf_token() }}"
                     data-empty-label="{{ __('ui.no_notifications_yet') }}"
                 >
-                    <button type="button" @click="open = ! open" class="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary" aria-label="{{ __('ui.open_notifications') }}" :aria-expanded="open.toString()">
+                    <button type="button" data-notification-toggle @click="open = ! open" class="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary" aria-label="{{ __('ui.open_notifications') }}" :aria-expanded="open.toString()">
                         <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M10.27 21a2 2 0 0 0 3.46 0"></path>
                             <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>

@@ -347,6 +347,12 @@
     background: var(--color-bg-primary);
 }
 
+footer,
+footer * {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .education-ops-shell .bg-white,
 .education-ops-shell .bg-slate-50,
 .education-ops-shell .bg-gray-50 {

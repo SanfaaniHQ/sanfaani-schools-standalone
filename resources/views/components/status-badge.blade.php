@@ -40,5 +40,5 @@
 @endphp
 
 <span {{ $attributes->merge(['class' => "inline-flex rounded-full border px-2.5 py-1 text-xs font-medium {$classes}"]) }}>
-    {{ ucfirst(str_replace('_', ' ', $normalized)) }}
+    {{ __("status.{$normalized}") !== "status.{$normalized}" ? __("status.{$normalized}") : ucfirst(str_replace('_', ' ', $normalized)) }}
 </span>

@@ -12,6 +12,7 @@ use App\Mail\Transactional\StudentLifecycleMail;
 use App\Mail\Transactional\StudentTransactionalMail;
 use App\Models\CommunicationLog;
 use App\Models\School;
+use App\Support\MailSecurity;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Support\Facades\Log;
@@ -151,7 +152,7 @@ class CommunicationService
             $this->recordAudit('communication_email_failed', $log, $school, [
                 'type' => $type,
                 'recipient' => $recipient,
-                'error' => $exception->getMessage(),
+                'error' => MailSecurity::sanitizeError($exception),
             ]);
 
             Log::warning('Communication email failed.', [
@@ -263,11 +264,11 @@ class CommunicationService
 
                 return [
                     'fallback_used' => true,
-                    'primary_error' => $primaryException->getMessage(),
+                    'primary_error' => MailSecurity::sanitizeError($primaryException),
                 ];
             } catch (Throwable $fallbackException) {
                 throw new RuntimeException(
-                    'School SMTP failed: '.$primaryException->getMessage().' Platform fallback failed: '.$fallbackException->getMessage(),
+                    'School SMTP failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback failed: '.MailSecurity::sanitizeError($fallbackException),
                     previous: $fallbackException
                 );
             }
@@ -298,7 +299,7 @@ class CommunicationService
     private function markFailed(CommunicationLog $log, Throwable $exception): void
     {
         $log->status = CommunicationLog::STATUS_FAILED;
-        $log->failure_reason = substr($exception->getMessage(), 0, 4000);
+        $log->failure_reason = MailSecurity::sanitizeError($exception, 1000);
 
         $this->saveLog($log);
     }
@@ -349,7 +350,7 @@ class CommunicationService
                     'communication_log_id' => $log->id,
                     'recipient' => $recipient,
                     'type' => $type,
-                    'error' => $exception->getMessage(),
+                    'error' => MailSecurity::sanitizeError($exception),
                 ],
             ];
 

@@ -210,17 +210,29 @@ Route::post('/s/{school:slug}/payment/initiate', [ResultCheckerPaymentController
 Route::get('/s/{school:slug}/payment/callback/{gateway?}', [ResultCheckerPaymentController::class, 'callbackForSchool'])
     ->name('public.school.payment.callback');
 
-Route::get('/m/open/{recipient}', [MarketingTrackingController::class, 'open'])
+Route::get('/m/open/t/{token}', [MarketingTrackingController::class, 'openToken'])
     ->middleware('signed')
     ->name('marketing.track.open');
 
-Route::get('/m/click/{recipient}', [MarketingTrackingController::class, 'click'])
+Route::get('/m/click/t/{token}', [MarketingTrackingController::class, 'clickToken'])
     ->middleware('signed')
     ->name('marketing.track.click');
 
-Route::get('/m/unsubscribe/{recipient}', [MarketingTrackingController::class, 'unsubscribe'])
+Route::get('/m/unsubscribe/t/{token}', [MarketingTrackingController::class, 'unsubscribeToken'])
     ->middleware('signed')
     ->name('marketing.unsubscribe');
+
+Route::get('/m/open/{recipient}', [MarketingTrackingController::class, 'open'])
+    ->middleware('signed')
+    ->name('marketing.track.open.legacy');
+
+Route::get('/m/click/{recipient}', [MarketingTrackingController::class, 'click'])
+    ->middleware('signed')
+    ->name('marketing.track.click.legacy');
+
+Route::get('/m/unsubscribe/{recipient}', [MarketingTrackingController::class, 'unsubscribe'])
+    ->middleware('signed')
+    ->name('marketing.unsubscribe.legacy');
 
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])

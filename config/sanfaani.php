@@ -32,6 +32,8 @@ return [
         'chunk_size' => (int) env('SANFAANI_MARKETING_CHUNK_SIZE', 100),
         'dispatch_delay_seconds' => (int) env('SANFAANI_MARKETING_DISPATCH_DELAY_SECONDS', 2),
         'max_retry_attempts' => (int) env('SANFAANI_MARKETING_MAX_RETRY_ATTEMPTS', 3),
+        'tracking_url_ttl_days' => (int) env('SANFAANI_MARKETING_TRACKING_URL_TTL_DAYS', 30),
+        'allow_destructive_rollbacks' => (bool) env('SANFAANI_MARKETING_ALLOW_DESTRUCTIVE_ROLLBACKS', false),
     ],
     'idle_timeout_minutes' => (int) env('SANFAANI_IDLE_TIMEOUT_MINUTES', 30),
     'backups' => [

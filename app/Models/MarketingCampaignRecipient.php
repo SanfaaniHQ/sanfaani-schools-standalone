@@ -21,6 +21,7 @@ class MarketingCampaignRecipient extends Model
         'marketing_campaign_id',
         'lead_request_id',
         'email',
+        'tracking_token',
         'name',
         'school_name',
         'status',
