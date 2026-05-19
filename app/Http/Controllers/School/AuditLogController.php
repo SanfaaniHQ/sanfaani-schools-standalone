@@ -81,7 +81,7 @@ class AuditLogController extends Controller
     private function currentSchoolOrFail(Request $request, CurrentSchoolService $currentSchool): School
     {
         $user = $request->user();
-        abort_unless($user?->hasRole('school_admin') || $user?->hasRole('super_admin'), 403);
+        abort_unless(in_array($currentSchool->roleContext($user), ['school_admin', 'super_admin'], true), 403);
 
         $school = $currentSchool->get($user);
         abort_if(! $school, 403);

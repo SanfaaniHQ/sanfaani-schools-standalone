@@ -42,7 +42,7 @@ class SearchController extends Controller
 
         $school = $currentSchool->get($user);
         $role = $currentSchool->roleContext($user);
-        $isPlatform = $user->hasRole('super_admin') && ! $currentSchool->inSupportMode($user);
+        $isPlatform = $role === 'super_admin' && ! $currentSchool->inSupportMode($user);
 
         $groups = $isPlatform
             ? $this->platformResults($query, $user, $support)

@@ -660,10 +660,10 @@ class StudentResultWorkspaceService
             ->values();
         $publishReadyRows = $expectedRows->filter(fn ($row) => $this->rowIsPublishReady($row))->values();
         $publishedRows = $expectedRows
-            ->filter(fn ($row) => $row['latest_result']?->status === ResultWorkflowStatus::Published->value)
+            ->filter(fn ($row) => $this->resultIsCurrentlyPublished($row['latest_result']))
             ->values();
         $notReadyRows = $expectedRows
-            ->reject(fn ($row) => $this->rowIsPublishReady($row) || $row['latest_result']?->status === ResultWorkflowStatus::Published->value)
+            ->reject(fn ($row) => $this->rowIsPublishReady($row) || $this->resultIsCurrentlyPublished($row['latest_result']))
             ->values();
         $pendingReviewRows = $expectedRows
             ->filter(fn ($row) => $this->rowHasAnyStatus($row, [
@@ -773,5 +773,13 @@ class StudentResultWorkspaceService
     private function percentage(int $count, int $total): int
     {
         return $total > 0 ? (int) round(($count / $total) * 100) : 0;
+    }
+
+    private function resultIsCurrentlyPublished(?StudentResult $result): bool
+    {
+        return $result
+            && $result->status === ResultWorkflowStatus::Published->value
+            && filled($result->published_at)
+            && blank($result->unpublished_at);
     }
 }

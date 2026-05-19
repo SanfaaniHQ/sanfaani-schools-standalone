@@ -21,11 +21,13 @@ class DashboardController extends Controller
             }
         }
 
-        if (auth()->user()->hasRole('super_admin')) {
+        $activeRole = app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user());
+
+        if ($activeRole === 'super_admin') {
             return redirect()->route('admin.dashboard');
         }
 
-        if (auth()->user()->hasAnyRole(['school_admin', 'result_officer', 'teacher'])) {
+        if (in_array($activeRole, ['school_admin', 'result_officer', 'teacher'], true)) {
             return redirect()->route('school.dashboard');
         }
 

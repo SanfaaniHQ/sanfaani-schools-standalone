@@ -1,8 +1,9 @@
 @php
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
-    $workspaceLabel = auth()->check() && auth()->user()->hasRole('super_admin') ? 'Platform workspace' : 'School workspace';
+    $activeRoleContext = auth()->check() ? app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user()) : null;
+    $workspaceLabel = $activeRoleContext === 'super_admin' ? __('ui.platform_workspace') : __('ui.school_workspace');
     $routeName = request()->route()?->getName();
-    $breadcrumbLabel = $routeName ? str($routeName)->replace(['.', '-'], ' ')->title()->toString() : 'Workspace';
+    $breadcrumbLabel = $routeName ? str($routeName)->replace(['.', '-'], ' ')->title()->toString() : __('ui.workspace');
     $notificationsTableReady = auth()->check() && \Illuminate\Support\Facades\Schema::hasTable('notifications');
     $topbarNotifications = $notificationsTableReady
         ? auth()->user()->notifications()->latest()->take(6)->get()
@@ -10,12 +11,19 @@
     $unreadNotificationCount = $notificationsTableReady
         ? auth()->user()->unreadNotifications()->count()
         : 0;
+    $workspaceService = auth()->check() ? app(\App\Services\UserWorkspaceService::class) : null;
+    $workspaceContexts = $workspaceService ? $workspaceService->contextsFor(auth()->user()) : collect();
+    $activeWorkspaceKey = $workspaceService?->activeKey(auth()->user());
+    $activeWorkspace = $workspaceContexts->firstWhere('key', $activeWorkspaceKey) ?? $workspaceContexts->first();
+    $activeWorkspaceLabel = $activeWorkspace
+        ? $activeWorkspace['label'].' - '.$activeWorkspace['school_name']
+        : __('ui.workspace');
 @endphp
 
 <header class="sticky top-0 z-20 border-b border-border-subtle bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/85">
     <div class="flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
         <div class="flex min-w-0 items-center gap-3">
-            <button type="button" @click="sidebarOpen = true" class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary lg:hidden" aria-label="Open navigation">
+            <button type="button" @click="sidebarOpen = true" class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary lg:hidden" aria-label="{{ __('ui.open_navigation') }}">
                 <svg aria-hidden="true" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 6h16"></path>
                     <path d="M4 12h16"></path>
@@ -38,25 +46,64 @@
                 type="button"
                 x-on:click="commandPaletteOpen = true; $nextTick(() => $refs.commandSearch?.focus())"
                 class="order-last flex h-10 w-full items-center gap-3 rounded-md border border-border-subtle bg-bg-secondary px-3 text-sm text-text-tertiary transition hover:border-border-hover hover:bg-bg-tertiary md:order-none md:max-w-md"
-                aria-label="Open global search"
+                aria-label="{{ __('ui.open_search') }}"
             >
                 <svg aria-hidden="true" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-                <span class="min-w-0 flex-1 truncate text-start">Search students, teachers, results, settings...</span>
+                <span class="min-w-0 flex-1 truncate text-start">{{ __('ui.search_placeholder') }}</span>
                 <span class="hidden rounded border border-border-subtle px-1.5 py-0.5 font-mono text-[11px] text-text-muted sm:inline">Ctrl K</span>
             </button>
 
             <div class="flex min-w-0 items-center gap-2">
+                @if ($workspaceContexts->count() > 1)
+                    <div x-data="{ open: false }" class="relative">
+                        <button type="button" @click="open = ! open" class="hidden h-10 max-w-[16rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary sm:inline-flex" aria-label="{{ __('ui.switch_workspace') }}" :aria-expanded="open.toString()">
+                            <span class="min-w-0 truncate text-start">{{ $activeWorkspaceLabel }}</span>
+                            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m6 9 6 6 6-6"></path>
+                            </svg>
+                        </button>
+                        <button type="button" @click="open = ! open" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary sm:hidden" aria-label="{{ __('ui.switch_workspace') }}" :aria-expanded="open.toString()">
+                            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 7h16"></path>
+                                <path d="M7 12h10"></path>
+                                <path d="M10 17h4"></path>
+                            </svg>
+                        </button>
+                        <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">
+                            <div class="border-b border-border-subtle px-3 py-2">
+                                <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.current_workspace') }}</p>
+                                <p class="mt-1 truncate text-sm font-semibold text-text-primary">{{ $activeWorkspaceLabel ?: __('ui.choose_workspace') }}</p>
+                            </div>
+                            @foreach ($workspaceContexts as $context)
+                                <form method="POST" action="{{ route('workspace.store') }}">
+                                    @csrf
+                                    <input type="hidden" name="workspace" value="{{ $context['key'] }}">
+                                    <button type="submit" class="flex w-full items-start justify-between gap-3 rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary" @if ($context['key'] === $activeWorkspaceKey) aria-current="true" @endif>
+                                        <span class="min-w-0">
+                                            <span class="block font-semibold text-text-primary">{{ $context['label'] }}</span>
+                                            <span class="mt-0.5 block truncate text-xs text-text-tertiary">{{ $context['school_name'] }}</span>
+                                        </span>
+                                        @if ($context['key'] === $activeWorkspaceKey)
+                                            <span class="shrink-0 rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-semibold text-brand-primary">{{ __('ui.active') }}</span>
+                                        @endif
+                                    </button>
+                                </form>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <div x-data="{ open: false }" class="relative">
-                    <button type="button" @click="open = ! open" class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary" aria-label="Change language" :aria-expanded="open.toString()">
+                    <button type="button" @click="open = ! open" class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary" aria-label="{{ __('ui.change_language') }}" :aria-expanded="open.toString()">
                         <span>{{ data_get($supportedLanguages, app()->getLocale().'.short', strtoupper(app()->getLocale())) }}</span>
                         <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="m6 9 6 6 6-6"></path>
                         </svg>
                     </button>
-                    <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 mt-2 w-44 overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">
+                    <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 z-50 mt-2 w-44 overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">
                         @foreach ($supportedLanguages as $code => $language)
                             <a href="{{ request()->fullUrlWithQuery(['lang' => $code]) }}" class="flex items-center justify-between rounded-md px-3 py-2 text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary" @if (app()->getLocale() === $code) aria-current="true" @endif>
                                 <span>{{ $language['native'] }}</span>
@@ -66,7 +113,7 @@
                     </div>
                 </div>
 
-                <button type="button" data-theme-toggle class="hidden h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary sm:inline-flex" aria-label="Toggle light and dark mode">
+                <button type="button" data-theme-toggle class="hidden h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary sm:inline-flex" aria-label="{{ __('ui.toggle_theme') }}">
                     <svg aria-hidden="true" class="h-4 w-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="4"></circle>
                         <path d="M12 2v2"></path>
@@ -87,8 +134,9 @@
                     data-read-url-template="{{ route('notifications.read', ['notification' => '__ID__']) }}"
                     data-index-url="{{ route('notifications.index') }}"
                     data-csrf="{{ csrf_token() }}"
+                    data-empty-label="{{ __('ui.no_notifications_yet') }}"
                 >
-                    <button type="button" @click="open = ! open" class="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary" aria-label="Open notifications" :aria-expanded="open.toString()">
+                    <button type="button" @click="open = ! open" class="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary" aria-label="{{ __('ui.open_notifications') }}" :aria-expanded="open.toString()">
                         <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M10.27 21a2 2 0 0 0 3.46 0"></path>
                             <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
@@ -100,10 +148,10 @@
                         @endif
                     </button>
 
-                    <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary shadow-lg">
+                    <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 z-50 mt-2 w-[min(20rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary shadow-lg">
                         <div class="flex items-center justify-between border-b border-border-subtle px-4 py-3">
-                            <p class="text-sm font-semibold text-text-primary">Notifications</p>
-                            <a href="{{ route('notifications.index') }}" class="text-xs font-semibold text-brand-primary hover:text-brand-hover">View all</a>
+                            <p class="text-sm font-semibold text-text-primary">{{ __('ui.notifications') }}</p>
+                            <a href="{{ route('notifications.index') }}" class="text-xs font-semibold text-brand-primary hover:text-brand-hover">{{ __('ui.view_all') }}</a>
                         </div>
                         <div class="max-h-96 divide-y divide-border-subtle overflow-y-auto" data-notification-list>
                             @forelse ($topbarNotifications as $notification)
@@ -127,30 +175,30 @@
                                 </form>
                             @empty
                                 <div class="px-4 py-6 text-sm text-text-secondary">
-                                    No notifications yet.
+                                    {{ __('ui.no_notifications_yet') }}
                                 </div>
                             @endforelse
                         </div>
                         @if ($unreadNotificationCount > 0)
                             <form method="POST" action="{{ route('notifications.read-all') }}" class="border-t border-border-subtle px-4 py-3">
                                 @csrf
-                                <button type="submit" class="text-xs font-semibold text-brand-primary hover:text-brand-hover" data-loading-text="Updating...">Mark all as read</button>
+                                <button type="submit" class="text-xs font-semibold text-brand-primary hover:text-brand-hover" data-loading-text="Updating...">{{ __('ui.mark_all_as_read') }}</button>
                             </form>
                         @endif
                     </div>
                 </div>
 
                 <div x-data="{ open: false }" class="relative">
-                    <button type="button" @click="open = ! open" class="inline-flex h-10 max-w-[10rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-2 text-sm font-semibold text-text-primary transition hover:border-border-hover hover:bg-bg-tertiary" aria-label="Open user menu" :aria-expanded="open.toString()">
+                    <button type="button" @click="open = ! open" class="inline-flex h-10 max-w-[10rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-2 text-sm font-semibold text-text-primary transition hover:border-border-hover hover:bg-bg-tertiary" aria-label="{{ __('ui.profile') }}" :aria-expanded="open.toString()">
                         <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-brand-primary text-xs text-white">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
                         <span class="hidden truncate xl:inline">{{ auth()->user()->name }}</span>
                     </button>
-                    <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 mt-2 w-56 overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">
-                        <a href="{{ route('profile.edit') }}" class="block rounded-md px-3 py-2 text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary">Profile</a>
+                    <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">
+                        <a href="{{ route('profile.edit') }}" class="block rounded-md px-3 py-2 text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.profile') }}</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="block w-full rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary">
-                                Log Out
+                                {{ __('ui.logout') }}
                             </button>
                         </form>
                     </div>

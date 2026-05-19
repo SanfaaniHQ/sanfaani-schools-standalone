@@ -7,15 +7,16 @@
     </x-slot>
 
     @php
+        $roleContext = app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user());
         $modules = [
             ['Grading Scales', 'Set score ranges, grades, and remarks.', route('school.grading-scales.index')],
             ['Manual Result Entry', 'Enter and update student scores.', route('school.results.manual.index')],
             ['CSV Result Upload', 'Upload class-based result files.', route('school.results.upload.index')],
             ['Result Publishing', 'Publish or unpublish checked results.', route('school.results.publishing.index')],
-            ['Report Card Settings', 'Configure display, signatures, and comments.', auth()->user()->hasRole('result_officer') ? route('school.report-card-settings.preview') : route('school.report-card-settings.edit')],
+            ['Report Card Settings', 'Configure display, signatures, and comments.', $roleContext === 'result_officer' ? route('school.report-card-settings.preview') : route('school.report-card-settings.edit')],
             ['Result Access Policy', 'View your current result access rules.', route('school.result-access-policy.show')],
             ['Public Result Checker', 'Open parent-facing result checker.', route('public.results.index')],
-            ['Scratch Cards', 'Request and download generated scratch cards.', auth()->user()->hasRole('result_officer') ? route('school.dashboard') : route('school.scratch-cards.index')],
+            ['Scratch Cards', 'Request and download generated scratch cards.', $roleContext === 'result_officer' ? route('school.dashboard') : route('school.scratch-cards.index')],
         ];
         $future = ['Assessment/Test Results', 'CBT Results', 'PDF Results', 'QR Verification'];
     @endphp

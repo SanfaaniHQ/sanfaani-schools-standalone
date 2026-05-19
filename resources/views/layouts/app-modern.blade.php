@@ -37,14 +37,20 @@
     @stack('styles')
 </head>
 <body class="education-ops-shell bg-bg-primary font-sans text-text-primary">
-    <div x-data="{ sidebarOpen: false, commandPaletteOpen: false, notificationsOpen: false }" class="min-h-screen">
+    <div
+        x-data="{ sidebarOpen: false, commandPaletteOpen: false, notificationsOpen: false }"
+        x-on:keydown.escape.window="sidebarOpen = false; commandPaletteOpen = false; notificationsOpen = false"
+        x-on:resize.window="if (window.innerWidth >= 1024) sidebarOpen = false"
+        x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen); document.body.classList.toggle('overflow-hidden', sidebarOpen)"
+        class="min-h-screen overflow-x-clip"
+    >
         @include('layouts.partials.sidebar')
 
-        <div class="lg:pl-64">
+        <div class="min-w-0 lg:ps-64">
             @include('layouts.partials.topbar')
 
-            <main id="main-content" class="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-                <div class="mx-auto max-w-dashboard animate-fade-in">
+            <main id="main-content" class="min-h-screen overflow-x-clip px-4 py-6 sm:px-6 lg:px-8">
+                <div class="mx-auto w-full max-w-dashboard animate-fade-in">
                     @yield('content')
                 </div>
             </main>

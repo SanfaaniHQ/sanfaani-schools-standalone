@@ -127,7 +127,7 @@ class MailSettingController extends Controller
 
     private function schoolAdminSchool(Request $request, CurrentSchoolService $currentSchool): School
     {
-        abort_unless($request->user()?->hasRole('school_admin'), 403);
+        abort_unless($currentSchool->roleContext($request->user()) === 'school_admin', 403);
 
         $school = $currentSchool->get();
         abort_if(! $school, 403);

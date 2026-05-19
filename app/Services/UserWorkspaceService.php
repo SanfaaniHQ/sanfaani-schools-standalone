@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Spatie\Permission\PermissionRegistrar;
 
 class UserWorkspaceService
 {
@@ -77,6 +78,26 @@ class UserWorkspaceService
             filled($context['school_id']) ? (int) $context['school_id'] : null,
             $context['role_name']
         );
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    public function activeKey(?User $user = null): ?string
+    {
+        $user ??= auth()->user();
+
+        if (! $user) {
+            return null;
+        }
+
+        $schoolId = TenantContext::schoolId();
+        $roleName = TenantContext::roleName();
+
+        if (! $roleName) {
+            return null;
+        }
+
+        return $schoolId ? "school:{$schoolId}:{$roleName}" : "global:{$roleName}";
     }
 
     public function selectByKey(User $user, string $key): bool

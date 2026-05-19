@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ResultWorkflowStatus;
+use App\Services\CurrentSchoolService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -146,7 +147,9 @@ class StudentResult extends Model
 
             $originalStatus = ResultWorkflowStatus::fromValue((string) $result->getOriginal('status'));
 
-            if ($actor?->hasRole('teacher') && $originalStatus?->isLockedAfterApproval()) {
+            $roleContext = $actor ? app(CurrentSchoolService::class)->roleContext($actor) : null;
+
+            if ($roleContext === 'teacher' && $originalStatus?->isLockedAfterApproval()) {
                 return false;
             }
 

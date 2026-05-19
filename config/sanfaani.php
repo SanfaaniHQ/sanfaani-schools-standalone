@@ -18,7 +18,7 @@ return [
     'default_country' => env('SANFAANI_DEFAULT_COUNTRY', 'Nigeria'),
     'default_currency' => env('SANFAANI_DEFAULT_CURRENCY', 'NGN'),
     'default_language' => env('SANFAANI_DEFAULT_LANGUAGE', 'en'),
-    'supported_languages' => array_filter(array_map('trim', explode(',', env('SANFAANI_SUPPORTED_LANGUAGES', 'en,ar,fr,yo,ha')))),
+    'supported_languages' => array_filter(array_map('trim', explode(',', env('SANFAANI_SUPPORTED_LANGUAGES', 'en,ar,fr')))),
     'languages' => [
         'en' => ['label' => 'English', 'native' => 'English', 'short' => 'EN', 'rtl' => false],
         'ar' => ['label' => 'Arabic', 'native' => 'العربية', 'short' => 'AR', 'rtl' => true],
@@ -27,6 +27,12 @@ return [
         'ha' => ['label' => 'Hausa', 'native' => 'Hausa', 'short' => 'HA', 'rtl' => false],
     ],
     'rtl_locales' => ['ar'],
+    'marketing' => [
+        'queue' => env('SANFAANI_MARKETING_QUEUE', 'marketing'),
+        'chunk_size' => (int) env('SANFAANI_MARKETING_CHUNK_SIZE', 100),
+        'dispatch_delay_seconds' => (int) env('SANFAANI_MARKETING_DISPATCH_DELAY_SECONDS', 2),
+        'max_retry_attempts' => (int) env('SANFAANI_MARKETING_MAX_RETRY_ATTEMPTS', 3),
+    ],
     'idle_timeout_minutes' => (int) env('SANFAANI_IDLE_TIMEOUT_MINUTES', 30),
     'backups' => [
         'retention_count' => (int) env('SANFAANI_BACKUP_RETENTION_COUNT', 10),

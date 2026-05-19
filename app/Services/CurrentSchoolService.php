@@ -63,11 +63,40 @@ class CurrentSchoolService
             return session('support_role_context', 'school_admin');
         }
 
-        if (TenantContext::roleName()) {
-            return TenantContext::roleName();
+        $tenantRoleName = TenantContext::roleName();
+
+        if ($tenantRoleName && $this->roleBelongsToUser($user, $tenantRoleName, TenantContext::schoolId())) {
+            return $tenantRoleName;
+        }
+
+        if ($tenantRoleName) {
+            TenantContext::clear();
         }
 
         // Regular user: check session for active role context, fallback to first role
-        return session('active_role_context') ?: $user->roles()->pluck('name')->first();
+        $sessionRole = session('active_role_context');
+
+        if ($sessionRole && $this->roleBelongsToUser($user, (string) $sessionRole, session('active_school_id'))) {
+            return (string) $sessionRole;
+        }
+
+        return $user->roles()->pluck('name')->first();
+    }
+
+    private function roleBelongsToUser(User $user, string $roleName, mixed $schoolId = null): bool
+    {
+        if ($roleName === 'super_admin') {
+            return $user->hasRole('super_admin');
+        }
+
+        if (filled($schoolId)) {
+            return $user->activeSchoolRoles()
+                ->where('school_id', (int) $schoolId)
+                ->where('role_name', $roleName)
+                ->exists()
+                || ((int) $user->school_id === (int) $schoolId && $user->hasRole($roleName));
+        }
+
+        return $user->hasRole($roleName);
     }
 }

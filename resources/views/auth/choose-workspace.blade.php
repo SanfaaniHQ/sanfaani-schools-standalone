@@ -1,8 +1,8 @@
 <x-guest-layout>
     <div class="mb-6 text-center">
-        <h1 class="text-xl font-semibold text-gray-900">Choose Workspace</h1>
+        <h1 class="text-xl font-semibold text-gray-900">{{ __('ui.choose_workspace') }}</h1>
         <p class="mt-2 text-sm text-gray-600">
-            Select the school and role context you want to use for this session.
+            {{ __('ui.choose_workspace_help') }}
         </p>
     </div>
 
@@ -40,7 +40,7 @@
         <button type="submit"
                 data-loading-text="Opening..."
                 class="w-full rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
-            Continue
+            {{ __('ui.continue') }}
         </button>
     </form>
 </x-guest-layout>

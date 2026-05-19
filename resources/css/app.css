@@ -84,6 +84,7 @@
     html {
         color-scheme: light;
         scroll-behavior: smooth;
+        overflow-x: clip;
     }
 
     html.dark {
@@ -96,6 +97,45 @@
         font-family: var(--font-ui);
         font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
         text-rendering: optimizeLegibility;
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    *,
+    *::before,
+    *::after {
+        min-width: 0;
+    }
+
+    img,
+    svg,
+    video,
+    canvas {
+        max-width: 100%;
+    }
+
+    input,
+    select,
+    textarea {
+        color: var(--color-text-primary);
+        background-color: var(--color-bg-secondary);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--color-text-tertiary);
+        opacity: 1;
+    }
+
+    select option {
+        color: #111827;
+        background-color: #ffffff;
+    }
+
+    html.dark select option {
+        color: #f8fafc;
+        background-color: #18181b;
     }
 
     [x-cloak] {
@@ -147,7 +187,9 @@
     }
 
     .ui-button {
-        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium leading-none transition duration-200 ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+        @apply inline-flex min-h-10 max-w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-center text-sm font-medium leading-tight transition duration-200 ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     .ui-button-primary,
@@ -176,7 +218,9 @@
     }
 
     .ui-table-wrap {
-        @apply overflow-x-auto rounded-lg border border-border-subtle bg-bg-secondary shadow-sm;
+        @apply max-w-full overflow-x-auto rounded-lg border border-border-subtle bg-bg-secondary shadow-sm;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-inline: contain;
     }
 
     .enterprise-table {
@@ -224,6 +268,51 @@
     .marketing-link {
         @apply rounded-md text-brand-primary underline-offset-4 transition hover:text-brand-hover hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary;
     }
+}
+
+.education-ops-shell,
+.education-ops-shell * {
+    min-width: 0;
+}
+
+.education-ops-shell a,
+.education-ops-shell button,
+.education-ops-shell p,
+.education-ops-shell span,
+.education-ops-shell td,
+.education-ops-shell th {
+    overflow-wrap: anywhere;
+}
+
+.education-ops-shell table {
+    max-width: 100%;
+}
+
+.education-ops-shell th,
+.education-ops-shell td {
+    overflow-wrap: anywhere;
+}
+
+.education-ops-shell .sticky {
+    scroll-margin-top: 5rem;
+}
+
+.education-ops-shell [role="dialog"] {
+    max-width: 100vw;
+}
+
+.education-ops-shell .grid,
+.education-ops-shell .flex {
+    min-width: 0;
+}
+
+.education-ops-shell .max-w-dashboard {
+    width: 100%;
+}
+
+[data-toast-region] {
+    inset-inline-end: 1rem;
+    right: auto;
 }
 
 @layer utilities {

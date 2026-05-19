@@ -435,12 +435,14 @@ class StudentController extends Controller
         ?AcademicSession $selectedSession,
         ?Term $selectedTerm
     ): array {
+        $publishedCondition = "status = 'published' AND published_at IS NOT NULL AND unpublished_at IS NULL";
+
         $resultStats = $this->studentResultsForContext($school, $student, $selectedSession, $selectedTerm)
             ->selectRaw('COUNT(*) as total_results')
-            ->selectRaw("SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published_results")
+            ->selectRaw("SUM(CASE WHEN {$publishedCondition} THEN 1 ELSE 0 END) as published_results")
             ->selectRaw("SUM(CASE WHEN status = 'reviewed' THEN 1 ELSE 0 END) as reviewed_results")
             ->selectRaw("SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) as draft_results")
-            ->selectRaw("SUM(CASE WHEN status <> 'published' THEN 1 ELSE 0 END) as unpublished_results")
+            ->selectRaw("SUM(CASE WHEN NOT ({$publishedCondition}) THEN 1 ELSE 0 END) as unpublished_results")
             ->first();
 
         $latestResult = $this->studentResultsForContext($school, $student, $selectedSession, $selectedTerm)

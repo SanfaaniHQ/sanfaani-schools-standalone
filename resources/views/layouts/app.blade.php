@@ -42,18 +42,20 @@
     </head>
     <body class="education-ops-shell bg-bg-primary font-sans text-text-primary antialiased">
         <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-brand-primary focus:px-4 focus:py-3 focus:text-sm focus:font-medium focus:text-white">
-            Skip to main content
+            {{ __('ui.skip_to_main_content') }}
         </a>
 
         <div
             x-data="{ sidebarOpen: false, commandPaletteOpen: false, notificationsOpen: false }"
             x-on:sanfaani:open-command-palette.window="commandPaletteOpen = true; $nextTick(() => $refs.commandSearch?.focus())"
-            x-on:keydown.escape.window="commandPaletteOpen = false; notificationsOpen = false"
-            class="min-h-screen bg-bg-primary"
+            x-on:keydown.escape.window="sidebarOpen = false; commandPaletteOpen = false; notificationsOpen = false"
+            x-on:resize.window="if (window.innerWidth >= 1024) sidebarOpen = false"
+            x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen); document.body.classList.toggle('overflow-hidden', sidebarOpen)"
+            class="min-h-screen overflow-x-clip bg-bg-primary"
         >
             @include('layouts.partials.sidebar')
 
-            <div class="lg:ps-64">
+            <div class="min-w-0 lg:ps-64">
                 @include('layouts.partials.topbar')
 
                 @if (auth()->check() && auth()->user()->hasRole('super_admin') && session('is_support_session') && session('support_school_id'))
@@ -85,8 +87,8 @@
                     </div>
                 @endif
 
-                <main id="main-content" class="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-                    <div class="mx-auto max-w-dashboard animate-fade-in">
+                <main id="main-content" class="min-h-screen overflow-x-clip px-4 py-6 sm:px-6 lg:px-8">
+                    <div class="mx-auto w-full max-w-dashboard animate-fade-in">
                         @isset($header)
                             <header class="mb-6 rounded-lg border border-border-subtle bg-bg-secondary px-5 py-5 shadow-sm">
                                 {{ $header }}
@@ -136,7 +138,7 @@
                             <div class="space-y-3" data-global-search-results></div>
 
                             <div data-command-default-results>
-                            <p class="px-3 py-2 text-xs font-medium uppercase tracking-wider text-text-tertiary">Core operations</p>
+                            <p class="px-3 py-2 text-xs font-medium uppercase tracking-wider text-text-tertiary">{{ __('ui.core_operations') }}</p>
                             @php
                                 $user = auth()->user();
                                 $schoolService = $schoolServiceForShell;
@@ -145,7 +147,7 @@
                                 $authz = app(\App\Services\SchoolAuthorizationService::class);
                                 $canCommand = fn (?string $feature = null) => ! $feature || ($school && $authz->can($user, $school, $feature));
 
-                                $commandItems = $user->hasRole('super_admin') && ! $schoolService->inSupportMode($user)
+                                $commandItems = $roleContext === 'super_admin' && ! $schoolService->inSupportMode($user)
                                     ? [
                                         ['label' => 'Platform Dashboard', 'context' => 'Global platform status', 'href' => route('admin.dashboard'), 'visible' => true],
                                         ['label' => 'Schools', 'context' => 'Institution accounts and support access', 'href' => route('admin.schools.index'), 'visible' => true],

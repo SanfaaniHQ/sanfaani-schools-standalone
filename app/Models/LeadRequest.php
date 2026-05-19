@@ -21,24 +21,31 @@ class LeadRequest extends Model
 
     public const STATUS_DEMO_SCHEDULED = 'demo_scheduled';
 
+    public const STATUS_TRIAL_STARTED = 'trial_started';
+
+    public const STATUS_ACTIVE_PROSPECT = 'active_prospect';
+
     public const STATUS_CONVERTED = 'converted';
+
+    public const STATUS_INACTIVE = 'inactive';
 
     public const STATUS_LOST = 'lost';
 
-    public const STATUS_ARCHIVED = 'archived';
+    public const STATUS_LOST_LEAD = 'lost_lead';
 
-    public const LEGACY_STATUS_TRIAL_STARTED = 'trial_started';
+    public const STATUS_ARCHIVED = 'archived';
 
     public const LEGACY_STATUS_CLOSED = 'closed';
 
     public const STATUSES = [
         self::STATUS_NEW,
         self::STATUS_CONTACTED,
-        self::STATUS_FOLLOW_UP,
         self::STATUS_DEMO_SCHEDULED,
+        self::STATUS_TRIAL_STARTED,
+        self::STATUS_ACTIVE_PROSPECT,
         self::STATUS_CONVERTED,
-        self::STATUS_LOST,
-        self::STATUS_ARCHIVED,
+        self::STATUS_INACTIVE,
+        self::STATUS_LOST_LEAD,
     ];
 
     public const ACCEPTED_STATUSES = [
@@ -46,10 +53,13 @@ class LeadRequest extends Model
         self::STATUS_CONTACTED,
         self::STATUS_FOLLOW_UP,
         self::STATUS_DEMO_SCHEDULED,
+        self::STATUS_TRIAL_STARTED,
+        self::STATUS_ACTIVE_PROSPECT,
         self::STATUS_CONVERTED,
+        self::STATUS_INACTIVE,
         self::STATUS_LOST,
+        self::STATUS_LOST_LEAD,
         self::STATUS_ARCHIVED,
-        self::LEGACY_STATUS_TRIAL_STARTED,
         self::LEGACY_STATUS_CLOSED,
     ];
 
@@ -59,13 +69,17 @@ class LeadRequest extends Model
         'school_name',
         'email',
         'phone',
+        'country',
+        'state',
         'role',
         'number_of_students',
         'school_type',
         'preferred_demo_time',
         'message',
         'source',
+        'tags',
         'status',
+        'conversion_status',
         'assigned_to',
         'contacted_at',
         'next_follow_up_at',
@@ -85,6 +99,7 @@ class LeadRequest extends Model
         'last_activity_at' => 'datetime',
         'converted_at' => 'datetime',
         'archived_at' => 'datetime',
+        'tags' => 'array',
         'metadata' => 'array',
     ];
 
@@ -150,7 +165,13 @@ class LeadRequest extends Model
     {
         return $this->next_follow_up_at
             && $this->next_follow_up_at->isPast()
-            && ! in_array($this->status, [self::STATUS_CONVERTED, self::STATUS_LOST, self::STATUS_ARCHIVED], true);
+            && ! in_array($this->status, [
+                self::STATUS_CONVERTED,
+                self::STATUS_INACTIVE,
+                self::STATUS_LOST,
+                self::STATUS_LOST_LEAD,
+                self::STATUS_ARCHIVED,
+            ], true);
     }
 
     public function isConverted(): bool
@@ -160,6 +181,24 @@ class LeadRequest extends Model
 
     public function statusLabel(): string
     {
-        return ucwords(str_replace('_', ' ', $this->status));
+        return self::statusLabels()[$this->status] ?? ucwords(str_replace('_', ' ', $this->status));
+    }
+
+    public static function statusLabels(): array
+    {
+        return [
+            self::STATUS_NEW => 'New Lead',
+            self::STATUS_CONTACTED => 'Contacted',
+            self::STATUS_DEMO_SCHEDULED => 'Demo Scheduled',
+            self::STATUS_TRIAL_STARTED => 'Trial Started',
+            self::STATUS_ACTIVE_PROSPECT => 'Active Prospect',
+            self::STATUS_CONVERTED => 'Converted',
+            self::STATUS_INACTIVE => 'Inactive',
+            self::STATUS_LOST_LEAD => 'Lost Lead',
+            self::STATUS_FOLLOW_UP => 'Follow Up',
+            self::STATUS_LOST => 'Lost Lead',
+            self::STATUS_ARCHIVED => 'Archived',
+            self::LEGACY_STATUS_CLOSED => 'Closed',
+        ];
     }
 }

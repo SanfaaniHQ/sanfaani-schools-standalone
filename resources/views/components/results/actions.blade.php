@@ -18,13 +18,14 @@
     $isPublished = $status === \App\Enums\ResultWorkflowStatus::Published->value
         && filled($result->published_at)
         && blank($result->unpublished_at);
-    $canPublish = $school
-        && $user?->can('publish', [\App\Models\StudentResult::class, $school])
+    $canPublishPermission = $school
+        && $user?->can('publish', [\App\Models\StudentResult::class, $school]);
+    $canUnpublishPermission = $school
+        && $user?->can('unpublish', [\App\Models\StudentResult::class, $school]);
+    $canPublish = $canPublishPermission
         && in_array($status, \App\Enums\ResultWorkflowStatus::publishableStudentResultValues(), true)
         && $isComplete;
-    $canUnpublish = $school
-        && $isPublished
-        && $user?->can('unpublish', [\App\Models\StudentResult::class, $school]);
+    $canUnpublish = $canUnpublishPermission && $isPublished;
     $canSubmit = $user?->can('submit', $result);
     $canApprove = $user?->can('approve', $result);
     $canReturn = $user?->can('returnForCorrection', $result);
@@ -40,8 +41,7 @@
     $auditUrl = $studentProfileUrl
         ? $studentProfileUrl.'#activity-timeline'
         : ($student && Route::has('school.students.show') ? route('school.students.show', $student).'#activity-timeline' : null);
-    $canOpenSchoolAuditLogs = $user?->hasRole('super_admin')
-        || app(\App\Services\CurrentSchoolService::class)->roleContext($user) === 'school_admin';
+    $canOpenSchoolAuditLogs = in_array(app(\App\Services\CurrentSchoolService::class)->roleContext($user), ['super_admin', 'school_admin'], true);
     $auditLogUrl = $canOpenSchoolAuditLogs && Route::has('school.audit-logs.index')
         ? route('school.audit-logs.index', ['action' => 'result_', 'auditable_type' => class_basename($result)])
         : $auditUrl;
@@ -51,7 +51,7 @@
     $dangerClass = 'inline-flex min-h-8 items-center rounded-md border border-red-500/30 px-2 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-500/10 dark:text-red-300';
 @endphp
 
-<div {{ $attributes->merge(['class' => 'flex min-w-56 flex-wrap gap-2']) }}>
+<div {{ $attributes->merge(['class' => 'flex min-w-56 flex-wrap gap-2']) }} data-result-actions>
     @if ($workspaceUrl)
         <a href="{{ $workspaceUrl }}" class="{{ $linkClass }}">View</a>
     @endif
@@ -77,15 +77,15 @@
         </form>
     @endif
 
-    @if ($canPublish && Route::has('school.results.publishing.publish-single'))
-        <form method="POST" action="{{ route('school.results.publishing.publish-single', $result) }}" data-result-action-form data-confirm="Publish this result now?" data-loading-text="Publishing...">
+    @if ($canPublishPermission && $isComplete && Route::has('school.results.publishing.publish-single'))
+        <form method="POST" action="{{ route('school.results.publishing.publish-single', $result) }}" data-result-action-form data-result-publish-form data-confirm="Publish this result now?" data-loading-text="Publishing..." @class(['hidden' => ! $canPublish])>
             @csrf
             <button type="submit" class="{{ $successClass }}">Publish</button>
         </form>
     @endif
 
-    @if ($canUnpublish && Route::has('school.results.publishing.unpublish-single'))
-        <form method="POST" action="{{ route('school.results.publishing.unpublish-single', $result) }}" data-result-action-form data-confirm="Unpublish this result?" data-loading-text="Unpublishing...">
+    @if ($canUnpublishPermission && Route::has('school.results.publishing.unpublish-single'))
+        <form method="POST" action="{{ route('school.results.publishing.unpublish-single', $result) }}" data-result-action-form data-result-unpublish-form data-confirm="Unpublish this result?" data-loading-text="Unpublishing..." @class(['hidden' => ! $canUnpublish])>
             @csrf
             <input type="hidden" name="unpublish_reason" value="Unpublished from the result row actions.">
             <button type="submit" class="{{ $dangerClass }}">Unpublish</button>

@@ -4,6 +4,10 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
 use App\Http\Controllers\Admin\LeadRequestController;
 use App\Http\Controllers\Admin\MailSettingController;
+use App\Http\Controllers\Admin\MarketingAutomationController;
+use App\Http\Controllers\Admin\MarketingCampaignController;
+use App\Http\Controllers\Admin\MarketingDashboardController;
+use App\Http\Controllers\Admin\MarketingEmailTemplateController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentGatewaySettingController;
 use App\Http\Controllers\Admin\PlatformSettingController;
@@ -27,6 +31,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MarketingTrackingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
@@ -205,6 +210,18 @@ Route::post('/s/{school:slug}/payment/initiate', [ResultCheckerPaymentController
 Route::get('/s/{school:slug}/payment/callback/{gateway?}', [ResultCheckerPaymentController::class, 'callbackForSchool'])
     ->name('public.school.payment.callback');
 
+Route::get('/m/open/{recipient}', [MarketingTrackingController::class, 'open'])
+    ->middleware('signed')
+    ->name('marketing.track.open');
+
+Route::get('/m/click/{recipient}', [MarketingTrackingController::class, 'click'])
+    ->middleware('signed')
+    ->name('marketing.track.click');
+
+Route::get('/m/unsubscribe/{recipient}', [MarketingTrackingController::class, 'unsubscribe'])
+    ->middleware('signed')
+    ->name('marketing.unsubscribe');
+
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -314,6 +331,38 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('lead-requests.communications.store');
         Route::post('/lead-requests/{leadRequest}/convert', [LeadRequestController::class, 'convert'])
             ->name('lead-requests.convert');
+
+        Route::prefix('email-marketing')
+            ->name('email-marketing.')
+            ->group(function () {
+                Route::get('/', MarketingDashboardController::class)
+                    ->name('dashboard');
+
+                Route::resource('campaigns', MarketingCampaignController::class)
+                    ->except(['destroy']);
+                Route::post('/campaigns/{campaign}/send', [MarketingCampaignController::class, 'send'])
+                    ->name('campaigns.send');
+                Route::post('/campaigns/{campaign}/duplicate', [MarketingCampaignController::class, 'duplicate'])
+                    ->name('campaigns.duplicate');
+                Route::post('/campaigns/{campaign}/pause', [MarketingCampaignController::class, 'pause'])
+                    ->name('campaigns.pause');
+                Route::post('/campaigns/{campaign}/resume', [MarketingCampaignController::class, 'resume'])
+                    ->name('campaigns.resume');
+                Route::post('/campaigns/{campaign}/archive', [MarketingCampaignController::class, 'archive'])
+                    ->name('campaigns.archive');
+
+                Route::resource('templates', MarketingEmailTemplateController::class)
+                    ->except(['show', 'destroy']);
+
+                Route::get('/automations', [MarketingAutomationController::class, 'index'])
+                    ->name('automations.index');
+                Route::post('/automations', [MarketingAutomationController::class, 'store'])
+                    ->name('automations.store');
+                Route::patch('/automations/{automation}', [MarketingAutomationController::class, 'update'])
+                    ->name('automations.update');
+                Route::post('/automations/run', [MarketingAutomationController::class, 'run'])
+                    ->name('automations.run');
+            });
 
         Route::get('/system-maintenance', [SystemMaintenanceController::class, 'index'])
             ->name('system-maintenance.index');

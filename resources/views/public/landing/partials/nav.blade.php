@@ -1,15 +1,15 @@
 @php
     $navItems = [
-        ['label' => 'Features', 'route' => 'landing.features', 'active' => 'landing.features'],
-        ['label' => 'Pricing', 'route' => 'landing.pricing', 'active' => 'landing.pricing'],
-        ['label' => 'Result Checker', 'route' => 'public.results.index', 'active' => 'public.results.*'],
-        ['label' => 'Contact', 'route' => 'landing.contact', 'active' => 'landing.contact'],
+        ['label' => __('ui.features'), 'route' => 'landing.features', 'active' => 'landing.features'],
+        ['label' => __('ui.pricing'), 'route' => 'landing.pricing', 'active' => 'landing.pricing'],
+        ['label' => __('ui.result_checker'), 'route' => 'public.results.index', 'active' => 'public.results.*'],
+        ['label' => __('ui.contact'), 'route' => 'landing.contact', 'active' => 'landing.contact'],
     ];
 @endphp
 
 <header x-data="{ open: false, languageOpen: false }" class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-gray-950 focus:shadow">
-        Skip to content
+        {{ __('ui.skip_to_content') }}
     </a>
     <nav class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8" aria-label="Main navigation">
         <a href="{{ route('landing.home') }}" class="flex items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
@@ -22,7 +22,7 @@
                     {{ $item['label'] }}
                 </a>
             @endforeach
-            <a href="{{ route('login') }}" class="marketing-link px-3 py-2 transition hover:bg-gray-50 hover:text-gray-950">Login</a>
+            <a href="{{ route('login') }}" class="marketing-link px-3 py-2 transition hover:bg-gray-50 hover:text-gray-950">{{ __('ui.log_in') }}</a>
         </div>
 
         <div class="flex items-center gap-2">
@@ -31,7 +31,7 @@
                         class="inline-flex h-10 items-center gap-2 rounded-md border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2"
                         @click="languageOpen = ! languageOpen"
                         :aria-expanded="languageOpen.toString()"
-                        aria-label="Change language">
+                        aria-label="{{ __('ui.change_language') }}">
                     {{ data_get($supportedLanguages, app()->getLocale().'.short', strtoupper(app()->getLocale())) }}
                     <svg aria-hidden="true" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="m6 9 6 6 6-6"></path>
@@ -47,10 +47,10 @@
                 </div>
             </div>
             <a href="{{ route('public.results.index') }}" class="ui-button-secondary hidden sm:inline-flex">
-                Check Result
+                {{ __('ui.check_result') }}
             </a>
             <a href="{{ route('landing.demo') }}" class="ui-button-primary hidden gap-2 sm:inline-flex">
-                Request Demo
+                {{ __('ui.request_demo') }}
                 <x-marketing.icon name="arrow-right" class="h-4 w-4" />
             </a>
             <button type="button"
@@ -58,7 +58,7 @@
                     :aria-expanded="open.toString()"
                     aria-controls="public-mobile-menu"
                     @click="open = ! open">
-                <span class="sr-only">Open menu</span>
+                <span class="sr-only">{{ __('ui.open_menu') }}</span>
                 <svg x-show="!open" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -84,10 +84,10 @@
                 @endforeach
             </div>
             <a href="{{ route('landing.demo') }}" class="ui-button-primary mt-2 w-full gap-2">
-                Request Demo
+                {{ __('ui.request_demo') }}
                 <x-marketing.icon name="arrow-right" class="h-4 w-4" />
             </a>
-            <a href="{{ route('login') }}" class="ui-button-secondary w-full">Login to Portal</a>
+            <a href="{{ route('login') }}" class="ui-button-secondary w-full">{{ __('ui.login_to_portal') }}</a>
         </div>
     </div>
 </header>

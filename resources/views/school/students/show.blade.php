@@ -4,7 +4,7 @@
         $roleContext = app(\App\Services\CurrentSchoolService::class)->roleContext($user);
         $featureAccess = app(\App\Services\SchoolRoleFeatureService::class);
         $supportMode = $user?->hasRole('super_admin') && session('support_school_id');
-        $canManageStudents = $user?->hasRole('school_admin') || $supportMode;
+        $canManageStudents = $roleContext === 'school_admin' || $supportMode;
         $canEnterManualResult = $canManageStudents || (
             $roleContext === 'result_officer'
             && $featureAccess->enabled($school->id, 'result_officer', 'results.manual_entry')

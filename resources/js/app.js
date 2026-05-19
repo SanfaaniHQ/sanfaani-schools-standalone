@@ -103,7 +103,9 @@ const updateResultState = (result) => {
         const statusBadge = row.querySelector('[data-result-status-badge]');
         if (statusBadge) {
             statusBadge.textContent = result.status_label || result.status || 'Updated';
-            statusBadge.className = 'inline-flex rounded-full border border-border-subtle bg-bg-secondary px-2.5 py-1 text-xs font-medium text-text-secondary';
+            statusBadge.className = result.is_published
+                ? 'inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300'
+                : 'inline-flex rounded-full border border-border-subtle bg-bg-secondary px-2.5 py-1 text-xs font-medium text-text-secondary';
         }
 
         const publishedLabel = row.querySelector('[data-result-published-label]');
@@ -123,6 +125,20 @@ const updateResultState = (result) => {
 
         row.querySelectorAll('[data-result-version]').forEach((node) => {
             node.textContent = result.result_version || '';
+        });
+
+        row.querySelectorAll('[data-result-publish-form]').forEach((form) => {
+            form.classList.toggle('hidden', !result.can_publish);
+            form.querySelectorAll('button, input[type="submit"]').forEach((control) => {
+                control.disabled = !result.can_publish;
+            });
+        });
+
+        row.querySelectorAll('[data-result-unpublish-form]').forEach((form) => {
+            form.classList.toggle('hidden', !result.can_unpublish);
+            form.querySelectorAll('button, input[type="submit"]').forEach((control) => {
+                control.disabled = !result.can_unpublish;
+            });
         });
     });
 };
@@ -342,6 +358,7 @@ const initNotificationPolling = () => {
         const readUrlTemplate = root.dataset.readUrlTemplate;
         const indexUrl = root.dataset.indexUrl;
         const csrf = root.dataset.csrf || '';
+        const emptyLabel = root.dataset.emptyLabel || 'No notifications yet.';
         const list = root.querySelector('[data-notification-list]');
         const button = root.querySelector('button[aria-label="Open notifications"]');
 
@@ -370,7 +387,7 @@ const initNotificationPolling = () => {
 
         const syncList = (notifications) => {
             if (!Array.isArray(notifications) || notifications.length === 0) {
-                list.innerHTML = '<div class="px-4 py-6 text-sm text-text-secondary">No notifications yet.</div>';
+                list.innerHTML = `<div class="px-4 py-6 text-sm text-text-secondary">${escapeHtml(emptyLabel)}</div>`;
                 return;
             }
 

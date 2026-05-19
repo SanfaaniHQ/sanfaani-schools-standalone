@@ -311,7 +311,7 @@ class ResultPublishingController extends Controller
 
         return $this->workflowSuccess($request, 'Result published successfully.', [
             'result' => $this->resultStatePayload($freshResult),
-            'reload' => true,
+            'reload' => false,
         ]);
     }
 
@@ -392,7 +392,7 @@ class ResultPublishingController extends Controller
 
         return $this->workflowSuccess($request, 'Result unpublished successfully.', [
             'result' => $this->resultStatePayload($studentResult->fresh(['student', 'subject', 'publishedBy', 'unpublishedBy'])),
-            'reload' => true,
+            'reload' => false,
         ]);
     }
 
@@ -651,6 +651,12 @@ class ResultPublishingController extends Controller
         $isPublished = $result->status === ResultWorkflowStatus::Published->value
             && filled($result->published_at)
             && blank($result->unpublished_at);
+        $school = $result->school ?: $this->currentSchoolOrFail();
+        $canPublish = auth()->user()?->can('publish', [StudentResult::class, $school])
+            && in_array($result->status, ResultWorkflowStatus::publishableStudentResultValues(), true)
+            && ! $this->resultIsIncomplete($result);
+        $canUnpublish = auth()->user()?->can('unpublish', [StudentResult::class, $school])
+            && $isPublished;
 
         return [
             'id' => $result->id,
@@ -664,6 +670,8 @@ class ResultPublishingController extends Controller
             'unpublished_at_label' => $result->unpublished_at?->format('d M Y, h:i A'),
             'unpublished_by' => $result->unpublishedBy?->name,
             'result_version' => 'v'.max(1, (int) $result->result_version),
+            'can_publish' => $canPublish,
+            'can_unpublish' => $canUnpublish,
         ];
     }
 }

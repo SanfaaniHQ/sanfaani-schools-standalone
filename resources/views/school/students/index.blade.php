@@ -1,6 +1,6 @@
 <x-app-layout>
     @php
-        $canManageStudents = auth()->user()->hasRole('school_admin');
+        $canManageStudents = app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user()) === 'school_admin';
     @endphp
 
     <x-slot name="header">
