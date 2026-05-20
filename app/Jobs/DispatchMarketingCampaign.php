@@ -16,6 +16,8 @@ class DispatchMarketingCampaign implements ShouldQueue
 
     public int $timeout = 120;
 
+    public int $maxExceptions = 2;
+
     public function __construct(
         public int $campaignId,
         public ?int $actorId = null
@@ -32,5 +34,15 @@ class DispatchMarketingCampaign implements ShouldQueue
         }
 
         $marketing->dispatchCampaign($campaign, $this->actorId ? User::find($this->actorId) : null);
+    }
+
+    public function backoff(): array
+    {
+        return [60, 300];
+    }
+
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(2);
     }
 }

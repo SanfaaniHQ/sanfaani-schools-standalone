@@ -92,6 +92,16 @@ class Student extends Model
         return $this->hasMany(ReportCardSnapshot::class);
     }
 
+    public function cbtCandidates(): HasMany
+    {
+        return $this->hasMany(CbtCandidate::class);
+    }
+
+    public function cbtAttempts(): HasMany
+    {
+        return $this->hasMany(CbtAttempt::class);
+    }
+
     public function electiveSubjects(): HasMany
     {
         return $this->hasMany(StudentElectiveSubject::class);

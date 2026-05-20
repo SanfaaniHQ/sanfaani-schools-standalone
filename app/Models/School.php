@@ -178,6 +178,31 @@ class School extends Model
         return $this->hasMany(ReportCardSnapshot::class);
     }
 
+    public function pdfSnapshots(): HasMany
+    {
+        return $this->hasMany(PdfSnapshot::class);
+    }
+
+    public function cbtQuestionBanks(): HasMany
+    {
+        return $this->hasMany(CbtQuestionBank::class);
+    }
+
+    public function cbtQuestions(): HasMany
+    {
+        return $this->hasMany(CbtQuestion::class);
+    }
+
+    public function cbtExams(): HasMany
+    {
+        return $this->hasMany(CbtExam::class);
+    }
+
+    public function cbtAttempts(): HasMany
+    {
+        return $this->hasMany(CbtAttempt::class);
+    }
+
     public function reportCardCommentRules(): HasMany
     {
         return $this->hasMany(ReportCardCommentRule::class);

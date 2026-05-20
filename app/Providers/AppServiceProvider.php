@@ -25,6 +25,7 @@ use App\Services\DashboardWidgetService;
 use App\Services\ScratchAnalyticsService;
 use App\Services\TenantMailManager;
 use App\Services\TenantThemeResolver;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -53,6 +54,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Model::preventLazyLoading(! $this->app->isProduction());
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
+            logger()->warning('Lazy loading prevented.', [
+                'model' => $model::class,
+                'relation' => $relation,
+                'route' => app()->runningInConsole() ? null : request()->route()?->getName(),
+            ]);
+        });
+
         Gate::policy(StudentResult::class, StudentResultPolicy::class);
         Gate::policy(CommunicationLog::class, CommunicationLogPolicy::class);
         Gate::policy(TeacherClassAssignment::class, TeacherAssignmentPolicy::class);
@@ -72,6 +82,13 @@ class AppServiceProvider extends ServiceProvider
             'support.manage',
             'support.direct_escalation',
             'teacher.assignment.manage',
+            'cbt.manage',
+            'cbt.question_bank',
+            'cbt.mark_theory',
+            'cbt.publish_results',
+            'cbt.public_competition',
+            'cbt.certificates',
+            'pdf.snapshots',
         ] as $featureKey) {
             Gate::define($featureKey, fn (User $user, School $school) => app(SchoolAuthorizationService::class)
                 ->can($user, $school, $featureKey));

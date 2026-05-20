@@ -15,6 +15,8 @@ class RunMarketingAutomations implements ShouldQueue
 
     public int $timeout = 180;
 
+    public int $maxExceptions = 2;
+
     public function __construct(public ?int $actorId = null)
     {
         $this->onQueue((string) config('sanfaani.marketing.queue', 'marketing'));
@@ -23,5 +25,15 @@ class RunMarketingAutomations implements ShouldQueue
     public function handle(MarketingAutomationService $marketing): void
     {
         $marketing->runAutomations($this->actorId ? User::find($this->actorId) : null);
+    }
+
+    public function backoff(): array
+    {
+        return [120, 600];
+    }
+
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(2);
     }
 }

@@ -2,15 +2,15 @@
     'title',
     'body',
     'primaryHref' => route('landing.demo'),
-    'primaryLabel' => 'Request Demo',
+    'primaryLabel' => __('ui.request_demo'),
     'secondaryHref' => route('public.results.index'),
-    'secondaryLabel' => 'Check Result',
+    'secondaryLabel' => __('ui.check_result'),
 ])
 
 <section {{ $attributes->merge(['class' => 'marketing-cta-gradient']) }}>
     <x-ui.container class="py-16 sm:py-20">
         <div class="mx-auto max-w-3xl text-center">
-            <x-marketing.badge tone="white" icon="sparkles">Launch-ready, upgrade-friendly</x-marketing.badge>
+            <x-marketing.badge tone="white" icon="sparkles">{{ __('marketing.cta_panel.badge') }}</x-marketing.badge>
             <h2 class="mt-5 text-3xl font-semibold leading-tight text-white sm:text-4xl">{{ $title }}</h2>
             <p class="mx-auto mt-4 max-w-2xl text-base leading-7 text-white/75">{{ $body }}</p>
             <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

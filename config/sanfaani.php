@@ -35,6 +35,17 @@ return [
         'tracking_url_ttl_days' => (int) env('SANFAANI_MARKETING_TRACKING_URL_TTL_DAYS', 30),
         'allow_destructive_rollbacks' => (bool) env('SANFAANI_MARKETING_ALLOW_DESTRUCTIVE_ROLLBACKS', false),
     ],
+    'cbt' => [
+        'autosave_seconds' => (int) env('SANFAANI_CBT_AUTOSAVE_SECONDS', 20),
+        'candidate_code_ttl_days' => (int) env('SANFAANI_CBT_CODE_TTL_DAYS', 30),
+        'question_import_chunk_size' => (int) env('SANFAANI_CBT_IMPORT_CHUNK_SIZE', 250),
+        'public_throttle' => env('SANFAANI_CBT_PUBLIC_THROTTLE', '12,1'),
+    ],
+    'pdf' => [
+        'disk' => env('SANFAANI_PDF_DISK', 'local'),
+        'watermark_enabled' => (bool) env('SANFAANI_PDF_WATERMARK_ENABLED', true),
+        'queue' => env('SANFAANI_PDF_QUEUE', 'default'),
+    ],
     'idle_timeout_minutes' => (int) env('SANFAANI_IDLE_TIMEOUT_MINUTES', 30),
     'backups' => [
         'retention_count' => (int) env('SANFAANI_BACKUP_RETENTION_COUNT', 10),

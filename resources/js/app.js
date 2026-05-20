@@ -2,9 +2,12 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 
-window.Alpine = Alpine;
+window.Alpine = window.Alpine || Alpine;
 
-Alpine.start();
+if (!window.__SANFAANI_ALPINE_STARTED__) {
+    window.__SANFAANI_ALPINE_STARTED__ = true;
+    window.Alpine.start();
+}
 
 const applyTheme = (theme) => {
     const normalizedTheme = theme === 'light' ? 'light' : 'dark';
@@ -239,6 +242,12 @@ const submitResultAction = async (form, submitter) => {
 
 const initGlobalSearch = () => {
     document.querySelectorAll('[data-global-search-root]').forEach((root) => {
+        if (root.dataset.searchMounted === 'true') {
+            return;
+        }
+
+        root.dataset.searchMounted = 'true';
+
         const input = root.querySelector('[data-global-search-input]');
         const results = root.querySelector('[data-global-search-results]');
         const status = root.querySelector('[data-global-search-status]');
@@ -354,6 +363,12 @@ const initGlobalSearch = () => {
 
 const initNotificationPolling = () => {
     document.querySelectorAll('[data-notification-root]').forEach((root) => {
+        if (root.dataset.notificationsMounted === 'true') {
+            return;
+        }
+
+        root.dataset.notificationsMounted = 'true';
+
         const feedUrl = root.dataset.feedUrl;
         const readUrlTemplate = root.dataset.readUrlTemplate;
         const indexUrl = root.dataset.indexUrl;

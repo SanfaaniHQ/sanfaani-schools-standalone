@@ -51,6 +51,11 @@ class User extends Authenticatable
         return $this->hasMany(TeacherResultSubmission::class, 'teacher_user_id');
     }
 
+    public function cbtAttempts(): HasMany
+    {
+        return $this->hasMany(CbtAttempt::class);
+    }
+
     public function supportThreadsCreated(): HasMany
     {
         return $this->hasMany(SupportThread::class, 'created_by');

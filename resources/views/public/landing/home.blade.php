@@ -1,35 +1,11 @@
 @php
     $platformName = $platformSettings->platform_name;
-
-    $quickActions = [
-        ['title' => 'Request Demo', 'body' => 'Walk through setup, results, publishing, and parent access.', 'url' => route('landing.demo'), 'icon' => 'sparkles'],
-        ['title' => 'Check Result', 'body' => 'Open the public result checker flow for published results.', 'url' => route('public.results.index'), 'icon' => 'shield'],
-        ['title' => 'Explore Features', 'body' => 'See the modules available for school teams and parents.', 'url' => route('landing.features'), 'icon' => 'check'],
-        ['title' => 'Contact Sales', 'body' => 'Discuss onboarding, pricing, and school-specific needs.', 'url' => route('landing.contact'), 'icon' => 'mail'],
-    ];
-
-    $featureCards = [
-        ['title' => 'Student 360 Profiles', 'body' => 'Keep student records, enrollments, results, and access history connected.', 'icon' => 'users'],
-        ['title' => 'Result Publishing Control', 'body' => 'Review, publish, unpublish, and protect result visibility with clear permissions.', 'icon' => 'shield'],
-        ['title' => 'Scratch Card Access', 'body' => 'Support approved card batches, serial numbers, PINs, and parent checking.', 'icon' => 'check'],
-        ['title' => 'Flexible School Setup', 'body' => 'Classes, arms, subjects, sessions, terms, grading, and remarks match school reality.', 'icon' => 'sparkles'],
-        ['title' => 'Staff Workflows', 'body' => 'School admins, teachers, and result officers work in role-aware dashboards.', 'icon' => 'users'],
-        ['title' => 'Upgrade-Ready Foundation', 'body' => 'Built for PDF snapshots, verification, SMS, and parent access expansion.', 'icon' => 'trending'],
-    ];
-
-    $steps = [
-        'Configure school, classes, sessions, terms, subjects, and grading.',
-        'Add students manually or by CSV upload with clean admission numbers.',
-        'Enter or upload results, then review before publishing.',
-        'Control access through scratch cards or school payment policies.',
-        'Let parents check only approved, published results online.',
-    ];
-
-    $testimonials = [
-        ['quote' => 'The workflow feels familiar to school staff but gives management much better control over publishing.', 'name' => 'School Administrator', 'role' => 'Private secondary school'],
-        ['quote' => 'Scratch card access and result checking are clear enough for parents without extra training.', 'name' => 'Result Officer', 'role' => 'Islamic school'],
-        ['quote' => 'The setup can start small and still leave room for future modules when the school is ready.', 'name' => 'Education Consultant', 'role' => 'School onboarding partner'],
-    ];
+    $quickActions = collect(trans('marketing.home.quick_actions'))
+        ->map(fn ($action) => $action + ['url' => route($action['route'])])
+        ->all();
+    $featureCards = trans('marketing.home.feature_cards');
+    $steps = trans('marketing.home.steps');
+    $testimonials = trans('marketing.home.testimonials');
 @endphp
 
 <!DOCTYPE html>
@@ -38,10 +14,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ $platformName }} - African School Management and Result Portal</title>
-        <meta name="description" content="Modern school management SaaS for African private schools, Islamic schools, academies, and training centres with secure results, staff roles, scratch cards, and parent access.">
-        <meta property="og:title" content="{{ $platformName }} - African School Management and Result Portal">
-        <meta property="og:description" content="Manage students, publish results safely, protect role access, and let parents check approved results online.">
+        <title>{{ __('marketing.home.title', ['platform' => $platformName]) }}</title>
+        <meta name="description" content="{{ __('marketing.home.description') }}">
+        <meta property="og:title" content="{{ __('marketing.home.title', ['platform' => $platformName]) }}">
+        <meta property="og:description" content="{{ __('marketing.home.og_description') }}">
         <meta property="og:type" content="website">
         <meta property="og:image" content="{{ asset('images/marketing/hero-dashboard-preview.png') }}">
         <link rel="canonical" href="{{ route('landing.home') }}">
@@ -74,16 +50,16 @@
             <section class="marketing-soft-gradient py-16 sm:py-20">
                 <x-ui.container class="grid gap-10 lg:grid-cols-2 lg:items-center">
                     <div>
-                        <x-marketing.badge icon="clock">The problem</x-marketing.badge>
+                        <x-marketing.badge icon="clock">{{ __('marketing.home.problem_badge') }}</x-marketing.badge>
                         <h2 class="mt-5 text-3xl font-semibold leading-tight text-gray-950 sm:text-4xl">
-                            Result work needs structure, not another spreadsheet relay.
+                            {{ __('marketing.home.problem_title') }}
                         </h2>
                         <p class="mt-5 text-base leading-7 text-gray-600">
-                            Manual result preparation slows schools down, publishing mistakes create trust issues, and parents keep asking staff for records that should already be accessible.
+                            {{ __('marketing.home.problem_body') }}
                         </p>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
-                        @foreach (['Slow result preparation', 'Manual parent requests', 'Mixed grading styles', 'Unclear scratch-card tracking'] as $point)
+                        @foreach (trans('marketing.home.problem_points') as $point)
                             <div class="rounded-lg border border-gray-200 bg-white p-5 text-sm font-semibold text-gray-800 shadow-sm">
                                 {{ $point }}
                             </div>
@@ -96,13 +72,13 @@
                 <x-ui.container>
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div class="max-w-2xl">
-                            <x-marketing.badge icon="sparkles">Core modules</x-marketing.badge>
+                            <x-marketing.badge icon="sparkles">{{ __('marketing.home.modules_badge') }}</x-marketing.badge>
                             <h2 class="mt-5 text-3xl font-semibold leading-tight text-gray-950 sm:text-4xl">
-                                A modern SaaS foundation for school result operations.
+                                {{ __('marketing.home.modules_title') }}
                             </h2>
                         </div>
                         <a href="{{ route('landing.features') }}" class="ui-button-secondary gap-2">
-                            View all features
+                            {{ __('marketing.home.view_features') }}
                             <x-marketing.icon name="arrow-right" class="h-4 w-4" />
                         </a>
                     </div>
@@ -118,19 +94,19 @@
             <section class="bg-gray-50 py-16 sm:py-20">
                 <x-ui.container class="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
                     <div>
-                        <x-marketing.badge icon="trending" tone="sky">Conversion workflow</x-marketing.badge>
+                        <x-marketing.badge icon="trending" tone="sky">{{ __('marketing.home.workflow_badge') }}</x-marketing.badge>
                         <h2 class="mt-5 text-3xl font-semibold leading-tight text-gray-950 sm:text-4xl">
-                            From school setup to parent result checking.
+                            {{ __('marketing.home.workflow_title') }}
                         </h2>
                         <p class="mt-5 text-base leading-7 text-gray-600">
-                            The public promise is simple, but the workflow underneath keeps school staff, students, results, access, and publishing rules properly separated.
+                            {{ __('marketing.home.workflow_body') }}
                         </p>
                         <div class="mt-8 flex flex-col gap-3 sm:flex-row">
                             <a href="{{ route('landing.demo') }}" class="ui-button-primary gap-2">
-                                See demo flow
+                                {{ __('marketing.home.see_demo_flow') }}
                                 <x-marketing.icon name="arrow-right" class="h-4 w-4" />
                             </a>
-                            <a href="{{ route('landing.pricing') }}" class="ui-button-secondary">View pricing</a>
+                            <a href="{{ route('landing.pricing') }}" class="ui-button-secondary">{{ __('marketing.home.view_pricing') }}</a>
                         </div>
                     </div>
                     <div class="space-y-4">
@@ -147,9 +123,9 @@
             <section class="bg-white py-16 sm:py-20">
                 <x-ui.container>
                     <div class="mx-auto max-w-2xl text-center">
-                        <x-marketing.badge icon="users">What schools care about</x-marketing.badge>
+                        <x-marketing.badge icon="users">{{ __('marketing.home.trust_badge') }}</x-marketing.badge>
                         <h2 class="mt-5 text-3xl font-semibold leading-tight text-gray-950 sm:text-4xl">
-                            Built around clarity, control, and parent confidence.
+                            {{ __('marketing.home.trust_title') }}
                         </h2>
                     </div>
                     <div class="mt-10 grid gap-5 lg:grid-cols-3">
@@ -163,19 +139,19 @@
             <section class="bg-gray-50 py-16 sm:py-20">
                 <x-ui.container class="grid gap-8 lg:grid-cols-2 lg:items-center">
                     <div>
-                        <x-marketing.badge icon="shield" tone="amber">Pricing direction</x-marketing.badge>
+                        <x-marketing.badge icon="shield" tone="amber">{{ __('marketing.home.pricing_badge') }}</x-marketing.badge>
                         <h2 class="mt-5 text-3xl font-semibold leading-tight text-gray-950 sm:text-4xl">
-                            Start lean, then scale by modules, school size, and support needs.
+                            {{ __('marketing.home.pricing_title') }}
                         </h2>
                         <p class="mt-5 text-base leading-7 text-gray-600">
-                            Plans can support free trials, per-student pricing, term/session arrangements, and custom school agreements.
+                            {{ __('marketing.home.pricing_body') }}
                         </p>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
-                        @foreach (['Free Trial', 'Standard', 'Premium', 'Custom School Plan'] as $plan)
+                        @foreach (trans('marketing.home.plans') as $plan)
                             <div class="marketing-card rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
                                 <p class="font-semibold text-gray-950">{{ $plan }}</p>
-                                <p class="mt-2 text-sm leading-6 text-gray-600">Flexible onboarding for schools at different launch stages.</p>
+                                <p class="mt-2 text-sm leading-6 text-gray-600">{{ __('marketing.home.plan_body') }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -183,8 +159,8 @@
             </section>
 
             @include('public.landing.partials.cta', [
-                'title' => 'Give your school a result workflow parents can trust.',
-                'body' => 'Bring student records, result publishing, access control, and public result checking into one modern school portal.',
+                'title' => __('marketing.home.cta_title'),
+                'body' => __('marketing.home.cta_body'),
             ])
         </main>
 

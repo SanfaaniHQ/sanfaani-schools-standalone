@@ -42,6 +42,7 @@ class TestCommand extends Command
         $testingEnvironment = [
             'APP_ENV' => 'testing',
             'APP_KEY' => 'base64:6B51G2yW9oVncbGTPK/T5yJ4U4K7KBlpS7Mxfq/0slE=',
+            'APP_CONFIG_CACHE' => base_path('bootstrap/cache/config.testing.php'),
             'APP_MAINTENANCE_DRIVER' => 'file',
             'BCRYPT_ROUNDS' => '4',
             'BROADCAST_CONNECTION' => 'null',

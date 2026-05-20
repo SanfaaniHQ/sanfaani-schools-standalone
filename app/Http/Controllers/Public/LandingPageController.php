@@ -13,8 +13,6 @@ use Illuminate\Validation\Rule;
 
 class LandingPageController extends Controller
 {
-    private const SUCCESS_MESSAGE = 'Thank you. We have received your request and will contact you.';
-
     public function home()
     {
         return view('public.landing.home');
@@ -50,7 +48,7 @@ class LandingPageController extends Controller
             'page' => 'contact',
         ]);
 
-        return back()->with('success', self::SUCCESS_MESSAGE);
+        return back()->with('success', __('marketing.lead_success'));
     }
 
     public function demo()
@@ -86,7 +84,7 @@ class LandingPageController extends Controller
             'message' => $data['message'] ?? null,
         ], 'landing_demo');
 
-        return back()->with('success', self::SUCCESS_MESSAGE);
+        return back()->with('success', __('marketing.lead_success'));
     }
 
     private function storeLead(string $type, array $data, string $source, array $metadata = []): void
@@ -119,9 +117,9 @@ class LandingPageController extends Controller
         if (filled($data['email'] ?? null)) {
             app(CommunicationService::class)->sendPlatformEmail(
                 $data['email'],
-                'We received your request',
-                'Lead acknowledgment',
-                'Thank you for your interest in Sanfaani Schools. Our team will contact you shortly.',
+                __('marketing.lead_ack_subject'),
+                __('marketing.lead_ack_title'),
+                __('marketing.lead_ack_body'),
                 'lead_acknowledgment',
                 ['lead_type' => $type],
                 'platform_transactional'
@@ -135,9 +133,9 @@ class LandingPageController extends Controller
                 foreach ($admins as $admin) {
                     app(CommunicationService::class)->sendPlatformEmail(
                         $admin->email,
-                        'New '.ucfirst($type).' request received',
-                        'Lead notification',
-                        'A new '.$type.' request has been submitted by '.$data['name'].'.',
+                        __('marketing.lead_admin_subject', ['type' => ucfirst($type)]),
+                        __('marketing.lead_admin_title'),
+                        __('marketing.lead_admin_body', ['type' => $type, 'name' => $data['name']]),
                         'lead_admin_notification',
                         ['lead_type' => $type, 'requester_email' => $data['email'] ?? null],
                         'platform_transactional'

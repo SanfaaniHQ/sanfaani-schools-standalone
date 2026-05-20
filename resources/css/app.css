@@ -301,6 +301,12 @@
     max-width: 100vw;
 }
 
+.education-ops-shell [role="dialog"] > * {
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
 .education-ops-shell .grid,
 .education-ops-shell .flex {
     min-width: 0;
@@ -351,6 +357,76 @@ footer,
 footer * {
     min-width: 0;
     overflow-wrap: anywhere;
+}
+
+.marketing-card,
+.enterprise-panel,
+.ui-card,
+.ui-panel {
+    max-width: 100%;
+}
+
+.marketing-card,
+.enterprise-panel,
+.ui-card {
+    overflow-wrap: anywhere;
+}
+
+.cbt-question-body,
+.cbt-question-body * {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.cbt-question-body img,
+.cbt-question-body table {
+    max-width: 100%;
+}
+
+.cbt-question-body table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+[dir="rtl"] .education-ops-shell .enterprise-table th,
+[dir="rtl"] .education-ops-shell .enterprise-table td {
+    text-align: right;
+}
+
+@media (max-width: 640px) {
+    html {
+        overflow-x: hidden;
+    }
+
+    .education-ops-shell main {
+        padding-inline: 1rem;
+    }
+
+    .education-ops-shell .ui-button,
+    .education-ops-shell .ui-button-primary,
+    .education-ops-shell .ui-button-secondary,
+    .education-ops-shell .btn-primary,
+    .education-ops-shell .btn-secondary {
+        min-height: 2.75rem;
+        padding-inline: 0.875rem;
+    }
+
+    .education-ops-shell table:not(.enterprise-table) {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    footer .grid {
+        width: 100%;
+    }
+}
+
+@media (min-resolution: 1.1dppx) {
+    .education-ops-shell .sticky {
+        transform: translateZ(0);
+    }
 }
 
 .education-ops-shell .bg-white,

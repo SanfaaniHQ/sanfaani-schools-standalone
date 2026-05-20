@@ -7,6 +7,7 @@ use App\Services\CurrentSchoolService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StudentResult extends Model
@@ -123,6 +124,11 @@ class StudentResult extends Model
     public function teacherResultSubmission(): BelongsTo
     {
         return $this->belongsTo(TeacherResultSubmission::class);
+    }
+
+    public function cbtAttempt(): HasOne
+    {
+        return $this->hasOne(CbtAttempt::class);
     }
 
     public function workflowStatus(): ?ResultWorkflowStatus

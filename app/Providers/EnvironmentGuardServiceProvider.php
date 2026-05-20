@@ -70,8 +70,12 @@ class EnvironmentGuardServiceProvider extends ServiceProvider
 
     private function isIsolatedTestingDatabase(): bool
     {
-        return app()->environment('testing')
-            && config('database.default') === 'sqlite'
-            && config('database.connections.sqlite.database') === ':memory:';
+        $environment = env('APP_ENV') ?: app()->environment();
+        $connection = env('DB_CONNECTION') ?: config('database.default');
+        $database = env('DB_DATABASE') ?: config('database.connections.sqlite.database');
+
+        return $environment === 'testing'
+            && $connection === 'sqlite'
+            && $database === ':memory:';
     }
 }

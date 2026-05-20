@@ -22,6 +22,13 @@ class SchoolAuthorizationService
         'report_cards.comments' => 'report_card_auto_comments',
         'student.bulk_upload' => 'student_bulk_upload',
         'support.manage' => 'support.access',
+        'cbt.manage' => 'cbt_exams',
+        'cbt.question_bank' => 'cbt_question_bank',
+        'cbt.mark_theory' => 'cbt_theory_marking',
+        'cbt.publish_results' => 'cbt_results',
+        'cbt.public_competition' => 'cbt_competition_mode',
+        'cbt.certificates' => 'cbt_certificates',
+        'pdf.snapshots' => 'pdf_snapshots',
     ];
 
     /** @var array<string, bool> */

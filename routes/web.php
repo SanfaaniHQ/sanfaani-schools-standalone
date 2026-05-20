@@ -36,6 +36,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Public\LandingPageController;
+use App\Http\Controllers\Public\CbtAccessController as PublicCbtAccessController;
 use App\Http\Controllers\Public\ResultCheckerController;
 use App\Http\Controllers\Public\ResultCheckerPaymentController;
 use App\Http\Controllers\Public\ResultVerificationController;
@@ -44,6 +45,11 @@ use App\Http\Controllers\PublicResultController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
 use App\Http\Controllers\School\AuditLogController as SchoolAuditLogController;
+use App\Http\Controllers\School\CbtDashboardController;
+use App\Http\Controllers\School\CbtExamController;
+use App\Http\Controllers\School\CbtMarkingController;
+use App\Http\Controllers\School\CbtQuestionBankController;
+use App\Http\Controllers\School\CbtQuestionController;
 use App\Http\Controllers\School\ClassUploadController;
 use App\Http\Controllers\School\CommunicationController as SchoolCommunicationController;
 use App\Http\Controllers\School\GradingScaleController;
@@ -191,6 +197,34 @@ Route::post('/schools/{slug}/results/check', [PublicSchoolPublicPageController::
 
 Route::get('/s/{slug}', [PublicSchoolPublicPageController::class, 'show'])
     ->name('public.school-page.show');
+
+Route::get('/cbt/attempts/{attempt:attempt_uuid}', [PublicCbtAccessController::class, 'take'])
+    ->middleware('throttle:60,1')
+    ->name('public.cbt.take');
+
+Route::post('/cbt/attempts/{attempt:attempt_uuid}/save', [PublicCbtAccessController::class, 'save'])
+    ->middleware('throttle:120,1')
+    ->name('public.cbt.save');
+
+Route::post('/cbt/attempts/{attempt:attempt_uuid}/submit', [PublicCbtAccessController::class, 'submit'])
+    ->middleware('throttle:30,1')
+    ->name('public.cbt.submit');
+
+Route::get('/cbt/attempts/{attempt:attempt_uuid}/result', [PublicCbtAccessController::class, 'result'])
+    ->middleware('throttle:30,1')
+    ->name('public.cbt.result');
+
+Route::get('/cbt/attempts/{attempt:attempt_uuid}/snapshot', [PublicCbtAccessController::class, 'snapshot'])
+    ->middleware('throttle:12,1')
+    ->name('public.cbt.snapshot');
+
+Route::get('/cbt/{school:slug}/{exam}', [PublicCbtAccessController::class, 'entry'])
+    ->middleware('throttle:30,1')
+    ->name('public.cbt.entry');
+
+Route::post('/cbt/{school:slug}/{exam}/access', [PublicCbtAccessController::class, 'access'])
+    ->middleware('throttle:12,1')
+    ->name('public.cbt.access');
 
 Route::get('/s/{school:slug}/result-checker', [ResultCheckerController::class, 'index'])
     ->name('public.school.results.index');
@@ -507,6 +541,58 @@ Route::middleware(['auth', 'school.context'])
             ->group(function () {
                 Route::get('/dashboard', [SchoolAdminDashboardController::class, 'index'])
                     ->name('dashboard');
+
+                Route::prefix('cbt')
+                    ->name('cbt.')
+                    ->middleware('feature.school:cbt.manage,cbt.question_bank,cbt.mark_theory,cbt.publish_results')
+                    ->group(function () {
+                        Route::get('/', [CbtDashboardController::class, 'index'])
+                            ->name('dashboard');
+
+                        Route::resource('question-banks', CbtQuestionBankController::class)
+                            ->only(['index', 'create', 'store', 'show'])
+                            ->middleware('feature.school:cbt.question_bank,cbt.manage');
+
+                        Route::post('/question-banks/{questionBank}/import', [CbtQuestionBankController::class, 'import'])
+                            ->middleware('feature.school:cbt.question_bank,cbt.manage')
+                            ->name('question-banks.import');
+
+                        Route::post('/question-banks/{questionBank}/questions', [CbtQuestionController::class, 'store'])
+                            ->middleware('feature.school:cbt.question_bank,cbt.manage')
+                            ->name('questions.store');
+
+                        Route::resource('exams', CbtExamController::class)
+                            ->only(['index', 'create', 'store', 'show'])
+                            ->middleware('feature.school:cbt.manage,cbt.question_bank');
+
+                        Route::post('/exams/{exam}/questions', [CbtExamController::class, 'attachQuestions'])
+                            ->middleware('feature.school:cbt.manage')
+                            ->name('exams.questions.attach');
+
+                        Route::post('/exams/{exam}/open', [CbtExamController::class, 'open'])
+                            ->middleware('feature.school:cbt.manage')
+                            ->name('exams.open');
+
+                        Route::post('/exams/{exam}/access-codes', [CbtExamController::class, 'generateCodes'])
+                            ->middleware('feature.school:cbt.manage')
+                            ->name('exams.access-codes.generate');
+
+                        Route::post('/exams/{exam}/publish-results', [CbtExamController::class, 'publishResults'])
+                            ->middleware('feature.school:cbt.publish_results,results.publish')
+                            ->name('exams.publish-results');
+
+                        Route::get('/marking', [CbtMarkingController::class, 'index'])
+                            ->middleware('feature.school:cbt.mark_theory')
+                            ->name('marking.index');
+
+                        Route::get('/marking/{attempt}', [CbtMarkingController::class, 'show'])
+                            ->middleware('feature.school:cbt.mark_theory')
+                            ->name('marking.show');
+
+                        Route::patch('/marking/answers/{answer}', [CbtMarkingController::class, 'update'])
+                            ->middleware('feature.school:cbt.mark_theory')
+                            ->name('marking.answers.update');
+                    });
 
                 Route::get('/students', [StudentController::class, 'index'])
                     ->middleware('feature.school:students.view,students.view_assigned')

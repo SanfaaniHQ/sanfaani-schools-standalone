@@ -16,6 +16,8 @@ class ProcessBulkCommunicationBatch implements ShouldQueue
 
     public int $timeout = 90;
 
+    public int $maxExceptions = 2;
+
     public function __construct(
         public int $bulkCommunicationBatchId,
         public ?int $actorId = null
@@ -32,5 +34,15 @@ class ProcessBulkCommunicationBatch implements ShouldQueue
         $actor = $this->actorId ? User::find($this->actorId) : null;
 
         $bulkCommunications->processPendingBatch($batch, $actor);
+    }
+
+    public function backoff(): array
+    {
+        return [30, 120, 300];
+    }
+
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHour();
     }
 }

@@ -64,6 +64,8 @@
                 $item(__('ui.my_subjects'), 'school.teacher-assignments.my', 'school.teacher-assignments.my', 'book-open', 'teacher.assignments.view'),
                 $item(__('ui.result_entry'), 'school.teacher-results.create', 'school.teacher-results.create', 'file-text', 'teacher.results.create'),
                 $item(__('ui.my_submissions'), 'school.teacher-results.index', 'school.teacher-results.*', 'clipboard-list', 'teacher.results.submit'),
+                $item(__('ui.cbt_question_bank'), 'school.cbt.question-banks.index', 'school.cbt.question-banks.*', 'book-open', 'cbt.question_bank'),
+                $item(__('ui.cbt_marking'), 'school.cbt.marking.index', 'school.cbt.marking.*', 'clipboard-list', 'cbt.mark_theory'),
                 $item(__('ui.students'), 'school.students.index', 'school.students.*', 'users', 'students.view_assigned'),
             ],
             __('ui.assigned_tools') => [
@@ -79,6 +81,7 @@
                 $item(__('ui.result_upload'), 'school.results.upload.index', 'school.results.upload.*', 'archive', 'results.upload'),
                 $item(__('ui.result_review_queue'), 'school.result-reviews.index', 'school.result-reviews.*', 'clipboard-list', 'results.review'),
                 $item(__('ui.result_publishing'), 'school.results.publishing.index', 'school.results.publishing.*', 'pie-chart', 'results.publish'),
+                $item(__('ui.cbt_results'), 'school.cbt.dashboard', 'school.cbt.*', 'clipboard-list', 'cbt.publish_results'),
                 $item(__('ui.analytics'), 'school.result-system.index', 'school.result-system.*', 'bar-chart', 'results.review'),
             ],
             __('ui.student_access') => [
@@ -102,6 +105,7 @@
                 $item(__('ui.results'), 'school.results.manual.index', 'school.results.manual.*', 'file-text', 'results.manual_entry'),
                 $item(__('ui.result_upload'), 'school.results.upload.index', 'school.results.upload.*', 'archive', 'results.upload'),
                 $item(__('ui.result_review_queue'), 'school.result-reviews.index', 'school.result-reviews.*', 'clipboard-list', 'results.review'),
+                $item(__('ui.cbt_center'), 'school.cbt.dashboard', 'school.cbt.*', 'clipboard-list', 'cbt.manage'),
                 $item(__('ui.report_cards'), 'school.report-card-settings.edit', 'school.report-card-settings.*', 'pie-chart'),
                 $item(__('ui.scratch_cards'), 'school.scratch-cards.index', 'school.scratch-cards.*', 'credit-card'),
                 $item(__('ui.promotions'), 'school.student-promotions.index', 'school.student-promotions.*', 'activity', 'student.promote'),

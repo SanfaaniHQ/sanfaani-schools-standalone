@@ -15,6 +15,8 @@ class SendMarketingCampaignEmail implements ShouldQueue
 
     public int $timeout = 60;
 
+    public int $maxExceptions = 2;
+
     public function __construct(public int $recipientId)
     {
         $this->onQueue((string) config('sanfaani.marketing.queue', 'marketing'));
@@ -34,5 +36,10 @@ class SendMarketingCampaignEmail implements ShouldQueue
         }
 
         $marketing->sendRecipient($recipient);
+    }
+
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addHours(4);
     }
 }
