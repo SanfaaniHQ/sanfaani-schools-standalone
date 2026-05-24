@@ -11,35 +11,41 @@
     </x-slot>
 
     @php
+        $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
+        $user = auth()->user();
         $attentionItems = collect([
-            ['label' => 'Pending scratch card requests', 'value' => $pendingScratchCardRequests, 'href' => route('admin.scratch-card-requests.index')],
-            ['label' => 'Pending payments', 'value' => $pendingPayments, 'href' => route('admin.payments.index')],
-            ['label' => 'New demo requests', 'value' => $newDemoRequests, 'href' => route('admin.lead-requests.index', ['type' => 'demo'])],
-            ['label' => 'New contact requests', 'value' => $newContactRequests, 'href' => route('admin.lead-requests.index', ['type' => 'contact'])],
-            ['label' => 'Suspended schools', 'value' => $suspendedSchools, 'href' => route('admin.schools.index', ['status' => 'suspended'])],
-        ])->filter(fn ($item) => (int) $item['value'] > 0);
+            ['label' => 'Pending scratch card requests', 'value' => $pendingScratchCardRequests, 'href' => route('admin.scratch-card-requests.index'), 'widget' => 'scratch_card_requests'],
+            ['label' => 'Pending payments', 'value' => $pendingPayments, 'href' => route('admin.payments.index'), 'widget' => 'platform_payments'],
+            ['label' => 'New demo requests', 'value' => $newDemoRequests, 'href' => route('admin.lead-requests.index', ['type' => 'demo']), 'widget' => 'demo_requests'],
+            ['label' => 'New contact requests', 'value' => $newContactRequests, 'href' => route('admin.lead-requests.index', ['type' => 'contact']), 'widget' => 'lead_pipeline'],
+            ['label' => 'Suspended schools', 'value' => $suspendedSchools, 'href' => route('admin.schools.index', ['status' => 'suspended']), 'widget' => 'schools_total'],
+        ])->filter(fn ($item) => (int) $item['value'] > 0 && $behavior->allowsDashboardWidget($item['widget'], user: $user));
 
-        $modules = [
-            ['title' => 'Schools', 'body' => 'Create, update, archive, and support schools.', 'href' => route('admin.schools.index')],
-            ['title' => 'School Subscriptions', 'body' => 'Assign plans and track subscription health.', 'href' => route('admin.school-subscriptions.index')],
-            ['title' => 'Scratch Card Requests', 'body' => 'Approve batches, confirm payments, and generate cards.', 'href' => route('admin.scratch-card-requests.index')],
-            ['title' => 'Plans', 'body' => 'Manage plan limits and feature availability.', 'href' => route('admin.subscription-plans.index')],
-            ['title' => 'Leads', 'body' => 'Convert demo and contact requests into schools.', 'href' => route('admin.lead-requests.index')],
-            ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index')],
-            ['title' => 'Audit Logs', 'body' => 'Read platform and school action history.', 'href' => route('admin.audit-logs.index')],
-            ['title' => 'System Maintenance', 'body' => 'Clear caches, optimize Laravel, and manage backups.', 'href' => route('admin.system-maintenance.index')],
-        ];
+        $modules = collect([
+            ['title' => 'Schools', 'body' => 'Create, update, archive, and support schools.', 'href' => route('admin.schools.index'), 'group' => 'platform_schools'],
+            ['title' => 'School Subscriptions', 'body' => 'Assign plans and track subscription health.', 'href' => route('admin.school-subscriptions.index'), 'group' => 'platform_subscriptions'],
+            ['title' => 'Scratch Card Requests', 'body' => 'Approve batches, confirm payments, and generate cards.', 'href' => route('admin.scratch-card-requests.index'), 'group' => 'platform_scratch_cards'],
+            ['title' => 'Plans', 'body' => 'Manage plan limits and feature availability.', 'href' => route('admin.subscription-plans.index'), 'group' => 'platform_subscriptions'],
+            ['title' => 'Leads', 'body' => 'Convert demo and contact requests into schools.', 'href' => route('admin.lead-requests.index'), 'group' => 'platform_onboarding'],
+            ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
+            ['title' => 'Local School Settings', 'body' => 'Local owner settings placeholder for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
+            ['title' => 'License Status', 'body' => 'Deployment-gated placeholder; license activation is not implemented here.', 'href' => route('admin.deployment.placeholder', 'standalone-license'), 'group' => 'standalone_license'],
+            ['title' => 'Managed Backups', 'body' => 'Deployment-gated placeholder; backup manager is not implemented here.', 'href' => route('admin.deployment.placeholder', 'managed-backups'), 'group' => 'managed_backups'],
+            ['title' => 'Managed Updates', 'body' => 'Deployment-gated placeholder; update manager is not implemented here.', 'href' => route('admin.deployment.placeholder', 'managed-updates'), 'group' => 'managed_updates'],
+            ['title' => 'Audit Logs', 'body' => 'Read platform and school action history.', 'href' => route('admin.audit-logs.index'), 'group' => 'platform_audit'],
+            ['title' => 'System Maintenance', 'body' => 'Clear caches, optimize Laravel, and manage backups.', 'href' => route('admin.system-maintenance.index'), 'group' => 'system_maintenance'],
+        ])->filter(fn ($module) => $behavior->allowsRouteGroup($module['group'], user: $user));
     @endphp
 
     <div class="space-y-6">
         <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <x-ui.panel>
-                <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Platform status</p>
+                <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">{{ $behavior->label() }}</p>
                 <h3 class="mt-2 text-2xl font-semibold text-text-primary">
-                    {{ $activeSchools }} active schools across {{ $totalSchools }} institutions
+                    {{ $behavior->commercialModelLabel() }}
                 </h3>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                    Monitor school operations, result publishing, scratch card access, payments, support, audit logs, and release readiness from one platform workspace.
+                    {{ $behavior->description() }}
                 </p>
             </x-ui.panel>
 
@@ -59,10 +65,14 @@
         </section>
 
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-ui.stat-card label="Schools" :value="$totalSchools" :meta="$activeSchools . ' active / ' . $trialSchools . ' trial'" />
+            @if ($behavior->allowsDashboardWidget('schools_total', user: $user))
+                <x-ui.stat-card label="Schools" :value="$totalSchools" :meta="$activeSchools . ' active / ' . $trialSchools . ' trial'" />
+            @endif
             <x-ui.stat-card label="Users" :value="$totalUsers" :meta="$totalSchoolAdmins . ' admins, ' . $totalResultOfficers . ' result officers'" />
             <x-ui.stat-card label="Published Results" :value="$publishedResults" meta="Live result records" tone="success" />
-            <x-ui.stat-card label="Scratch Cards" :value="$generatedScratchCardBatches" :meta="$revokedScratchCards . ' revoked cards'" />
+            @if ($behavior->allowsDashboardWidget('scratch_card_requests', user: $user))
+                <x-ui.stat-card label="Scratch Cards" :value="$generatedScratchCardBatches" :meta="$revokedScratchCards . ' revoked cards'" />
+            @endif
         </section>
 
         <section class="grid gap-4 lg:grid-cols-3">

@@ -145,17 +145,20 @@
                                 $school = $schoolService->get($user);
                                 $roleContext = $schoolService->roleContext($user);
                                 $authz = app(\App\Services\SchoolAuthorizationService::class);
+                                $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
                                 $canCommand = fn (?string $feature = null) => ! $feature || ($school && $authz->can($user, $school, $feature));
+                                $canCommandGroup = fn (?string $group = null) => ! $group || $behavior->allowsRouteGroup($group, $school, $user);
 
                                 $commandItems = $roleContext === 'super_admin' && ! $schoolService->inSupportMode($user)
                                     ? [
-                                        ['label' => 'Platform Dashboard', 'context' => 'Global platform status', 'href' => route('admin.dashboard'), 'visible' => true],
-                                        ['label' => 'Schools', 'context' => 'Institution accounts and support access', 'href' => route('admin.schools.index'), 'visible' => true],
-                                        ['label' => 'Scratch Requests', 'context' => 'Card batches awaiting action', 'href' => route('admin.scratch-card-requests.index'), 'visible' => true],
-                                        ['label' => 'Communication Center', 'context' => 'Broadcasts, delivery history, and retries', 'href' => route('admin.communications.index'), 'visible' => true],
-                                        ['label' => 'Platform Mail System', 'context' => 'SMTP health and fallback policy', 'href' => route('admin.platform-mail-system.index'), 'visible' => true],
-                                        ['label' => 'Security', 'context' => 'Login, permission, and suspicious activity', 'href' => route('admin.security.index'), 'visible' => true],
-                                        ['label' => 'Audit Logs', 'context' => 'Security and compliance trail', 'href' => route('admin.audit-logs.index'), 'visible' => true],
+                                        ['label' => 'Platform Dashboard', 'context' => 'Global platform status', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'platform_dashboard'],
+                                        ['label' => 'Local Dashboard', 'context' => 'Local owner status', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'local_dashboard'],
+                                        ['label' => 'Schools', 'context' => 'Institution accounts and support access', 'href' => route('admin.schools.index'), 'visible' => true, 'group' => 'platform_schools'],
+                                        ['label' => 'Scratch Requests', 'context' => 'Card batches awaiting action', 'href' => route('admin.scratch-card-requests.index'), 'visible' => true, 'group' => 'platform_scratch_cards'],
+                                        ['label' => 'Communication Center', 'context' => 'Broadcasts, delivery history, and retries', 'href' => route('admin.communications.index'), 'visible' => true, 'group' => 'platform_communications'],
+                                        ['label' => 'Platform Mail System', 'context' => 'SMTP health and fallback policy', 'href' => route('admin.platform-mail-system.index'), 'visible' => true, 'group' => 'platform_mail'],
+                                        ['label' => 'Security', 'context' => 'Login, permission, and suspicious activity', 'href' => route('admin.security.index'), 'visible' => true, 'group' => 'platform_security'],
+                                        ['label' => 'Audit Logs', 'context' => 'Security and compliance trail', 'href' => route('admin.audit-logs.index'), 'visible' => true, 'group' => 'platform_audit'],
                                     ]
                                     : [
                                         ['label' => 'Dashboard', 'context' => 'School operations status', 'href' => route('school.dashboard'), 'visible' => true],
@@ -168,7 +171,7 @@
                                          ['label' => 'Audit Logs', 'context' => 'School activity and security trail', 'href' => route('school.audit-logs.index'), 'visible' => $roleContext === 'school_admin'],
                                      ];
 
-                                $commandItems = collect($commandItems)->filter(fn ($item) => $item['visible']);
+                                $commandItems = collect($commandItems)->filter(fn ($item) => $item['visible'] && $canCommandGroup($item['group'] ?? null));
                             @endphp
 
                             @foreach ($commandItems as $item)

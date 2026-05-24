@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
+use App\Http\Controllers\Admin\DeploymentPlaceholderController;
 use App\Http\Controllers\Admin\LeadRequestController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\MarketingAutomationController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
 use App\Http\Controllers\Admin\SystemMaintenanceController;
+use App\Http\Controllers\Admin\SystemStatusController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -288,22 +290,28 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('dashboard');
 
         Route::get('/platform-settings', [PlatformSettingController::class, 'edit'])
-            ->name('platform-settings.edit');
+            ->name('platform-settings.edit')
+            ->middleware('deployment.behavior:platform_settings|local_school_settings');
 
         Route::patch('/platform-settings', [PlatformSettingController::class, 'update'])
-            ->name('platform-settings.update');
+            ->name('platform-settings.update')
+            ->middleware('deployment.behavior:platform_settings|local_school_settings');
 
         Route::resource('schools', SchoolController::class)
-            ->except(['show', 'destroy']);
+            ->except(['show', 'destroy'])
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/support-access/start', [SchoolController::class, 'startSupportAccess'])
-            ->name('schools.support-access.start');
+            ->name('schools.support-access.start')
+            ->middleware('deployment.behavior:platform_schools|platform_support');
 
         Route::get('/schools/{school}/public-page', [AdminSchoolPublicPageController::class, 'edit'])
-            ->name('schools.public-page.edit');
+            ->name('schools.public-page.edit')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::patch('/schools/{school}/public-page', [AdminSchoolPublicPageController::class, 'update'])
-            ->name('schools.public-page.update');
+            ->name('schools.public-page.update')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/support-access/stop', [SchoolController::class, 'stopSupportAccess'])
             ->name('support-access.stop');
@@ -315,71 +323,94 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('support-access.continue');
 
         Route::post('/schools/{school}/archive', [SchoolController::class, 'archive'])
-            ->name('schools.archive');
+            ->name('schools.archive')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/restore', [SchoolController::class, 'restore'])
-            ->name('schools.restore');
+            ->name('schools.restore')
+            ->middleware('deployment.behavior:platform_schools');
 
         // School Admin User Management
         Route::get('/schools/{school}/admins', [SchoolAdminUserController::class, 'index'])
-            ->name('schools.admins.index');
+            ->name('schools.admins.index')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::get('/schools/{school}/admins/create', [SchoolAdminUserController::class, 'create'])
-            ->name('schools.admins.create');
+            ->name('schools.admins.create')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/admins', [SchoolAdminUserController::class, 'store'])
-            ->name('schools.admins.store');
+            ->name('schools.admins.store')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/admins/{admin}/reset-password', [SchoolAdminUserController::class, 'resetPassword'])
-            ->name('schools.admins.reset-password');
+            ->name('schools.admins.reset-password')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/admins/{admin}/send-reset-link', [SchoolAdminUserController::class, 'sendResetLink'])
-            ->name('schools.admins.send-reset-link');
+            ->name('schools.admins.send-reset-link')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/admins/{admin}/disable', [SchoolAdminUserController::class, 'disable'])
-            ->name('schools.admins.disable');
+            ->name('schools.admins.disable')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/admins/{admin}/enable', [SchoolAdminUserController::class, 'enable'])
-            ->name('schools.admins.enable');
+            ->name('schools.admins.enable')
+            ->middleware('deployment.behavior:platform_schools');
 
         Route::resource('subscription-plans', SubscriptionPlanController::class)
-            ->except(['show', 'destroy']);
+            ->except(['show', 'destroy'])
+            ->middleware('deployment.behavior:platform_subscriptions');
 
         Route::post('/subscription-plans/{subscriptionPlan}/archive', [SubscriptionPlanController::class, 'archive'])
-            ->name('subscription-plans.archive');
+            ->name('subscription-plans.archive')
+            ->middleware('deployment.behavior:platform_subscriptions');
 
         Route::post('/subscription-plans/{subscriptionPlan}/activate', [SubscriptionPlanController::class, 'activate'])
-            ->name('subscription-plans.activate');
+            ->name('subscription-plans.activate')
+            ->middleware('deployment.behavior:platform_subscriptions');
 
         Route::resource('school-subscriptions', SchoolSubscriptionController::class)
-            ->only(['index', 'create', 'store']);
+            ->only(['index', 'create', 'store'])
+            ->middleware('deployment.behavior:platform_subscriptions');
 
         Route::get('/feature-overrides', [SchoolFeatureOverrideController::class, 'index'])
-            ->name('feature-overrides.index');
+            ->name('feature-overrides.index')
+            ->middleware('deployment.behavior:platform_features');
 
         Route::post('/feature-overrides', [SchoolFeatureOverrideController::class, 'store'])
-            ->name('feature-overrides.store');
+            ->name('feature-overrides.store')
+            ->middleware('deployment.behavior:platform_features');
 
         Route::resource('result-access-policies', ResultAccessPolicyController::class)
-            ->except(['destroy']);
+            ->except(['destroy'])
+            ->middleware('deployment.behavior:platform_result_system');
 
         Route::get('/result-system', [AdminResultSystemController::class, 'index'])
-            ->name('result-system.index');
+            ->name('result-system.index')
+            ->middleware('deployment.behavior:platform_result_system');
 
         Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
-            ->name('roles-permissions.index');
+            ->name('roles-permissions.index')
+            ->middleware('deployment.behavior:platform_security');
 
         Route::resource('lead-requests', LeadRequestController::class)
-            ->only(['index', 'show', 'update']);
+            ->only(['index', 'show', 'update'])
+            ->middleware('deployment.behavior:platform_onboarding');
         Route::post('/lead-requests/{leadRequest}/notes', [LeadRequestController::class, 'storeNote'])
-            ->name('lead-requests.notes.store');
+            ->name('lead-requests.notes.store')
+            ->middleware('deployment.behavior:platform_onboarding');
         Route::post('/lead-requests/{leadRequest}/communications', [LeadRequestController::class, 'storeCommunication'])
-            ->name('lead-requests.communications.store');
+            ->name('lead-requests.communications.store')
+            ->middleware('deployment.behavior:platform_onboarding');
         Route::post('/lead-requests/{leadRequest}/convert', [LeadRequestController::class, 'convert'])
-            ->name('lead-requests.convert');
+            ->name('lead-requests.convert')
+            ->middleware('deployment.behavior:platform_onboarding');
 
         Route::prefix('email-marketing')
             ->name('email-marketing.')
+            ->middleware('deployment.behavior:platform_marketing')
             ->group(function () {
                 Route::get('/', MarketingDashboardController::class)
                     ->name('dashboard');
@@ -411,104 +442,158 @@ Route::middleware(['auth', 'role:super_admin'])
             });
 
         Route::get('/system-maintenance', [SystemMaintenanceController::class, 'index'])
-            ->name('system-maintenance.index');
+            ->name('system-maintenance.index')
+            ->middleware('deployment.behavior:system_maintenance');
+
+        Route::get('/system/status', SystemStatusController::class)
+            ->name('system.status')
+            ->middleware('deployment.behavior:system_status');
+
+        Route::get('/deployment/{section}', [DeploymentPlaceholderController::class, 'show'])
+            ->whereIn('section', [
+                'standalone-installer',
+                'standalone-license',
+                'standalone-updates',
+                'local-branding',
+                'local-mail',
+                'managed-support',
+                'managed-backups',
+                'managed-updates',
+                'managed-white-label',
+            ])
+            ->middleware('deployment.behavior:standalone_installer|standalone_license|standalone_updates|local_branding|local_mail_settings|managed_support|managed_backups|managed_updates|managed_white_label')
+            ->name('deployment.placeholder');
 
         Route::post('/system-maintenance/clear-all-cache', [SystemMaintenanceController::class, 'clearAllCache'])
-            ->name('system-maintenance.clear-all-cache');
+            ->name('system-maintenance.clear-all-cache')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/clear-config-cache', [SystemMaintenanceController::class, 'clearConfigCache'])
-            ->name('system-maintenance.clear-config-cache');
+            ->name('system-maintenance.clear-config-cache')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/clear-route-cache', [SystemMaintenanceController::class, 'clearRouteCache'])
-            ->name('system-maintenance.clear-route-cache');
+            ->name('system-maintenance.clear-route-cache')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/clear-view-cache', [SystemMaintenanceController::class, 'clearViewCache'])
-            ->name('system-maintenance.clear-view-cache');
+            ->name('system-maintenance.clear-view-cache')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/clear-app-cache', [SystemMaintenanceController::class, 'clearAppCache'])
-            ->name('system-maintenance.clear-app-cache');
+            ->name('system-maintenance.clear-app-cache')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/optimize', [SystemMaintenanceController::class, 'optimize'])
-            ->name('system-maintenance.optimize');
+            ->name('system-maintenance.optimize')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/storage-link', [SystemMaintenanceController::class, 'storageLink'])
-            ->name('system-maintenance.storage-link');
+            ->name('system-maintenance.storage-link')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/backups', [SystemMaintenanceController::class, 'createBackup'])
-            ->name('system-maintenance.backups.create');
+            ->name('system-maintenance.backups.create')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::post('/system-maintenance/backups/cleanup', [SystemMaintenanceController::class, 'cleanupBackups'])
-            ->name('system-maintenance.backups.cleanup');
+            ->name('system-maintenance.backups.cleanup')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::get('/system-maintenance/backups/{fileName}', [SystemMaintenanceController::class, 'downloadBackup'])
             ->where('fileName', '[A-Za-z0-9._-]+')
-            ->name('system-maintenance.backups.download');
+            ->name('system-maintenance.backups.download')
+            ->middleware('deployment.behavior:system_maintenance');
 
         Route::get('/payments', [PaymentController::class, 'index'])
-            ->name('payments.index');
+            ->name('payments.index')
+            ->middleware('deployment.behavior:platform_payments');
 
         Route::post('/payments/{payment}/confirm', [PaymentController::class, 'confirm'])
-            ->name('payments.confirm');
+            ->name('payments.confirm')
+            ->middleware('deployment.behavior:platform_payments');
 
         Route::get('/payment-settings', [PaymentGatewaySettingController::class, 'index'])
-            ->name('payment-settings.index');
+            ->name('payment-settings.index')
+            ->middleware('deployment.behavior:platform_payments');
 
         Route::patch('/payment-settings/{gateway}', [PaymentGatewaySettingController::class, 'update'])
-            ->name('payment-settings.update');
+            ->name('payment-settings.update')
+            ->middleware('deployment.behavior:platform_payments');
 
         Route::get('/mail-settings', [MailSettingController::class, 'edit'])
-            ->name('mail-settings.edit');
+            ->name('mail-settings.edit')
+            ->middleware('deployment.behavior:platform_mail');
 
         Route::get('/platform-mail-system', [PlatformMailSystemController::class, 'index'])
-            ->name('platform-mail-system.index');
+            ->name('platform-mail-system.index')
+            ->middleware('deployment.behavior:platform_mail');
 
         Route::patch('/mail-settings', [MailSettingController::class, 'update'])
-            ->name('mail-settings.update');
+            ->name('mail-settings.update')
+            ->middleware('deployment.behavior:platform_mail');
 
         Route::post('/mail-settings/test', [MailSettingController::class, 'test'])
-            ->name('mail-settings.test');
+            ->name('mail-settings.test')
+            ->middleware('deployment.behavior:platform_mail');
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
-            ->name('audit-logs.index');
+            ->name('audit-logs.index')
+            ->middleware('deployment.behavior:platform_audit');
         Route::get('/audit-logs/export', [AuditLogController::class, 'export'])
-            ->name('audit-logs.export');
+            ->name('audit-logs.export')
+            ->middleware('deployment.behavior:platform_audit');
 
         Route::get('/security', [SecurityController::class, 'index'])
-            ->name('security.index');
+            ->name('security.index')
+            ->middleware('deployment.behavior:platform_security');
 
         Route::get('/communications', [AdminCommunicationController::class, 'index'])
-            ->name('communications.index');
+            ->name('communications.index')
+            ->middleware('deployment.behavior:platform_communications');
         Route::get('/communications/logs', [AdminCommunicationController::class, 'logs'])
-            ->name('communications.logs');
+            ->name('communications.logs')
+            ->middleware('deployment.behavior:platform_communications');
         Route::post('/communications/send', [AdminCommunicationController::class, 'send'])
-            ->name('communications.send');
+            ->name('communications.send')
+            ->middleware('deployment.behavior:platform_communications');
         Route::post('/communications/{communicationLog}/resend', [AdminCommunicationController::class, 'resend'])
-            ->name('communications.resend');
+            ->name('communications.resend')
+            ->middleware('deployment.behavior:platform_communications');
         Route::post('/communications/retry-failed', [AdminCommunicationController::class, 'retryFailed'])
-            ->name('communications.retry-failed');
+            ->name('communications.retry-failed')
+            ->middleware('deployment.behavior:platform_communications');
         Route::get('/communications/export', [AdminCommunicationController::class, 'export'])
-            ->name('communications.export');
+            ->name('communications.export')
+            ->middleware('deployment.behavior:platform_communications');
 
         Route::get('/support-threads', [AdminSupportThreadController::class, 'index'])
-            ->name('support-threads.index');
+            ->name('support-threads.index')
+            ->middleware('deployment.behavior:platform_support|managed_support');
 
         Route::get('/support-threads/{thread}', [AdminSupportThreadController::class, 'show'])
-            ->name('support-threads.show');
+            ->name('support-threads.show')
+            ->middleware('deployment.behavior:platform_support|managed_support');
 
         Route::get('/support-attachments/{attachment}', [AdminSupportThreadController::class, 'downloadAttachment'])
-            ->name('support-attachments.download');
+            ->name('support-attachments.download')
+            ->middleware('deployment.behavior:platform_support|managed_support');
 
         Route::post('/support-threads/{thread}/reply', [AdminSupportThreadController::class, 'reply'])
-            ->name('support-threads.reply');
+            ->name('support-threads.reply')
+            ->middleware('deployment.behavior:platform_support|managed_support');
 
         Route::patch('/support-threads/{thread}/status', [AdminSupportThreadController::class, 'status'])
-            ->name('support-threads.status');
+            ->name('support-threads.status')
+            ->middleware('deployment.behavior:platform_support|managed_support');
 
         Route::patch('/support-threads/{thread}/assign', [AdminSupportThreadController::class, 'assign'])
-            ->name('support-threads.assign');
+            ->name('support-threads.assign')
+            ->middleware('deployment.behavior:platform_support|managed_support');
 
         Route::prefix('scratch-card-requests')
             ->name('scratch-card-requests.')
+            ->middleware('deployment.behavior:platform_scratch_cards')
             ->group(function () {
                 Route::get('/', [ScratchCardRequestController::class, 'index'])
                     ->name('index');
@@ -530,7 +615,8 @@ Route::middleware(['auth', 'role:super_admin'])
             });
 
         Route::post('/scratch-cards/{card}/revoke', [ScratchCardRequestController::class, 'revokeCard'])
-            ->name('scratch-cards.revoke');
+            ->name('scratch-cards.revoke')
+            ->middleware('deployment.behavior:platform_scratch_cards');
     });
 
 Route::middleware(['auth', 'school.context'])

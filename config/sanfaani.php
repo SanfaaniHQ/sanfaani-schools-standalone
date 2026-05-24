@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'deployment' => [
+        'mode' => env('SANFAANI_DEPLOYMENT_MODE', 'saas'),
+        'license_mode' => env('SANFAANI_LICENSE_MODE', 'subscription'),
+        'brand_mode' => env('SANFAANI_BRAND_MODE', 'default'),
+        'updates_enabled' => (bool) env('SANFAANI_UPDATES_ENABLED', true),
+        'demo_enabled' => (bool) env('SANFAANI_DEMO_ENABLED', false),
+    ],
     'platform_name' => env('SANFAANI_PLATFORM_NAME', 'Sanfaani Schools'),
     'company_name' => env('SANFAANI_COMPANY_NAME', 'Sanfaani Ltd'),
     'product_url' => env('SANFAANI_PRODUCT_URL', 'https://schools.sanfaani.net'),

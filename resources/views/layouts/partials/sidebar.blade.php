@@ -7,51 +7,69 @@
     $school = $user ? $schoolService->get($user) : null;
     $roleContext = $user ? $schoolService->roleContext($user) : null;
     $authz = app(\App\Services\SchoolAuthorizationService::class);
+    $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
     $isSuperAdmin = $roleContext === 'super_admin' && ! $schoolService->inSupportMode($user);
     $can = fn (?string $feature) => ! $feature || ($school && $authz->can($user, $school, $feature));
-    $item = function (string $label, string $route, string $active, string $icon, ?string $feature = null, array $parameters = []) use ($can) {
+    $canGroup = fn (?string $routeGroup) => ! $routeGroup || $behavior->allowsRouteGroup($routeGroup, $school, $user);
+    $item = function (string $label, string $route, string $active, string $icon, ?string $feature = null, ?string $routeGroup = null, array $parameters = []) use ($can, $canGroup) {
         return [
             'label' => $label,
             'href' => \Illuminate\Support\Facades\Route::has($route) ? route($route, $parameters) : null,
             'active' => $active,
             'icon' => $icon,
-            'visible' => $can($feature),
+            'visible' => $can($feature) && $canGroup($routeGroup),
         ];
     };
 
     if ($isSuperAdmin) {
         $navSections = [
             __('ui.platform') => [
-                $item(__('ui.dashboard'), 'admin.dashboard', 'admin.dashboard', 'home'),
-                $item(__('ui.schools'), 'admin.schools.index', 'admin.schools.*', 'users'),
-                $item(__('ui.plans'), 'admin.subscription-plans.index', 'admin.subscription-plans.*', 'layout-grid'),
-                $item(__('ui.subscriptions'), 'admin.school-subscriptions.index', 'admin.school-subscriptions.*', 'wallet'),
-                $item(__('ui.global_analytics'), 'admin.result-system.index', 'admin.result-system.*', 'bar-chart'),
+                $item(__('ui.dashboard'), 'admin.dashboard', 'admin.dashboard', 'home', null, 'platform_dashboard'),
+                $item(__('ui.schools'), 'admin.schools.index', 'admin.schools.*', 'users', null, 'platform_schools'),
+                $item(__('ui.plans'), 'admin.subscription-plans.index', 'admin.subscription-plans.*', 'layout-grid', null, 'platform_subscriptions'),
+                $item(__('ui.subscriptions'), 'admin.school-subscriptions.index', 'admin.school-subscriptions.*', 'wallet', null, 'platform_subscriptions'),
+                $item(__('ui.global_analytics'), 'admin.result-system.index', 'admin.result-system.*', 'bar-chart', null, 'platform_result_system'),
             ],
             __('ui.operations') => [
-                $item(__('ui.scratch_card_requests'), 'admin.scratch-card-requests.index', 'admin.scratch-card-requests.*', 'credit-card'),
-                $item(__('ui.leads'), 'admin.lead-requests.index', 'admin.lead-requests.*', 'activity'),
-                $item(__('ui.communication_center'), 'admin.communications.index', 'admin.communications.index', 'mail'),
-                $item(__('ui.communication_logs'), 'admin.communications.logs', 'admin.communications.logs', 'clipboard-list'),
-                $item(__('ui.platform_mail_system'), 'admin.platform-mail-system.index', 'admin.platform-mail-system.*', 'mail'),
-                $item(__('ui.support_escalation'), 'admin.support-threads.index', 'admin.support-threads.*', 'activity'),
-                $item(__('ui.backups'), 'admin.system-maintenance.index', 'admin.system-maintenance.*', 'archive'),
+                $item(__('ui.scratch_card_requests'), 'admin.scratch-card-requests.index', 'admin.scratch-card-requests.*', 'credit-card', null, 'platform_scratch_cards'),
+                $item(__('ui.leads'), 'admin.lead-requests.index', 'admin.lead-requests.*', 'activity', null, 'platform_onboarding'),
+                $item(__('ui.communication_center'), 'admin.communications.index', 'admin.communications.index', 'mail', null, 'platform_communications'),
+                $item(__('ui.communication_logs'), 'admin.communications.logs', 'admin.communications.logs', 'clipboard-list', null, 'platform_communications'),
+                $item(__('ui.platform_mail_system'), 'admin.platform-mail-system.index', 'admin.platform-mail-system.*', 'mail', null, 'platform_mail'),
+                $item(__('ui.support_escalation'), 'admin.support-threads.index', 'admin.support-threads.*', 'activity', null, 'platform_support'),
+                $item(__('ui.backups'), 'admin.system-maintenance.index', 'admin.system-maintenance.*', 'archive', null, 'system_maintenance'),
+                $item(__('System Status'), 'admin.system.status', 'admin.system.*', 'settings', null, 'system_status'),
+            ],
+            'Local Installation' => [
+                $item('Local Dashboard', 'admin.dashboard', 'admin.dashboard', 'home', null, 'local_dashboard'),
+                $item('Local School Settings', 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings', null, 'local_school_settings'),
+                $item('Local Branding', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'local_branding', ['section' => 'local-branding']),
+                $item('Local SMTP Settings', 'admin.deployment.placeholder', 'admin.deployment.*', 'mail', null, 'local_mail_settings', ['section' => 'local-mail']),
+                $item('License Status', 'admin.deployment.placeholder', 'admin.deployment.*', 'shield', null, 'standalone_license', ['section' => 'standalone-license']),
+                $item('Standalone Updates', 'admin.deployment.placeholder', 'admin.deployment.*', 'archive', null, 'standalone_updates', ['section' => 'standalone-updates']),
+                $item('Installer', 'admin.deployment.placeholder', 'admin.deployment.*', 'activity', null, 'standalone_installer', ['section' => 'standalone-installer']),
+            ],
+            'Managed Operations' => [
+                $item('Managed Support', 'admin.deployment.placeholder', 'admin.deployment.*', 'activity', null, 'managed_support', ['section' => 'managed-support']),
+                $item('Managed Backups', 'admin.deployment.placeholder', 'admin.deployment.*', 'archive', null, 'managed_backups', ['section' => 'managed-backups']),
+                $item('Managed Updates', 'admin.deployment.placeholder', 'admin.deployment.*', 'settings', null, 'managed_updates', ['section' => 'managed-updates']),
+                $item('White Label', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'managed_white_label', ['section' => 'managed-white-label']),
             ],
             __('ui.email_marketing') => [
-                $item(__('ui.email_marketing'), 'admin.email-marketing.dashboard', 'admin.email-marketing.dashboard', 'mail'),
-                $item(__('ui.campaigns'), 'admin.email-marketing.campaigns.index', 'admin.email-marketing.campaigns.*', 'clipboard-list'),
-                $item(__('ui.automations'), 'admin.email-marketing.automations.index', 'admin.email-marketing.automations.*', 'activity'),
-                $item(__('ui.email_templates'), 'admin.email-marketing.templates.index', 'admin.email-marketing.templates.*', 'file-text'),
-                $item(__('ui.campaign_analytics'), 'admin.email-marketing.dashboard', 'admin.email-marketing.dashboard', 'bar-chart'),
+                $item(__('ui.email_marketing'), 'admin.email-marketing.dashboard', 'admin.email-marketing.dashboard', 'mail', null, 'platform_marketing'),
+                $item(__('ui.campaigns'), 'admin.email-marketing.campaigns.index', 'admin.email-marketing.campaigns.*', 'clipboard-list', null, 'platform_marketing'),
+                $item(__('ui.automations'), 'admin.email-marketing.automations.index', 'admin.email-marketing.automations.*', 'activity', null, 'platform_marketing'),
+                $item(__('ui.email_templates'), 'admin.email-marketing.templates.index', 'admin.email-marketing.templates.*', 'file-text', null, 'platform_marketing'),
+                $item(__('ui.campaign_analytics'), 'admin.email-marketing.dashboard', 'admin.email-marketing.dashboard', 'bar-chart', null, 'platform_marketing'),
             ],
             __('ui.governance') => [
-                $item(__('ui.audit_logs'), 'admin.audit-logs.index', 'admin.audit-logs.*', 'clipboard-list'),
-                $item(__('ui.security'), 'admin.security.index', 'admin.security.*', 'shield'),
-                $item(__('ui.roles_permissions'), 'admin.roles-permissions.index', 'admin.roles-permissions.*', 'shield'),
-                $item(__('ui.result_access_policies'), 'admin.result-access-policies.index', 'admin.result-access-policies.*', 'file-text'),
-                $item(__('ui.mail_settings'), 'admin.mail-settings.edit', 'admin.mail-settings.*', 'mail'),
-                $item(__('ui.system_settings'), 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings'),
-                $item(__('ui.website_management'), 'admin.platform-settings.edit', 'admin.platform-settings.*', 'layout-grid'),
+                $item(__('ui.audit_logs'), 'admin.audit-logs.index', 'admin.audit-logs.*', 'clipboard-list', null, 'platform_audit'),
+                $item(__('ui.security'), 'admin.security.index', 'admin.security.*', 'shield', null, 'platform_security'),
+                $item(__('ui.roles_permissions'), 'admin.roles-permissions.index', 'admin.roles-permissions.*', 'shield', null, 'platform_security'),
+                $item(__('ui.result_access_policies'), 'admin.result-access-policies.index', 'admin.result-access-policies.*', 'file-text', null, 'platform_result_system'),
+                $item(__('ui.mail_settings'), 'admin.mail-settings.edit', 'admin.mail-settings.*', 'mail', null, 'platform_mail'),
+                $item(__('ui.system_settings'), 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings', null, 'platform_settings'),
+                $item(__('ui.website_management'), 'admin.platform-settings.edit', 'admin.platform-settings.*', 'layout-grid', null, 'platform_settings'),
                 $item(__('ui.legal_pages'), 'legal.privacy', 'legal.*', 'file-text'),
                 $item(__('ui.notifications'), 'notifications.index', 'notifications.*', 'activity'),
             ],

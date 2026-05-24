@@ -1,7 +1,10 @@
 <?php
 
-use App\Http\Middleware\EnsureCommunicationFeatureEnabled;
 use App\Http\Middleware\EnsureActiveRole;
+use App\Http\Middleware\EnsureCommunicationFeatureEnabled;
+use App\Http\Middleware\EnsureDeploymentBehavior;
+use App\Http\Middleware\EnsureDeploymentMode;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureSchoolFeatureEnabled;
 use App\Http\Middleware\EnsureValidSchoolContext;
 use App\Http\Middleware\IdleTimeoutMiddleware;
@@ -28,8 +31,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureActiveRole::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'feature' => EnsureFeatureEnabled::class,
             'feature.communication' => EnsureCommunicationFeatureEnabled::class,
             'feature.school' => EnsureSchoolFeatureEnabled::class,
+            'deployment.behavior' => EnsureDeploymentBehavior::class,
+            'deployment.mode' => EnsureDeploymentMode::class,
             'school.context' => EnsureValidSchoolContext::class,
         ]);
     })

@@ -2,15 +2,15 @@
 
 namespace App\Providers;
 
-use App\Models\School;
 use App\Models\CommunicationLog;
+use App\Models\School;
 use App\Models\StudentResult;
 use App\Models\TeacherClassAssignment;
 use App\Models\TeacherResultSubmission;
 use App\Models\TeacherSubjectAssignment;
 use App\Models\User;
-use App\Policies\SchoolPolicy;
 use App\Policies\CommunicationLogPolicy;
+use App\Policies\SchoolPolicy;
 use App\Policies\StudentResultPolicy;
 use App\Policies\TeacherAssignmentPolicy;
 use App\Policies\TeacherResultSubmissionPolicy;
@@ -18,11 +18,14 @@ use App\Policies\UserPolicy;
 use App\Services\AuditService;
 use App\Services\BrandingService;
 use App\Services\CurrentSchoolService;
+use App\Services\DashboardWidgetService;
 use App\Services\MailSettingService;
 use App\Services\PlatformSettingService;
 use App\Services\SchoolAuthorizationService;
-use App\Services\DashboardWidgetService;
 use App\Services\ScratchAnalyticsService;
+use App\Services\System\DeploymentBehaviorService;
+use App\Services\System\DeploymentModeService;
+use App\Services\System\FeatureAccessService;
 use App\Services\TenantMailManager;
 use App\Services\TenantThemeResolver;
 use Illuminate\Database\Eloquent\Model;
@@ -47,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(TenantMailManager::class);
         $this->app->singleton(ScratchAnalyticsService::class);
         $this->app->singleton(DashboardWidgetService::class);
+        $this->app->singleton(DeploymentModeService::class);
+        $this->app->singleton(DeploymentBehaviorService::class);
     }
 
     /**
@@ -108,6 +113,10 @@ class AppServiceProvider extends ServiceProvider
             $school = app(CurrentSchoolService::class)->get($user);
 
             return app(SchoolAuthorizationService::class)->canAny($user, $school, $featureKeys);
+        });
+
+        Blade::if('feature', function (string $featureKey, ?School $school = null, ?User $user = null): bool {
+            return app(FeatureAccessService::class)->enabled($featureKey, $school, $user);
         });
 
         app(MailSettingService::class)->applyConfigured();
