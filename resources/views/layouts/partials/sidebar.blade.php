@@ -47,7 +47,7 @@
                 $item('Local SMTP Settings', 'admin.deployment.placeholder', 'admin.deployment.*', 'mail', null, 'local_mail_settings', ['section' => 'local-mail']),
                 $item('License Status', 'admin.deployment.placeholder', 'admin.deployment.*', 'shield', null, 'standalone_license', ['section' => 'standalone-license']),
                 $item('Standalone Updates', 'admin.deployment.placeholder', 'admin.deployment.*', 'archive', null, 'standalone_updates', ['section' => 'standalone-updates']),
-                $item('Installer', 'admin.deployment.placeholder', 'admin.deployment.*', 'activity', null, 'standalone_installer', ['section' => 'standalone-installer']),
+                $item('Installer', 'installer.welcome', 'installer.*', 'activity', null, 'standalone_installer'),
             ],
             'Managed Operations' => [
                 $item('Managed Support', 'admin.deployment.placeholder', 'admin.deployment.*', 'activity', null, 'managed_support', ['section' => 'managed-support']),

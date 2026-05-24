@@ -7,6 +7,7 @@ return [
         'brand_mode' => env('SANFAANI_BRAND_MODE', 'default'),
         'updates_enabled' => (bool) env('SANFAANI_UPDATES_ENABLED', true),
         'demo_enabled' => (bool) env('SANFAANI_DEMO_ENABLED', false),
+        'installed' => (bool) env('SANFAANI_INSTALLED', true),
     ],
     'platform_name' => env('SANFAANI_PLATFORM_NAME', 'Sanfaani Schools'),
     'company_name' => env('SANFAANI_COMPANY_NAME', 'Sanfaani Ltd'),

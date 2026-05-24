@@ -4,12 +4,14 @@ namespace App\Services\System;
 
 use App\Models\School;
 use App\Models\User;
+use App\Services\Installer\InstallerStateService;
 
 class DeploymentBehaviorService
 {
     public function __construct(
         private DeploymentModeService $deployment,
         private FeatureAccessService $features,
+        private InstallerStateService $installer,
     ) {}
 
     public function currentMode(): string
@@ -56,8 +58,8 @@ class DeploymentBehaviorService
 
         $definition = $this->definition('route_groups', $group);
 
-        if ((bool) data_get($definition, 'requires_uninstalled', false) && $this->installed()) {
-            return false;
+        if ((bool) data_get($definition, 'requires_uninstalled', false)) {
+            return $this->installer->canAccessInstaller();
         }
 
         return $this->featuresAllowed($definition, $school, $user);
@@ -173,11 +175,6 @@ class DeploymentBehaviorService
         $config = config('deployment_modes.modes.'.$this->currentMode(), []);
 
         return is_array($config) ? $config : [];
-    }
-
-    private function installed(): bool
-    {
-        return (bool) config('sanfaani.deployment.installed', true);
     }
 
     private function normalize(string $value): string

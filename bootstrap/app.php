@@ -8,10 +8,13 @@ use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureSchoolFeatureEnabled;
 use App\Http\Middleware\EnsureValidSchoolContext;
 use App\Http\Middleware\IdleTimeoutMiddleware;
+use App\Http\Middleware\EnsureInstallerAccess;
+use App\Http\Middleware\PreventReinstall;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
@@ -20,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function (): void {
+            Route::middleware('web')->group(base_path('routes/installer.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
@@ -36,6 +42,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature.school' => EnsureSchoolFeatureEnabled::class,
             'deployment.behavior' => EnsureDeploymentBehavior::class,
             'deployment.mode' => EnsureDeploymentMode::class,
+            'installer.access' => EnsureInstallerAccess::class,
+            'prevent.reinstall' => PreventReinstall::class,
             'school.context' => EnsureValidSchoolContext::class,
         ]);
     })
