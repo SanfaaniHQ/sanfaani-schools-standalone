@@ -82,7 +82,7 @@ class SupportThreadController extends Controller
             'attachments.*' => ['file', 'max:5120'],
         ]);
 
-        $support->addReply($thread, $request->user(), 'super_admin', $data['message'], (bool) ($data['is_internal_note'] ?? false), $request, $this->storeAttachments($request));
+        $support->addReply($thread, $request->user(), 'super_admin', $data['message'], (bool) ($data['is_internal_note'] ?? false), $request, $this->storeAttachments($request, $thread));
 
         return back()->with('success', 'Reply sent successfully.');
     }
@@ -129,14 +129,18 @@ class SupportThreadController extends Controller
         return back()->with('success', 'Thread assignment updated.');
     }
 
-    private function storeAttachments(Request $request): array
+    private function storeAttachments(Request $request, SupportThread $thread): array
     {
+        $directory = $thread->school_id
+            ? 'support-attachments/schools/'.$thread->school_id
+            : 'support-attachments/platform';
+
         return collect($request->file('attachments', []))
             ->filter()
-            ->map(function ($file) {
+            ->map(function ($file) use ($directory) {
                 return [
                     'disk' => 'local',
-                    'path' => $file->store('support-attachments'),
+                    'path' => $file->store($directory),
                     'name' => $file->getClientOriginalName(),
                     'mime' => $file->getClientMimeType(),
                     'size' => $file->getSize(),

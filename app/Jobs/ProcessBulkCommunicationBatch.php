@@ -20,7 +20,8 @@ class ProcessBulkCommunicationBatch implements ShouldQueue
 
     public function __construct(
         public int $bulkCommunicationBatchId,
-        public ?int $actorId = null
+        public ?int $actorId = null,
+        public ?int $schoolId = null
     ) {}
 
     public function handle(BulkCommunicationService $bulkCommunications): void
@@ -28,6 +29,10 @@ class ProcessBulkCommunicationBatch implements ShouldQueue
         $batch = BulkCommunicationBatch::find($this->bulkCommunicationBatchId);
 
         if (! $batch) {
+            return;
+        }
+
+        if ($this->schoolId && (int) $batch->school_id !== (int) $this->schoolId) {
             return;
         }
 

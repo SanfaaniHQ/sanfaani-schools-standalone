@@ -76,7 +76,7 @@ class SupportThreadController extends Controller
             'attachments' => ['nullable', 'array', 'max:3'],
             'attachments.*' => ['file', 'max:5120'],
         ]);
-        $data['attachments'] = $this->storeAttachments($request);
+        $data['attachments'] = $this->storeAttachments($request, $school);
         $data['route_to'] ??= $role === 'school_admin' ? SupportThread::ROUTE_SUPER_ADMIN : SupportThread::ROUTE_SCHOOL_ADMIN;
 
         $thread = $support->createThread($school, $request->user(), $role, $data, $request);
@@ -127,7 +127,7 @@ class SupportThreadController extends Controller
         ]);
 
         $canUseInternalNote = $role === 'school_admin';
-        $support->addReply($thread, $request->user(), $role, $data['message'], $canUseInternalNote && (bool) ($data['is_internal_note'] ?? false), $request, $this->storeAttachments($request));
+        $support->addReply($thread, $request->user(), $role, $data['message'], $canUseInternalNote && (bool) ($data['is_internal_note'] ?? false), $request, $this->storeAttachments($request, $school));
 
         return back()->with('success', 'Reply sent successfully.');
     }
@@ -198,14 +198,14 @@ class SupportThreadController extends Controller
         abort_unless($support->visibleSchoolThreadsQuery($school, $user, $role)->whereKey($thread->getKey())->exists(), 403, 'You cannot access this support thread.');
     }
 
-    private function storeAttachments(Request $request): array
+    private function storeAttachments(Request $request, School $school): array
     {
         return collect($request->file('attachments', []))
             ->filter()
-            ->map(function ($file) {
+            ->map(function ($file) use ($school) {
                 return [
                     'disk' => 'local',
-                    'path' => $file->store('support-attachments'),
+                    'path' => $file->store('support-attachments/schools/'.$school->id),
                     'name' => $file->getClientOriginalName(),
                     'mime' => $file->getClientMimeType(),
                     'size' => $file->getSize(),
