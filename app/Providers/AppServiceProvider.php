@@ -9,6 +9,13 @@ use App\Models\TeacherClassAssignment;
 use App\Models\TeacherResultSubmission;
 use App\Models\TeacherSubjectAssignment;
 use App\Models\User;
+use App\Events\DemoRequested;
+use App\Events\LicenseExpiring;
+use App\Events\OnboardingChecklistCompleted;
+use App\Events\OnboardingStepCompleted;
+use App\Listeners\Marketing\CreateRenewalReminderFromLicense;
+use App\Listeners\Marketing\CreateSalesTaskFromDemoRequest;
+use App\Listeners\Marketing\TrackOnboardingConversionActivity;
 use App\Policies\CommunicationLogPolicy;
 use App\Policies\SchoolPolicy;
 use App\Policies\StudentResultPolicy;
@@ -130,6 +137,11 @@ class AppServiceProvider extends ServiceProvider
                 'school_id' => data_get($event->notifiable, 'school_id'),
             ]);
         });
+
+        Event::listen(DemoRequested::class, CreateSalesTaskFromDemoRequest::class);
+        Event::listen(OnboardingStepCompleted::class, TrackOnboardingConversionActivity::class);
+        Event::listen(OnboardingChecklistCompleted::class, TrackOnboardingConversionActivity::class);
+        Event::listen(LicenseExpiring::class, CreateRenewalReminderFromLicense::class);
 
         View::composer('*', function ($view) {
             $service = app(PlatformSettingService::class);

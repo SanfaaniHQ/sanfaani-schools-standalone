@@ -209,7 +209,7 @@ class MarketingAutomationService
 
     public function suppress(string $email, string $reason = 'unsubscribed', ?User $actor = null, array $metadata = []): MarketingSuppression
     {
-        return MarketingSuppression::updateOrCreate(
+        $suppression = MarketingSuppression::updateOrCreate(
             ['email' => Str::lower(trim($email))],
             [
                 'reason' => $reason,
@@ -219,6 +219,19 @@ class MarketingAutomationService
                 'metadata' => $metadata,
             ]
         );
+
+        try {
+            app(\App\Services\Marketing\UnsubscribeService::class)->record(
+                $email,
+                $reason,
+                $metadata['source'] ?? 'marketing',
+                metadata: $metadata
+            );
+        } catch (Throwable) {
+            //
+        }
+
+        return $suppression;
     }
 
     public function runAutomations(?User $actor = null): int

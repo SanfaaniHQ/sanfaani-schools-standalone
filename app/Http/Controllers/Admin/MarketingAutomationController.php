@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Jobs\RunMarketingAutomations;
 use App\Models\LeadRequest;
+use App\Models\MarketingAutomationSequence;
+use App\Models\MarketingLeadActivity;
 use App\Models\MarketingAutomation;
+use App\Services\Marketing\MarketingAutomationService as MarketingPipelineService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,6 +16,43 @@ use Illuminate\View\View;
 
 class MarketingAutomationController extends Controller
 {
+    public function dashboard(MarketingPipelineService $marketing): View
+    {
+        return view('admin.marketing.index', [
+            'analytics' => $marketing->analytics(),
+        ]);
+    }
+
+    public function leads(): View
+    {
+        return view('admin.marketing.leads', [
+            'leads' => LeadRequest::query()
+                ->with(['marketingLeadScores', 'convertedSchool:id,name'])
+                ->latest()
+                ->paginate(15),
+        ]);
+    }
+
+    public function activities(): View
+    {
+        return view('admin.marketing.activities', [
+            'activities' => MarketingLeadActivity::query()
+                ->with(['leadRequest:id,name,email,school_name,status', 'demoRequest:id,name,email,school_name', 'school:id,name', 'user:id,name,email'])
+                ->latest()
+                ->paginate(20),
+        ]);
+    }
+
+    public function sequences(): View
+    {
+        return view('admin.marketing.sequences', [
+            'sequences' => MarketingAutomationSequence::query()
+                ->withCount(['steps', 'enrollments'])
+                ->latest()
+                ->paginate(15),
+        ]);
+    }
+
     public function index(): View
     {
         return view('admin.email-marketing.automations.index', [

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\MarketingAutomationController;
 use App\Http\Controllers\Admin\MarketingCampaignController;
 use App\Http\Controllers\Admin\MarketingDashboardController;
 use App\Http\Controllers\Admin\MarketingEmailTemplateController;
+use App\Http\Controllers\Admin\SalesTaskController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentGatewaySettingController;
 use App\Http\Controllers\Admin\OnboardingProgressController as AdminOnboardingProgressController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Demo\DemoRequestController;
 use App\Http\Controllers\MarketingTrackingController;
+use App\Http\Controllers\MarketingUnsubscribeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\ProfileController;
@@ -284,6 +286,9 @@ Route::get('/m/unsubscribe/{recipient}', [MarketingTrackingController::class, 'u
     ->middleware('signed')
     ->name('marketing.unsubscribe.legacy');
 
+Route::get('/unsubscribe/{token}', MarketingUnsubscribeController::class)
+    ->name('marketing.unsubscribe.public');
+
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
@@ -437,6 +442,30 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::post('/lead-requests/{leadRequest}/convert', [LeadRequestController::class, 'convert'])
             ->name('lead-requests.convert')
             ->middleware('deployment.behavior:platform_onboarding');
+
+        Route::prefix('marketing')
+            ->name('marketing.')
+            ->middleware(['feature:marketing_automation', 'deployment.behavior:platform_marketing'])
+            ->group(function () {
+                Route::get('/', [MarketingAutomationController::class, 'dashboard'])
+                    ->name('index');
+                Route::get('/leads', [MarketingAutomationController::class, 'leads'])
+                    ->name('leads');
+                Route::get('/activities', [MarketingAutomationController::class, 'activities'])
+                    ->name('activities');
+                Route::get('/sequences', [MarketingAutomationController::class, 'sequences'])
+                    ->name('sequences');
+            });
+
+        Route::prefix('sales')
+            ->name('sales.')
+            ->middleware(['feature:marketing_automation', 'deployment.behavior:platform_marketing'])
+            ->group(function () {
+                Route::get('/tasks', [SalesTaskController::class, 'index'])
+                    ->name('tasks.index');
+                Route::post('/tasks/{salesTask}/complete', [SalesTaskController::class, 'complete'])
+                    ->name('tasks.complete');
+            });
 
         Route::prefix('demo')
             ->name('demo.')

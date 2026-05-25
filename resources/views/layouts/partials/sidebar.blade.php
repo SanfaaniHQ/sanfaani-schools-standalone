@@ -59,6 +59,8 @@
                 $item('White Label', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'managed_white_label', ['section' => 'managed-white-label']),
             ],
             __('ui.email_marketing') => [
+                $item('Marketing Pipeline', 'admin.marketing.index', 'admin.marketing.*', 'activity', null, 'platform_marketing'),
+                $item('Sales Tasks', 'admin.sales.tasks.index', 'admin.sales.tasks.*', 'clipboard-list', null, 'platform_marketing'),
                 $item(__('ui.email_marketing'), 'admin.email-marketing.dashboard', 'admin.email-marketing.dashboard', 'mail', null, 'platform_marketing'),
                 $item(__('ui.campaigns'), 'admin.email-marketing.campaigns.index', 'admin.email-marketing.campaigns.*', 'clipboard-list', null, 'platform_marketing'),
                 $item(__('ui.automations'), 'admin.email-marketing.automations.index', 'admin.email-marketing.automations.*', 'activity', null, 'platform_marketing'),

@@ -18,6 +18,8 @@
             ['label' => 'Pending payments', 'value' => $pendingPayments, 'href' => route('admin.payments.index'), 'widget' => 'platform_payments'],
             ['label' => 'New demo requests', 'value' => $newDemoRequests, 'href' => route('admin.lead-requests.index', ['type' => 'demo']), 'widget' => 'demo_requests'],
             ['label' => 'New contact requests', 'value' => $newContactRequests, 'href' => route('admin.lead-requests.index', ['type' => 'contact']), 'widget' => 'lead_pipeline'],
+            ['label' => 'Pending sales tasks', 'value' => $pendingSalesTasks, 'href' => route('admin.sales.tasks.index'), 'widget' => 'marketing_sales_tasks'],
+            ['label' => 'Renewal reminders', 'value' => $renewalReminderTasks, 'href' => route('admin.sales.tasks.index'), 'widget' => 'marketing_renewals'],
             ['label' => 'Suspended schools', 'value' => $suspendedSchools, 'href' => route('admin.schools.index', ['status' => 'suspended']), 'widget' => 'schools_total'],
         ])->filter(fn ($item) => (int) $item['value'] > 0 && $behavior->allowsDashboardWidget($item['widget'], user: $user));
 
@@ -27,6 +29,8 @@
             ['title' => 'Scratch Card Requests', 'body' => 'Approve batches, confirm payments, and generate cards.', 'href' => route('admin.scratch-card-requests.index'), 'group' => 'platform_scratch_cards'],
             ['title' => 'Plans', 'body' => 'Manage plan limits and feature availability.', 'href' => route('admin.subscription-plans.index'), 'group' => 'platform_subscriptions'],
             ['title' => 'Leads', 'body' => 'Convert demo and contact requests into schools.', 'href' => route('admin.lead-requests.index'), 'group' => 'platform_onboarding'],
+            ['title' => 'Marketing Pipeline', 'body' => 'Track lead scores, activities, conversion milestones, and sales follow-up.', 'href' => route('admin.marketing.index'), 'group' => 'platform_marketing'],
+            ['title' => 'Sales Tasks', 'body' => 'Review follow-up tasks for demos, trials, renewals, and managed opportunities.', 'href' => route('admin.sales.tasks.index'), 'group' => 'platform_marketing'],
             ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
             ['title' => 'Local School Settings', 'body' => 'Local owner settings placeholder for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
             ['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license'],
@@ -74,6 +78,9 @@
             <x-ui.stat-card label="Published Results" :value="$publishedResults" meta="Live result records" tone="success" />
             @if ($behavior->allowsDashboardWidget('scratch_card_requests', user: $user))
                 <x-ui.stat-card label="Scratch Cards" :value="$generatedScratchCardBatches" :meta="$revokedScratchCards . ' revoked cards'" />
+            @endif
+            @if ($behavior->allowsDashboardWidget('marketing_sales_tasks', user: $user))
+                <x-ui.stat-card label="Sales Tasks" :value="$pendingSalesTasks" :meta="$trialLeadCount . ' trial leads'" />
             @endif
         </section>
 

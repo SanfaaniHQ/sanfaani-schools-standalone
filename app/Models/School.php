@@ -263,6 +263,21 @@ class School extends Model
         return $this->hasMany(OnboardingEventLog::class);
     }
 
+    public function marketingLeadScores(): HasMany
+    {
+        return $this->hasMany(MarketingLeadScore::class);
+    }
+
+    public function marketingActivities(): HasMany
+    {
+        return $this->hasMany(MarketingLeadActivity::class);
+    }
+
+    public function salesTasks(): HasMany
+    {
+        return $this->hasMany(SalesTask::class);
+    }
+
     public function featureOverrides(): HasMany
     {
         return $this->hasMany(SchoolFeatureOverride::class);

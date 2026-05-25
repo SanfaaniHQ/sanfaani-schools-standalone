@@ -66,6 +66,11 @@ return [
         'white_label_status' => ['label' => 'White-label status', 'route_group' => 'managed_white_label'],
         'system_health' => ['label' => 'System health', 'route_group' => 'system_status'],
         'onboarding_progress' => ['label' => 'Onboarding progress', 'route_group' => 'guided_onboarding'],
+        'marketing_new_leads' => ['label' => 'New leads', 'route_group' => 'platform_marketing'],
+        'marketing_sales_tasks' => ['label' => 'Sales tasks', 'route_group' => 'platform_marketing'],
+        'marketing_trial_leads' => ['label' => 'Trial leads', 'route_group' => 'platform_marketing'],
+        'marketing_renewals' => ['label' => 'Renewal reminders', 'route_group' => 'platform_marketing'],
+        'marketing_conversions' => ['label' => 'Conversion milestones', 'route_group' => 'platform_marketing'],
     ],
 
     'settings_sections' => [
@@ -130,6 +135,11 @@ return [
                 'platform_payments',
                 'system_health',
                 'onboarding_progress',
+                'marketing_new_leads',
+                'marketing_sales_tasks',
+                'marketing_trial_leads',
+                'marketing_renewals',
+                'marketing_conversions',
             ],
             'settings_sections' => [
                 'platform',
@@ -213,6 +223,7 @@ return [
                 'platform_scratch_cards',
                 'platform_communications',
                 'platform_support',
+                'platform_marketing',
                 'demo_sessions',
                 'guided_onboarding',
                 'platform_mail',
@@ -243,6 +254,10 @@ return [
                 'white_label_status',
                 'system_health',
                 'onboarding_progress',
+                'marketing_new_leads',
+                'marketing_sales_tasks',
+                'marketing_renewals',
+                'marketing_conversions',
             ],
             'settings_sections' => [
                 'platform',

@@ -38,4 +38,19 @@ class DemoRequest extends Model
     {
         return $this->hasMany(DemoSession::class);
     }
+
+    public function marketingLeadScores(): HasMany
+    {
+        return $this->hasMany(MarketingLeadScore::class);
+    }
+
+    public function marketingActivities(): HasMany
+    {
+        return $this->hasMany(MarketingLeadActivity::class);
+    }
+
+    public function salesTasks(): HasMany
+    {
+        return $this->hasMany(SalesTask::class);
+    }
 }

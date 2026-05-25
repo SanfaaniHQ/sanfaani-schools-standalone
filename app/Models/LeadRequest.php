@@ -138,6 +138,26 @@ class LeadRequest extends Model
         return $this->hasMany(LeadTimelineEvent::class);
     }
 
+    public function marketingLeadScores(): HasMany
+    {
+        return $this->hasMany(MarketingLeadScore::class);
+    }
+
+    public function marketingActivities(): HasMany
+    {
+        return $this->hasMany(MarketingLeadActivity::class);
+    }
+
+    public function salesTasks(): HasMany
+    {
+        return $this->hasMany(SalesTask::class);
+    }
+
+    public function marketingEnrollments(): HasMany
+    {
+        return $this->hasMany(MarketingAutomationEnrollment::class);
+    }
+
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
         $search = trim((string) $search);

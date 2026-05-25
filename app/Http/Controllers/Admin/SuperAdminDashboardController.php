@@ -8,6 +8,7 @@ use App\Models\PaymentTransaction;
 use App\Models\School;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardBatch;
+use App\Models\SalesTask;
 use App\Models\StudentResult;
 use App\Models\User;
 use App\Services\OnboardingProgressService;
@@ -37,6 +38,11 @@ class SuperAdminDashboardController extends Controller
             'revokedScratchCards' => ScratchCard::where('status', 'revoked')->count(),
             'newDemoRequests' => LeadRequest::where('type', 'demo')->where('status', 'new')->count(),
             'newContactRequests' => LeadRequest::where('type', 'contact')->where('status', 'new')->count(),
+            'pendingSalesTasks' => SalesTask::where('status', SalesTask::STATUS_OPEN)->count(),
+            'trialLeadCount' => LeadRequest::where('status', LeadRequest::STATUS_TRIAL_STARTED)->count(),
+            'renewalReminderTasks' => SalesTask::where('status', SalesTask::STATUS_OPEN)
+                ->where('metadata->source_event', 'license.expiring')
+                ->count(),
             'platformOnboardingSteps' => $platformSteps,
             'platformOnboardingCompleted' => $platformCompleted,
             'platformOnboardingProgress' => $onboarding->progress($platformSteps, $platformCompleted),

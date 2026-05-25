@@ -2,6 +2,7 @@
 
 namespace App\Services\Demo;
 
+use App\Events\DemoRequested;
 use App\Models\DemoRequest;
 use App\Models\LeadRequest;
 use App\Services\LeadCrmService;
@@ -25,6 +26,7 @@ class DemoRequestService
         ]);
 
         $this->syncLead($request);
+        DemoRequested::dispatch($request);
 
         return $request;
     }
