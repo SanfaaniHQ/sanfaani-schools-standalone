@@ -38,6 +38,8 @@
     @endphp
 
     <div class="space-y-6">
+        <x-onboarding-progress-widget />
+
         <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <x-ui.panel>
                 <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">{{ $behavior->label() }}</p>

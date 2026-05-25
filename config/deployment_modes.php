@@ -24,6 +24,7 @@ return [
         'platform_marketing' => ['label' => 'Marketing automation', 'features' => ['marketing_automation']],
         'platform_demo' => ['label' => 'Demo and trial pipeline', 'features' => ['demo_system']],
         'demo_sessions' => ['label' => 'Demo session management', 'features' => ['demo_system']],
+        'guided_onboarding' => ['label' => 'Guided onboarding', 'features' => ['guided_onboarding']],
         'platform_payments' => ['label' => 'Platform payments', 'features' => ['saas_billing']],
         'platform_result_system' => ['label' => 'Platform result system'],
         'platform_scratch_cards' => ['label' => 'Platform scratch-card requests', 'features' => ['scratch_cards']],
@@ -64,6 +65,7 @@ return [
         'managed_update_status' => ['label' => 'Managed update status', 'route_group' => 'managed_updates'],
         'white_label_status' => ['label' => 'White-label status', 'route_group' => 'managed_white_label'],
         'system_health' => ['label' => 'System health', 'route_group' => 'system_status'],
+        'onboarding_progress' => ['label' => 'Onboarding progress', 'route_group' => 'guided_onboarding'],
     ],
 
     'settings_sections' => [
@@ -98,6 +100,7 @@ return [
                 'platform_marketing',
                 'platform_demo',
                 'demo_sessions',
+                'guided_onboarding',
                 'platform_payments',
                 'platform_result_system',
                 'platform_scratch_cards',
@@ -126,6 +129,7 @@ return [
                 'scratch_card_requests',
                 'platform_payments',
                 'system_health',
+                'onboarding_progress',
             ],
             'settings_sections' => [
                 'platform',
@@ -157,6 +161,7 @@ return [
                 'standalone_license',
                 'standalone_updates',
                 'demo_sessions',
+                'guided_onboarding',
                 'platform_security',
                 'platform_audit',
                 'system_maintenance',
@@ -179,6 +184,7 @@ return [
                 'local_license_status',
                 'local_update_status',
                 'system_health',
+                'onboarding_progress',
             ],
             'settings_sections' => [
                 'local_school',
@@ -208,6 +214,7 @@ return [
                 'platform_communications',
                 'platform_support',
                 'demo_sessions',
+                'guided_onboarding',
                 'platform_mail',
                 'platform_settings',
                 'platform_security',
@@ -235,6 +242,7 @@ return [
                 'managed_update_status',
                 'white_label_status',
                 'system_health',
+                'onboarding_progress',
             ],
             'settings_sections' => [
                 'platform',

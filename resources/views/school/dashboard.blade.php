@@ -26,6 +26,10 @@
         </div>
     </x-slot>
 
+    <div class="mb-6">
+        <x-onboarding-progress-widget />
+    </div>
+
     @if($roleContext === 'teacher')
         @include('school._teacher-dashboard')
     @elseif($roleContext === 'result_officer')

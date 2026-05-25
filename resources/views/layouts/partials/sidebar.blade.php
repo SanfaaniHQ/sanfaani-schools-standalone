@@ -34,6 +34,7 @@
                 $item(__('ui.scratch_card_requests'), 'admin.scratch-card-requests.index', 'admin.scratch-card-requests.*', 'credit-card', null, 'platform_scratch_cards'),
                 $item(__('ui.leads'), 'admin.lead-requests.index', 'admin.lead-requests.*', 'activity', null, 'platform_onboarding'),
                 $item('Demo Sessions', 'admin.demo.index', 'admin.demo.*', 'activity', null, 'demo_sessions'),
+                $item('Onboarding Progress', 'admin.onboarding.progress', 'admin.onboarding.*', 'activity', null, 'guided_onboarding'),
                 $item(__('ui.communication_center'), 'admin.communications.index', 'admin.communications.index', 'mail', null, 'platform_communications'),
                 $item(__('ui.communication_logs'), 'admin.communications.logs', 'admin.communications.logs', 'clipboard-list', null, 'platform_communications'),
                 $item(__('ui.platform_mail_system'), 'admin.platform-mail-system.index', 'admin.platform-mail-system.*', 'mail', null, 'platform_mail'),

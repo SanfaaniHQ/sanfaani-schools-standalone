@@ -90,6 +90,16 @@ return [
             'hidden_when_disabled' => true,
             'description' => 'Demo-mode controls for safe evaluation environments.',
         ],
+        'guided_onboarding' => [
+            'enabled' => true,
+            'category' => 'experience',
+            'deployment_modes' => $allDeploymentModes,
+            'license_modes' => $allLicenseModes,
+            'requires_school' => false,
+            'super_admin_bypass' => true,
+            'hidden_when_disabled' => true,
+            'description' => 'Role-based onboarding checklists, progress widgets, and guided setup visibility.',
+        ],
         'update_manager' => [
             'enabled' => true,
             'category' => 'operations',

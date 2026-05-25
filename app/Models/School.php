@@ -253,6 +253,16 @@ class School extends Model
         return $this->hasMany(DemoSession::class);
     }
 
+    public function userOnboardingProgress(): HasMany
+    {
+        return $this->hasMany(UserOnboardingProgress::class);
+    }
+
+    public function onboardingEventLogs(): HasMany
+    {
+        return $this->hasMany(OnboardingEventLog::class);
+    }
+
     public function featureOverrides(): HasMany
     {
         return $this->hasMany(SchoolFeatureOverride::class);

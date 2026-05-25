@@ -71,6 +71,11 @@ class DemoSession extends Model
         return $this->hasMany(DemoActivity::class);
     }
 
+    public function onboardingEventLogs(): HasMany
+    {
+        return $this->hasMany(OnboardingEventLog::class);
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', self::STATUS_ACTIVE)

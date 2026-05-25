@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\MarketingDashboardController;
 use App\Http\Controllers\Admin\MarketingEmailTemplateController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentGatewaySettingController;
+use App\Http\Controllers\Admin\OnboardingProgressController as AdminOnboardingProgressController;
 use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\PlatformMailSystemController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Demo\DemoRequestController;
 use App\Http\Controllers\MarketingTrackingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Public\LandingPageController;
@@ -292,6 +294,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/choose-workspace', [ChooseWorkspaceController::class, 'store'])
         ->name('workspace.store');
+
+    Route::middleware(['feature:guided_onboarding', 'role:super_admin|school_admin|teacher|parent|student|result_officer|accountant'])
+        ->prefix('onboarding')
+        ->name('onboarding.')
+        ->group(function () {
+            Route::get('/', [OnboardingController::class, 'index'])
+                ->name('index');
+            Route::post('/steps/{onboardingStep}/complete', [OnboardingController::class, 'complete'])
+                ->name('steps.complete');
+            Route::post('/steps/{onboardingStep}/skip', [OnboardingController::class, 'skip'])
+                ->name('steps.skip');
+        });
 });
 
 Route::middleware(['auth', 'role:super_admin'])
@@ -406,6 +420,10 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
             ->name('roles-permissions.index')
             ->middleware('deployment.behavior:platform_security');
+
+        Route::get('/onboarding/progress', [AdminOnboardingProgressController::class, 'index'])
+            ->name('onboarding.progress')
+            ->middleware(['feature:guided_onboarding', 'deployment.behavior:guided_onboarding']);
 
         Route::resource('lead-requests', LeadRequestController::class)
             ->only(['index', 'show', 'update'])

@@ -101,6 +101,16 @@ class User extends Authenticatable
         return $this->hasMany(DemoActivity::class);
     }
 
+    public function onboardingProgress(): HasMany
+    {
+        return $this->hasMany(UserOnboardingProgress::class);
+    }
+
+    public function onboardingEventLogs(): HasMany
+    {
+        return $this->hasMany(OnboardingEventLog::class);
+    }
+
     public function leadNotes(): HasMany
     {
         return $this->hasMany(LeadNote::class);
