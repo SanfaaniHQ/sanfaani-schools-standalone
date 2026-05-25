@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\MarketingCampaignRecipient;
+use App\Services\Security\SecretRedactionService;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -14,13 +15,7 @@ class MailSecurity
             return null;
         }
 
-        $message = $error instanceof Throwable ? $error->getMessage() : (string) $error;
-
-        $message = preg_replace('/\b(password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key|smtp[_-]?pass)=([^&\s]+)/i', '$1=***', $message) ?? $message;
-        $message = preg_replace('/(Authorization:\s*)(Bearer|Basic)\s+[A-Za-z0-9+\/=._-]+/i', '$1$2 ***', $message) ?? $message;
-        $message = preg_replace('/[A-Z]:\\\\[^\s\'"]+/i', '[path]', $message) ?? $message;
-        $message = preg_replace('#/(home|var|srv|www|storage|app|vendor)/[^\s\'"]+#i', '[path]', $message) ?? $message;
-        $message = preg_replace('/\s+/', ' ', $message) ?? $message;
+        $message = app(SecretRedactionService::class)->redact($error, $limit) ?? '';
 
         return Str::limit(trim($message), $limit, '');
     }

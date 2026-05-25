@@ -12,13 +12,18 @@
             </thead>
             <tbody class="divide-y divide-border-subtle">
                 @forelse ($logs as $log)
+                    @php
+                        $redactor = app(\App\Services\Security\SecretRedactionService::class);
+                        $safeMessage = $redactor->redact((string) $log->message);
+                        $safeContext = $log->context ? $redactor->redactArray((array) $log->context) : null;
+                    @endphp
                     <tr>
                         <td class="px-4 py-3 font-mono text-xs text-text-primary">{{ $log->event }}</td>
                         <td class="px-4 py-3"><x-ui.badge>{{ str($log->severity)->title() }}</x-ui.badge></td>
                         <td class="px-4 py-3 text-text-secondary">
-                            {{ $log->message }}
-                            @if ($log->context)
-                                <div class="mt-1 max-w-xl break-words font-mono text-xs text-text-tertiary">{{ json_encode($log->context, JSON_UNESCAPED_SLASHES) }}</div>
+                            {{ $safeMessage }}
+                            @if ($safeContext)
+                                <div class="mt-1 max-w-xl break-words font-mono text-xs text-text-tertiary">{{ json_encode($safeContext, JSON_UNESCAPED_SLASHES) }}</div>
                             @endif
                         </td>
                         <td class="px-4 py-3 text-text-secondary">{{ $log->created_at->format('d M Y H:i') }}</td>

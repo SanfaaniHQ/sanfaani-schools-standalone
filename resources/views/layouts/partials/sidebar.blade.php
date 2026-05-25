@@ -42,6 +42,7 @@
                 $item('Platform Updates', 'admin.updates.index', 'admin.updates.*', 'archive', null, 'platform_updates'),
                 $item('Platform Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'platform_backups'),
                 $item('Platform Performance', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'platform_performance'),
+                $item('Platform Security', 'admin.security.index', 'admin.security.*', 'shield', null, 'platform_security_diagnostics'),
                 $item(__('ui.backups'), 'admin.system-maintenance.index', 'admin.system-maintenance.*', 'archive', null, 'system_maintenance'),
                 $item(__('System Status'), 'admin.system.status', 'admin.system.*', 'settings', null, 'system_status'),
             ],
@@ -54,6 +55,7 @@
                 $item('Guided Updates', 'admin.updates.index', 'admin.updates.*', 'archive', null, 'standalone_updates'),
                 $item('Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'standalone_backups'),
                 $item('Hosting Health', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'standalone_performance'),
+                $item('Security Health', 'admin.security.index', 'admin.security.*', 'shield', null, 'standalone_security'),
                 $item('Installer', 'installer.welcome', 'installer.*', 'activity', null, 'standalone_installer'),
             ],
             'Managed Operations' => [
@@ -61,6 +63,7 @@
                 $item('Managed Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'managed_backups'),
                 $item('Managed Updates', 'admin.updates.index', 'admin.updates.*', 'settings', null, 'managed_updates'),
                 $item('Managed Performance', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'managed_performance'),
+                $item('Managed Security', 'admin.security.index', 'admin.security.*', 'shield', null, 'managed_security'),
                 $item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'license_activation'),
                 $item('White Label', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'managed_white_label', ['section' => 'managed-white-label']),
             ],
@@ -75,7 +78,6 @@
             ],
             __('ui.governance') => [
                 $item(__('ui.audit_logs'), 'admin.audit-logs.index', 'admin.audit-logs.*', 'clipboard-list', null, 'platform_audit'),
-                $item(__('ui.security'), 'admin.security.index', 'admin.security.*', 'shield', null, 'platform_security'),
                 $item(__('ui.roles_permissions'), 'admin.roles-permissions.index', 'admin.roles-permissions.*', 'shield', null, 'platform_security'),
                 $item(__('ui.result_access_policies'), 'admin.result-access-policies.index', 'admin.result-access-policies.*', 'file-text', null, 'platform_result_system'),
                 $item(__('ui.mail_settings'), 'admin.mail-settings.edit', 'admin.mail-settings.*', 'mail', null, 'platform_mail'),

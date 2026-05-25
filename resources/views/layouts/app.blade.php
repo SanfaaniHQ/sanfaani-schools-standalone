@@ -157,7 +157,7 @@
                                         ['label' => 'Scratch Requests', 'context' => 'Card batches awaiting action', 'href' => route('admin.scratch-card-requests.index'), 'visible' => true, 'group' => 'platform_scratch_cards'],
                                         ['label' => 'Communication Center', 'context' => 'Broadcasts, delivery history, and retries', 'href' => route('admin.communications.index'), 'visible' => true, 'group' => 'platform_communications'],
                                         ['label' => 'Platform Mail System', 'context' => 'SMTP health and fallback policy', 'href' => route('admin.platform-mail-system.index'), 'visible' => true, 'group' => 'platform_mail'],
-                                        ['label' => 'Security', 'context' => 'Login, permission, and suspicious activity', 'href' => route('admin.security.index'), 'visible' => true, 'group' => 'platform_security'],
+                                        ['label' => 'Platform Security', 'context' => 'Email, token, logging, and production safety diagnostics', 'href' => route('admin.security.index'), 'visible' => true, 'group' => 'platform_security_diagnostics'],
                                         ['label' => 'Audit Logs', 'context' => 'Security and compliance trail', 'href' => route('admin.audit-logs.index'), 'visible' => true, 'group' => 'platform_audit'],
                                     ]
                                     : [

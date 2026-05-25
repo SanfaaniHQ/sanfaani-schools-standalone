@@ -28,7 +28,7 @@ use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
 use App\Http\Controllers\Admin\SchoolPublicPageController as AdminSchoolPublicPageController;
 use App\Http\Controllers\Admin\SchoolSubscriptionController;
 use App\Http\Controllers\Admin\ScratchCardRequestController;
-use App\Http\Controllers\Admin\SecurityController;
+use App\Http\Controllers\Admin\SecurityDiagnosticsController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
@@ -694,9 +694,23 @@ Route::middleware(['auth', 'role:super_admin'])
             ->name('audit-logs.export')
             ->middleware('deployment.behavior:platform_audit');
 
-        Route::get('/security', [SecurityController::class, 'index'])
-            ->name('security.index')
-            ->middleware('deployment.behavior:platform_security');
+        Route::prefix('security')
+            ->name('security.')
+            ->middleware(['feature:security_diagnostics', 'deployment.behavior:platform_security_diagnostics|standalone_security|managed_security'])
+            ->group(function () {
+                Route::get('/', [SecurityDiagnosticsController::class, 'index'])
+                    ->name('index');
+                Route::get('/audit', [SecurityDiagnosticsController::class, 'audit'])
+                    ->name('audit');
+                Route::get('/email', [SecurityDiagnosticsController::class, 'email'])
+                    ->name('email');
+                Route::get('/logging', [SecurityDiagnosticsController::class, 'logging'])
+                    ->name('logging');
+                Route::get('/tokens', [SecurityDiagnosticsController::class, 'tokens'])
+                    ->name('tokens');
+                Route::get('/production', [SecurityDiagnosticsController::class, 'production'])
+                    ->name('production');
+            });
 
         Route::get('/communications', [AdminCommunicationController::class, 'index'])
             ->name('communications.index')

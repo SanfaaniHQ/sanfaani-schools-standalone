@@ -6,6 +6,7 @@ use App\Models\Backup;
 use App\Models\BackupLog;
 use App\Models\School;
 use App\Models\User;
+use App\Services\Security\SecretRedactionService;
 
 class BackupLogService
 {
@@ -31,40 +32,12 @@ class BackupLogService
 
     public function sanitizeContext(array $context): array
     {
-        $sanitized = [];
-
-        foreach ($context as $key => $value) {
-            $key = (string) $key;
-
-            if ($this->isSensitiveKey($key)) {
-                $sanitized[$key] = '[redacted]';
-                continue;
-            }
-
-            if (is_array($value)) {
-                $sanitized[$key] = $this->sanitizeContext($value);
-                continue;
-            }
-
-            $sanitized[$key] = is_string($value)
-                ? $this->sanitizeMessage($value)
-                : $value;
-        }
-
-        return $sanitized;
+        return app(SecretRedactionService::class)->redactArray($context);
     }
 
     public function sanitizeMessage(string $message): string
     {
-        $message = str_replace(base_path(), '[app]', $message);
-        $message = str_replace(storage_path(), '[storage]', $message);
-
-        return preg_replace('/\b([A-Z0-9_]*(?:KEY|SECRET|TOKEN|PASSWORD)[A-Z0-9_]*)=([^\s]+)/i', '$1=[redacted]', $message) ?? $message;
-    }
-
-    private function isSensitiveKey(string $key): bool
-    {
-        return preg_match('/(password|secret|token|key|env|absolute_path|real_path|dsn|credential)/i', $key) === 1;
+        return app(SecretRedactionService::class)->redact($message) ?? '';
     }
 
     private function normalizeSeverity(string $severity): string
