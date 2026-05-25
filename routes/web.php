@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\MarketingEmailTemplateController;
 use App\Http\Controllers\Admin\SalesTaskController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentGatewaySettingController;
+use App\Http\Controllers\Admin\PerformanceController;
 use App\Http\Controllers\Admin\OnboardingProgressController as AdminOnboardingProgressController;
 use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\PlatformMailSystemController;
@@ -562,6 +563,24 @@ Route::middleware(['auth', 'role:super_admin'])
                     ->name('restore-plan');
                 Route::post('/prune', [BackupController::class, 'prune'])
                     ->name('prune');
+            });
+
+        Route::prefix('performance')
+            ->name('performance.')
+            ->middleware(['feature:performance_diagnostics', 'deployment.behavior:platform_performance|standalone_performance|managed_performance'])
+            ->group(function () {
+                Route::get('/', [PerformanceController::class, 'index'])
+                    ->name('index');
+                Route::get('/audit', [PerformanceController::class, 'audit'])
+                    ->name('audit');
+                Route::get('/shared-hosting', [PerformanceController::class, 'sharedHosting'])
+                    ->name('shared-hosting');
+                Route::get('/cache', [PerformanceController::class, 'cache'])
+                    ->name('cache');
+                Route::get('/queues', [PerformanceController::class, 'queues'])
+                    ->name('queues');
+                Route::get('/logs', [PerformanceController::class, 'logs'])
+                    ->name('logs');
             });
 
         Route::get('/license', [LicenseController::class, 'index'])

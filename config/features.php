@@ -145,6 +145,23 @@ return [
             'entitlement_keys' => ['managed_backups', 'backup_manager', 'backups'],
             'description' => 'Managed backup tooling for contracted deployments.',
         ],
+        'performance_diagnostics' => [
+            'enabled' => (bool) env('SANFAANI_PERFORMANCE_DIAGNOSTICS_ENABLED', true),
+            'category' => 'operations',
+            'deployment_modes' => $allDeploymentModes,
+            'license_modes' => [
+                DeploymentModeService::LICENSE_SUBSCRIPTION,
+                DeploymentModeService::LICENSE_ANNUAL,
+                DeploymentModeService::LICENSE_LIFETIME,
+                DeploymentModeService::LICENSE_MANAGED_CONTRACT,
+                DeploymentModeService::LICENSE_WHITE_LABEL,
+                DeploymentModeService::LICENSE_TRIAL,
+            ],
+            'requires_school' => false,
+            'super_admin_bypass' => true,
+            'hidden_when_disabled' => true,
+            'description' => 'Read-only hosting, cache, queue, log, asset, and query readiness diagnostics.',
+        ],
         'white_label_branding' => [
             'enabled' => true,
             'category' => 'branding',
