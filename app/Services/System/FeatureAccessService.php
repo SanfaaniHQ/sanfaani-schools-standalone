@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\SchoolFeatureOverride;
 use App\Models\User;
 use App\Services\CurrentSchoolService;
+use App\Services\Licensing\LicenseEntitlementService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\SchoolFeatureAccessService;
 
@@ -96,7 +97,11 @@ class FeatureAccessService
 
         $explicitAccess = $this->explicitSchoolAccess($feature, $school, $config);
 
-        return $explicitAccess ?? true;
+        if ($explicitAccess !== null) {
+            return $explicitAccess;
+        }
+
+        return $this->explicitLicenseAccess($feature, $school, $config) ?? true;
     }
 
     public function isOverriddenForSchool(string $feature, School $school): bool
@@ -153,6 +158,15 @@ class FeatureAccessService
                 return $this->decision(
                     $explicitAccess,
                     "Feature [{$feature}] is ".($explicitAccess ? 'enabled' : 'disabled').' by subscription entitlement.'
+                );
+            }
+
+            $licenseAccess = $this->explicitLicenseAccess($feature, $school, $config);
+
+            if ($licenseAccess !== null) {
+                return $this->decision(
+                    $licenseAccess,
+                    "Feature [{$feature}] is ".($licenseAccess ? 'enabled' : 'disabled').' by license entitlement.'
                 );
             }
         }
@@ -213,6 +227,26 @@ class FeatureAccessService
         }
 
         return null;
+    }
+
+    private function explicitLicenseAccess(string $feature, School $school, array $config): ?bool
+    {
+        $disabled = false;
+        $licenseEntitlements = app(LicenseEntitlementService::class);
+
+        foreach ($this->schoolFeatureKeys($feature, $config) as $featureKey) {
+            $access = $licenseEntitlements->explicitAccess($featureKey, $school);
+
+            if ($access === true) {
+                return true;
+            }
+
+            if ($access === false) {
+                $disabled = true;
+            }
+        }
+
+        return $disabled ? false : null;
     }
 
     private function hasAuthorizationRequirements(array $config): bool

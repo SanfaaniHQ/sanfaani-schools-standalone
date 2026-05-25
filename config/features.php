@@ -69,6 +69,7 @@ return [
                 DeploymentModeService::LICENSE_MANAGED_CONTRACT,
                 DeploymentModeService::LICENSE_WHITE_LABEL,
                 DeploymentModeService::LICENSE_TRIAL,
+                DeploymentModeService::LICENSE_DEMO,
             ],
             'requires_school' => false,
             'super_admin_bypass' => true,

@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureCommunicationFeatureEnabled;
 use App\Http\Middleware\EnsureDeploymentBehavior;
 use App\Http\Middleware\EnsureDeploymentMode;
 use App\Http\Middleware\EnsureFeatureEnabled;
+use App\Http\Middleware\EnsureValidLicense;
 use App\Http\Middleware\EnsureSchoolFeatureEnabled;
 use App\Http\Middleware\EnsureValidSchoolContext;
 use App\Http\Middleware\IdleTimeoutMiddleware;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'deployment.behavior' => EnsureDeploymentBehavior::class,
             'deployment.mode' => EnsureDeploymentMode::class,
             'installer.access' => EnsureInstallerAccess::class,
+            'license.valid' => EnsureValidLicense::class,
             'prevent.reinstall' => PreventReinstall::class,
             'school.context' => EnsureValidSchoolContext::class,
         ]);

@@ -29,7 +29,7 @@
             ['title' => 'Leads', 'body' => 'Convert demo and contact requests into schools.', 'href' => route('admin.lead-requests.index'), 'group' => 'platform_onboarding'],
             ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
             ['title' => 'Local School Settings', 'body' => 'Local owner settings placeholder for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
-            ['title' => 'License Status', 'body' => 'Deployment-gated placeholder; license activation is not implemented here.', 'href' => route('admin.deployment.placeholder', 'standalone-license'), 'group' => 'standalone_license'],
+            ['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license'],
             ['title' => 'Managed Backups', 'body' => 'Deployment-gated placeholder; backup manager is not implemented here.', 'href' => route('admin.deployment.placeholder', 'managed-backups'), 'group' => 'managed_backups'],
             ['title' => 'Managed Updates', 'body' => 'Deployment-gated placeholder; update manager is not implemented here.', 'href' => route('admin.deployment.placeholder', 'managed-updates'), 'group' => 'managed_updates'],
             ['title' => 'Audit Logs', 'body' => 'Read platform and school action history.', 'href' => route('admin.audit-logs.index'), 'group' => 'platform_audit'],

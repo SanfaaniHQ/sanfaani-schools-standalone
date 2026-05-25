@@ -233,6 +233,21 @@ class School extends Model
         return $this->hasMany(SchoolSubscription::class);
     }
 
+    public function licenses(): HasMany
+    {
+        return $this->hasMany(License::class);
+    }
+
+    public function licenseActivations(): HasMany
+    {
+        return $this->hasMany(LicenseActivation::class);
+    }
+
+    public function licenseAuditLogs(): HasMany
+    {
+        return $this->hasMany(LicenseAuditLog::class);
+    }
+
     public function featureOverrides(): HasMany
     {
         return $this->hasMany(SchoolFeatureOverride::class);

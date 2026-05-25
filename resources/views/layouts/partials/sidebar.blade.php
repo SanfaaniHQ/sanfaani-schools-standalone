@@ -45,7 +45,7 @@
                 $item('Local School Settings', 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings', null, 'local_school_settings'),
                 $item('Local Branding', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'local_branding', ['section' => 'local-branding']),
                 $item('Local SMTP Settings', 'admin.deployment.placeholder', 'admin.deployment.*', 'mail', null, 'local_mail_settings', ['section' => 'local-mail']),
-                $item('License Status', 'admin.deployment.placeholder', 'admin.deployment.*', 'shield', null, 'standalone_license', ['section' => 'standalone-license']),
+                $item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'standalone_license'),
                 $item('Standalone Updates', 'admin.deployment.placeholder', 'admin.deployment.*', 'archive', null, 'standalone_updates', ['section' => 'standalone-updates']),
                 $item('Installer', 'installer.welcome', 'installer.*', 'activity', null, 'standalone_installer'),
             ],
@@ -53,6 +53,7 @@
                 $item('Managed Support', 'admin.deployment.placeholder', 'admin.deployment.*', 'activity', null, 'managed_support', ['section' => 'managed-support']),
                 $item('Managed Backups', 'admin.deployment.placeholder', 'admin.deployment.*', 'archive', null, 'managed_backups', ['section' => 'managed-backups']),
                 $item('Managed Updates', 'admin.deployment.placeholder', 'admin.deployment.*', 'settings', null, 'managed_updates', ['section' => 'managed-updates']),
+                $item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'license_activation'),
                 $item('White Label', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'managed_white_label', ['section' => 'managed-white-label']),
             ],
             __('ui.email_marketing') => [

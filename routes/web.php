@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
 use App\Http\Controllers\Admin\DeploymentPlaceholderController;
 use App\Http\Controllers\Admin\LeadRequestController;
+use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\MarketingAutomationController;
 use App\Http\Controllers\Admin\MarketingCampaignController;
@@ -448,6 +449,22 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/system/status', SystemStatusController::class)
             ->name('system.status')
             ->middleware('deployment.behavior:system_status');
+
+        Route::get('/license', [LicenseController::class, 'index'])
+            ->name('license.index')
+            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+
+        Route::get('/license/activate', [LicenseController::class, 'activate'])
+            ->name('license.activate')
+            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+
+        Route::post('/license/activate', [LicenseController::class, 'store'])
+            ->name('license.store')
+            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+
+        Route::post('/license/validate', [LicenseController::class, 'validateNow'])
+            ->name('license.validate')
+            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
 
         Route::get('/deployment/{section}', [DeploymentPlaceholderController::class, 'show'])
             ->whereIn('section', [
