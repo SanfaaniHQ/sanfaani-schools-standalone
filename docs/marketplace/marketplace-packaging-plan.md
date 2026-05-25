@@ -1,33 +1,40 @@
 # Marketplace Packaging Plan
 
-Marketplace packaging is planned and not implemented yet.
+This foundation prepares Sanfaani Schools for direct sales, marketplace review, reseller delivery, managed onboarding, single-school licensed buyers, white-label buyers, and demo/trial sales flows.
 
-## Target Buyers
+## Current Foundation
 
-- Single-school buyers.
-- Small school groups.
-- Resellers.
-- White-label buyers where license terms allow.
+- Package structure and include/exclude documentation.
+- Buyer-safe `.env.marketplace.example`.
+- Marketplace listing draft.
+- Buyer, reseller, white-label, managed handover, screenshot, demo, release, and validation checklists.
+- Non-destructive `marketplace:validate-package` readiness command.
 
-## Current Foundations
+## Target Package Modes
 
-- Single-school installer foundation.
-- License activation and validation foundation.
-- Deployment mode and feature flag foundations.
-- Documentation architecture for buyer guides.
+- `marketplace_single_school`: public marketplace package for one school.
+- `direct_single_school`: direct buyer package with sales-assisted setup.
+- `managed_client`: Sanfaani-operated deployment handover package.
+- `white_label`: buyer-branded package where license terms allow.
+- `demo_sales`: demo/trial package for controlled sales review.
 
-## Planned Packaging Work
+## Required Foundation References
 
-- Build package checklist.
-- Buyer installation guide.
-- License key activation workflow.
-- Update package workflow.
-- Marketplace changelog and versioning.
-- Support and refund policy docs.
+- Installer: `docs/installation/single-school-installer.md`
+- Licensing: `docs/licensing/license-activation.md`
+- Updates: `docs/updates/update-system-plan.md`
+- Backups: `docs/backups/backup-system-plan.md`
+- Tenant isolation: `docs/architecture/tenant-isolation.md`
+- Deployment modes: `docs/architecture/deployment-modes.md`
+
+## Packaging Boundary
+
+This step does not generate a production ZIP, copy files, integrate marketplace APIs, run billing, or deploy code. It defines the package manifest and readiness checks only.
 
 ## Do Not Claim Yet
 
-- One-click marketplace installer.
+- One-click marketplace deployment.
+- Real marketplace API integration.
 - Automated update delivery.
-- Automated backups.
-- Full billing automation.
+- Automated restore execution.
+- Full billing or payment workflow.
