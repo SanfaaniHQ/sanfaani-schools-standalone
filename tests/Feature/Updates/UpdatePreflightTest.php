@@ -51,14 +51,15 @@ class UpdatePreflightTest extends TestCase
         $this->assertContains('cache_writable', $keys);
     }
 
-    public function test_preflight_flags_backup_requirement_as_pending_when_backup_manager_is_not_implemented(): void
+    public function test_preflight_flags_backup_requirement_as_pending_when_no_recent_verified_backup_exists(): void
     {
         $result = app(UpdatePreflightService::class)->run($this->package());
 
         $backup = collect($result->checks())->firstWhere('key', 'backup_requirement');
         $this->assertSame('pending', $backup['status']);
         $this->assertTrue($backup['blocks']);
-        $this->assertFalse($backup['context']['backup_manager_available']);
+        $this->assertTrue($backup['context']['backup_manager_available']);
+        $this->assertFalse($backup['context']['recent_verified_backup']);
     }
 
     public function test_preflight_flags_migrations_as_warning_not_auto_run(): void

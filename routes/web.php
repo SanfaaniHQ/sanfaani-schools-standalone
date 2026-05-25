@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
 use App\Http\Controllers\Admin\DemoSessionController as AdminDemoSessionController;
 use App\Http\Controllers\Admin\DeploymentPlaceholderController;
@@ -541,6 +542,26 @@ Route::middleware(['auth', 'role:super_admin'])
                     ->name('preflight');
                 Route::post('/{updatePackage}/mark-ready', [UpdateController::class, 'markReady'])
                     ->name('mark-ready');
+            });
+
+        Route::prefix('backups')
+            ->name('backups.')
+            ->middleware(['feature:backup_manager', 'deployment.behavior:platform_backups|standalone_backups|managed_backups', 'license.valid'])
+            ->group(function () {
+                Route::get('/', [BackupController::class, 'index'])
+                    ->name('index');
+                Route::get('/create', [BackupController::class, 'create'])
+                    ->name('create');
+                Route::post('/', [BackupController::class, 'store'])
+                    ->name('store');
+                Route::get('/{backup}', [BackupController::class, 'show'])
+                    ->name('show');
+                Route::post('/{backup}/verify', [BackupController::class, 'verify'])
+                    ->name('verify');
+                Route::get('/{backup}/restore-plan', [BackupController::class, 'restorePlan'])
+                    ->name('restore-plan');
+                Route::post('/prune', [BackupController::class, 'prune'])
+                    ->name('prune');
             });
 
         Route::get('/license', [LicenseController::class, 'index'])

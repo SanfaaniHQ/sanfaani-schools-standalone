@@ -31,7 +31,7 @@ class UpdateRollbackService
                 'metadata' => [
                     'rollback_performed' => false,
                     'manual_only' => true,
-                    'backup_manager_available' => false,
+                    'backup_manager_available' => (bool) config('backups.enabled', false),
                     'rollback_supported_by_manifest' => (bool) data_get($manifest, 'rollback_supported', false),
                 ],
             ]

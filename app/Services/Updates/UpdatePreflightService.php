@@ -4,8 +4,10 @@ namespace App\Services\Updates;
 
 use App\Models\UpdatePackage;
 use App\Models\User;
+use App\Services\Backups\BackupVerificationService;
 use App\Support\Updates\UpdatePreflightResult;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
 
 class UpdatePreflightService
 {
@@ -15,6 +17,7 @@ class UpdatePreflightService
         private UpdateLogService $logs,
         private UpdateRollbackService $rollbacks,
         private SystemVersionService $versions,
+        private BackupVerificationService $backups,
     ) {}
 
     public function run(UpdatePackage $package, ?User $actor = null): UpdatePreflightResult
@@ -189,14 +192,24 @@ class UpdatePreflightService
             return;
         }
 
+        $school = $this->entitlements->defaultSchool();
+        $hasRecentBackup = (bool) config('backups.enabled', true)
+            && $this->backups->hasRecentVerifiedBackup($school);
+
         $result->add(
             'backup_requirement',
             'Backup requirement',
-            'pending',
-            'pending',
-            'A verified backup is required. The backup manager is planned, so this remains pending manual confirmation.',
-            true,
-            ['backup_manager_available' => false],
+            $hasRecentBackup ? 'pass' : 'pending',
+            $hasRecentBackup ? 'info' : 'pending',
+            $hasRecentBackup
+                ? 'A recent verified backup is available for this update preflight.'
+                : 'A recent verified backup is required before update readiness can pass. Create and verify backup metadata in the backup manager first.',
+            ! $hasRecentBackup,
+            [
+                'backup_manager_available' => (bool) config('backups.enabled', true),
+                'recent_verified_backup' => $hasRecentBackup,
+                'backup_manager_route' => Route::has('admin.backups.index') ? route('admin.backups.index') : null,
+            ],
         );
     }
 
