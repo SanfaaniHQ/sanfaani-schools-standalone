@@ -91,6 +91,16 @@ class User extends Authenticatable
         return $this->hasMany(LeadRequest::class, 'assigned_to');
     }
 
+    public function demoCredentials(): HasMany
+    {
+        return $this->hasMany(DemoCredential::class);
+    }
+
+    public function demoActivities(): HasMany
+    {
+        return $this->hasMany(DemoActivity::class);
+    }
+
     public function leadNotes(): HasMany
     {
         return $this->hasMany(LeadNote::class);

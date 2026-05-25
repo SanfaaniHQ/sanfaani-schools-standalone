@@ -248,6 +248,11 @@ class School extends Model
         return $this->hasMany(LicenseAuditLog::class);
     }
 
+    public function demoSessions(): HasMany
+    {
+        return $this->hasMany(DemoSession::class);
+    }
+
     public function featureOverrides(): HasMany
     {
         return $this->hasMany(SchoolFeatureOverride::class);

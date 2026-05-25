@@ -80,7 +80,11 @@ return [
             'enabled' => true,
             'category' => 'commercial',
             'deployment_modes' => $allDeploymentModes,
-            'license_modes' => [DeploymentModeService::LICENSE_DEMO],
+            'license_modes' => [
+                DeploymentModeService::LICENSE_SUBSCRIPTION,
+                DeploymentModeService::LICENSE_TRIAL,
+                DeploymentModeService::LICENSE_DEMO,
+            ],
             'requires_school' => false,
             'super_admin_bypass' => true,
             'hidden_when_disabled' => true,

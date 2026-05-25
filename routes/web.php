@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
+use App\Http\Controllers\Admin\DemoSessionController as AdminDemoSessionController;
 use App\Http\Controllers\Admin\DeploymentPlaceholderController;
 use App\Http\Controllers\Admin\LeadRequestController;
 use App\Http\Controllers\Admin\LicenseController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Demo\DemoRequestController;
 use App\Http\Controllers\MarketingTrackingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -102,12 +104,21 @@ Route::post('/contact', [LandingPageController::class, 'submitContact'])
     ->middleware('throttle:5,1')
     ->name('landing.contact.submit');
 
-Route::get('/demo', [LandingPageController::class, 'demo'])
+Route::get('/demo', [DemoRequestController::class, 'create'])
+    ->middleware('feature:demo_system')
     ->name('landing.demo');
 
-Route::post('/demo', [LandingPageController::class, 'submitDemo'])
-    ->middleware('throttle:5,1')
+Route::get('/demo/thank-you', [DemoRequestController::class, 'thankYou'])
+    ->middleware('feature:demo_system')
+    ->name('demo.thank-you');
+
+Route::post('/demo', [DemoRequestController::class, 'store'])
+    ->middleware(['feature:demo_system', 'throttle:5,1'])
     ->name('landing.demo.submit');
+
+Route::post('/demo/request', [DemoRequestController::class, 'store'])
+    ->middleware(['feature:demo_system', 'throttle:5,1'])
+    ->name('demo.request.store');
 
 Route::get('/admin/login', [AdminAuthenticatedSessionController::class, 'create'])
     ->middleware('guest')
@@ -408,6 +419,20 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::post('/lead-requests/{leadRequest}/convert', [LeadRequestController::class, 'convert'])
             ->name('lead-requests.convert')
             ->middleware('deployment.behavior:platform_onboarding');
+
+        Route::prefix('demo')
+            ->name('demo.')
+            ->middleware(['feature:demo_system', 'deployment.behavior:demo_sessions'])
+            ->group(function () {
+                Route::get('/', [AdminDemoSessionController::class, 'index'])
+                    ->name('index');
+                Route::get('/{demoSession}', [AdminDemoSessionController::class, 'show'])
+                    ->name('show');
+                Route::post('/{demoSession}/expire', [AdminDemoSessionController::class, 'expire'])
+                    ->name('expire');
+                Route::post('/{demoSession}/credentials', [AdminDemoSessionController::class, 'credentials'])
+                    ->name('credentials');
+            });
 
         Route::prefix('email-marketing')
             ->name('email-marketing.')
