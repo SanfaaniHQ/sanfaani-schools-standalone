@@ -1,30 +1,46 @@
 # Sanfaani Schools Documentation
 
-This folder collects production launch, product, admin, developer, payment, design, deployment, security, notification, marketplace, and testing notes for Sanfaani Schools.
+This directory is the source structure for the future documentation site at `https://doc.sanfaani.net`.
 
-Sanfaani Schools is being prepared for production launch at `https://schools.sanfaani.net`. The current focus is school setup, student records, result entry/upload, grading, publishing, scratch-card access, public result checking, email readiness, backup discipline, and deployment safety.
+The docs must reflect the current product honestly. The following foundations exist now:
 
-## Sections
+- Deployment mode and license mode foundation.
+- Feature flag and module gating foundation.
+- SaaS, single-school, and managed deployment behavior separation.
+- Tenant isolation audit and security hardening coverage.
+- Standalone installer foundation for single-school deployments.
+- Licensing activation, validation, entitlement, and audit foundation.
+- Demo automation foundation.
+- Role-based guided onboarding foundation.
+- Lead nurturing, marketing automation, sales task, and unsubscribe foundation.
 
-- `product/` explains the product, modules, business model, and roadmap.
-- `users/` explains roles and permission boundaries.
-- `admin/` contains practical guides for Super Admins, School Admins, and Result Officers.
-- `developer/` explains architecture, important tables, and future upgrade logic.
-- `design/` describes the UI and UX standards.
-- `payments/` explains manual payment today and Paystack/Flutterwave readiness.
-- `notifications/` explains SMTP setup and email notification flow.
-- `deployment/` contains Namecheap production launch and backup instructions.
-- `security/` contains pre-deployment testing and report templates.
-- `marketplace/` contains CodeCanyon readiness and packaging notes.
-- `testing/` contains production verification checklists.
+The following systems are planned and must not be described as complete:
 
-For the final Namecheap deployment pass, use `testing/final-deployment-test-checklist.md` together with `deployment/namecheap-production-deployment.md`.
+- Update manager.
+- Backup manager.
+- Marketplace packaging automation.
+- Full billing/payment automation.
+- Full parent and student portal workflows.
+- Full white-label branding storage and reseller tooling.
 
-## Identity Rules
+Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.md` as the public URL contract, and `documentation-maintenance-workflow.md` as the rule for keeping docs synchronized with code changes.
 
-- Students and parents use `admission_number` for result checking.
-- Teachers and Result Officers use `staff_code` or email with password.
-- School Admins use email or staff code with password.
-- Schools use `school_code` and `slug`.
+## Audiences
 
-Admission numbers belong to students. Staff identities must stay separate so the platform remains clean and scalable.
+- SaaS customers.
+- Single-school buyers.
+- Managed clients.
+- Marketplace buyers.
+- Developers.
+- Deployment engineers.
+- Support teams.
+- Sales and onboarding teams.
+- Resellers.
+- White-label buyers.
+
+## Editing Rules
+
+- Do not document planned systems as available.
+- Prefer exact config keys, service names, routes, and feature names.
+- Update release notes and changelog files when user-visible behavior changes.
+- Keep secrets, SMTP credentials, license keys, payment keys, backups, logs, and database dumps out of documentation examples.

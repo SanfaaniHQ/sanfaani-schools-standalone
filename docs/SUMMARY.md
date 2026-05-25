@@ -1,0 +1,43 @@
+# doc.sanfaani.net Summary
+
+- [Getting Started](README.md)
+- Architecture
+  - [Commercial Architecture](architecture/commercial-architecture.md)
+  - [Deployment Modes](architecture/deployment-modes.md)
+  - [Feature Flags](architecture/feature-flags.md)
+  - [Tenant Isolation](architecture/tenant-isolation.md)
+- Installation and Deployment
+  - [Single-School Installer](installation/single-school-installer.md)
+  - [Namecheap Shared Hosting](deployment/namecheap-shared-hosting.md)
+  - [cPanel Hosting](deployment/cpanel-hosting.md)
+  - [VPS Hosting](deployment/vps-hosting.md)
+- Commercial Foundations
+  - [License Activation](licensing/license-activation.md)
+  - [Demo Automation](demo/demo-automation.md)
+  - [Guided Onboarding](onboarding/guided-onboarding.md)
+  - [Marketing Automation](marketing/marketing-automation.md)
+- User Manuals
+  - [School Admin](users/school-admin-manual.md)
+  - [Teacher](users/teacher-manual.md)
+  - [Parent](users/parent-manual.md)
+  - [Student](users/student-manual.md)
+  - [Result Officer](users/result-officer-manual.md)
+  - [Accountant](users/accountant-manual.md)
+  - [Super Admin](super-admin/platform-admin-manual.md)
+- Technical Guides
+  - [Local Development](developer/local-development.md)
+  - [Contribution Guide](developer/contribution-guide.md)
+  - [API Notes](api/README.md)
+  - [Security Overview](security/security-overview.md)
+  - [Support Playbook](support/support-playbook.md)
+  - [Common Issues](troubleshooting/common-issues.md)
+- Planned Commercial Systems
+  - [Update System Plan](updates/update-system-plan.md)
+  - [Backup System Plan](backups/backup-system-plan.md)
+  - [Marketplace Packaging Plan](marketplace/marketplace-packaging-plan.md)
+  - [White-Label Readiness](white-label/white-label-readiness.md)
+- Release Management
+  - [Release Workflow](release-notes/release-workflow.md)
+  - [Changelog](changelog/CHANGELOG.md)
+  - [Documentation Maintenance](documentation-maintenance-workflow.md)
+  - [Documentation Backlog](initial-documentation-backlog.md)
