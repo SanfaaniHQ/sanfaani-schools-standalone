@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\School;
 use App\Services\Licensing\LicenseValidationService;
+use App\Services\System\DeploymentModeService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,7 +13,7 @@ class EnsureValidLicense
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $result = app(LicenseValidationService::class)->validate();
+        $result = app(LicenseValidationService::class)->validate($this->schoolForValidation());
 
         if ($result->valid()) {
             return $next($request);
@@ -24,5 +26,16 @@ class EnsureValidLicense
         }
 
         abort(403, 'A valid license is required.');
+    }
+
+    private function schoolForValidation(): ?School
+    {
+        $deployment = app(DeploymentModeService::class);
+
+        if ($deployment->isSingleSchool() || $deployment->isManaged()) {
+            return School::query()->orderBy('id')->first();
+        }
+
+        return null;
     }
 }

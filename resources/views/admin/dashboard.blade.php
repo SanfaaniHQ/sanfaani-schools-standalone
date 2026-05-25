@@ -32,10 +32,12 @@
             ['title' => 'Marketing Pipeline', 'body' => 'Track lead scores, activities, conversion milestones, and sales follow-up.', 'href' => route('admin.marketing.index'), 'group' => 'platform_marketing'],
             ['title' => 'Sales Tasks', 'body' => 'Review follow-up tasks for demos, trials, renewals, and managed opportunities.', 'href' => route('admin.sales.tasks.index'), 'group' => 'platform_marketing'],
             ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
+            ['title' => 'Platform Updates', 'body' => 'Review platform update packages, preflight checks, and rollback plans.', 'href' => route('admin.updates.index'), 'group' => 'platform_updates'],
             ['title' => 'Local School Settings', 'body' => 'Local owner settings placeholder for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
             ['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license'],
+            ['title' => 'Guided Updates', 'body' => 'Upload packages, run preflight checks, and plan manual shared-hosting updates.', 'href' => route('admin.updates.index'), 'group' => 'standalone_updates'],
             ['title' => 'Managed Backups', 'body' => 'Deployment-gated placeholder; backup manager is not implemented here.', 'href' => route('admin.deployment.placeholder', 'managed-backups'), 'group' => 'managed_backups'],
-            ['title' => 'Managed Updates', 'body' => 'Deployment-gated placeholder; update manager is not implemented here.', 'href' => route('admin.deployment.placeholder', 'managed-updates'), 'group' => 'managed_updates'],
+            ['title' => 'Managed Updates', 'body' => 'Coordinate package review, preflight checks, and rollback planning for managed clients.', 'href' => route('admin.updates.index'), 'group' => 'managed_updates'],
             ['title' => 'Audit Logs', 'body' => 'Read platform and school action history.', 'href' => route('admin.audit-logs.index'), 'group' => 'platform_audit'],
             ['title' => 'System Maintenance', 'body' => 'Clear caches, optimize Laravel, and manage backups.', 'href' => route('admin.system-maintenance.index'), 'group' => 'system_maintenance'],
         ])->filter(fn ($module) => $behavior->allowsRouteGroup($module['group'], user: $user));

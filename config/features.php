@@ -101,7 +101,7 @@ return [
             'description' => 'Role-based onboarding checklists, progress widgets, and guided setup visibility.',
         ],
         'update_manager' => [
-            'enabled' => true,
+            'enabled' => (bool) env('SANFAANI_UPDATES_ENABLED', true),
             'category' => 'operations',
             'deployment_modes' => $allDeploymentModes,
             'license_modes' => [
@@ -110,12 +110,12 @@ return [
                 DeploymentModeService::LICENSE_LIFETIME,
                 DeploymentModeService::LICENSE_MANAGED_CONTRACT,
                 DeploymentModeService::LICENSE_WHITE_LABEL,
-                DeploymentModeService::LICENSE_TRIAL,
             ],
             'requires_school' => false,
             'super_admin_bypass' => true,
             'hidden_when_disabled' => true,
-            'description' => 'System update visibility gate.',
+            'entitlement_keys' => ['update_manager', 'updates', 'guided_updates'],
+            'description' => 'Guided update package review, preflight, entitlement, and rollback planning gate.',
         ],
         'managed_backups' => [
             'enabled' => true,

@@ -57,10 +57,16 @@ class SystemStatusController extends Controller
                     'body' => 'Visible only when standalone license behavior is enabled.',
                 ],
                 [
-                    'title' => 'Standalone Updates',
+                    'title' => 'Guided Updates',
                     'route_group' => 'standalone_updates',
-                    'href' => route('admin.deployment.placeholder', 'standalone-updates'),
+                    'href' => route('admin.updates.index'),
                     'body' => 'Visible only when local update behavior is enabled.',
+                ],
+                [
+                    'title' => 'Platform Updates',
+                    'route_group' => 'platform_updates',
+                    'href' => route('admin.updates.index'),
+                    'body' => 'Visible only when platform update behavior is enabled.',
                 ],
                 [
                     'title' => 'Local Branding',
@@ -83,7 +89,7 @@ class SystemStatusController extends Controller
                 [
                     'title' => 'Managed Updates',
                     'route_group' => 'managed_updates',
-                    'href' => route('admin.deployment.placeholder', 'managed-updates'),
+                    'href' => route('admin.updates.index'),
                     'body' => 'Visible only when managed update behavior is enabled.',
                 ],
             ],

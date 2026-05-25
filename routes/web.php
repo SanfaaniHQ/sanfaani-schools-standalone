@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
 use App\Http\Controllers\Admin\SystemMaintenanceController;
 use App\Http\Controllers\Admin\SystemStatusController;
+use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -521,6 +522,26 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/system/status', SystemStatusController::class)
             ->name('system.status')
             ->middleware('deployment.behavior:system_status');
+
+        Route::prefix('updates')
+            ->name('updates.')
+            ->middleware(['feature:update_manager', 'deployment.behavior:platform_updates|standalone_updates|managed_updates', 'license.valid'])
+            ->group(function () {
+                Route::get('/', [UpdateController::class, 'index'])
+                    ->name('index');
+                Route::get('/check', [UpdateController::class, 'check'])
+                    ->name('check');
+                Route::get('/upload', [UpdateController::class, 'upload'])
+                    ->name('upload');
+                Route::post('/upload', [UpdateController::class, 'store'])
+                    ->name('store');
+                Route::get('/{updatePackage}', [UpdateController::class, 'show'])
+                    ->name('show');
+                Route::post('/{updatePackage}/preflight', [UpdateController::class, 'preflight'])
+                    ->name('preflight');
+                Route::post('/{updatePackage}/mark-ready', [UpdateController::class, 'markReady'])
+                    ->name('mark-ready');
+            });
 
         Route::get('/license', [LicenseController::class, 'index'])
             ->name('license.index')
