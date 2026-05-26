@@ -12,6 +12,8 @@ This changelog tracks documentation and product-facing commercial foundation cha
 - Deployment-mode documentation map.
 - Documentation maintenance workflow.
 - Initial documentation backlog.
+- Final commercialization roadmap and acceptance documentation.
+- Product mode capability matrix, remaining work register, production launch readiness, risk register, 30/60/90 day roadmap, and final executive summary.
 
 ### Current Commercial Foundations
 
@@ -32,6 +34,7 @@ This changelog tracks documentation and product-facing commercial foundation cha
 - Production security and outbound email hardening diagnostics.
 - Deployment-aware branding and white-label foundation.
 - Enterprise testing and release readiness workflow foundation.
+- Enterprise UI components and dashboard standardization foundation.
 
 ### Planned
 
@@ -39,3 +42,5 @@ This changelog tracks documentation and product-facing commercial foundation cha
 - Deployment automation.
 - Final marketplace ZIP generation.
 - Automated restore execution.
+- Real update download and application.
+- Full parent and student portal workflows.

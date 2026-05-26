@@ -16,6 +16,15 @@
   - [Demo Automation](demo/demo-automation.md)
   - [Guided Onboarding](onboarding/guided-onboarding.md)
   - [Marketing Automation](marketing/marketing-automation.md)
+- Roadmap and Acceptance
+  - [Final Commercialization Roadmap](roadmap/final-commercialization-roadmap.md)
+  - [Commercialization Acceptance Checklist](roadmap/commercialization-acceptance-checklist.md)
+  - [Product Mode Capability Matrix](roadmap/product-mode-capability-matrix.md)
+  - [Remaining Work Register](roadmap/remaining-work-register.md)
+  - [Production Launch Readiness](roadmap/production-launch-readiness.md)
+  - [Risk Register](roadmap/risk-register.md)
+  - [Next 30/60/90 Days](roadmap/next-30-60-90-days.md)
+  - [Final Executive Summary](roadmap/final-executive-summary.md)
 - User Manuals
   - [School Admin](users/school-admin-manual.md)
   - [Teacher](users/teacher-manual.md)

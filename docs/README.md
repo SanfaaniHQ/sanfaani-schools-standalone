@@ -13,15 +13,36 @@ The docs must reflect the current product honestly. The following foundations ex
 - Demo automation foundation.
 - Role-based guided onboarding foundation.
 - Lead nurturing, marketing automation, sales task, and unsubscribe foundation.
+- Guided update package and rollback foundation.
+- Backup metadata and pre-update backup workflow foundation.
+- Marketplace packaging workflow foundation.
+- Namecheap, cPanel, VPS, and cloud deployment readiness guides.
+- Shared-hosting performance diagnostics and hardening foundation.
+- Production security and outbound email hardening diagnostics.
+- Deployment-aware branding and white-label foundation.
+- Enterprise testing and release readiness workflow foundation.
+- Enterprise UI components and dashboard standardization foundation.
+- Final commercialization roadmap and acceptance documentation.
 
 The following systems are planned and must not be described as complete:
 
-- Update manager.
-- Backup manager.
-- Marketplace packaging automation.
+- Real update download and application.
+- Automated restore execution.
+- Marketplace ZIP generation and marketplace API integration.
 - Full billing/payment automation.
 - Full parent and student portal workflows.
-- Full white-label branding storage and reseller tooling.
+- White-label domain provisioning, full theme builder, and reseller tooling.
+
+## Roadmap And Acceptance
+
+- `roadmap/final-commercialization-roadmap.md`
+- `roadmap/commercialization-acceptance-checklist.md`
+- `roadmap/product-mode-capability-matrix.md`
+- `roadmap/remaining-work-register.md`
+- `roadmap/production-launch-readiness.md`
+- `roadmap/risk-register.md`
+- `roadmap/next-30-60-90-days.md`
+- `roadmap/final-executive-summary.md`
 
 Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.md` as the public URL contract, and `documentation-maintenance-workflow.md` as the rule for keeping docs synchronized with code changes.
 
