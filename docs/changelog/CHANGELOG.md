@@ -14,6 +14,7 @@ This changelog tracks documentation and product-facing commercial foundation cha
 - Initial documentation backlog.
 - Final commercialization roadmap and acceptance documentation.
 - Product mode capability matrix, remaining work register, production launch readiness, risk register, 30/60/90 day roadmap, and final executive summary.
+- Staging release candidate validation docs, staging mode matrix, smoke test template, and read-only staging readiness command.
 
 ### Current Commercial Foundations
 
@@ -35,6 +36,7 @@ This changelog tracks documentation and product-facing commercial foundation cha
 - Deployment-aware branding and white-label foundation.
 - Enterprise testing and release readiness workflow foundation.
 - Enterprise UI components and dashboard standardization foundation.
+- Staging release candidate validation and launch preparation foundation.
 
 ### Planned
 

@@ -25,6 +25,15 @@
   - [Risk Register](roadmap/risk-register.md)
   - [Next 30/60/90 Days](roadmap/next-30-60-90-days.md)
   - [Final Executive Summary](roadmap/final-executive-summary.md)
+- Staging
+  - [Staging Release Candidate Plan](staging/staging-release-candidate-plan.md)
+  - [Staging Validation Checklist](staging/staging-validation-checklist.md)
+  - [Staging Environment Matrix](staging/staging-environment-matrix.md)
+  - [Staging Mode Test Plan](staging/staging-mode-test-plan.md)
+  - [Staging Smoke Test Results Template](staging/staging-smoke-test-results-template.md)
+  - [Staging Go/No-Go Checklist](staging/staging-go-no-go-checklist.md)
+  - [Staging Known Issues](staging/staging-known-issues.md)
+  - [Staging Handover Notes](staging/staging-handover-notes.md)
 - User Manuals
   - [School Admin](users/school-admin-manual.md)
   - [Teacher](users/teacher-manual.md)

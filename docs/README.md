@@ -23,6 +23,7 @@ The docs must reflect the current product honestly. The following foundations ex
 - Enterprise testing and release readiness workflow foundation.
 - Enterprise UI components and dashboard standardization foundation.
 - Final commercialization roadmap and acceptance documentation.
+- Staging release candidate validation and launch preparation workflow.
 
 The following systems are planned and must not be described as complete:
 
@@ -43,6 +44,17 @@ The following systems are planned and must not be described as complete:
 - `roadmap/risk-register.md`
 - `roadmap/next-30-60-90-days.md`
 - `roadmap/final-executive-summary.md`
+
+## Staging
+
+- `staging/staging-release-candidate-plan.md`
+- `staging/staging-validation-checklist.md`
+- `staging/staging-environment-matrix.md`
+- `staging/staging-mode-test-plan.md`
+- `staging/staging-smoke-test-results-template.md`
+- `staging/staging-go-no-go-checklist.md`
+- `staging/staging-known-issues.md`
+- `staging/staging-handover-notes.md`
 
 Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.md` as the public URL contract, and `documentation-maintenance-workflow.md` as the rule for keeping docs synchronized with code changes.
 
