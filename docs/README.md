@@ -55,6 +55,17 @@ The following systems are planned and must not be described as complete:
 - `staging/staging-go-no-go-checklist.md`
 - `staging/staging-known-issues.md`
 - `staging/staging-handover-notes.md`
+- `staging/real-staging-deployment-runbook.md`
+- `staging/staging-env-template.md`
+- `staging/saas-mode-staging-checklist.md`
+- `staging/single-school-mode-staging-checklist.md`
+- `staging/managed-mode-staging-checklist.md`
+- `staging/white-label-staging-checklist.md`
+- `staging/marketplace-buyer-staging-checklist.md`
+- `staging/demo-trial-staging-checklist.md`
+- `staging/staging-smoke-test-checklist.md`
+- `staging/staging-go-no-go-report-template.md`
+- `staging/staging-incident-rollback-checklist.md`
 
 Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.md` as the public URL contract, and `documentation-maintenance-workflow.md` as the rule for keeping docs synchronized with code changes.
 
