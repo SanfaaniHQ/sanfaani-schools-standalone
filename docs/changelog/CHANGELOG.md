@@ -24,11 +24,18 @@ This changelog tracks documentation and product-facing commercial foundation cha
 - Demo automation foundation.
 - Role-based guided onboarding foundation.
 - Lead nurturing and sales workflow foundation.
+- Guided update package and rollback foundation.
+- Backup metadata and pre-update backup workflow foundation.
+- Marketplace packaging workflow foundation.
+- Namecheap, cPanel, VPS, and cloud deployment readiness guides.
+- Shared-hosting performance diagnostics and hardening foundation.
+- Production security and outbound email hardening diagnostics.
+- Deployment-aware branding and white-label foundation.
+- Enterprise testing and release readiness workflow foundation.
 
 ### Planned
 
-- Update manager.
-- Backup manager.
-- Marketplace packaging automation.
 - Full billing/payment workflow.
-- Full white-label branding storage.
+- Deployment automation.
+- Final marketplace ZIP generation.
+- Automated restore execution.
