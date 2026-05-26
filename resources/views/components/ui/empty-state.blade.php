@@ -5,14 +5,17 @@
     'actionLabel' => null,
 ])
 
-<div {{ $attributes->merge(['class' => 'rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center']) }}>
-    <p class="text-base font-semibold text-gray-950">{{ $title }}</p>
+<div {{ $attributes->merge(['class' => 'rounded-md border border-dashed border-border-subtle bg-bg-primary p-6 text-center sm:p-8']) }}>
+    <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle bg-bg-secondary text-brand-primary" aria-hidden="true">
+        <span class="h-2 w-2 rounded-full bg-current"></span>
+    </div>
+    <p class="mt-4 text-base font-semibold text-text-primary">{{ $title }}</p>
     @if ($body)
-        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-gray-600">{{ $body }}</p>
+        <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-text-secondary">{{ $body }}</p>
     @endif
     @if ($actionHref && $actionLabel)
-        <a href="{{ $actionHref }}" class="mt-5 inline-flex rounded-md bg-gray-950 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
+        <x-ui.action-button :href="$actionHref" class="mt-5">
             {{ $actionLabel }}
-        </a>
+        </x-ui.action-button>
     @endif
 </div>

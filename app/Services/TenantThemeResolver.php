@@ -3,10 +3,14 @@
 namespace App\Services;
 
 use App\Models\School;
+use App\Support\Ui\BrandingUiTokens;
 
 class TenantThemeResolver
 {
-    public function __construct(private BrandingService $branding) {}
+    public function __construct(
+        private BrandingService $branding,
+        private BrandingUiTokens $tokens,
+    ) {}
 
     public function current(): array
     {
@@ -22,11 +26,7 @@ class TenantThemeResolver
     {
         $theme = $branding ? $this->forBranding($branding) : $this->current();
 
-        return implode(' ', [
-            '--tenant-primary: '.$theme['primary_color'].';',
-            '--tenant-secondary: '.$theme['secondary_color'].';',
-            '--school-primary: '.$theme['primary_color'].';',
-        ]);
+        return $this->tokens->cssVariables($theme);
     }
 
     public function forBranding(object $branding): array

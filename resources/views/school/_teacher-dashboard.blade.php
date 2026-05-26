@@ -40,7 +40,11 @@
                         <span class="font-mono text-base font-semibold text-brand-primary">{{ $item['value'] }}</span>
                     </a>
                 @empty
-                    <p class="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-text-secondary">No returned or pending result work is visible.</p>
+                    <x-ui.empty-state
+                        title="No pending result work"
+                        body="No returned or pending result work is visible."
+                        class="p-4 sm:p-5"
+                    />
                 @endforelse
             </div>
         </x-ui.panel>

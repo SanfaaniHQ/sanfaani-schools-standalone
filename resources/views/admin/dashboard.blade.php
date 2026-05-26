@@ -1,13 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="text-xl font-semibold leading-tight text-text-primary">
-                Platform Command Center
-            </h2>
-            <p class="mt-1 text-sm text-text-secondary">
-                Production control for {{ $platformSettings->platform_name }}
-            </p>
-        </div>
+        <x-ui.page-header
+            title="Platform Command Center"
+            :description="'Production control for '.$platformSettings->platform_name"
+        />
     </x-slot>
 
     @php
@@ -77,7 +73,11 @@
                             <span class="font-mono text-base font-semibold text-brand-primary">{{ $item['value'] }}</span>
                         </a>
                     @empty
-                        <p class="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-text-secondary">No platform blockers are visible.</p>
+                        <x-ui.empty-state
+                            title="No platform blockers"
+                            body="No platform blockers are visible."
+                            class="p-4 sm:p-5"
+                        />
                     @endforelse
                 </div>
             </x-ui.panel>

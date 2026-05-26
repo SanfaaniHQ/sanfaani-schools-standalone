@@ -361,7 +361,13 @@ class School extends Model
             return $path;
         }
 
-        return Storage::disk('public')->url(ltrim($path, '/'));
+        $path = str_replace('\\', '/', ltrim((string) $path, '/'));
+
+        if (Str::contains($path, ['..', '.env', 'storage/app/private', ':'])) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 
     public function initials(): string

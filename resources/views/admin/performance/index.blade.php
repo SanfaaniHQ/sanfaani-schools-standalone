@@ -1,42 +1,28 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-text-primary">{{ $label }}</h2>
-                <p class="mt-1 text-sm text-text-secondary">Read-only shared-hosting, cache, queue, log, asset, and query readiness diagnostics.</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('admin.performance.audit') }}" class="ui-button-primary min-h-10 px-4 text-sm">Run audit</a>
-                <a href="{{ route('admin.performance.shared-hosting') }}" class="ui-button-secondary min-h-10 px-4 text-sm">Shared hosting</a>
-            </div>
-        </div>
+        <x-ui.page-header
+            :title="$label"
+            description="Read-only shared-hosting, cache, queue, log, asset, and query readiness diagnostics."
+        >
+            <x-slot name="actions">
+                <x-ui.action-button :href="route('admin.performance.audit')">Run audit</x-ui.action-button>
+                <x-ui.action-button :href="route('admin.performance.shared-hosting')" variant="secondary">Shared hosting</x-ui.action-button>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="space-y-6">
-        <x-ui.panel tone="warning">
-            <h3 class="text-base font-semibold text-text-primary">Read-only diagnostics</h3>
-            <p class="mt-2 text-sm leading-6 text-text-secondary">
-                This foundation reports hosting and performance readiness. It does not clear caches, run migrations, delete logs, optimize routes, create symlinks, or modify files from the web UI.
-            </p>
-        </x-ui.panel>
+        <x-ui.alert
+            tone="warning"
+            title="Read-only diagnostics"
+            body="This foundation reports hosting and performance readiness. It does not clear caches, run migrations, delete logs, optimize routes, create symlinks, or modify files from the web UI."
+        />
 
-        <section class="grid gap-4 md:grid-cols-4">
-            <x-ui.panel>
-                <p class="text-sm font-medium text-text-secondary">Passing</p>
-                <p class="mt-2 text-2xl font-semibold text-text-primary">{{ $report['summary']['pass'] }}</p>
-            </x-ui.panel>
-            <x-ui.panel>
-                <p class="text-sm font-medium text-text-secondary">Warnings</p>
-                <p class="mt-2 text-2xl font-semibold text-text-primary">{{ $report['summary']['warning'] }}</p>
-            </x-ui.panel>
-            <x-ui.panel>
-                <p class="text-sm font-medium text-text-secondary">Failures</p>
-                <p class="mt-2 text-2xl font-semibold text-text-primary">{{ $report['summary']['fail'] }}</p>
-            </x-ui.panel>
-            <x-ui.panel>
-                <p class="text-sm font-medium text-text-secondary">Mode</p>
-                <p class="mt-2 text-2xl font-semibold text-text-primary">{{ str($report['mode'])->replace('_', ' ')->title() }}</p>
-            </x-ui.panel>
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <x-ui.stat-card label="Passing" :value="$report['summary']['pass']" tone="success" />
+            <x-ui.stat-card label="Warnings" :value="$report['summary']['warning']" tone="warning" />
+            <x-ui.stat-card label="Failures" :value="$report['summary']['fail']" tone="danger" />
+            <x-ui.stat-card label="Mode" :value="str($report['mode'])->replace('_', ' ')->title()" tone="info" />
         </section>
 
         <section class="grid gap-4 lg:grid-cols-3">

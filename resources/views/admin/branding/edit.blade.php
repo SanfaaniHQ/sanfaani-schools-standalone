@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="text-xl font-semibold leading-tight text-text-primary">{{ $label }}</h2>
-            <p class="mt-1 text-sm text-text-secondary">Safe logo, favicon, colors, and white-label readiness for this deployment.</p>
-        </div>
+        <x-ui.page-header
+            :title="$label"
+            description="Safe logo, favicon, colors, and white-label readiness for this deployment."
+        />
     </x-slot>
 
     <div class="space-y-6">
         @if (session('success'))
-            <div class="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-brand-primary">{{ session('success') }}</div>
+            <x-ui.alert tone="success">{{ session('success') }}</x-ui.alert>
         @endif
 
         @include('branding.partials.brand-preview', ['branding' => $branding])
@@ -17,8 +17,7 @@
             @csrf
             @method('PATCH')
 
-            <x-ui.panel>
-                <h3 class="text-base font-semibold text-text-primary">Identity</h3>
+            <x-ui.form-section title="Identity">
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div>
                         <x-input-label for="brand_name" value="Brand name" />
@@ -35,10 +34,9 @@
                 <div class="mt-4">
                     @include('branding.partials.color-fields', ['branding' => $branding])
                 </div>
-            </x-ui.panel>
+            </x-ui.form-section>
 
-            <x-ui.panel>
-                <h3 class="text-base font-semibold text-text-primary">Email and reports</h3>
+            <x-ui.form-section title="Email and reports">
                 <div class="mt-4 grid gap-4 md:grid-cols-2">
                     <div>
                         <x-input-label for="email_footer_text" value="Email footer text" />
@@ -59,9 +57,9 @@
                 @unless ($whiteLabelAvailable)
                     <p class="mt-2 text-xs text-text-tertiary">White-label controls stay locked until the feature and license entitlement are both available.</p>
                 @endunless
-            </x-ui.panel>
+            </x-ui.form-section>
 
-            <button type="submit" class="ui-button-primary">Save branding</button>
+            <x-ui.action-button type="submit">Save branding</x-ui.action-button>
         </form>
 
         @include('branding.partials.asset-fields', [

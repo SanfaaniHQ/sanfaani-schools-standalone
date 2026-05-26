@@ -1,63 +1,46 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-text-primary">{{ $label }}</h2>
-                <p class="mt-1 text-sm text-text-secondary">Safe package review, preflight checks, update logs, and rollback planning.</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('admin.updates.check') }}" class="ui-button-secondary min-h-10 px-4 text-sm">Check safely</a>
-                <a href="{{ route('admin.updates.upload') }}" class="ui-button-primary min-h-10 px-4 text-sm">Upload package</a>
-            </div>
-        </div>
+        <x-ui.page-header
+            :title="$label"
+            description="Safe package review, preflight checks, update logs, and rollback planning."
+        >
+            <x-slot name="actions">
+                <x-ui.action-button :href="route('admin.updates.check')" variant="secondary">Check safely</x-ui.action-button>
+                <x-ui.action-button :href="route('admin.updates.upload')">Upload package</x-ui.action-button>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="space-y-6">
         @if (session('success'))
-            <x-ui.notice tone="success">{{ session('success') }}</x-ui.notice>
+            <x-ui.alert tone="success">{{ session('success') }}</x-ui.alert>
         @endif
         @if (session('error'))
-            <x-ui.notice tone="danger">{{ session('error') }}</x-ui.notice>
+            <x-ui.alert tone="danger">{{ session('error') }}</x-ui.alert>
         @endif
 
-        <x-ui.panel tone="warning">
-            <h3 class="text-base font-semibold text-text-primary">Foundation mode</h3>
-            <p class="mt-2 text-sm leading-6 text-text-secondary">
-                Application of updates is planned and not implemented. This manager does not extract packages, run shell commands, run migrations, or change application files from the web UI.
-            </p>
+        <x-ui.alert
+            tone="warning"
+            title="Foundation mode"
+            body="Application of updates is planned and not implemented. This manager does not extract packages, run shell commands, run migrations, or change application files from the web UI."
+        >
             <p class="mt-2 text-sm leading-6 text-text-secondary">
                 Shared-hosting guidance is manual: prepare a verified backup, use maintenance mode, then follow cPanel or Namecheap file manager steps outside this wizard.
             </p>
-        </x-ui.panel>
+        </x-ui.alert>
 
         <section class="grid gap-4 md:grid-cols-3">
-            <x-ui.panel>
-                <p class="text-sm font-medium text-text-secondary">Current version</p>
-                <p class="mt-2 text-2xl font-semibold text-text-primary">{{ $currentVersion->version }}</p>
-                <p class="mt-1 text-sm text-text-tertiary">{{ str($currentVersion->channel)->title() }} channel</p>
-            </x-ui.panel>
-            <x-ui.panel>
-                <p class="text-sm font-medium text-text-secondary">Configured channel</p>
-                <p class="mt-2 text-2xl font-semibold text-text-primary">{{ str($channel)->title() }}</p>
-                <p class="mt-1 text-sm text-text-tertiary">Supported: stable, beta, security.</p>
-            </x-ui.panel>
-            <x-ui.panel>
-                <p class="text-sm font-medium text-text-secondary">Entitlement status</p>
-                <p class="mt-2 text-2xl font-semibold text-text-primary">{{ str($decision['status'])->replace('_', ' ')->title() }}</p>
-                <p class="mt-1 text-sm text-text-tertiary">{{ $decision['message'] }}</p>
-            </x-ui.panel>
+            <x-ui.stat-card label="Current version" :value="$currentVersion->version" :meta="str($currentVersion->channel)->title().' channel'" />
+            <x-ui.stat-card label="Configured channel" :value="str($channel)->title()" meta="Supported: stable, beta, security." />
+            <x-ui.stat-card label="Entitlement status" :value="str($decision['status'])->replace('_', ' ')->title()" :meta="$decision['message']" tone="info" />
         </section>
 
-        <x-ui.panel>
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h3 class="text-base font-semibold text-text-primary">Update packages</h3>
-                    <p class="mt-1 text-sm text-text-secondary">Package paths stay private and are not displayed.</p>
-                </div>
-            </div>
-            <div class="mt-4 overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-subtle text-sm">
-                    <thead class="bg-bg-tertiary text-xs uppercase text-text-tertiary">
+        <x-ui.table-card
+            title="Update packages"
+            description="Package paths stay private and are not displayed."
+        >
+                <table class="enterprise-table">
+                    <thead>
                         <tr>
                             <th class="px-4 py-3 text-left">Version</th>
                             <th class="px-4 py-3 text-left">Channel</th>
@@ -88,9 +71,10 @@
                         @endforelse
                     </tbody>
                 </table>
-            </div>
-            <div class="mt-4">{{ $packages->links() }}</div>
-        </x-ui.panel>
+            <x-slot name="footer">
+                {{ $packages->links() }}
+            </x-slot>
+        </x-ui.table-card>
 
         @include('admin.updates.partials.logs', ['logs' => $logs])
     </div>

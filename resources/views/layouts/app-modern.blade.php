@@ -1,6 +1,7 @@
 @php
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
-    $brandColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#047857';
+    $uiTokens = app(\App\Support\Ui\BrandingUiTokens::class);
+    $tenantCssVariables = $uiTokens->cssVariables($schoolBranding ?? null);
 @endphp
 
 <!DOCTYPE html>
@@ -28,7 +29,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        :root { --school-primary: {{ $brandColor }}; }
+        :root { {{ $tenantCssVariables }} }
         [x-cloak] { display: none !important; }
     </style>
     @if (data_get($schoolBranding ?? null, 'custom_css'))

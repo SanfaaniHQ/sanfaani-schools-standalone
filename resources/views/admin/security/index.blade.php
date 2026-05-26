@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <p class="text-xs font-medium uppercase tracking-wide text-text-tertiary">Admin / Security</p>
-            <h2 class="text-xl font-semibold leading-tight text-text-primary">{{ $label }}</h2>
-            <p class="mt-1 text-sm text-text-secondary">Read-only production safety, outbound email, logging, token, and audit diagnostics.</p>
-        </div>
+        <x-ui.page-header
+            eyebrow="Admin / Security"
+            :title="$label"
+            description="Read-only production safety, outbound email, logging, token, and audit diagnostics."
+        />
     </x-slot>
 
     <div class="space-y-6">
@@ -27,7 +27,7 @@
                 ['label' => 'Tokens', 'href' => route('admin.security.tokens')],
                 ['label' => 'Production', 'href' => route('admin.security.production')],
             ] as $link)
-                <a href="{{ $link['href'] }}" class="rounded-md border border-border-subtle bg-bg-primary px-4 py-3 text-sm font-semibold text-text-primary transition hover:border-border-hover hover:bg-bg-tertiary">
+                <a href="{{ $link['href'] }}" class="rounded-md border border-border-subtle bg-bg-secondary px-4 py-3 text-sm font-semibold text-text-primary transition hover:border-border-hover hover:bg-bg-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary">
                     {{ $link['label'] }}
                 </a>
             @endforeach
@@ -57,14 +57,11 @@
                 ['label' => 'Failed Logins', 'value' => $summary['failed_logins']],
                 ['label' => 'Permission Events', 'value' => $summary['permission_events']],
             ] as $metric)
-                <div class="rounded-md bg-bg-primary p-4 shadow-sm">
-                    <p class="text-xs font-medium uppercase tracking-wide text-text-tertiary">{{ $metric['label'] }}</p>
-                    <p class="mt-2 text-2xl font-semibold text-text-primary">{{ number_format($metric['value']) }}</p>
-                </div>
+                <x-ui.stat-card :label="$metric['label']" :value="number_format($metric['value'])" />
             @endforeach
         </section>
 
-        <form method="GET" action="{{ route('admin.security.index') }}" class="grid gap-3 rounded-md bg-bg-primary p-4 shadow-sm md:grid-cols-4">
+        <form method="GET" action="{{ route('admin.security.index') }}" class="grid gap-3 rounded-md border border-border-subtle bg-bg-secondary p-4 shadow-sm md:grid-cols-4">
             <input name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search event, action, IP" class="rounded-md border-border-subtle text-sm shadow-sm md:col-span-2">
             <select name="severity" class="rounded-md border-border-subtle text-sm shadow-sm">
                 <option value="">All severities</option>
@@ -73,15 +70,14 @@
                 @endforeach
             </select>
             <div class="flex gap-2">
-                <button class="rounded-md bg-text-primary px-4 py-2 text-sm font-medium text-bg-primary">Filter</button>
-                <a href="{{ route('admin.security.index') }}" class="rounded-md border border-border-subtle px-4 py-2 text-sm font-medium text-text-secondary">Reset</a>
+                <x-ui.action-button type="submit" size="sm">Filter</x-ui.action-button>
+                <x-ui.action-button :href="route('admin.security.index')" variant="secondary" size="sm">Reset</x-ui.action-button>
             </div>
         </form>
 
-        <div class="overflow-hidden rounded-md bg-bg-primary shadow-sm">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-subtle text-sm">
-                    <thead class="bg-bg-tertiary text-xs uppercase text-text-tertiary">
+        <x-ui.table-card>
+                <table class="enterprise-table">
+                    <thead>
                         <tr>
                             <th class="px-4 py-3 text-left">Event</th>
                             <th class="px-4 py-3 text-left">Actor</th>
@@ -109,13 +105,16 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-12 text-center text-sm text-text-secondary">No security events match the current filters.</td>
+                                <td colspan="6" class="px-4 py-10">
+                                    <x-ui.empty-state title="No security events" body="No security events match the current filters." />
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
-            </div>
-            <div class="border-t border-border-subtle px-6 py-4">{{ $logs->links() }}</div>
-        </div>
+            <x-slot name="footer">
+                {{ $logs->links() }}
+            </x-slot>
+        </x-ui.table-card>
     </div>
 </x-app-layout>

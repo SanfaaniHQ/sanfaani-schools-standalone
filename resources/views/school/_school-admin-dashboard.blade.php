@@ -56,9 +56,11 @@
                         <span class="font-mono text-base font-semibold text-brand-primary">{{ $item['value'] }}</span>
                     </a>
                 @empty
-                    <div class="rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-3 text-sm text-text-secondary">
-                        No critical operational blockers are visible right now.
-                    </div>
+                    <x-ui.empty-state
+                        title="No critical blockers"
+                        body="No critical operational blockers are visible right now."
+                        class="p-4 sm:p-5"
+                    />
                 @endforelse
             </div>
         </x-ui.panel>
