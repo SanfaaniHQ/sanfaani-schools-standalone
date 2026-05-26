@@ -22,3 +22,12 @@ White-label packaging is allowed only where license terms permit it.
 - Provide branded admin/support notes where contracted.
 - Provide update and backup boundaries.
 - Clearly mark planned features as planned.
+
+## Branding Foundation
+
+- Confirm `SANFAANI_BRANDING_ENABLED=true`.
+- Confirm `SANFAANI_WHITE_LABEL_ENABLED` matches the purchased license.
+- Upload only PNG, JPG, WEBP, or ICO assets.
+- Keep logo/favicon files under safe public branding storage.
+- Confirm email footer and report footer text are buyer-approved.
+- Do not expose private storage paths, `.env` values, license keys, or hosting credentials in branding copy.

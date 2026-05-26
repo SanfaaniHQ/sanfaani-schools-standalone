@@ -1,8 +1,13 @@
 @php
     $user = auth()->user();
+    $brandSchool = $user ? app(\App\Services\CurrentSchoolService::class)->get($user) : null;
+    $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->current($brandSchool);
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
+    $brandName = data_get($resolvedBranding, 'brand_name', $brandName);
     $brandLogo = data_get($schoolBranding ?? null, 'logo_url') ?: ($platformLogoUrl ?? null);
+    $brandLogo = data_get($resolvedBranding, 'logo_url') ?: $brandLogo;
     $brandInitials = data_get($schoolBranding ?? null, 'initials') ?: ($platformInitials ?? 'SS');
+    $brandInitials = data_get($resolvedBranding, 'initials', $brandInitials);
     $schoolService = app(\App\Services\CurrentSchoolService::class);
     $school = $user ? $schoolService->get($user) : null;
     $roleContext = $user ? $schoolService->roleContext($user) : null;
@@ -43,6 +48,7 @@
                 $item('Platform Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'platform_backups'),
                 $item('Platform Performance', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'platform_performance'),
                 $item('Platform Security', 'admin.security.index', 'admin.security.*', 'shield', null, 'platform_security_diagnostics'),
+                $item('Platform Branding', 'admin.branding.edit', 'admin.branding.*', 'layout-grid', null, 'platform_branding'),
                 $item(__('ui.backups'), 'admin.system-maintenance.index', 'admin.system-maintenance.*', 'archive', null, 'system_maintenance'),
                 $item(__('System Status'), 'admin.system.status', 'admin.system.*', 'settings', null, 'system_status'),
             ],
@@ -56,6 +62,7 @@
                 $item('Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'standalone_backups'),
                 $item('Hosting Health', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'standalone_performance'),
                 $item('Security Health', 'admin.security.index', 'admin.security.*', 'shield', null, 'standalone_security'),
+                $item('Guided Branding', 'admin.branding.edit', 'admin.branding.*', 'layout-grid', null, 'standalone_branding'),
                 $item('Installer', 'installer.welcome', 'installer.*', 'activity', null, 'standalone_installer'),
             ],
             'Managed Operations' => [
@@ -64,6 +71,7 @@
                 $item('Managed Updates', 'admin.updates.index', 'admin.updates.*', 'settings', null, 'managed_updates'),
                 $item('Managed Performance', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'managed_performance'),
                 $item('Managed Security', 'admin.security.index', 'admin.security.*', 'shield', null, 'managed_security'),
+                $item('Managed Branding', 'admin.branding.edit', 'admin.branding.*', 'layout-grid', null, 'managed_branding'),
                 $item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'license_activation'),
                 $item('White Label', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'managed_white_label', ['section' => 'managed-white-label']),
             ],
@@ -145,6 +153,7 @@
                 $item(__('ui.finance'), 'school.subscription.show', 'school.subscription.*', 'wallet'),
                 $item(__('ui.bulk_communication'), 'school.communications.bulk', 'school.communications.bulk*', 'mail', 'communication.bulk'),
                 $item(__('ui.mail_settings'), 'school.mail-settings.edit', 'school.mail-settings.*', 'mail'),
+                $item('Branding', 'school.branding.edit', 'school.branding.*', 'layout-grid'),
                 $item(__('ui.settings'), 'school.profile.edit', 'school.profile.*', 'settings'),
                 $item(__('ui.user_management'), 'school.staff.index', 'school.staff.*', 'shield'),
                 $item(__('ui.audit_logs'), 'school.audit-logs.index', 'school.audit-logs.*', 'clipboard-list'),

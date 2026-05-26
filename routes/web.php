@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\BrandingController as AdminBrandingController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
 use App\Http\Controllers\Admin\DemoSessionController as AdminDemoSessionController;
 use App\Http\Controllers\Admin\DeploymentPlaceholderController;
@@ -57,6 +58,7 @@ use App\Http\Controllers\PublicResultController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
 use App\Http\Controllers\School\AuditLogController as SchoolAuditLogController;
+use App\Http\Controllers\School\BrandingController as SchoolBrandingController;
 use App\Http\Controllers\School\CbtDashboardController;
 use App\Http\Controllers\School\CbtExamController;
 use App\Http\Controllers\School\CbtMarkingController;
@@ -581,6 +583,20 @@ Route::middleware(['auth', 'role:super_admin'])
                     ->name('queues');
                 Route::get('/logs', [PerformanceController::class, 'logs'])
                     ->name('logs');
+            });
+
+        Route::prefix('branding')
+            ->name('branding.')
+            ->middleware(['feature:branding_manager', 'deployment.behavior:platform_branding|standalone_branding|managed_branding'])
+            ->group(function () {
+                Route::get('/', [AdminBrandingController::class, 'edit'])
+                    ->name('edit');
+                Route::patch('/', [AdminBrandingController::class, 'update'])
+                    ->name('update');
+                Route::post('/logo', [AdminBrandingController::class, 'logo'])
+                    ->name('logo');
+                Route::post('/favicon', [AdminBrandingController::class, 'favicon'])
+                    ->name('favicon');
             });
 
         Route::get('/license', [LicenseController::class, 'index'])
@@ -1122,6 +1138,20 @@ Route::middleware(['auth', 'school.context'])
 
                 Route::patch('/public-page', [SchoolSchoolPublicPageController::class, 'update'])
                     ->name('public-page.update');
+
+                Route::prefix('branding')
+                    ->name('branding.')
+                    ->middleware('feature:branding_manager')
+                    ->group(function () {
+                        Route::get('/', [SchoolBrandingController::class, 'edit'])
+                            ->name('edit');
+                        Route::patch('/', [SchoolBrandingController::class, 'update'])
+                            ->name('update');
+                        Route::post('/logo', [SchoolBrandingController::class, 'logo'])
+                            ->name('logo');
+                        Route::post('/favicon', [SchoolBrandingController::class, 'favicon'])
+                            ->name('favicon');
+                    });
 
                 Route::get('/subscription', [SchoolPlanController::class, 'show'])
                     ->name('subscription.show');

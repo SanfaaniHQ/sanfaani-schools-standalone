@@ -1,5 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+        @endphp
         <div>
             <h2 class="text-xl font-semibold leading-tight text-text-primary">
                 @if($roleContext === 'teacher')
@@ -7,7 +10,7 @@
                 @elseif($roleContext === 'result_officer')
                     Result Officer Command Center
                 @else
-                    School Operations Command Center
+                    {{ data_get($resolvedBranding, 'dashboard_heading', 'School Operations Command Center') }}
                 @endif
             </h2>
 

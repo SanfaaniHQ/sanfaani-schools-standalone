@@ -93,6 +93,19 @@ class School extends Model
         return $this->hasOne(SchoolPublicPage::class);
     }
 
+    public function brandingSettings(): HasMany
+    {
+        return $this->hasMany(BrandingSetting::class);
+    }
+
+    public function activeBrandingSetting(): HasOne
+    {
+        return $this->hasOne(BrandingSetting::class)
+            ->where('scope', BrandingSetting::SCOPE_SCHOOL)
+            ->where('is_active', true)
+            ->latestOfMany();
+    }
+
     public function websiteSetting(): HasOne
     {
         return $this->hasOne(SchoolWebsiteSetting::class);

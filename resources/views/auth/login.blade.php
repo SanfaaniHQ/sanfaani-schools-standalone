@@ -1,8 +1,12 @@
 <x-guest-layout>
     @php
+        $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->current();
         $brandName = data_get($schoolBranding ?? null, 'name') ?: ($platformSettings->platform_name ?? config('app.name', 'Sanfaani Schools'));
+        $brandName = data_get($resolvedBranding, 'brand_name', $brandName);
         $brandLogoUrl = data_get($schoolBranding ?? null, 'logo_url') ?: ($platformLogoUrl ?? null);
+        $brandLogoUrl = data_get($resolvedBranding, 'logo_url') ?: $brandLogoUrl;
         $brandInitials = data_get($schoolBranding ?? null, 'initials') ?: ($platformInitials ?? 'SS');
+        $brandInitials = data_get($resolvedBranding, 'initials', $brandInitials);
         $supportEmail = $platformSettings->support_email ?? config('sanfaani.support_email');
         $supportPhone = $platformSettings->whatsapp_number ?? config('sanfaani.whatsapp_number');
     @endphp
@@ -21,10 +25,10 @@
             <div class="max-w-xl">
                 <p class="text-sm font-semibold uppercase tracking-normal text-brand-primary">{{ $platformSettings->company_name }}</p>
                 <h1 class="mt-4 text-4xl font-semibold leading-tight text-text-primary">
-                    {{ __('ui.login_heading') }}
+                    {{ data_get($resolvedBranding, 'login_heading') ?: __('ui.login_heading') }}
                 </h1>
                 <p class="mt-5 text-base leading-7 text-text-secondary">
-                    {{ __('ui.login_intro') }}
+                    {{ data_get($resolvedBranding, 'login_subheading') ?: __('ui.login_intro') }}
                 </p>
 
                 <div class="mt-8 grid gap-3 sm:grid-cols-3">

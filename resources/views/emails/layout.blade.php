@@ -1,7 +1,11 @@
 @php
+    $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->current($school ?? null);
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($school ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
+    $brandName = data_get($resolvedBranding, 'brand_name', $brandName);
     $brandColor = data_get($schoolBranding ?? null, 'primary_color') ?: data_get($school ?? null, 'primary_color') ?: '#047857';
+    $brandColor = data_get($resolvedBranding, 'primary_color', $brandColor);
     $brandLogo = data_get($schoolBranding ?? null, 'logo_url') ?: (isset($school) && method_exists($school, 'logoUrl') ? $school->logoUrl() : null);
+    $brandLogo = data_get($resolvedBranding, 'logo_url') ?: $brandLogo;
 @endphp
 
 <!DOCTYPE html>
@@ -28,6 +32,7 @@
                     <tr>
                         <td style="padding:32px 24px;color:#1e293b;font-size:15px;line-height:1.7;">
                             {{ $slot }}
+                            @include('emails.partials.brand-footer', ['school' => $school ?? null])
                         </td>
                     </tr>
                     <tr>

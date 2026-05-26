@@ -1,9 +1,13 @@
 <x-guest-layout>
     @php
+        $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->current();
         $brandName = data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
+        $brandName = data_get($resolvedBranding, 'brand_name', $brandName);
         $companyName = data_get($platformSettings ?? null, 'company_name', $brandName);
         $brandLogoUrl = $platformLogoUrl ?? null;
+        $brandLogoUrl = data_get($resolvedBranding, 'logo_url') ?: $brandLogoUrl;
         $brandInitials = $platformInitials ?? 'SS';
+        $brandInitials = data_get($resolvedBranding, 'initials', $brandInitials);
         $supportEmail = data_get($platformSettings ?? null, 'support_email', config('sanfaani.support_email'));
     @endphp
 
@@ -31,10 +35,10 @@
                 <div class="relative z-10 mt-12 max-w-2xl lg:mt-0">
                     <p class="text-sm font-semibold uppercase tracking-normal text-emerald-200">{{ $companyName }}</p>
                     <h1 class="mt-4 max-w-xl text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
-                        Modern School Management Platform
+                        {{ data_get($resolvedBranding, 'login_heading') ?: 'Modern School Management Platform' }}
                     </h1>
                     <p class="mt-5 max-w-xl text-base leading-7 text-emerald-50/90">
-                        Manage results, students, communication, and school operations efficiently from a stable multi-school workspace.
+                        {{ data_get($resolvedBranding, 'login_subheading') ?: 'Manage results, students, communication, and school operations efficiently from a stable multi-school workspace.' }}
                     </p>
 
                     <div class="mt-8 grid max-w-xl gap-3 sm:grid-cols-3" aria-label="Platform trust indicators">

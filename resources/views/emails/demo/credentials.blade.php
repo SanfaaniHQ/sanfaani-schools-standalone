@@ -23,4 +23,5 @@
     </table>
 
     <p style="margin-top: 20px;">This email does not include server paths, internal errors, or application secrets.</p>
+    @include('emails.partials.brand-footer', ['school' => $demoSession->school])
 </div>

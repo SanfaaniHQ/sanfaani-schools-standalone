@@ -1,22 +1,21 @@
 # White-Label Readiness
 
-White-label support is foundation-level.
+This foundation adds deployment-aware branding settings for platform, school, managed client, and white-label scopes.
 
-## Current State
+Implemented now:
 
-- `white_label` license mode exists.
-- `white_label_branding` feature gate exists.
-- License entitlements can expose white-label branding.
-- Deployment behavior can expose managed white-label visibility.
+- Branding settings metadata in `branding_settings`.
+- Safe logo and favicon upload paths under public branding storage.
+- Config defaults for brand name, colors, login copy, email footer text, and report footer text.
+- Feature gates for `branding_manager` and `white_label_branding`.
+- White-label access checks through feature and license entitlement foundations.
+- Admin and school branding forms.
 
-## Planned Scope
+Planned later:
 
-- Branding storage and review workflow.
-- Custom logo, colors, support contacts, and public identity controls.
-- Reseller/customer documentation.
-- White-label license terms.
-- Tenant-safe public asset handling.
+- Full visual theme builder.
+- Automated marketplace packaging of branded assets.
+- White-label domain provisioning.
+- Advanced multi-brand design system controls.
 
-## Boundaries
-
-Do not hard-code buyer names, school names, reseller names, domains, or marketplace package behavior.
+White-label fields should only be enabled when the deployment has the `white_label_branding` feature and a matching license entitlement.

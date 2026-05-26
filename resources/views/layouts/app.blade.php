@@ -1,8 +1,18 @@
 @php
+    $brandSchool = auth()->check() ? app(\App\Services\CurrentSchoolService::class)->get(auth()->user()) : null;
+    $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->current($brandSchool);
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
+    $brandName = data_get($resolvedBranding, 'brand_name', $brandName);
     $pageFavicon = data_get($schoolBranding ?? null, 'favicon_url') ?: ($platformFaviconUrl ?? null);
+    $pageFavicon = data_get($resolvedBranding, 'favicon_url') ?: $pageFavicon;
     $pageTitle = trim($__env->yieldContent('title')) ?: $brandName;
     $schoolServiceForShell = auth()->check() ? app(\App\Services\CurrentSchoolService::class) : null;
+    $tenantCssVariables = sprintf(
+        '--tenant-primary: %s; --tenant-secondary: %s; --school-primary: %s;',
+        data_get($resolvedBranding, 'primary_color', '#047857'),
+        data_get($resolvedBranding, 'secondary_color', '#0f766e'),
+        data_get($resolvedBranding, 'primary_color', '#047857'),
+    );
 @endphp
 
 <!DOCTYPE html>
@@ -11,7 +21,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="{{ data_get($tenantTheme ?? [], 'primary_color', '#047857') }}">
+        <meta name="theme-color" content="{{ data_get($resolvedBranding, 'primary_color', data_get($tenantTheme ?? [], 'primary_color', '#047857')) }}">
 
         <title>{{ $pageTitle }}</title>
 

@@ -1,8 +1,9 @@
 @php
     $reportSettings = $reportCard['settings'] ?? null;
+    $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
     $showLogo = $reportSettings?->show_logo ?? true;
-    $logoUrl = $showLogo ? $school->logoUrl() : null;
-    $primaryColor = $reportSettings?->primary_color ?: '#111827';
+    $logoUrl = $showLogo ? (data_get($resolvedBranding, 'logo_url') ?: $school->logoUrl()) : null;
+    $primaryColor = $reportSettings?->primary_color ?: data_get($resolvedBranding, 'primary_color', '#111827');
     $showTeacherRemark = $reportSettings?->show_teacher_remark ?? true;
     $resultClass = $reportCard['resultClass'] ?? $results->first()?->schoolClass ?? $student->schoolClass;
 
@@ -214,6 +215,12 @@
                             {{ __('public_result.qr_verification') }} - Verification link available
                         </button>
                     </section>
+
+                    @if (data_get($resolvedBranding, 'report_footer_text'))
+                        <footer class="mt-6 border-t border-gray-200 pt-4 text-center text-xs text-gray-500">
+                            {{ data_get($resolvedBranding, 'report_footer_text') }}
+                        </footer>
+                    @endif
                 </div>
             </div>
         </main>
