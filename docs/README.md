@@ -24,6 +24,7 @@ The docs must reflect the current product honestly. The following foundations ex
 - Enterprise UI components and dashboard standardization foundation.
 - Final commercialization roadmap and acceptance documentation.
 - Staging release candidate validation and launch preparation workflow.
+- Staging deployment execution checklists, command sequence, env examples, and signoff templates.
 
 The following systems are planned and must not be described as complete:
 
@@ -66,6 +67,21 @@ The following systems are planned and must not be described as complete:
 - `staging/staging-smoke-test-checklist.md`
 - `staging/staging-go-no-go-report-template.md`
 - `staging/staging-incident-rollback-checklist.md`
+- `staging/staging-deployment-execution-checklist.md`
+- `staging/staging-server-command-sequence.md`
+- `staging/staging-env-saas.example.md`
+- `staging/staging-env-single-school.example.md`
+- `staging/staging-env-managed.example.md`
+- `staging/staging-post-deploy-verification.md`
+- `staging/staging-mode-switching-guide.md`
+- `staging/staging-database-migration-checklist.md`
+- `staging/staging-seed-and-demo-data-checklist.md`
+- `staging/staging-mail-smtp-checklist.md`
+- `staging/staging-queue-cron-checklist.md`
+- `staging/staging-storage-permissions-checklist.md`
+- `staging/staging-domain-ssl-checklist.md`
+- `staging/staging-first-login-checklist.md`
+- `staging/staging-signoff-report-template.md`
 
 Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.md` as the public URL contract, and `documentation-maintenance-workflow.md` as the rule for keeping docs synchronized with code changes.
 
