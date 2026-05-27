@@ -18,8 +18,8 @@ return new class extends Migration
                 ->constrained('schools')
                 ->cascadeOnDelete();
 
-            $table->string('name');
-            $table->string('section')->nullable();
+            $table->string('name', 100);
+            $table->string('section', 100)->nullable();
             $table->string('status')->default('active');
 
             $table->timestamps();

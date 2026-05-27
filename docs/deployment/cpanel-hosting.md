@@ -34,6 +34,10 @@ Select PHP 8.3 or newer in MultiPHP Manager. Enable Laravel-required extensions 
 - Assign privileges.
 - Configure `.env`.
 - Run migrations through terminal, installer, or reviewed SQL import workflow.
+- Use `php artisan migrate --force` for controlled forward migrations.
+- Do not use `migrate:fresh` on demo or production. `EnvironmentGuard` blocks destructive commands by design.
+- If an empty demo migration fails halfway, drop only the partial table that failed after confirming the environment is disposable.
+- cPanel/Namecheap MySQL may enforce a 1000-byte key limit and 64-character identifier limit; see `docs/deployment/shared-hosting-mysql-index-compatibility.md`.
 
 ## Composer And Build Assets
 
@@ -46,6 +50,14 @@ npm run build
 ```
 
 Without Node on server, build locally and upload `public/build`. Do not rely on `public/build.zip`.
+
+If Composer is not globally available, run the local PHAR form when available:
+
+```bash
+php composer.phar install --no-dev --optimize-autoloader
+```
+
+Use HTTPS clone for public GitHub repositories when SSH keys are not configured. Use an SSH deploy key for private repositories.
 
 ## Installer Flow
 
@@ -98,3 +110,5 @@ Clear cache after changing `.env`.
 ## Troubleshooting
 
 See `docs/deployment/deployment-troubleshooting.md` for 403, 500, missing assets, storage links, mail failures, and cache issues.
+
+Readiness warnings are advisory unless a command marks them as `fail`. Run `php artisan security:audit` with production-style env overrides when local shell values are not production-safe.

@@ -13,6 +13,16 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
 
     private const CBT_MIGRATION = 'database/migrations/2026_05_20_000001_create_cbt_architecture_tables.php';
 
+    private const MARKETING_SEQUENCES_MIGRATION = 'database/migrations/2026_05_25_020003_create_marketing_automation_sequences_table.php';
+
+    private const MARKETING_STEPS_MIGRATION = 'database/migrations/2026_05_25_020004_create_marketing_automation_steps_table.php';
+
+    private const MARKETING_ENROLLMENTS_MIGRATION = 'database/migrations/2026_05_25_020005_create_marketing_automation_enrollments_table.php';
+
+    private const PERMISSION_MIGRATION = 'database/migrations/2026_04_30_125040_create_permission_tables.php';
+
+    private const SCHOOL_CLASSES_MIGRATION = 'database/migrations/2026_04_30_153808_create_school_classes_table.php';
+
     private const DOC = 'docs/deployment/shared-hosting-mysql-index-compatibility.md';
 
     public function test_app_service_provider_applies_default_string_length_191(): void
@@ -67,6 +77,68 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
         $this->assertNotContains('topic', $columns);
     }
 
+    public function test_cbt_question_banks_pool_index_uses_inline_blueprint_style(): void
+    {
+        $migration = $this->cbtMigration();
+
+        $this->assertStringContainsString("\$table->index(['school_id', 'difficulty'], 'cbt_question_banks_pool_idx');", $migration);
+        $this->assertStringNotContainsString('$this->addIndex', $migration);
+    }
+
+    public function test_marketing_sequences_status_trigger_index_keeps_name_and_omits_trigger_event(): void
+    {
+        $columns = $this->indexColumns($this->marketingSequencesMigration(), 'marketing_sequences_status_trigger_idx');
+
+        $this->assertSame(['status'], $columns);
+        $this->assertNotContains('trigger_event', $columns);
+    }
+
+    public function test_marketing_automation_steps_uses_short_sequence_foreign_key_name(): void
+    {
+        $this->assertStringContainsString("indexName: 'marketing_steps_sequence_fk'", $this->marketingStepsMigration());
+    }
+
+    public function test_marketing_automation_enrollments_uses_short_sequence_foreign_key_name(): void
+    {
+        $this->assertStringContainsString("indexName: 'marketing_enrollments_sequence_fk'", $this->marketingEnrollmentsMigration());
+    }
+
+    public function test_known_failed_marketing_sequence_foreign_key_names_are_absent(): void
+    {
+        $migrations = $this->allMigrationContent();
+
+        $this->assertStringNotContainsString('marketing_automation_steps_marketing_automation_sequence_id_foreign', $migrations);
+        $this->assertStringNotContainsString('marketing_automation_enrollments_marketing_automation_sequence_id_foreign', $migrations);
+    }
+
+    public function test_no_generated_marketing_sequence_foreign_key_name_exceeds_mysql_identifier_limit(): void
+    {
+        $this->assertDoesNotMatchRegularExpression(
+            "/foreignId\\('marketing_automation_sequence_id'\\)\\s*->constrained\\('marketing_automation_sequences'\\)/s",
+            $this->allMigrationContent()
+        );
+        $this->assertLessThanOrEqual(64, strlen('marketing_steps_sequence_fk'));
+        $this->assertLessThanOrEqual(64, strlen('marketing_enrollments_sequence_fk'));
+    }
+
+    public function test_spatie_permission_unique_columns_are_limited_for_shared_hosting(): void
+    {
+        $migration = $this->file(self::PERMISSION_MIGRATION);
+
+        $this->assertStringContainsString("\$table->string('name', 125);", $migration);
+        $this->assertStringContainsString("\$table->string('guard_name', 25);", $migration);
+        $this->assertStringContainsString("\$table->unique(['name', 'guard_name']);", $migration);
+    }
+
+    public function test_school_class_name_and_section_unique_columns_are_limited_for_shared_hosting(): void
+    {
+        $migration = $this->file(self::SCHOOL_CLASSES_MIGRATION);
+
+        $this->assertStringContainsString("\$table->string('name', 100);", $migration);
+        $this->assertStringContainsString("\$table->string('section', 100)->nullable();", $migration);
+        $this->assertStringContainsString("\$table->unique(['school_id', 'name', 'section']);", $migration);
+    }
+
     public function test_shared_hosting_mysql_index_compatibility_doc_exists(): void
     {
         $this->assertFileExists(base_path(self::DOC));
@@ -82,7 +154,17 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
         $doc = strtolower($this->doc());
 
         $this->assertStringContainsString('do not use `migrate:fresh`', $doc);
+        $this->assertStringContainsString('environmentguard', $doc);
         $this->assertStringNotContainsString('php artisan migrate:fresh', $doc);
+    }
+
+    public function test_docs_mention_cpanel_namecheap_key_limit(): void
+    {
+        $doc = strtolower($this->doc());
+
+        $this->assertStringContainsString('cpanel', $doc);
+        $this->assertStringContainsString('namecheap', $doc);
+        $this->assertStringContainsString('1000-byte', $doc);
     }
 
     public function test_full_test_suite_is_part_of_validation_expectation(): void
@@ -100,6 +182,21 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
         return $this->file(self::CBT_MIGRATION);
     }
 
+    private function marketingSequencesMigration(): string
+    {
+        return $this->file(self::MARKETING_SEQUENCES_MIGRATION);
+    }
+
+    private function marketingStepsMigration(): string
+    {
+        return $this->file(self::MARKETING_STEPS_MIGRATION);
+    }
+
+    private function marketingEnrollmentsMigration(): string
+    {
+        return $this->file(self::MARKETING_ENROLLMENTS_MIGRATION);
+    }
+
     private function doc(): string
     {
         return $this->file(self::DOC);
@@ -108,6 +205,13 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
     private function file(string $path): string
     {
         return File::get(base_path($path));
+    }
+
+    private function allMigrationContent(): string
+    {
+        return collect(File::files(base_path('database/migrations')))
+            ->map(fn ($file): string => File::get($file->getPathname()))
+            ->implode("\n");
     }
 
     private function indexColumns(string $content, string $indexName): array

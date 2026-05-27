@@ -34,6 +34,9 @@ If Namecheap cannot point the domain root to `public`, place only the contents o
 - Put the database name, user, password, host, and port in `.env`.
 - Run migrations through CLI if available: `php artisan migrate --force`.
 - If CLI is unavailable, use the installer migration readiness flow and follow host-supported migration/import procedures.
+- Do not use `migrate:fresh` on demo or production. `EnvironmentGuard` blocks destructive commands by design.
+- If a migration failed halfway on an empty demo database, drop only the partial table that failed after confirming it contains no production/client data.
+- Namecheap/cPanel MySQL can enforce a 1000-byte key limit; see `docs/deployment/shared-hosting-mysql-index-compatibility.md`.
 
 ## Composer And Assets
 
@@ -46,6 +49,14 @@ npm run build
 ```
 
 If Node is unavailable, build assets locally in a clean release workspace and upload `public/build`. Do not use `public/build.zip` as the deployment artifact.
+
+If Composer is not globally available, upload or use a local Composer PHAR and run:
+
+```bash
+php composer.phar install --no-dev --optimize-autoloader
+```
+
+For GitHub checkout, use HTTPS clone for a public repository when SSH keys are not configured. For private repositories, configure a deploy key before using SSH clone.
 
 ## Storage Link Workaround
 
@@ -102,8 +113,20 @@ Use Namecheap Private Email, cPanel email, or a trusted SMTP provider. Set `MAIL
 
 - 403: document root is not mapped to Laravel `public`, file permissions are too strict, or `.htaccess` is missing.
 - 500: missing PHP extension, invalid `.env`, stale config cache, unwritable storage/cache, or database credentials are wrong.
+- Migration key length error: cPanel/Namecheap MySQL may reject long `utf8mb4` composite indexes; confirm the shared-hosting compatibility hotfix is present.
+- Migration identifier error: long automatic foreign key names may exceed MySQL's 64-character identifier limit; use explicit short names in migrations.
 - Assets missing: `APP_URL` wrong, `public/build` missing, or storage link unavailable.
 - Uploaded images missing: storage link/workaround not configured.
+
+## Validation Notes
+
+Run security audit with production-style env overrides when shell defaults are local:
+
+```bash
+APP_ENV=production APP_DEBUG=false php artisan security:audit
+```
+
+Expected readiness warnings are advisory unless the command reports `fail`.
 
 ## Rollback Notes
 

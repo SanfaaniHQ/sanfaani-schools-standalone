@@ -10,6 +10,7 @@ VPS hosting is recommended for SaaS, managed clients, and schools that need reli
 - MySQL or MariaDB.
 - Composer and Node.js.
 - Supervisor or systemd for queue workers.
+- Modern MySQL/MariaDB on VPS usually avoids the 1000-byte shared-hosting key limit when configured properly, but migrations should still remain safe for shared-hosting compatibility.
 
 ## Folder Structure
 
@@ -62,6 +63,8 @@ Run these only after a verified backup and reviewed `.env`.
 
 Set ownership to the deploy user and web server group. Make `storage` and `bootstrap/cache` writable by PHP-FPM. Do not make secrets world-readable.
 
+Confirm `.env`, logs, backups, update packages, private storage, and SQL dumps are outside public access. The web root must point to `public`.
+
 ## Queue Workers
 
 Use Supervisor or systemd for `php artisan queue:work`. Example Supervisor command:
@@ -71,6 +74,8 @@ php /var/www/sanfaani-schools/current/artisan queue:work --sleep=3 --tries=3 --t
 ```
 
 Restart workers after deployments.
+
+Redis may be available on VPS and can be used where configured, but database queues remain a safe baseline. The ZIP extension is optional for baseline app serving but affects package, backup, and archive workflows.
 
 ## Scheduler
 
@@ -90,6 +95,7 @@ Use Let's Encrypt, host-managed SSL, or cloud load balancer TLS. Set `APP_URL=ht
 - Preserve uploaded files and `.env`.
 - Rollback means reverting files and restoring database/storage backups manually or through operator-approved tooling.
 - The backup manager records metadata and restore guidance only.
+- The update preflight and backup foundations do not perform full automated restore or real update application.
 
 ## Security Checklist
 

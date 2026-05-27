@@ -10,7 +10,9 @@ return new class extends Migration
     {
         Schema::create('marketing_automation_steps', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('marketing_automation_sequence_id')->constrained('marketing_automation_sequences')->cascadeOnDelete();
+            $table->foreignId('marketing_automation_sequence_id')
+                ->constrained('marketing_automation_sequences', indexName: 'marketing_steps_sequence_fk')
+                ->cascadeOnDelete();
             $table->string('key');
             $table->string('channel')->default('email');
             $table->string('mail_type')->nullable();

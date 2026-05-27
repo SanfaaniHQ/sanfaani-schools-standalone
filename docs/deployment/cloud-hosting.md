@@ -19,6 +19,7 @@ Use platform secrets for `.env` values. Never bake secrets into images or Git. R
 - Restrict network access.
 - Store credentials in the platform secret store.
 - Run migrations only after a verified backup and release review.
+- Managed MySQL/MariaDB usually avoids the 1000-byte shared-hosting key limit when configured properly, but migrations should stay shared-hosting compatible.
 
 ## Object Storage
 
@@ -39,6 +40,8 @@ php artisan view:cache
 
 Run migrations as a controlled release step, not automatically on every container boot.
 
+Cloud dashboards may require build commands and environment variables to be configured separately from the repository. Keep `APP_ENV=production` and `APP_DEBUG=false` for production-like environments.
+
 ## Queue Worker
 
 Run a separate worker process:
@@ -48,6 +51,8 @@ php artisan queue:work --sleep=3 --tries=3 --timeout=90
 ```
 
 Use Redis/database queue depending on platform support.
+
+Redis is often available on cloud platforms even when it is unavailable on shared hosting. Use platform workers for long-running queues rather than web requests.
 
 ## Scheduler
 
@@ -67,7 +72,9 @@ every minute.
 - Lock down database access.
 - Keep logs private.
 - Do not expose storage, `.env`, backups, update packages, or private uploads.
+- Ensure the web server or platform document root points to Laravel `public`.
+- The ZIP extension may affect package and backup workflows even when it is optional for baseline app serving.
 
 ## Updates And Rollback
 
-Use release artifacts and platform rollback where available, plus verified database/storage backups for data rollback. The update manager foundation does not apply code patches automatically.
+Use release artifacts and platform rollback where available, plus verified database/storage backups for data rollback. The update manager foundation does not apply code patches automatically, and the backup foundation does not perform full automated restore.

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['status', 'trigger_event'], 'marketing_sequences_status_trigger_idx');
+            $table->index(['status'], 'marketing_sequences_status_trigger_idx');
         });
     }
 

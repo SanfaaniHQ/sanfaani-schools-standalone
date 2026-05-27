@@ -10,7 +10,9 @@ return new class extends Migration
     {
         Schema::create('marketing_automation_enrollments', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('marketing_automation_sequence_id')->constrained('marketing_automation_sequences')->cascadeOnDelete();
+            $table->foreignId('marketing_automation_sequence_id')
+                ->constrained('marketing_automation_sequences', indexName: 'marketing_enrollments_sequence_fk')
+                ->cascadeOnDelete();
             $table->foreignId('lead_request_id')->nullable()->constrained('lead_requests')->nullOnDelete();
             $table->foreignId('demo_request_id')->nullable()->constrained('demo_requests')->nullOnDelete();
             $table->foreignId('school_id')->nullable()->constrained('schools')->nullOnDelete();

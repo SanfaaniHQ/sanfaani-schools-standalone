@@ -29,13 +29,15 @@ git pull --ff-only origin feature/v7-cbt-localization-hardening
 
 If the deployment uses a tagged release candidate, replace the branch checkout with the approved tag or commit.
 
+Use HTTPS clone for a public GitHub repository when SSH public-key access is not configured. Use a deploy key for private SSH clones.
+
 ## 3. Install PHP Dependencies
 
 ```bash
 composer install --no-dev --optimize-autoloader
 ```
 
-Do not commit `vendor`. If the host cannot run Composer, deploy dependencies through an approved build handoff.
+Do not commit `vendor`. If the host cannot run Composer globally, use `php composer.phar install --no-dev --optimize-autoloader` when a local Composer PHAR is available, or deploy dependencies through an approved build handoff.
 
 ## 4. Build Frontend Assets
 
@@ -78,7 +80,9 @@ After backup approval and go/no-go for the staging target:
 php artisan migrate --force
 ```
 
-Do not edit existing migrations during staging execution.
+Do not run `migrate:fresh` on demo or production. `EnvironmentGuard` blocks destructive commands by design. If an empty demo migration failed halfway, drop only the partial table that failed after owner approval, not the full database.
+
+Do not edit existing migrations during staging execution. Confirm cPanel/Namecheap shared-hosting index and foreign key compatibility fixes are present before running migrations.
 
 ## 7. Storage And Cache
 
@@ -93,6 +97,8 @@ php artisan view:cache
 ```
 
 Use `php artisan route:cache` only after route-cache compatibility is confirmed for the target.
+
+The domain document root must point to Laravel `public`, or the shared-hosting public-folder workaround must be reviewed before the browser smoke test.
 
 ## 8. Required Validation Commands
 
