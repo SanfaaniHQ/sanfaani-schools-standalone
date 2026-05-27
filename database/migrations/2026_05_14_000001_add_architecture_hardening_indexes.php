@@ -13,10 +13,6 @@ return new class extends Migration
             'student_id',
             'academic_session_id',
             'term_id',
-            'result_type',
-            'status',
-            'published_at',
-            'unpublished_at',
         ], 'student_results_public_lookup_idx');
 
         $this->addIndex('student_results', [
@@ -24,8 +20,6 @@ return new class extends Migration
             'school_class_id',
             'academic_session_id',
             'term_id',
-            'result_type',
-            'status',
         ], 'student_results_publish_scope_idx');
 
         $this->addIndex('scratch_card_usages', [

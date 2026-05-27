@@ -33,7 +33,7 @@ return new class extends Migration
 
             $table->unique(['school_id', 'code'], 'cbt_question_banks_school_code_unique');
             $table->index(['school_id', 'subject_id', 'school_class_id', 'status'], 'cbt_question_banks_scope_idx');
-            $table->index(['school_id', 'difficulty', 'category', 'topic'], 'cbt_question_banks_pool_idx');
+            $table->index(['school_id', 'difficulty'], 'cbt_question_banks_pool_idx');
         });
 
         Schema::create('cbt_questions', function (Blueprint $table) {

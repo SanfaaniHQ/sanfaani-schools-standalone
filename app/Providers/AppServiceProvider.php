@@ -40,6 +40,7 @@ use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -66,6 +67,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Schema::defaultStringLength(191);
+
         Model::preventLazyLoading(! $this->app->isProduction());
         Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
             logger()->warning('Lazy loading prevented.', [
