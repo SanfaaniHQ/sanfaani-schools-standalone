@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <x-ui.page-header
-            title="Platform Command Center"
+            title="Platform Dashboard"
             :description="'Production control for '.$platformSettings->platform_name"
         />
     </x-slot>
@@ -24,7 +24,7 @@
             ['title' => 'School Subscriptions', 'body' => 'Assign plans and track subscription health.', 'href' => route('admin.school-subscriptions.index'), 'group' => 'platform_subscriptions'],
             ['title' => 'Scratch Card Requests', 'body' => 'Approve batches, confirm payments, and generate cards.', 'href' => route('admin.scratch-card-requests.index'), 'group' => 'platform_scratch_cards'],
             ['title' => 'Plans', 'body' => 'Manage plan limits and feature availability.', 'href' => route('admin.subscription-plans.index'), 'group' => 'platform_subscriptions'],
-            ['title' => 'Leads', 'body' => 'Convert demo and contact requests into schools.', 'href' => route('admin.lead-requests.index'), 'group' => 'platform_onboarding'],
+            ['title' => 'Leads', 'body' => 'Review demo and contact requests, then create a school workspace when the client is ready.', 'href' => route('admin.lead-requests.index'), 'group' => 'platform_onboarding'],
             ['title' => 'Marketing Pipeline', 'body' => 'Track lead scores, activities, conversion milestones, and sales follow-up.', 'href' => route('admin.marketing.index'), 'group' => 'platform_marketing'],
             ['title' => 'Sales Tasks', 'body' => 'Review follow-up tasks for demos, trials, renewals, and managed opportunities.', 'href' => route('admin.sales.tasks.index'), 'group' => 'platform_marketing'],
             ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
@@ -33,7 +33,7 @@
             ['title' => 'Platform Performance', 'body' => 'Review hosting, cache, queue, log, asset, and query readiness diagnostics.', 'href' => route('admin.performance.index'), 'group' => 'platform_performance'],
             ['title' => 'Platform Security', 'body' => 'Review production error exposure, outbound email, logging, and token safety diagnostics.', 'href' => route('admin.security.index'), 'group' => 'platform_security_diagnostics'],
             ['title' => 'Platform Branding', 'body' => 'Manage platform name, logo, colors, footer text, and white-label readiness.', 'href' => route('admin.branding.edit'), 'group' => 'platform_branding'],
-            ['title' => 'Local School Settings', 'body' => 'Local owner settings placeholder for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
+            ['title' => 'Local School Settings', 'body' => 'School identity and owner settings for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
             ['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license'],
             ['title' => 'Guided Updates', 'body' => 'Upload packages, run preflight checks, and plan manual shared-hosting updates.', 'href' => route('admin.updates.index'), 'group' => 'standalone_updates'],
             ['title' => 'Backups', 'body' => 'Create backup metadata, verify readiness, and review manual restore plans.', 'href' => route('admin.backups.index'), 'group' => 'standalone_backups'],
@@ -74,8 +74,8 @@
                         </a>
                     @empty
                         <x-ui.empty-state
-                            title="No platform blockers"
-                            body="No platform blockers are visible."
+                            title="No urgent platform tasks"
+                            body="New demo requests, contact requests, payments, and school setup items will appear here when they need attention."
                             class="p-4 sm:p-5"
                         />
                     @endforelse

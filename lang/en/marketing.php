@@ -12,7 +12,7 @@ return [
     'cta_panel' => [
         'badge' => 'Launch-ready, upgrade-friendly',
         'title' => 'Ready to make result management easier?',
-        'body' => 'Start with a guided demo and see how :platform can support your school operations.',
+        'body' => 'Start with a guided browser demo and see how :platform can support your school operations without local installation.',
     ],
 
     'hero' => [
@@ -66,7 +66,7 @@ return [
         'description' => 'Modern school management SaaS for African private schools, Islamic schools, academies, and training centres with secure results, staff roles, scratch cards, and parent access.',
         'og_description' => 'Manage students, publish results safely, protect role access, and let parents check approved results online.',
         'quick_actions' => [
-            ['title' => 'Request Demo', 'body' => 'Walk through setup, results, publishing, and parent access.', 'icon' => 'sparkles', 'route' => 'landing.demo'],
+            ['title' => 'Request Demo', 'body' => 'Use your browser to walk through setup, results, publishing, and parent access.', 'icon' => 'sparkles', 'route' => 'landing.demo'],
             ['title' => 'Check Result', 'body' => 'Open the public result checker flow for published results.', 'icon' => 'shield', 'route' => 'public.results.index'],
             ['title' => 'Explore Features', 'body' => 'See the modules available for school teams and parents.', 'icon' => 'check', 'route' => 'landing.features'],
             ['title' => 'Contact Sales', 'body' => 'Discuss onboarding, pricing, and school-specific needs.', 'icon' => 'mail', 'route' => 'landing.contact'],
@@ -92,7 +92,7 @@ return [
         'see_demo_flow' => 'See demo flow',
         'view_pricing' => 'View pricing',
         'steps' => [
-            'Configure school, classes, sessions, terms, subjects, and grading.',
+            'Open your school workspace in the browser and configure school, classes, sessions, terms, subjects, and grading.',
             'Add students manually or by CSV upload with clean admission numbers.',
             'Enter or upload results, then review before publishing.',
             'Control access through scratch cards or school payment policies.',
@@ -214,7 +214,7 @@ return [
         'description' => 'Request a :platform demo for result management and parent result checking.',
         'badge' => 'Request Demo',
         'headline' => 'See :platform with your school workflow in mind.',
-        'intro' => 'Tell us your school type, student size, and preferred demo time. We will walk through setup, upload, publishing, scratch cards, and result checking.',
+        'intro' => 'Tell us your school type, student size, and preferred demo time. We will walk through setup, upload, publishing, scratch cards, and result checking from the browser.',
         'covers_title' => 'Demo covers',
         'covers' => ['School setup', 'Student upload', 'Manual and CSV results', 'Publishing control', 'Scratch card flow', 'Public result checker'],
         'metrics' => [
@@ -223,6 +223,6 @@ return [
         ],
         'submit' => 'Request Demo',
         'cta_title' => 'Need sales details instead?',
-        'cta_body' => 'Contact us with your school details and we will recommend the right onboarding path.',
+        'cta_body' => 'Contact us with your school details and we will recommend SaaS onboarding, managed setup, or standalone installation where appropriate.',
     ],
 ];

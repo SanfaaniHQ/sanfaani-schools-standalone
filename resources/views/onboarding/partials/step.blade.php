@@ -27,7 +27,7 @@
             @unless ($completed)
                 <form method="POST" action="{{ route('onboarding.steps.complete', $step) }}">
                     @csrf
-                    <button class="ui-button-primary">Complete</button>
+                    <button class="ui-button-primary">Mark done</button>
                 </form>
             @endunless
             @if (! $completed && ! $skipped)

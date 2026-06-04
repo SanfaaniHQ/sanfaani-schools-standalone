@@ -12,7 +12,7 @@
             <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Assigned academic work</p>
             <h3 class="mt-2 text-2xl font-semibold text-text-primary">Welcome back, {{ auth()->user()->name }}</h3>
             <p class="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-                Your workspace is limited to assigned classes, assigned subjects, and result submissions you are allowed to act on.
+                You will only see the classes, subjects, students, and result tasks assigned to you.
             </p>
         </x-ui.panel>
 
@@ -42,7 +42,7 @@
                 @empty
                     <x-ui.empty-state
                         title="No pending result work"
-                        body="No returned or pending result work is visible."
+                        body="No returned or pending result work is visible. When your school assigns classes or opens result entry, the next task will appear here."
                         class="p-4 sm:p-5"
                     />
                 @endforelse

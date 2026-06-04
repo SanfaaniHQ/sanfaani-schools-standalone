@@ -5,7 +5,7 @@
         @csrf
         <div>
             <h2 class="text-xl font-semibold text-text-primary">School Profile Setup</h2>
-            <p class="mt-2 text-sm text-text-secondary">This creates or updates one local school in single-school mode. SaaS multi-school onboarding remains separate.</p>
+            <p class="mt-2 text-sm text-text-secondary">This creates or updates the one school that will use this standalone installation. SaaS schools are created through the hosted school workspace flow instead.</p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">

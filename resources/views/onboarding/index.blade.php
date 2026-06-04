@@ -3,7 +3,7 @@
         <div>
             <h2 class="text-xl font-semibold leading-tight text-text-primary">Guided Onboarding</h2>
             <p class="mt-1 text-sm text-text-secondary">
-                {{ $checklist->name }} @if ($school) for {{ $school->name }} @endif
+                {{ $checklist->name }} @if ($school) for {{ $school->name }} @endif. Follow these browser-based steps to prepare the workspace for real school data.
             </p>
         </div>
     </x-slot>
@@ -21,6 +21,9 @@
                     @if ($checklist->description)
                         <p class="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">{{ $checklist->description }}</p>
                     @endif
+                    <p class="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
+                        Start with the items your school needs first. You can come back later as staff, students, results, and parent access are added.
+                    </p>
                 </div>
                 <div class="min-w-[10rem] rounded-lg border border-border-subtle bg-bg-primary px-4 py-3">
                     <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Progress</p>

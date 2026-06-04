@@ -5,6 +5,6 @@
             'record' => $records->get($step->id),
         ])
     @empty
-        <x-ui.empty-state title="No onboarding steps are available" body="This role does not have visible steps in the current deployment and license context." />
+        <x-ui.empty-state title="No onboarding steps are available" body="There is no setup checklist for this role right now. Use the dashboard to continue, or contact Sanfaani support if you expected onboarding steps." />
     @endforelse
 </section>

@@ -4,7 +4,7 @@
     <div class="space-y-5">
         <div>
             <h2 class="text-xl font-semibold text-text-primary">Database Connection Check</h2>
-            <p class="mt-2 text-sm text-text-secondary">This page checks connectivity and migration readiness without showing database usernames, passwords, or host secrets.</p>
+            <p class="mt-2 text-sm text-text-secondary">This page checks whether the app can reach the database using the database credentials already saved in <span class="font-mono">.env</span>. It does not show database usernames, passwords, or host secrets.</p>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2">
@@ -31,6 +31,12 @@
         @endif
 
         @include('installer.partials.checks', ['checks' => [$migrationCheck]])
+
+        <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
+            <p class="font-semibold text-text-primary">Database requirement</p>
+            <p class="mt-1">Create the database in your hosting panel before this step. You will need the database name, username, password, host, and port from your hosting provider.</p>
+            <p class="mt-2">If this check fails, confirm the credentials in <span class="font-mono">.env</span>, assign the database user to the database, and make sure the database server allows the website to connect.</p>
+        </div>
 
         <div class="flex justify-between">
             <a href="{{ route('installer.permissions') }}" class="rounded-md border border-border-subtle px-4 py-2 text-sm font-semibold text-text-secondary hover:bg-bg-secondary">Back</a>

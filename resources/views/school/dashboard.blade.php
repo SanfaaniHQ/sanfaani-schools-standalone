@@ -3,9 +3,9 @@
         @php
             $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
             $dashboardTitle = match ($roleContext) {
-                'teacher' => 'Teacher Command Center',
-                'result_officer' => 'Result Officer Command Center',
-                default => data_get($resolvedBranding, 'dashboard_heading', 'School Operations Command Center'),
+                'teacher' => 'Teacher Dashboard',
+                'result_officer' => 'Result Officer Dashboard',
+                default => data_get($resolvedBranding, 'dashboard_heading', 'School Dashboard'),
             };
         @endphp
         <x-ui.page-header :title="$dashboardTitle" :description="$school->name">

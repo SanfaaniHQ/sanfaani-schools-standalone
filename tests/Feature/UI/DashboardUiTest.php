@@ -33,7 +33,7 @@ class DashboardUiTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Platform Command Center')
+            ->assertSee('Platform Dashboard')
             ->assertSee('ui-card');
     }
 
@@ -65,7 +65,7 @@ class DashboardUiTest extends TestCase
             ->assertOk()
             ->assertSee('School Admin Dashboard')
             ->assertSee('UI Standard Academy')
-            ->assertSee('Operational status');
+            ->assertSee('School setup overview');
     }
 
     private function userWithRole(string $role, array $attributes = []): User

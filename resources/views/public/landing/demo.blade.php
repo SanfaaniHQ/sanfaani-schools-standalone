@@ -30,6 +30,10 @@
                             {{ __('marketing.demo.intro') }}
                         </p>
 
+                        <div class="mt-6 rounded-lg border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+                            SaaS customers use Sanfaani from the browser. You do not need hosting, Git, Composer, npm, or terminal access to request a demo or start onboarding.
+                        </div>
+
                         <x-ui.panel tone="white" class="mt-8">
                             <h2 class="text-base font-semibold text-gray-950">{{ __('marketing.demo.covers_title') }}</h2>
                             <div class="mt-4 grid gap-3 text-sm font-medium text-gray-700 sm:grid-cols-2">

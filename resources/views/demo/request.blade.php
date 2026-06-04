@@ -19,13 +19,13 @@
                     <a href="{{ route('landing.home') }}" class="text-sm font-semibold text-emerald-700">{{ $platformName }}</a>
                     <h1 class="mt-5 text-4xl font-semibold tracking-tight text-gray-950 sm:text-5xl">Explore a guided school demo</h1>
                     <p class="mt-5 text-lg leading-8 text-gray-600">
-                        Request a scoped demo environment with role-based access for school admins, teachers, result officers, parents, students, and finance workflows.
+                        Request browser access to a guided Sanfaani demo. School owners do not need to install the app, use Git, run Composer, run npm, or open a terminal.
                     </p>
                     <div class="mt-8 grid gap-3 text-sm text-gray-700 sm:grid-cols-2">
                         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">Demo data is isolated from real schools.</div>
                         <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">Temporary credentials expire automatically.</div>
-                        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">Buyer exploration can be tracked safely.</div>
-                        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">Conversion paths stay inside the CRM pipeline.</div>
+                        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">Next steps are sent to the contact details you provide.</div>
+                        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">Managed setup is available when you want Sanfaani to handle configuration.</div>
                     </div>
                 </section>
 
@@ -89,6 +89,10 @@
                             <label for="demo-message" class="block text-sm font-medium text-gray-700">What should the demo cover?</label>
                             <textarea id="demo-message" name="message" rows="5" class="mt-1 ui-input">{{ old('message') }}</textarea>
                             @error('message') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="rounded-md border border-emerald-100 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900">
+                            After you submit, Sanfaani will prepare demo access or contact you to schedule a walkthrough. SaaS customers continue from the browser; standalone installation is only for technical buyers.
                         </div>
 
                         <button type="submit" data-loading-text="{{ __('marketing.forms.sending') }}" class="ui-button-primary w-full py-3">

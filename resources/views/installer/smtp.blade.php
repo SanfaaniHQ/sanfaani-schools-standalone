@@ -4,8 +4,12 @@
     <form method="POST" action="{{ route('installer.smtp.store') }}" class="space-y-5">
         @csrf
         <div>
-            <h2 class="text-xl font-semibold text-text-primary">SMTP Setup Placeholder</h2>
-            <p class="mt-2 text-sm text-text-secondary">Capture non-sensitive mail intent for review. This step does not send test email and does not persist SMTP passwords.</p>
+            <h2 class="text-xl font-semibold text-text-primary">Email Setup Review</h2>
+            <p class="mt-2 text-sm text-text-secondary">Record the mail settings you plan to use. This step does not send a test email and does not persist SMTP passwords.</p>
+        </div>
+
+        <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
+            Ask your hosting provider or email provider for SMTP host, port, encryption, username, password, from address, and from name. Sanfaani can configure these during managed setup.
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -54,7 +58,7 @@
 
         <div class="flex justify-between">
             <a href="{{ route('installer.school') }}" class="rounded-md border border-border-subtle px-4 py-2 text-sm font-semibold text-text-secondary hover:bg-bg-secondary">Back</a>
-            <button type="submit" class="rounded-md bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90">Save placeholder</button>
+            <button type="submit" class="rounded-md bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90">Save and continue</button>
         </div>
     </form>
 @endsection

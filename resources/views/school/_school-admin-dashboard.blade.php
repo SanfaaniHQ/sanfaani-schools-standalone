@@ -27,10 +27,10 @@
         <x-ui.panel class="min-w-0">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Operational status</p>
+                    <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">School setup overview</p>
                     <h3 class="mt-2 text-2xl font-semibold text-text-primary">{{ $school->name }}</h3>
                     <p class="mt-2 text-sm leading-6 text-text-secondary">
-                        Session {{ $activeSession?->name ?? 'not set' }} and term {{ $activeTerm?->name ?? 'not set' }} are driving the current dashboard.
+                        Session {{ $activeSession?->name ?? 'not set' }} and term {{ $activeTerm?->name ?? 'not set' }} are used for the current school work.
                     </p>
                 </div>
                 <div class="flex shrink-0 items-center gap-3 rounded-lg border border-border-subtle bg-bg-primary px-4 py-3">
@@ -57,14 +57,35 @@
                     </a>
                 @empty
                     <x-ui.empty-state
-                        title="No critical blockers"
-                        body="No critical operational blockers are visible right now."
+                        title="No urgent school tasks"
+                        body="When setup or result items need action, they will appear here. If this is a new school, start with profile, session, term, classes, subjects, staff, and students."
+                        :action-href="route('onboarding.index')"
+                        action-label="Open setup guide"
                         class="p-4 sm:p-5"
                     />
                 @endforelse
             </div>
         </x-ui.panel>
     </section>
+
+    @if (! $activeSession || ! $activeTerm || $totalClasses === 0 || $totalSubjects === 0 || $totalStudents === 0)
+        <x-ui.panel>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="text-base font-semibold text-text-primary">First setup steps</h3>
+                    <p class="mt-1 text-sm leading-6 text-text-secondary">Add the basics first so teachers, result officers, students, and parents see the right information.</p>
+                </div>
+                <a href="{{ route('onboarding.index') }}" class="ui-button-primary">Open setup guide</a>
+            </div>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <a href="{{ route('school.profile.edit') }}" class="rounded-md border border-border-subtle bg-bg-primary p-3 text-sm font-semibold text-text-primary hover:bg-bg-tertiary">School profile</a>
+                <a href="{{ route('school.sessions.index') }}" class="rounded-md border border-border-subtle bg-bg-primary p-3 text-sm font-semibold text-text-primary hover:bg-bg-tertiary">Session</a>
+                <a href="{{ route('school.terms.index') }}" class="rounded-md border border-border-subtle bg-bg-primary p-3 text-sm font-semibold text-text-primary hover:bg-bg-tertiary">Term</a>
+                <a href="{{ route('school.classes.index') }}" class="rounded-md border border-border-subtle bg-bg-primary p-3 text-sm font-semibold text-text-primary hover:bg-bg-tertiary">Classes</a>
+                <a href="{{ route('school.students.index') }}" class="rounded-md border border-border-subtle bg-bg-primary p-3 text-sm font-semibold text-text-primary hover:bg-bg-tertiary">Students</a>
+            </div>
+        </x-ui.panel>
+    @endif
 
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <x-ui.stat-card label="Students" :value="$totalStudents" :meta="$totalSchoolUsers . ' users in school scope'" />
@@ -109,8 +130,8 @@
 
     <section>
         <div class="mb-4 flex flex-col gap-1">
-            <h3 class="text-lg font-semibold text-text-primary">Operational modules</h3>
-            <p class="text-sm text-text-secondary">Only modules available to this school role are shown.</p>
+            <h3 class="text-lg font-semibold text-text-primary">School tools</h3>
+            <p class="text-sm text-text-secondary">Only tools available to this school role are shown.</p>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             @foreach ($moduleCards as $card)

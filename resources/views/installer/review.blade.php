@@ -5,7 +5,7 @@
         @csrf
         <div>
             <h2 class="text-xl font-semibold text-text-primary">Final Review</h2>
-            <p class="mt-2 text-sm text-text-secondary">Finalize only after confirming the environment, database, owner account, and school profile.</p>
+            <p class="mt-2 text-sm text-text-secondary">Finalize only after confirming hosting, the <span class="font-mono">/public</span> document root, database credentials, owner account, school profile, and email plan.</p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -33,6 +33,10 @@
 
         <div class="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             Finalization writes the installation lock and prevents reinstall. It does not run seeders, migrations, license activation, updates, backups, or demo automation.
+        </div>
+
+        <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
+            If any item still depends on your host, pause here and ask your hosting provider or Sanfaani managed setup team to verify it before finalizing.
         </div>
 
         <div class="flex justify-between">

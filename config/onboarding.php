@@ -36,7 +36,7 @@ return [
     'checklists' => [
         'super_admin' => [
             'name' => 'Platform operator onboarding',
-            'description' => 'Platform-level setup for SaaS or managed operations.',
+            'description' => 'Review the hosted platform, demo requests, and school workspace setup for SaaS or managed clients.',
             'role_name' => 'super_admin',
             'deployment_modes' => [DeploymentModeService::MODE_SAAS, DeploymentModeService::MODE_MANAGED],
             'license_modes' => DeploymentModeService::LICENSE_MODES,
@@ -49,7 +49,7 @@ return [
         ],
         'school_admin' => [
             'name' => 'School admin onboarding',
-            'description' => 'Core setup sequence for local school operations.',
+            'description' => 'Start the school workspace with profile, academic periods, classes, subjects, staff, students, and result settings.',
             'role_name' => 'school_admin',
             'deployment_modes' => DeploymentModeService::DEPLOYMENT_MODES,
             'license_modes' => DeploymentModeService::LICENSE_MODES,
@@ -66,7 +66,7 @@ return [
         ],
         'teacher' => [
             'name' => 'Teacher onboarding',
-            'description' => 'Teacher workspace orientation.',
+            'description' => 'Review assigned classes and subjects before entering results.',
             'role_name' => 'teacher',
             'steps' => [
                 ['key' => 'review_assigned_classes', 'title' => 'Review assigned classes', 'route_name' => 'school.teacher-assignments.my'],
@@ -76,7 +76,7 @@ return [
         ],
         'parent' => [
             'name' => 'Parent onboarding',
-            'description' => 'Parent portal orientation placeholder.',
+            'description' => 'Review linked children and published result access when the parent portal is enabled.',
             'role_name' => 'parent',
             'steps' => [
                 ['key' => 'review_children', 'title' => 'Review linked children', 'action_url' => '#'],
@@ -85,7 +85,7 @@ return [
         ],
         'student' => [
             'name' => 'Student onboarding',
-            'description' => 'Student portal orientation placeholder.',
+            'description' => 'Review the student dashboard and available result access when the student portal is enabled.',
             'role_name' => 'student',
             'steps' => [
                 ['key' => 'open_student_dashboard', 'title' => 'Open student dashboard', 'action_url' => '#'],
@@ -94,7 +94,7 @@ return [
         ],
         'result_officer' => [
             'name' => 'Result officer onboarding',
-            'description' => 'Result workflow setup and review.',
+            'description' => 'Prepare grading, result review, and publishing settings for the school.',
             'role_name' => 'result_officer',
             'steps' => [
                 ['key' => 'configure_grading', 'title' => 'Configure grading scales', 'route_name' => 'school.grading-scales.index'],
@@ -104,7 +104,7 @@ return [
         ],
         'accountant' => [
             'name' => 'Accountant onboarding',
-            'description' => 'Payment and scratch-card review path.',
+            'description' => 'Review payment settings and scratch-card tools used for result access.',
             'role_name' => 'accountant',
             'steps' => [
                 ['key' => 'review_payment_settings', 'title' => 'Review payment settings', 'action_url' => '#', 'required' => false],

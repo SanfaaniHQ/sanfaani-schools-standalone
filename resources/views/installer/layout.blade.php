@@ -32,12 +32,21 @@
             <div>
                 <p class="text-xs font-semibold uppercase tracking-normal text-text-muted">Standalone installer</p>
                 <h1 class="text-2xl font-semibold text-text-primary">{{ config('app.name', 'Sanfaani Schools') }}</h1>
-                <p class="mt-1 text-sm text-text-secondary">Single-school installation foundation for shared hosting, cPanel, VPS, and managed setup.</p>
+                <p class="mt-1 text-sm text-text-secondary">Plain-language setup checks for technical standalone single-school installations.</p>
             </div>
             <div class="rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-xs text-text-secondary">
                 Step {{ $currentIndex + 1 }} of {{ max(1, $stepList->count()) }}
             </div>
         </header>
+
+        <div class="mb-5 grid gap-3 lg:grid-cols-2">
+            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                Normal SaaS customers do not need this installer. If your school is using the hosted Sanfaani service, open the link from Sanfaani in your browser and complete onboarding there.
+            </div>
+            <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                Hosting warning: your domain document root must point to <span class="font-mono">/public</span>, or only Laravel public files should be exposed through a safe public-folder mapping.
+            </div>
+        </div>
 
         @if (session('error'))
             <div class="mb-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

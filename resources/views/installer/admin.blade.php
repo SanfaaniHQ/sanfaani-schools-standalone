@@ -5,7 +5,7 @@
         @csrf
         <div>
             <h2 class="text-xl font-semibold text-text-primary">Owner Admin Setup</h2>
-            <p class="mt-2 text-sm text-text-secondary">Create the local owner account using the existing user and role system.</p>
+            <p class="mt-2 text-sm text-text-secondary">Create the first owner login for this standalone school. Use a real email address and share the password only through a secure handover process.</p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">

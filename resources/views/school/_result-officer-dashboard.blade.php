@@ -12,7 +12,7 @@
             <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Result operations</p>
             <h3 class="mt-2 text-2xl font-semibold text-text-primary">Welcome back, {{ auth()->user()->name }}</h3>
             <p class="mt-2 max-w-2xl text-sm leading-6 text-text-secondary">
-                This workspace focuses on result entry, upload, review, publishing readiness, and student academic visibility enabled by the School Admin.
+                This dashboard helps you enter, upload, review, and publish results when the School Admin has enabled those tools.
             </p>
         </x-ui.panel>
 
@@ -42,7 +42,7 @@
                 @empty
                     <x-ui.empty-state
                         title="No result exceptions"
-                        body="No result exceptions are visible right now."
+                        body="No result exceptions are visible right now. Submitted, returned, or draft result items will appear here when they need review."
                         class="p-4 sm:p-5"
                     />
                 @endforelse
