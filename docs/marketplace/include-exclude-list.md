@@ -23,9 +23,18 @@ This manifest defines packaging intent. It is not a generated archive.
 - `.env.marketplace.example`
 - `README.md`
 
+## Package Profiles
+
+- `technical`: source code package for technical buyers; excludes `vendor`, excludes `node_modules`, and lets the buyer run Composer and npm.
+- `cpanel_ready`: shared-hosting package; includes `vendor` when present, includes `public/build` when present, and excludes `node_modules`.
+- `managed_handover`: docs and checklists for Sanfaani team/client handover; secrets are never included.
+
 ## Exclude
 
+- `.git`
 - `.env`
+- `.env.backup`
+- `.env.production`
 - `.env.*.local`
 - `vendor`
 - `node_modules`
@@ -37,6 +46,8 @@ This manifest defines packaging intent. It is not a generated archive.
 - `storage/app/private`
 - `storage/app/database`
 - `storage/app/updates`
+- `storage/app/marketplace-packages`
+- backups
 - `public/build.zip`
 - test databases such as `database/*.sqlite`
 - local IDE files such as `.idea` and `.vscode`
