@@ -41,6 +41,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Demo\MarketplaceLiveDemoController;
 use App\Http\Controllers\Demo\DemoRequestController;
 use App\Http\Controllers\MarketingTrackingController;
 use App\Http\Controllers\MarketingUnsubscribeController;
@@ -128,6 +129,14 @@ Route::post('/demo', [DemoRequestController::class, 'store'])
 Route::post('/demo/request', [DemoRequestController::class, 'store'])
     ->middleware(['feature:demo_system', 'throttle:5,1'])
     ->name('demo.request.store');
+
+Route::get('/demo/live', [MarketplaceLiveDemoController::class, 'index'])
+    ->middleware('feature:demo_system')
+    ->name('demo.live');
+
+Route::post('/demo/live/login/{role}', [MarketplaceLiveDemoController::class, 'login'])
+    ->middleware(['feature:demo_system', 'throttle:10,1'])
+    ->name('demo.live.login');
 
 Route::get('/admin/login', [AdminAuthenticatedSessionController::class, 'create'])
     ->middleware('guest')
@@ -298,7 +307,7 @@ Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'demo.safe'])->group(function () {
     Route::get('/choose-workspace', [ChooseWorkspaceController::class, 'create'])
         ->name('workspace.create');
 
@@ -318,7 +327,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 });
 
-Route::middleware(['auth', 'role:super_admin'])
+Route::middleware(['auth', 'role:super_admin', 'demo.safe'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -799,7 +808,7 @@ Route::middleware(['auth', 'role:super_admin'])
             ->middleware('deployment.behavior:platform_scratch_cards');
     });
 
-Route::middleware(['auth', 'school.context'])
+Route::middleware(['auth', 'school.context', 'demo.safe'])
     ->prefix('school')
     ->name('school.')
     ->group(function () {
@@ -1332,7 +1341,7 @@ Route::middleware(['auth', 'school.context'])
             });
     });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'demo.safe'])->group(function () {
     Route::get('/search', SearchController::class)
         ->name('search');
 

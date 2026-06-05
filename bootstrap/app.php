@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureActiveRole;
 use App\Http\Middleware\EnsureCommunicationFeatureEnabled;
+use App\Http\Middleware\EnsureDemoSafeAction;
 use App\Http\Middleware\EnsureDeploymentBehavior;
 use App\Http\Middleware\EnsureDeploymentMode;
 use App\Http\Middleware\EnsureFeatureEnabled;
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature' => EnsureFeatureEnabled::class,
             'feature.communication' => EnsureCommunicationFeatureEnabled::class,
             'feature.school' => EnsureSchoolFeatureEnabled::class,
+            'demo.safe' => EnsureDemoSafeAction::class,
             'deployment.behavior' => EnsureDeploymentBehavior::class,
             'deployment.mode' => EnsureDeploymentMode::class,
             'installer.access' => EnsureInstallerAccess::class,
