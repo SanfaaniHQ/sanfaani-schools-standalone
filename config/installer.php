@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'enabled' => (bool) env('SANFAANI_INSTALLER_ENABLED', false),
+    'enabled' => (bool) env('SANFAANI_INSTALLER_ENABLED', true),
 
     'feature' => 'standalone_installer',
 

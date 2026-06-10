@@ -35,6 +35,7 @@
             ['title' => 'Platform Branding', 'body' => 'Manage platform name, logo, colors, footer text, and white-label readiness.', 'href' => route('admin.branding.edit'), 'group' => 'platform_branding'],
             ['title' => 'Local School Settings', 'body' => 'School identity and owner settings for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
             ['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license'],
+            ['title' => 'Local-First Offline Status', 'body' => 'Review standalone edition, installer, license, local database, and sync readiness.', 'href' => route('admin.standalone.status'), 'group' => 'standalone_status'],
             ['title' => 'Guided Updates', 'body' => 'Upload packages, run preflight checks, and plan manual shared-hosting updates.', 'href' => route('admin.updates.index'), 'group' => 'standalone_updates'],
             ['title' => 'Backups', 'body' => 'Create backup metadata, verify readiness, and review manual restore plans.', 'href' => route('admin.backups.index'), 'group' => 'standalone_backups'],
             ['title' => 'Hosting Health', 'body' => 'Review shared-hosting limits, queue fallback, cache readiness, logs, and asset size warnings.', 'href' => route('admin.performance.index'), 'group' => 'standalone_performance'],

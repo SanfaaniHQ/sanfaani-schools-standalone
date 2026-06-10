@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\ScratchCardRequestController;
 use App\Http\Controllers\Admin\SecurityDiagnosticsController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
+use App\Http\Controllers\Admin\StandaloneStatusController;
 use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
 use App\Http\Controllers\Admin\SystemMaintenanceController;
 use App\Http\Controllers\Admin\SystemStatusController;
@@ -333,6 +334,10 @@ Route::middleware(['auth', 'role:super_admin', 'demo.safe'])
     ->group(function () {
         Route::get('/dashboard', [SuperAdminDashboardController::class, 'index'])
             ->name('dashboard');
+
+        Route::get('/standalone/status', StandaloneStatusController::class)
+            ->name('standalone.status')
+            ->middleware('deployment.behavior:standalone_status');
 
         Route::get('/platform-settings', [PlatformSettingController::class, 'edit'])
             ->name('platform-settings.edit')
