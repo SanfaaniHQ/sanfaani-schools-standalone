@@ -45,6 +45,15 @@ return [
         'marketplace_package_builder_as_primary_flow',
     ],
 
+    'surface_gates' => [
+        'standalone_navigation_enabled' => (bool) env('SANFAANI_STANDALONE_NAVIGATION_ENABLED', true),
+        'private_homepage_enabled' => (bool) env('SANFAANI_STANDALONE_PRIVATE_HOMEPAGE_ENABLED', true),
+        'hide_saas_surfaces' => (bool) env('SANFAANI_STANDALONE_HIDE_SAAS_SURFACES', true),
+        'hide_marketplace_surfaces' => (bool) env('SANFAANI_STANDALONE_HIDE_MARKETPLACE_SURFACES', true),
+        'hide_demo_surfaces' => (bool) env('SANFAANI_STANDALONE_HIDE_DEMO_SURFACES', true),
+        'hide_platform_marketing_surfaces' => (bool) env('SANFAANI_STANDALONE_HIDE_PLATFORM_MARKETING_SURFACES', true),
+    ],
+
     'recommended_env' => [
         'SANFAANI_PRODUCT_EDITION' => 'standalone',
         'SANFAANI_DEPLOYMENT_MODE' => DeploymentModeService::MODE_SINGLE_SCHOOL,
@@ -56,5 +65,9 @@ return [
         'SANFAANI_STANDALONE_SYNC_ENDPOINT' => '',
         'SANFAANI_STANDALONE_SYNC_TOKEN' => '',
         'SANFAANI_STANDALONE_BACKUP_SYNC_ENABLED' => 'false',
+        'SANFAANI_STANDALONE_HIDE_SAAS_SURFACES' => 'true',
+        'SANFAANI_STANDALONE_HIDE_MARKETPLACE_SURFACES' => 'true',
+        'SANFAANI_STANDALONE_HIDE_DEMO_SURFACES' => 'true',
+        'SANFAANI_STANDALONE_HIDE_PLATFORM_MARKETING_SURFACES' => 'true',
     ],
 ];

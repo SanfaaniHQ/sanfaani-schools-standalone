@@ -1,4 +1,6 @@
 @php
+    $standalone = app(\App\Services\Standalone\StandaloneEditionService::class);
+    $schoolStatusLabel = $standalone->hidesSaasSurfaces() ? 'Access status' : 'Subscription status';
     $attentionItems = collect([
         ['label' => 'Pending scratch card payments', 'value' => $pendingScratchCardRequests, 'tone' => 'warning', 'href' => route('school.scratch-cards.index')],
         ['label' => 'Draft result records', 'value' => $draftResults, 'tone' => 'warning', 'href' => route('school.results.manual.index')],
@@ -12,7 +14,9 @@
         ['title' => 'Subjects', 'body' => 'Subject catalog and class assignments.', 'href' => route('school.subjects.index'), 'feature' => null],
         ['title' => 'Sessions', 'body' => 'Academic years, current session, and archives.', 'href' => route('school.sessions.index'), 'feature' => null],
         ['title' => 'Terms', 'body' => 'Operational terms attached to sessions.', 'href' => route('school.terms.index'), 'feature' => null],
+        ['title' => 'Admissions', 'body' => 'Applications, settings, channels, and conversion workflow.', 'href' => route('admin.admissions.index'), 'feature' => null],
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
+        ['title' => 'CBT', 'body' => 'Question banks, exams, marking, and CBT result publishing.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],
         ['title' => 'Bulk Communication', 'body' => 'Send school-scoped operational messages.', 'href' => route('school.communications.bulk'), 'feature' => 'communication.bulk'],
         ['title' => 'Promotions', 'body' => 'Move students across sessions without losing history.', 'href' => route('school.student-promotions.index'), 'feature' => 'student.promote'],
@@ -41,7 +45,7 @@
                     @endif
                     <div>
                         <p class="text-sm font-semibold text-text-primary">{{ ucfirst($school->status) }}</p>
-                        <p class="text-xs text-text-tertiary">{{ ucfirst($school->subscription_status) }} subscription</p>
+                        <p class="text-xs text-text-tertiary">{{ $schoolStatusLabel }}: {{ ucfirst($school->subscription_status) }}</p>
                     </div>
                 </div>
             </div>

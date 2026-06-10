@@ -7,34 +7,49 @@ use App\Models\LeadRequest;
 use App\Models\User;
 use App\Services\CommunicationService;
 use App\Services\LeadCrmService;
+use App\Services\Standalone\StandaloneEditionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 
 class LandingPageController extends Controller
 {
-    public function home()
+    public function home(StandaloneEditionService $standalone)
     {
+        if ($standalone->privateHomepageEnabled()) {
+            return view('public.standalone.home', [
+                'standaloneStatus' => $standalone->status(),
+            ]);
+        }
+
         return view('public.landing.home');
     }
 
-    public function features()
+    public function features(StandaloneEditionService $standalone)
     {
+        abort_if($standalone->hidesPlatformMarketingSurfaces(), 404);
+
         return view('public.landing.features');
     }
 
-    public function pricing()
+    public function pricing(StandaloneEditionService $standalone)
     {
+        abort_if($standalone->hidesSaasSurfaces(), 404);
+
         return view('public.landing.pricing');
     }
 
-    public function contact()
+    public function contact(StandaloneEditionService $standalone)
     {
+        abort_if($standalone->hidesPlatformMarketingSurfaces(), 404);
+
         return view('public.landing.contact');
     }
 
-    public function submitContact(Request $request)
+    public function submitContact(Request $request, StandaloneEditionService $standalone)
     {
+        abort_if($standalone->hidesPlatformMarketingSurfaces(), 404);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'school_name' => ['nullable', 'string', 'max:255'],

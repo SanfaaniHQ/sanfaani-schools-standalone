@@ -112,6 +112,12 @@ class DemoSessionTest extends TestCase
 
         config(['sanfaani.deployment.license_mode' => 'trial']);
 
+        $this->assertFalse(app(DemoEnvironmentService::class)->canAccessDemo());
+
+        config([
+            'standalone.surface_gates.hide_demo_surfaces' => false,
+        ]);
+
         $this->assertTrue(app(DemoEnvironmentService::class)->canAccessDemo());
     }
 

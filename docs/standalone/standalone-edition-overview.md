@@ -26,6 +26,13 @@ SANFAANI_STANDALONE_SYNC_ENABLED=false
 SANFAANI_STANDALONE_SYNC_ENDPOINT=
 SANFAANI_STANDALONE_SYNC_TOKEN=
 SANFAANI_STANDALONE_BACKUP_SYNC_ENABLED=false
+SANFAANI_STANDALONE_PRIVATE_HOMEPAGE_ENABLED=true
+SANFAANI_STANDALONE_HIDE_SAAS_SURFACES=true
+SANFAANI_STANDALONE_HIDE_MARKETPLACE_SURFACES=true
+SANFAANI_STANDALONE_HIDE_DEMO_SURFACES=true
+SANFAANI_STANDALONE_HIDE_PLATFORM_MARKETING_SURFACES=true
 ```
+
+These surface gates keep the standalone home page, navigation, dashboards, and direct routes focused on private school operations. SaaS billing/subscriptions, marketplace demo pages, public demo requests, customer acquisition dashboards, and platform marketing tools should stay hidden unless a maintainer deliberately disables the relevant gate for a controlled internal workflow.
 
 For non-technical schools, Sanfaani or an implementation partner can provide a done-for-you installation service: prepare hosting or a local server, run the installer, create the admin account, activate the license, and hand over usage guidance.

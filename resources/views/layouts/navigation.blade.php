@@ -4,6 +4,8 @@
     $navLogoUrl = data_get($schoolBranding ?? null, 'logo_url') ?: ($platformLogoUrl ?? null);
     $navInitials = data_get($schoolBranding ?? null, 'initials') ?: ($platformInitials ?? 'SS');
     $navColor = data_get($schoolBranding ?? null, 'primary_color') ?: '#047857';
+    $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
+    $canGroup = fn (string $group) => $behavior->allowsRouteGroup($group, user: Auth::user());
 @endphp
 <nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur">
     <!-- Primary Navigation Menu -->
@@ -57,18 +59,26 @@
                     @endif
 
                     @if (Auth::user()->hasRole('super_admin'))
-                        <x-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
-                            Platform Settings
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.result-system.index')" :active="request()->routeIs('admin.result-system.*')">
-                            Result System
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
-                            Maintenance
-                        </x-nav-link>
-                        <x-nav-link :href="route('admin.communications.index')" :active="request()->routeIs('admin.communications.*')">
-                            Communications
-                        </x-nav-link>
+                        @if ($canGroup('platform_settings') || $canGroup('local_school_settings'))
+                            <x-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
+                                {{ $canGroup('local_school_settings') ? 'Local School Settings' : 'Platform Settings' }}
+                            </x-nav-link>
+                        @endif
+                        @if ($canGroup('platform_result_system'))
+                            <x-nav-link :href="route('admin.result-system.index')" :active="request()->routeIs('admin.result-system.*')">
+                                Result System
+                            </x-nav-link>
+                        @endif
+                        @if ($canGroup('system_maintenance'))
+                            <x-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
+                                Maintenance
+                            </x-nav-link>
+                        @endif
+                        @if ($canGroup('platform_communications'))
+                            <x-nav-link :href="route('admin.communications.index')" :active="request()->routeIs('admin.communications.*')">
+                                Communications
+                            </x-nav-link>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -152,18 +162,26 @@
             @endif
 
             @if (Auth::user()->hasRole('super_admin'))
-                <x-responsive-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
-                    Platform Settings
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.result-system.index')" :active="request()->routeIs('admin.result-system.*')">
-                    Result System
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
-                    Maintenance
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('admin.communications.index')" :active="request()->routeIs('admin.communications.*')">
-                    Communications
-                </x-responsive-nav-link>
+                @if ($canGroup('platform_settings') || $canGroup('local_school_settings'))
+                    <x-responsive-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
+                        {{ $canGroup('local_school_settings') ? 'Local School Settings' : 'Platform Settings' }}
+                    </x-responsive-nav-link>
+                @endif
+                @if ($canGroup('platform_result_system'))
+                    <x-responsive-nav-link :href="route('admin.result-system.index')" :active="request()->routeIs('admin.result-system.*')">
+                        Result System
+                    </x-responsive-nav-link>
+                @endif
+                @if ($canGroup('system_maintenance'))
+                    <x-responsive-nav-link :href="route('admin.system-maintenance.index')" :active="request()->routeIs('admin.system-maintenance.*')">
+                        Maintenance
+                    </x-responsive-nav-link>
+                @endif
+                @if ($canGroup('platform_communications'))
+                    <x-responsive-nav-link :href="route('admin.communications.index')" :active="request()->routeIs('admin.communications.*')">
+                        Communications
+                    </x-responsive-nav-link>
+                @endif
             @endif
         </div>
 

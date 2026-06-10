@@ -1,9 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
+            $isLocalSettings = $behavior->allowsRouteGroup('local_school_settings', user: auth()->user());
+        @endphp
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h2 class="text-xl font-semibold leading-tight text-gray-900">Platform Settings</h2>
-                <p class="mt-1 text-sm text-gray-500">Manage brand, contact, and launch identity for Sanfaani Schools.</p>
+                <h2 class="text-xl font-semibold leading-tight text-gray-900">{{ $isLocalSettings ? 'Local School Settings' : 'Platform Settings' }}</h2>
+                <p class="mt-1 text-sm text-gray-500">{{ $isLocalSettings ? 'Manage identity, contact, and launch settings for this installation.' : 'Manage brand, contact, and launch identity for Sanfaani Schools.' }}</p>
             </div>
 
             <a href="{{ route('admin.dashboard') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -29,11 +33,11 @@
                 @method('PATCH')
 
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                    <h3 class="text-base font-semibold text-gray-900">Brand Identity</h3>
+                    <h3 class="text-base font-semibold text-gray-900">{{ $isLocalSettings ? 'Installation Identity' : 'Brand Identity' }}</h3>
 
                     <div class="mt-5 grid gap-6 sm:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Platform Name</label>
+                            <label class="block text-sm font-medium text-gray-700">{{ $isLocalSettings ? 'Installation Name' : 'Platform Name' }}</label>
                             <input type="text" name="platform_name" value="{{ old('platform_name', $settings->platform_name) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
                             @error('platform_name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                         </div>

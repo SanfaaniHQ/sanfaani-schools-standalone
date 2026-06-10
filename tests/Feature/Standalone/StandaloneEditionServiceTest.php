@@ -26,6 +26,8 @@ class StandaloneEditionServiceTest extends TestCase
             'standalone.sync.token' => '',
             'standalone.sync.backup_enabled' => false,
             'installer.enabled' => true,
+            'sanfaani.deployment.mode' => 'single_school',
+            'sanfaani.deployment.license_mode' => 'annual',
         ]);
     }
 
@@ -52,6 +54,12 @@ class StandaloneEditionServiceTest extends TestCase
         $this->assertNull($service->syncEndpoint());
         $this->assertFalse($service->backupSyncEnabled());
         $this->assertSame('single_school', $service->recommendedEnvironment()['SANFAANI_DEPLOYMENT_MODE']);
+        $this->assertTrue($service->standaloneNavigationEnabled());
+        $this->assertTrue($service->privateHomepageEnabled());
+        $this->assertTrue($service->hidesSaasSurfaces());
+        $this->assertTrue($service->hidesMarketplaceSurfaces());
+        $this->assertTrue($service->hidesDemoSurfaces());
+        $this->assertTrue($service->hidesPlatformMarketingSurfaces());
     }
 
     public function test_service_warns_when_saas_or_demo_modes_are_enabled_for_standalone(): void

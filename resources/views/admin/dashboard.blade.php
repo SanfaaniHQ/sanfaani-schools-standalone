@@ -1,14 +1,19 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $headerBehavior = app(\App\Services\System\DeploymentBehaviorService::class);
+            $headerIsLocal = $headerBehavior->allowsRouteGroup('local_dashboard', user: auth()->user());
+        @endphp
         <x-ui.page-header
-            title="Platform Dashboard"
-            :description="'Production control for '.$platformSettings->platform_name"
+            :title="$headerIsLocal ? 'Installation Dashboard' : 'Platform Dashboard'"
+            :description="$headerIsLocal ? 'Private single-school operations for '.$platformSettings->platform_name : 'Production control for '.$platformSettings->platform_name"
         />
     </x-slot>
 
     @php
         $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
         $user = auth()->user();
+        $isLocalDashboard = $behavior->allowsRouteGroup('local_dashboard', user: $user);
         $attentionItems = collect([
             ['label' => 'Pending scratch card requests', 'value' => $pendingScratchCardRequests, 'href' => route('admin.scratch-card-requests.index'), 'widget' => 'scratch_card_requests'],
             ['label' => 'Pending payments', 'value' => $pendingPayments, 'href' => route('admin.payments.index'), 'widget' => 'platform_payments'],
@@ -75,8 +80,8 @@
                         </a>
                     @empty
                         <x-ui.empty-state
-                            title="No urgent platform tasks"
-                            body="New demo requests, contact requests, payments, and school setup items will appear here when they need attention."
+                            :title="$isLocalDashboard ? 'No urgent installation tasks' : 'No urgent platform tasks'"
+                            :body="$isLocalDashboard ? 'License, backup, update, system health, and school setup items will appear here when they need attention.' : 'New demo requests, contact requests, payments, and school setup items will appear here when they need attention.'"
                             class="p-4 sm:p-5"
                         />
                     @endforelse

@@ -8,6 +8,7 @@ use App\Models\License;
 use App\Models\School;
 use App\Models\User;
 use App\Services\Licensing\LicenseValidationService;
+use App\Services\Standalone\StandaloneEditionService;
 use App\Services\System\DeploymentModeService;
 use App\Services\System\FeatureAccessService;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,7 @@ class DemoEnvironmentService
         private DeploymentModeService $deployment,
         private FeatureAccessService $features,
         private LicenseValidationService $licenses,
+        private StandaloneEditionService $standalone,
         private DemoCredentialService $credentials,
         private DemoActivityService $activity,
     ) {}
@@ -28,6 +30,10 @@ class DemoEnvironmentService
     public function canAccessDemo(?School $school = null, ?User $user = null): bool
     {
         try {
+            if ($this->standalone->hidesDemoSurfaces()) {
+                return false;
+            }
+
             if (! (bool) config('demo.enabled', true)) {
                 return false;
             }

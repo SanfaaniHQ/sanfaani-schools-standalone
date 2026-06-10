@@ -27,6 +27,12 @@ class StandaloneEditionService
         return $this->productEdition() === 'standalone';
     }
 
+    public function isStandaloneMode(): bool
+    {
+        return $this->isStandalone()
+            && $this->deploymentMode() === DeploymentModeService::MODE_SINGLE_SCHOOL;
+    }
+
     public function deploymentMode(): string
     {
         try {
@@ -111,6 +117,47 @@ class StandaloneEditionService
         return (array) config('standalone.demoted_flows', []);
     }
 
+    public function surfaceGates(): array
+    {
+        return (array) config('standalone.surface_gates', []);
+    }
+
+    public function standaloneNavigationEnabled(): bool
+    {
+        return $this->isStandaloneMode()
+            && (bool) data_get($this->surfaceGates(), 'standalone_navigation_enabled', true);
+    }
+
+    public function privateHomepageEnabled(): bool
+    {
+        return $this->isStandaloneMode()
+            && (bool) data_get($this->surfaceGates(), 'private_homepage_enabled', true);
+    }
+
+    public function hidesSaasSurfaces(): bool
+    {
+        return $this->isStandaloneMode()
+            && (bool) data_get($this->surfaceGates(), 'hide_saas_surfaces', true);
+    }
+
+    public function hidesMarketplaceSurfaces(): bool
+    {
+        return $this->isStandaloneMode()
+            && (bool) data_get($this->surfaceGates(), 'hide_marketplace_surfaces', true);
+    }
+
+    public function hidesDemoSurfaces(): bool
+    {
+        return $this->isStandaloneMode()
+            && (bool) data_get($this->surfaceGates(), 'hide_demo_surfaces', true);
+    }
+
+    public function hidesPlatformMarketingSurfaces(): bool
+    {
+        return $this->isStandaloneMode()
+            && (bool) data_get($this->surfaceGates(), 'hide_platform_marketing_surfaces', true);
+    }
+
     public function warnings(): array
     {
         $warnings = [];
@@ -166,6 +213,7 @@ class StandaloneEditionService
             'backup_sync_enabled' => $this->backupSyncEnabled(),
             'recommended_env' => $this->recommendedEnvironment(),
             'demoted_flows' => $this->demotedFlows(),
+            'surface_gates' => $this->surfaceGates(),
             'warnings' => $this->warnings(),
         ];
     }

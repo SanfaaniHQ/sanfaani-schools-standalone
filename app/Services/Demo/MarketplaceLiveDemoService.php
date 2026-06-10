@@ -16,6 +16,7 @@ use App\Models\TeacherSubjectAssignment;
 use App\Models\Term;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\Standalone\StandaloneEditionService;
 use App\Services\UserWorkspaceService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -27,8 +28,16 @@ use Spatie\Permission\Models\Role;
 
 class MarketplaceLiveDemoService
 {
+    public function __construct(
+        private StandaloneEditionService $standalone,
+    ) {}
+
     public function enabled(): bool
     {
+        if ($this->standalone->hidesDemoSurfaces() || $this->standalone->hidesMarketplaceSurfaces()) {
+            return false;
+        }
+
         return (bool) config('demo.marketplace.enabled', false);
     }
 

@@ -40,7 +40,7 @@
 
                         <div>
                             <h3 class="text-base font-semibold text-gray-900">{{ $school->name }}</h3>
-                            <p class="mt-1 text-sm text-gray-500">School name is controlled by the Super Admin to keep billing, subscriptions, and records consistent.</p>
+                            <p class="mt-1 text-sm text-gray-500">School name is controlled by the installation admin to keep identity, access, and records consistent.</p>
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\PlatformSettingService;
+use App\Services\System\DeploymentBehaviorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -78,9 +79,13 @@ class PlatformSettingController extends Controller
 
         $platformSettings->update($data);
 
+        $message = app(DeploymentBehaviorService::class)->allowsRouteGroup('local_school_settings', user: $request->user())
+            ? 'Local school settings updated successfully.'
+            : 'Platform settings updated successfully.';
+
         return redirect()
             ->route('admin.platform-settings.edit')
-            ->with('success', 'Platform settings updated successfully.');
+            ->with('success', $message);
     }
 
     private function deleteStoredFile(?string $path): void

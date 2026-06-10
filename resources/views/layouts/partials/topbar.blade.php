@@ -1,7 +1,10 @@
 @php
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
     $activeRoleContext = auth()->check() ? app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user()) : null;
-    $workspaceLabel = $activeRoleContext === 'super_admin' ? __('ui.platform_workspace') : __('ui.school_workspace');
+    $topbarBehavior = app(\App\Services\System\DeploymentBehaviorService::class);
+    $workspaceLabel = $activeRoleContext === 'super_admin'
+        ? ($topbarBehavior->allowsRouteGroup('local_dashboard', user: auth()->user()) ? 'Installation Workspace' : __('ui.platform_workspace'))
+        : __('ui.school_workspace');
     $routeName = request()->route()?->getName();
     $breadcrumbLabel = $routeName ? str($routeName)->replace(['.', '-'], ' ')->title()->toString() : __('ui.workspace');
     $notificationsTableReady = auth()->check() && \Illuminate\Support\Facades\Schema::hasTable('notifications');

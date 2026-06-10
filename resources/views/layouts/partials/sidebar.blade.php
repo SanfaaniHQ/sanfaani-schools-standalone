@@ -14,6 +14,9 @@
     $authz = app(\App\Services\SchoolAuthorizationService::class);
     $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
     $isSuperAdmin = $roleContext === 'super_admin' && ! $schoolService->inSupportMode($user);
+    $superAdminWorkspaceLabel = $behavior->allowsRouteGroup('local_dashboard', $school, $user)
+        ? 'Installation Admin'
+        : __('ui.platform_operations');
     $can = fn (?string $feature) => ! $feature || ($school && $authz->can($user, $school, $feature));
     $canGroup = fn (?string $routeGroup) => ! $routeGroup || $behavior->allowsRouteGroup($routeGroup, $school, $user);
     $item = function (string $label, string $route, string $active, string $icon, ?string $feature = null, ?string $routeGroup = null, array $parameters = []) use ($can, $canGroup) {
@@ -150,7 +153,7 @@
                 $item(__('ui.promotions'), 'school.student-promotions.index', 'school.student-promotions.*', 'activity', 'student.promote'),
             ],
             __('ui.administration') => [
-                $item(__('ui.finance'), 'school.subscription.show', 'school.subscription.*', 'wallet'),
+                $item(__('ui.finance'), 'school.subscription.show', 'school.subscription.*', 'wallet', null, 'platform_subscriptions'),
                 $item(__('ui.bulk_communication'), 'school.communications.bulk', 'school.communications.bulk*', 'mail', 'communication.bulk'),
                 $item(__('ui.mail_settings'), 'school.mail-settings.edit', 'school.mail-settings.*', 'mail'),
                 $item('Branding', 'school.branding.edit', 'school.branding.*', 'layout-grid'),
@@ -187,7 +190,7 @@
         <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-semibold text-text-primary">{{ $brandName }}</p>
             <p class="truncate text-xs text-text-tertiary">
-                {{ $isSuperAdmin ? __('ui.platform_operations') : str($roleContext ?: __('ui.workspace'))->replace('_', ' ')->title() }}
+                {{ $isSuperAdmin ? $superAdminWorkspaceLabel : str($roleContext ?: __('ui.workspace'))->replace('_', ' ')->title() }}
             </p>
         </div>
         <button type="button" @click="sidebarOpen = false" class="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-tertiary hover:bg-bg-secondary hover:text-text-primary lg:hidden" aria-label="{{ __('ui.close_navigation') }}">
