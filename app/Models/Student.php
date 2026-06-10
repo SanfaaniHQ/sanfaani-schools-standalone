@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Admissions\AdmissionApplication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -100,6 +101,11 @@ class Student extends Model
     public function cbtAttempts(): HasMany
     {
         return $this->hasMany(CbtAttempt::class);
+    }
+
+    public function convertedAdmissionApplications(): HasMany
+    {
+        return $this->hasMany(AdmissionApplication::class, 'converted_student_id');
     }
 
     public function electiveSubjects(): HasMany

@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Admissions\AdmissionApiKey;
+use App\Models\Admissions\AdmissionApplication;
+use App\Models\Admissions\AdmissionChannel;
+use App\Models\Admissions\AdmissionCycle;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -169,6 +173,26 @@ class School extends Model
     public function students(): HasMany
     {
         return $this->hasMany(Student::class);
+    }
+
+    public function admissionCycles(): HasMany
+    {
+        return $this->hasMany(AdmissionCycle::class);
+    }
+
+    public function admissionApplications(): HasMany
+    {
+        return $this->hasMany(AdmissionApplication::class);
+    }
+
+    public function admissionChannels(): HasMany
+    {
+        return $this->hasMany(AdmissionChannel::class);
+    }
+
+    public function admissionApiKeys(): HasMany
+    {
+        return $this->hasMany(AdmissionApiKey::class);
     }
 
     public function studentClassEnrollments(): HasMany

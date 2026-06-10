@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\Admissions\AdmissionController as AdminAdmissionController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BrandingController as AdminBrandingController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\Admin\SystemMaintenanceController;
 use App\Http\Controllers\Admin\SystemStatusController;
 use App\Http\Controllers\Admin\UpdateController;
 use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
+use App\Http\Controllers\Admissions\PublicAdmissionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
@@ -168,6 +170,21 @@ Route::view('/privacy-policy', 'public.legal.privacy')
 
 Route::view('/terms', 'public.legal.terms')
     ->name('legal.terms');
+
+Route::get('/admissions', [PublicAdmissionController::class, 'index'])
+    ->name('admissions.index');
+Route::get('/admissions/apply', [PublicAdmissionController::class, 'create'])
+    ->name('admissions.apply');
+Route::post('/admissions/apply', [PublicAdmissionController::class, 'store'])
+    ->middleware('throttle:'.config('admissions.submission_throttle', '5,1'))
+    ->name('admissions.store');
+Route::get('/admissions/track', [PublicAdmissionController::class, 'trackForm'])
+    ->name('admissions.track');
+Route::post('/admissions/track', [PublicAdmissionController::class, 'track'])
+    ->middleware('throttle:'.config('admissions.tracking_throttle', '10,1'))
+    ->name('admissions.track.submit');
+Route::get('/admissions/embed', [PublicAdmissionController::class, 'embed'])
+    ->name('admissions.embed');
 
 Route::get('/result-checker', [ResultCheckerController::class, 'index'])
     ->name('public.results.index');
@@ -811,6 +828,28 @@ Route::middleware(['auth', 'role:super_admin', 'demo.safe'])
         Route::post('/scratch-cards/{card}/revoke', [ScratchCardRequestController::class, 'revokeCard'])
             ->name('scratch-cards.revoke')
             ->middleware('deployment.behavior:platform_scratch_cards');
+    });
+
+Route::middleware(['auth', 'school.context', 'role:school_admin|super_admin', 'demo.safe'])
+    ->prefix('admin/admissions')
+    ->name('admin.admissions.')
+    ->group(function () {
+        Route::get('/', [AdminAdmissionController::class, 'index'])->name('index');
+        Route::get('/applications', [AdminAdmissionController::class, 'applications'])->name('applications.index');
+        Route::get('/applications/{application}', [AdminAdmissionController::class, 'show'])->name('applications.show');
+        Route::post('/applications/{application}/status', [AdminAdmissionController::class, 'updateStatus'])->name('applications.status');
+        Route::post('/applications/{application}/notes', [AdminAdmissionController::class, 'addNote'])->name('applications.notes');
+        Route::get('/applications/{application}/documents/{document}', [AdminAdmissionController::class, 'downloadDocument'])->name('documents.download');
+        Route::post('/applications/{application}/documents/{document}/review', [AdminAdmissionController::class, 'reviewDocument'])->name('documents.review');
+        Route::post('/applications/{application}/payments', [AdminAdmissionController::class, 'addPayment'])->name('payments.store');
+        Route::post('/applications/{application}/payments/{payment}/confirm', [AdminAdmissionController::class, 'confirmPayment'])->name('payments.confirm');
+        Route::post('/applications/{application}/interviews', [AdminAdmissionController::class, 'scheduleInterview'])->name('interviews.store');
+        Route::post('/applications/{application}/convert-to-student', [AdminAdmissionController::class, 'convert'])->name('applications.convert');
+        Route::get('/settings', [AdminAdmissionController::class, 'settings'])->name('settings');
+        Route::post('/settings', [AdminAdmissionController::class, 'updateSettings'])->name('settings.update');
+        Route::post('/settings/channels', [AdminAdmissionController::class, 'addChannel'])->name('channels.store');
+        Route::post('/settings/api-keys', [AdminAdmissionController::class, 'createApiKey'])->name('api-keys.store');
+        Route::post('/settings/api-keys/{apiKey}/revoke', [AdminAdmissionController::class, 'revokeApiKey'])->name('api-keys.revoke');
     });
 
 Route::middleware(['auth', 'school.context', 'demo.safe'])
