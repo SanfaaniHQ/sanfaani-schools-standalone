@@ -36,3 +36,5 @@ SANFAANI_STANDALONE_HIDE_PLATFORM_MARKETING_SURFACES=true
 These surface gates keep the standalone home page, navigation, dashboards, and direct routes focused on private school operations. SaaS billing/subscriptions, marketplace demo pages, public demo requests, customer acquisition dashboards, and platform marketing tools should stay hidden unless a maintainer deliberately disables the relevant gate for a controlled internal workflow.
 
 For non-technical schools, Sanfaani or an implementation partner can provide a done-for-you installation service: prepare hosting or a local server, run the installer, create the admin account, activate the license, and hand over usage guidance.
+
+See [Standalone Dashboard Experience](standalone-dashboard-experience.md) for the owner, School Admin, Teacher, Result Officer, setup-checklist, and planned-module behavior.

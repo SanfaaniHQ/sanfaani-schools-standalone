@@ -76,6 +76,12 @@
                         <span class="mt-1 block text-sm text-text-secondary">Publish or unpublish approved results.</span>
                     </a>
                 @endif
+                @if(($features['cbt.publish_results']['enabled'] ?? false))
+                    <a href="{{ route('school.cbt.dashboard') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">CBT Results</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Review CBT attempts and publish approved CBT outcomes.</span>
+                    </a>
+                @endif
             </div>
         </x-ui.panel>
     </section>

@@ -70,6 +70,18 @@
                         <span class="mt-1 block text-sm text-text-secondary">Open Student 360 for visible classes.</span>
                     </a>
                 @endif
+                @if(($features['cbt.question_bank']['enabled'] ?? false))
+                    <a href="{{ route('school.cbt.question-banks.index') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">CBT Question Bank</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Prepare reusable questions for assigned academic work.</span>
+                    </a>
+                @endif
+                @if(($features['cbt.mark_theory']['enabled'] ?? false))
+                    <a href="{{ route('school.cbt.marking.index') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">CBT Theory Marking</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Review and score theory answers awaiting teacher input.</span>
+                    </a>
+                @endif
             </div>
         </x-ui.panel>
     </section>

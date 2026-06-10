@@ -142,6 +142,7 @@
                 $item(__('ui.subjects'), 'school.subjects.index', 'school.subjects.*', 'book-open'),
                 $item(__('ui.sessions'), 'school.sessions.index', 'school.sessions.*', 'calendar'),
                 $item(__('ui.terms'), 'school.terms.index', 'school.terms.*', 'clipboard-list'),
+                $item('Admissions', 'admin.admissions.index', 'admin.admissions.*', 'clipboard-list'),
             ],
             __('ui.assessment') => [
                 $item(__('ui.results'), 'school.results.manual.index', 'school.results.manual.*', 'file-text', 'results.manual_entry'),

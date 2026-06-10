@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\CurrentSchoolService;
 use App\Services\OnboardingProgressService;
 use App\Services\SchoolAuthorizationService;
+use App\Services\Standalone\StandaloneDashboardSummaryService;
+use App\Services\Standalone\StandaloneEditionService;
 use App\Services\TeacherAssignmentAccessService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -15,7 +17,9 @@ class SchoolAdminDashboardController extends Controller
     public function index(
         CurrentSchoolService $currentSchool,
         OnboardingProgressService $onboarding,
-        SchoolAuthorizationService $authorization
+        SchoolAuthorizationService $authorization,
+        StandaloneEditionService $standalone,
+        StandaloneDashboardSummaryService $standaloneDashboard,
     ) {
         $user = auth()->user();
         $school = $currentSchool->get($user);
@@ -77,6 +81,9 @@ class SchoolAdminDashboardController extends Controller
                 'schoolOnboardingSteps' => $schoolSteps,
                 'schoolOnboardingCompleted' => $schoolCompleted,
                 'schoolOnboardingProgress' => $onboarding->progress($schoolSteps, $schoolCompleted),
+                'standaloneSummary' => $standalone->isStandaloneMode()
+                    ? $standaloneDashboard->forSchool($school)
+                    : null,
             ]);
         }
 

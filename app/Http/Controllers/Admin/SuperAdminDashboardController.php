@@ -12,12 +12,17 @@ use App\Models\SalesTask;
 use App\Models\StudentResult;
 use App\Models\User;
 use App\Services\OnboardingProgressService;
+use App\Services\Standalone\StandaloneDashboardSummaryService;
+use App\Services\Standalone\StandaloneEditionService;
 use Spatie\Permission\Models\Role;
 
 class SuperAdminDashboardController extends Controller
 {
-    public function index(OnboardingProgressService $onboarding)
-    {
+    public function index(
+        OnboardingProgressService $onboarding,
+        StandaloneEditionService $standalone,
+        StandaloneDashboardSummaryService $standaloneDashboard,
+    ) {
         $platformSteps = $onboarding->platformSteps();
         $platformCompleted = $onboarding->completedKeys('platform', user: auth()->user());
 
@@ -46,6 +51,9 @@ class SuperAdminDashboardController extends Controller
             'platformOnboardingSteps' => $platformSteps,
             'platformOnboardingCompleted' => $platformCompleted,
             'platformOnboardingProgress' => $onboarding->progress($platformSteps, $platformCompleted),
+            'standaloneSummary' => $standalone->isStandaloneMode()
+                ? $standaloneDashboard->forOwner()
+                : null,
         ]);
     }
 }

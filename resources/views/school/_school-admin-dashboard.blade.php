@@ -27,6 +27,13 @@
 <div class="space-y-6">
     <h2 class="sr-only">School Admin Dashboard</h2>
 
+    @if ($standaloneSummary)
+        <x-standalone-dashboard-summary
+            :summary="$standaloneSummary"
+            title="Standalone school readiness"
+        />
+    @endif
+
     <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <x-ui.panel class="min-w-0">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -72,7 +79,7 @@
         </x-ui.panel>
     </section>
 
-    @if (! $activeSession || ! $activeTerm || $totalClasses === 0 || $totalSubjects === 0 || $totalStudents === 0)
+    @if (! $standaloneSummary && (! $activeSession || ! $activeTerm || $totalClasses === 0 || $totalSubjects === 0 || $totalStudents === 0))
         <x-ui.panel>
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>

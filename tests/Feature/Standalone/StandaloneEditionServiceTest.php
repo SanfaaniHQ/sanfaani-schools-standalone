@@ -88,6 +88,7 @@ class StandaloneEditionServiceTest extends TestCase
             'docs/standalone/installer-and-license-flow.md',
             'docs/standalone/standalone-vs-saas-vs-marketplace.md',
             'docs/standalone/roadmap.md',
+            'docs/standalone/standalone-dashboard-experience.md',
         ];
 
         foreach ($docs as $doc) {
