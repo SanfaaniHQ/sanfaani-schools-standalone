@@ -40,6 +40,13 @@ return [
         'zip',
     ],
 
+    'allowed_package_mimes' => [
+        'application/zip',
+        'application/x-zip',
+        'application/x-zip-compressed',
+        'application/octet-stream',
+    ],
+
     'package_disk' => 'updates',
 
     'package_directory' => 'packages',

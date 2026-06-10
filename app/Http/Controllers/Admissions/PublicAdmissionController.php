@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Services\Admissions\AdmissionApplicationService;
 use App\Services\Admissions\AdmissionWebsiteIntegrationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PublicAdmissionController extends Controller
 {
@@ -39,6 +40,7 @@ class PublicAdmissionController extends Controller
     public function store(Request $request)
     {
         [$school] = $this->publicContext(requireOpenCycle: true);
+        $this->applications->guardAgainstSpam($request);
         $validated = $request->validate($this->applications->validationRules($school));
         $result = $this->applications->submit($school, $validated);
 
@@ -64,14 +66,39 @@ class PublicAdmissionController extends Controller
 
         $validated = $request->validate([
             'application_number' => ['required', 'string', 'max:64'],
-            'tracking_token' => ['nullable', 'string', 'max:100', 'required_without:guardian_phone'],
-            'guardian_phone' => ['nullable', 'string', 'max:50', 'required_without:tracking_token'],
+            'tracking_token' => ['nullable', 'string', 'max:100'],
+            'guardian_phone' => ['nullable', 'string', 'max:50'],
+            'date_of_birth' => ['nullable', 'date', 'before:today'],
         ]);
+
+        if (! filled($validated['tracking_token'] ?? null)) {
+            if (! config('admissions.guardian_tracking_fallback_enabled', false)) {
+                throw ValidationException::withMessages([
+                    'tracking_token' => 'The tracking token is required to verify this application.',
+                ]);
+            }
+
+            if (! filled($validated['guardian_phone'] ?? null)) {
+                throw ValidationException::withMessages([
+                    'guardian_phone' => 'Guardian phone is required when tracking token is not available.',
+                ]);
+            }
+
+            if (
+                config('admissions.guardian_tracking_requires_date_of_birth', true)
+                && ! filled($validated['date_of_birth'] ?? null)
+            ) {
+                throw ValidationException::withMessages([
+                    'date_of_birth' => 'Date of birth is required when tracking token is not available.',
+                ]);
+            }
+        }
 
         $application = $this->applications->track(
             $validated['application_number'],
             $validated['tracking_token'] ?? null,
-            $validated['guardian_phone'] ?? null
+            $validated['guardian_phone'] ?? null,
+            $validated['date_of_birth'] ?? null
         );
 
         if (! $application || (int) $application->school_id !== (int) $school->id) {
@@ -91,6 +118,12 @@ class PublicAdmissionController extends Controller
     {
         abort_unless(config('admissions.embed_enabled'), 404);
         [$school, $cycle] = $this->publicContext();
+        $allowedDomains = $this->integration->embedAllowedDomains($school, $request->query('channel'));
+        abort_unless(
+            $this->integration->requestAllowedForDomains($request, $allowedDomains),
+            403,
+            'This embed source is not allowed.'
+        );
 
         $response = response()->view('admissions.apply', [
             'school' => $school,
@@ -101,9 +134,10 @@ class PublicAdmissionController extends Controller
         ]);
 
         return $response
-            ->header('Content-Security-Policy', "frame-ancestors 'self' https: http:")
+            ->header('Content-Security-Policy', $this->integration->frameAncestors($allowedDomains))
             ->header('Referrer-Policy', 'strict-origin-when-cross-origin')
-            ->header('X-Content-Type-Options', 'nosniff');
+            ->header('X-Content-Type-Options', 'nosniff')
+            ->header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     }
 
     private function publicContext(bool $requireOpenCycle = false): array

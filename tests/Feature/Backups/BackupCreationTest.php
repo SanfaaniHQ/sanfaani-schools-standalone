@@ -5,6 +5,7 @@ namespace Tests\Feature\Backups;
 use App\Models\BackupItem;
 use App\Models\BackupLog;
 use App\Models\BackupRestorePlan;
+use App\Models\AuditLog;
 use App\Services\Backups\BackupConfigService;
 use App\Services\Backups\BackupFilesService;
 use App\Services\Backups\BackupPreflightService;
@@ -122,5 +123,26 @@ class BackupCreationTest extends TestCase
 
         $this->assertDatabaseCount('backups', 1);
         $this->assertDatabaseHas('backup_items', ['item_type' => BackupItem::TYPE_CONFIG]);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'backup_requested']);
+    }
+
+    public function test_restore_plan_view_is_audit_logged_without_running_restore(): void
+    {
+        $user = $this->superAdmin();
+        $backup = app(BackupService::class)->createManualBackup($user);
+
+        $this->actingAs($user)
+            ->get(route('admin.backups.restore-plan', $backup))
+            ->assertOk();
+
+        $this->assertDatabaseHas('backup_logs', [
+            'backup_id' => $backup->id,
+            'event' => 'backup.restore_plan_viewed',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'backup_restore_plan_viewed',
+        ]);
+
+        $this->assertFalse((bool) data_get(AuditLog::where('action', 'backup_restore_plan_viewed')->firstOrFail()->metadata, 'restore_performed'));
     }
 }

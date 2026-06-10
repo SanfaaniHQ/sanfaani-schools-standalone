@@ -6,7 +6,9 @@ use App\Models\Admissions\AdmissionApplication;
 use App\Models\Admissions\AdmissionStatusLog;
 use App\Models\School;
 use App\Notifications\Admissions\ApplicationSubmittedNotification;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -27,6 +29,7 @@ class AdmissionApplicationService
     {
         $maxKb = max(1, (int) config('admissions.max_upload_mb', 5)) * 1024;
         $mimes = implode(',', config('admissions.allowed_document_mimes', ['pdf', 'jpg', 'jpeg', 'png']));
+        $documentTypes = config('admissions.allowed_document_types', ['supporting_document']);
 
         return [
             'first_name' => ['required', 'string', 'max:100'],
@@ -54,8 +57,32 @@ class AdmissionApplicationService
             ],
             'documents.*' => ['file', 'mimes:'.$mimes, 'max:'.$maxKb],
             'document_types' => ['nullable', 'array'],
-            'document_types.*' => ['nullable', 'string', 'max:100'],
+            'document_types.*' => ['nullable', 'string', 'max:100', Rule::in($documentTypes)],
         ];
+    }
+
+    public function guardAgainstSpam(Request $request): void
+    {
+        $honeypotField = (string) config('admissions.honeypot_field', 'admission_website');
+        if ($honeypotField !== '' && filled($request->input($honeypotField))) {
+            throw ValidationException::withMessages([
+                'admissions' => 'The application could not be accepted. Please review the form and try again.',
+            ]);
+        }
+
+        $timestampField = (string) config('admissions.form_timestamp_field', 'admission_started_at');
+        $timestamp = $timestampField !== '' ? $request->input($timestampField) : null;
+        $requiresLocalCaptchaFallback = (bool) config('admissions.require_captcha', false);
+
+        if (! $requiresLocalCaptchaFallback) {
+            return;
+        }
+
+        if (! $this->submissionTimestampIsValid($timestamp)) {
+            throw ValidationException::withMessages([
+                'admissions' => 'The application could not be accepted. Please review the form and try again.',
+            ]);
+        }
     }
 
     public function submit(School $school, array $data, string $fallbackChannel = 'portal'): array
@@ -139,7 +166,12 @@ class AdmissionApplicationService
         return ['application' => $application, 'tracking_token' => $trackingToken];
     }
 
-    public function track(string $applicationNumber, ?string $trackingToken, ?string $guardianPhone): ?AdmissionApplication
+    public function track(
+        string $applicationNumber,
+        ?string $trackingToken,
+        ?string $guardianPhone,
+        ?string $dateOfBirth = null
+    ): ?AdmissionApplication
     {
         $application = AdmissionApplication::query()
             ->with(['school', 'cycle', 'requestedClass', 'guardians', 'statusLogs' => fn ($query) => $query->latest()])
@@ -157,12 +189,24 @@ class AdmissionApplicationService
                 fn ($guardian) => hash_equals($this->normalizePhone($guardian->phone), $this->normalizePhone($guardianPhone))
             );
 
-        return $tokenMatches || $guardianMatches ? $application : null;
+        if ($tokenMatches) {
+            return $application;
+        }
+
+        if (! (bool) config('admissions.guardian_tracking_fallback_enabled', false)) {
+            return null;
+        }
+
+        if ((bool) config('admissions.guardian_tracking_requires_date_of_birth', true)) {
+            $guardianMatches = $guardianMatches && $this->dateOfBirthMatches($application, $dateOfBirth);
+        }
+
+        return $guardianMatches ? $application : null;
     }
 
     private function storeDocument(AdmissionApplication $application, UploadedFile $file, string $type): void
     {
-        $disk = (string) config('admissions.document_disk', 'local');
+        $disk = $this->privateDocumentDisk();
         $path = $file->store(
             'admissions/'.$application->school_id.'/'.$application->application_number,
             $disk
@@ -180,6 +224,20 @@ class AdmissionApplicationService
             'size' => $file->getSize(),
             'status' => 'pending',
         ]);
+    }
+
+    private function privateDocumentDisk(): string
+    {
+        $disk = (string) config('admissions.document_disk', 'local');
+        $privateDisks = array_map('strval', (array) config('admissions.private_document_disks', ['local']));
+
+        if (! in_array($disk, $privateDisks, true)) {
+            throw ValidationException::withMessages([
+                'documents' => 'Documents could not be stored securely. Contact the school office.',
+            ]);
+        }
+
+        return $disk;
     }
 
     private function sendAcknowledgement(AdmissionApplication $application, string $trackingToken): void
@@ -200,5 +258,34 @@ class AdmissionApplicationService
     private function normalizePhone(?string $phone): string
     {
         return preg_replace('/\D+/', '', (string) $phone) ?: '';
+    }
+
+    private function submissionTimestampIsValid(mixed $timestamp): bool
+    {
+        if (! is_numeric($timestamp)) {
+            return false;
+        }
+
+        $startedAt = Carbon::createFromTimestamp((int) $timestamp);
+        $minimumSeconds = max(0, (int) config('admissions.minimum_submission_seconds', 3));
+
+        return $startedAt->lessThanOrEqualTo(now())
+            && $startedAt->diffInSeconds(now()) >= $minimumSeconds;
+    }
+
+    private function dateOfBirthMatches(AdmissionApplication $application, ?string $dateOfBirth): bool
+    {
+        if (! filled($dateOfBirth) || ! $application->date_of_birth) {
+            return false;
+        }
+
+        try {
+            return hash_equals(
+                $application->date_of_birth->toDateString(),
+                Carbon::parse($dateOfBirth)->toDateString()
+            );
+        } catch (Throwable) {
+            return false;
+        }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogService;
 use App\Services\DatabaseBackupService;
+use App\Services\Security\SecretRedactionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -78,10 +79,10 @@ class SystemMaintenanceController extends Controller
             return back()->with('success', 'Database backup created: '.$backup['file_name'].' ('.$backup['size_for_humans'].').');
         } catch (Throwable $exception) {
             $auditLog->log('database_backup_failed', null, null, metadata: [
-                'message' => $exception->getMessage(),
+                'message' => app(SecretRedactionService::class)->redact($exception),
             ], request: $request);
 
-            return back()->with('error', 'Backup failed: '.$exception->getMessage());
+            return back()->with('error', 'Backup failed. Review the audit log and server log for redacted details.');
         }
     }
 
@@ -120,9 +121,17 @@ class SystemMaintenanceController extends Controller
             'file_name' => basename($path),
         ], request: $request);
 
-        return response()->download($path, basename($path), [
+        $response = response()->download($path, basename($path), [
             'Content-Type' => 'application/sql',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
+        $response->setPrivate();
+        $response->headers->addCacheControlDirective('no-store');
+        $response->headers->addCacheControlDirective('no-cache');
+        $response->headers->addCacheControlDirective('must-revalidate');
+
+        return $response;
     }
 
     private function run(Request $request, AuditLogService $auditLog, string $action, array $commands, string $success): RedirectResponse

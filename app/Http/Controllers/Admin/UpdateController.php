@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\UpdateLog;
 use App\Models\UpdatePackage;
+use App\Services\AuditLogService;
 use App\Services\Updates\SystemVersionService;
 use App\Services\Updates\UpdateEntitlementService;
 use App\Services\Updates\UpdateManifestService;
@@ -25,6 +26,7 @@ class UpdateController extends Controller
         private UpdatePackageService $packages,
         private UpdatePreflightService $preflight,
         private UpdateServerClient $client,
+        private AuditLogService $auditLog,
     ) {}
 
     public function index(): View
@@ -79,6 +81,11 @@ class UpdateController extends Controller
         $data = $request->validate($this->packages->validationRules());
         $manifest = $this->manifests->parseJson($data['manifest_json'] ?? null);
         $package = $this->packages->storeUploadedPackage($data['package'], $manifest, $request->user());
+        $this->auditLog->log('update_package_uploaded', $package, metadata: [
+            'version' => $package->version,
+            'channel' => $package->channel,
+            'status' => $package->status,
+        ], request: $request);
 
         return redirect()
             ->route('admin.updates.show', $package)
@@ -103,6 +110,10 @@ class UpdateController extends Controller
         $this->authorizeUpdateAccess();
 
         $result = $this->preflight->run($updatePackage, auth()->user());
+        $this->auditLog->log('update_preflight_run', $updatePackage->fresh(), metadata: [
+            'passed' => $result->passed(),
+            'summary' => $result->summary(),
+        ], request: request());
 
         return redirect()
             ->route('admin.updates.show', $updatePackage)
@@ -118,6 +129,11 @@ class UpdateController extends Controller
         } catch (RuntimeException $exception) {
             return back()->with('error', $exception->getMessage());
         }
+        $this->auditLog->log('update_package_marked_ready', $package, metadata: [
+            'version' => $package->version,
+            'status' => $package->status,
+            'application_performed' => false,
+        ], request: request());
 
         return redirect()
             ->route('admin.updates.show', $package)

@@ -35,18 +35,69 @@ class AdmissionWebsiteIntegrationService
 
     public function sourceChannel(School $school, ?string $requested, string $fallback = 'portal'): string
     {
+        $channel = $this->activeChannel($school, $requested);
+
+        return $channel?->name ?: $fallback;
+    }
+
+    public function activeChannel(School $school, ?string $requested): ?AdmissionChannel
+    {
         $requested = trim((string) $requested);
 
         if ($requested === '') {
-            return $fallback;
+            return null;
         }
 
-        $channel = $school->admissionChannels()
+        return $school->admissionChannels()
             ->where('is_active', true)
             ->where('name', $requested)
             ->first();
+    }
 
-        return $channel?->name ?: $fallback;
+    public function embedAllowedDomains(School $school, ?string $requestedChannel = null): array
+    {
+        $configured = (array) config('admissions.embed_allowed_domains', []);
+        $channelDomain = $this->activeChannel($school, $requestedChannel)?->allowed_domain;
+
+        return collect($configured)
+            ->push($channelDomain)
+            ->filter(fn ($domain) => filled($domain))
+            ->map(fn ($domain) => $this->normalizeDomain((string) $domain))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function requestAllowedForDomains(Request $request, array $allowedDomains): bool
+    {
+        if ($allowedDomains === []) {
+            return true;
+        }
+
+        foreach ($allowedDomains as $domain) {
+            if ($this->domainAllowed($request, (string) $domain)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function frameAncestors(array $allowedDomains): string
+    {
+        if ($allowedDomains === []) {
+            return "frame-ancestors 'self' https: http:";
+        }
+
+        $sources = collect($allowedDomains)
+            ->flatMap(fn ($domain) => $this->cspSourcesForDomain((string) $domain))
+            ->filter()
+            ->unique()
+            ->values()
+            ->implode(' ');
+
+        return trim("frame-ancestors 'self' ".$sources);
     }
 
     public function publicConfig(School $school, ?AdmissionCycle $cycle): array
@@ -131,9 +182,7 @@ class AdmissionWebsiteIntegrationService
         }
 
         $host = Str::lower((string) parse_url($source, PHP_URL_HOST));
-        $allowed = Str::lower(trim($allowedDomain));
-        $allowed = preg_replace('#^https?://#', '', $allowed);
-        $allowed = trim((string) $allowed, " /\t\n\r\0\x0B");
+        $allowed = $this->normalizeDomain($allowedDomain);
 
         if (Str::startsWith($allowed, '*.')) {
             $base = Str::after($allowed, '*.');
@@ -142,5 +191,27 @@ class AdmissionWebsiteIntegrationService
         }
 
         return hash_equals($allowed, $host);
+    }
+
+    private function normalizeDomain(string $domain): string
+    {
+        $domain = Str::lower(trim($domain));
+        $domain = preg_replace('#^https?://#', '', $domain);
+
+        return trim((string) $domain, " /\t\n\r\0\x0B");
+    }
+
+    private function cspSourcesForDomain(string $domain): array
+    {
+        $domain = $this->normalizeDomain($domain);
+
+        if ($domain === '') {
+            return [];
+        }
+
+        return [
+            'https://'.$domain,
+            'http://'.$domain,
+        ];
     }
 }

@@ -2,10 +2,14 @@
 
 namespace Tests\Feature\Backups;
 
+use App\Models\AuditLog;
 use App\Models\Backup;
 use App\Models\BackupItem;
+use App\Services\DatabaseBackupService;
 use App\Services\Backups\BackupLogService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
+use RuntimeException;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -48,6 +52,59 @@ class BackupDashboardTest extends TestCase
         $this->actingAs($this->schoolAdmin())
             ->get(route('admin.backups.index'))
             ->assertForbidden();
+    }
+
+    public function test_backup_pages_and_downloads_require_authenticated_authorized_access(): void
+    {
+        $backup = Backup::create([
+            'type' => Backup::TYPE_MANUAL,
+            'status' => Backup::STATUS_COMPLETED,
+            'disk' => 'local',
+            'filename' => 'private.json',
+            'trigger' => 'test',
+            'metadata' => [],
+        ]);
+
+        $this->get(route('admin.backups.index'))->assertRedirect('/login');
+        $this->get(route('admin.backups.show', $backup))->assertRedirect('/login');
+        $this->post(route('admin.backups.store'))->assertRedirect('/login');
+        $this->get(route('admin.system-maintenance.backups.download', 'database-backup.sql'))
+            ->assertRedirect('/login');
+
+        $this->actingAs($this->schoolAdmin())
+            ->get(route('admin.system-maintenance.backups.download', 'database-backup.sql'))
+            ->assertForbidden();
+    }
+
+    public function test_authorized_backup_download_uses_private_security_headers(): void
+    {
+        $path = storage_path('framework/testing/database-backup.sql');
+        File::ensureDirectoryExists(dirname($path));
+        File::put($path, '-- test backup');
+
+        $this->mock(DatabaseBackupService::class, function ($mock) use ($path): void {
+            $mock->shouldReceive('pathFor')
+                ->once()
+                ->with('database-backup.sql')
+                ->andReturn($path);
+        });
+
+        $response = $this->actingAs($this->superAdmin())
+            ->get(route('admin.system-maintenance.backups.download', 'database-backup.sql'));
+
+        $response
+            ->assertOk()
+            ->assertDownload('database-backup.sql')
+            ->assertHeader('Content-Type', 'application/sql')
+            ->assertHeader('Pragma', 'no-cache')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+
+        $cacheControl = (string) $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('private', $cacheControl);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'database_backup_downloaded']);
+
+        File::delete($path);
     }
 
     public function test_demo_mode_cannot_access_backup_manager(): void
@@ -152,6 +209,28 @@ class BackupDashboardTest extends TestCase
             ->assertOk()
             ->assertDontSee(base_path('.env'))
             ->assertSee('[app]');
+    }
+
+    public function test_backup_failure_message_and_audit_log_do_not_leak_server_paths(): void
+    {
+        $this->mock(DatabaseBackupService::class, function ($mock): void {
+            $mock->shouldReceive('create')
+                ->once()
+                ->andThrow(new RuntimeException(base_path('storage/app/private/backups/database/private.sql')));
+        });
+
+        $response = $this->actingAs($this->superAdmin())
+            ->from(route('admin.system-maintenance.index'))
+            ->post(route('admin.system-maintenance.backups.create'));
+
+        $response
+            ->assertRedirect(route('admin.system-maintenance.index'))
+            ->assertSessionHas('error', 'Backup failed. Review the audit log and server log for redacted details.');
+
+        $this->assertStringNotContainsString(base_path(), (string) session('error'));
+
+        $log = AuditLog::where('action', 'database_backup_failed')->firstOrFail();
+        $this->assertStringNotContainsString(base_path(), json_encode($log->metadata, JSON_THROW_ON_ERROR));
     }
 
     public function test_school_admin_cannot_view_another_school_backup(): void

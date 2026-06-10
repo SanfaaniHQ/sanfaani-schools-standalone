@@ -11,10 +11,12 @@ use App\Models\Admissions\AdmissionDocument;
 use App\Models\Admissions\AdmissionPayment;
 use App\Models\School;
 use App\Notifications\Admissions\AdmissionPaymentNotification;
+use App\Services\AuditLogService;
 use App\Services\Admissions\AdmissionConversionService;
 use App\Services\Admissions\AdmissionWebsiteIntegrationService;
 use App\Services\Admissions\AdmissionWorkflowService;
 use App\Services\CurrentSchoolService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -100,18 +102,26 @@ class AdmissionController extends Controller
 
     public function updateStatus(Request $request, AdmissionApplication $application)
     {
-        $this->authorizeApplication($application, $this->school());
+        $school = $this->school();
+        $this->authorizeApplication($application, $school);
         $validated = $request->validate([
             'status' => ['required', Rule::in(AdmissionApplication::STATUSES)],
             'note' => ['nullable', 'string', 'max:2000'],
         ]);
+        $fromStatus = $application->status;
 
-        app(AdmissionWorkflowService::class)->changeStatus(
+        $updated = app(AdmissionWorkflowService::class)->changeStatus(
             $application,
             $validated['status'],
             $request->user()->id,
             $validated['note'] ?? null
         );
+
+        $this->audit('admission_status_changed', $updated, $school, [
+            'status' => $fromStatus,
+        ], [
+            'status' => $updated->status,
+        ]);
 
         return back()->with('success', 'Application status updated.');
     }
@@ -124,7 +134,11 @@ class AdmissionController extends Controller
             'visibility' => ['required', Rule::in(['internal', 'public'])],
         ]);
 
-        $application->notes()->create($validated + ['user_id' => $request->user()->id]);
+        $note = $application->notes()->create($validated + ['user_id' => $request->user()->id]);
+        $this->audit('admission_note_added', $application, $this->school(), metadata: [
+            'note_id' => $note->id,
+            'visibility' => $note->visibility,
+        ]);
 
         return back()->with('success', 'Admission note added.');
     }
@@ -135,11 +149,19 @@ class AdmissionController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(AdmissionDocument::STATUSES)],
         ]);
+        $fromStatus = $document->status;
 
         $document->update([
             'status' => $validated['status'],
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
+        ]);
+        $this->audit('admission_document_reviewed', $document, $this->school(), [
+            'status' => $fromStatus,
+        ], [
+            'status' => $document->status,
+        ], [
+            'application_id' => $application->id,
         ]);
 
         return back()->with('success', 'Document review saved.');
@@ -150,6 +172,10 @@ class AdmissionController extends Controller
         $this->authorizeNested($application, $document->admission_application_id);
         $disk = (string) config('admissions.document_disk', 'local');
         abort_unless(Storage::disk($disk)->exists($document->storage_path), 404);
+        $this->audit('admission_document_downloaded', $document, $this->school(), metadata: [
+            'application_id' => $application->id,
+            'document_id' => $document->id,
+        ]);
 
         return Storage::disk($disk)->download($document->storage_path, $document->original_name);
     }
@@ -164,8 +190,13 @@ class AdmissionController extends Controller
             'reference' => ['nullable', 'string', 'max:191'],
         ]);
 
-        $application->payments()->create($validated + ['method' => 'manual', 'status' => 'pending']);
+        $payment = $application->payments()->create($validated + ['method' => 'manual', 'status' => 'pending']);
         $application->update(['payment_status' => AdmissionApplication::PAYMENT_PENDING]);
+        $this->audit('admission_manual_payment_recorded', $payment, $this->school(), metadata: [
+            'application_id' => $application->id,
+            'amount' => $payment->amount,
+            'currency' => $payment->currency,
+        ]);
 
         return back()->with('success', 'Manual payment record added.');
     }
@@ -174,6 +205,7 @@ class AdmissionController extends Controller
     {
         $this->authorizeNested($application, $payment->admission_application_id);
         abort_unless(config('admissions.manual_payment_enabled'), 403);
+        $fromStatus = $payment->status;
 
         $payment->update([
             'status' => 'confirmed',
@@ -181,6 +213,13 @@ class AdmissionController extends Controller
             'confirmed_at' => now(),
         ]);
         $application->update(['payment_status' => AdmissionApplication::PAYMENT_CONFIRMED]);
+        $this->audit('admission_manual_payment_confirmed', $payment, $this->school(), [
+            'status' => $fromStatus,
+        ], [
+            'status' => $payment->status,
+        ], [
+            'application_id' => $application->id,
+        ]);
         $this->notifyPayment($application->loadMissing('guardians'));
 
         return back()->with('success', 'Manual payment confirmed.');
@@ -198,14 +237,33 @@ class AdmissionController extends Controller
         ]);
 
         $application->interviews()->create($validated);
+        $this->audit('admission_interview_scheduled', $application, $this->school(), metadata: [
+            'type' => $validated['type'],
+            'status' => $validated['status'],
+        ]);
 
         return back()->with('success', 'Interview or entrance exam saved.');
     }
 
     public function convert(Request $request, AdmissionApplication $application)
     {
-        $this->authorizeApplication($application, $this->school());
-        $student = app(AdmissionConversionService::class)->convert($application, $request->user()->id);
+        $school = $this->school();
+        $this->authorizeApplication($application, $school);
+
+        try {
+            $student = app(AdmissionConversionService::class)->convert($application, $request->user()->id);
+        } catch (Throwable $exception) {
+            $this->audit('admission_applicant_conversion_blocked', $application, $school, metadata: [
+                'status' => $application->status,
+                'reason' => $exception->getMessage(),
+            ]);
+
+            throw $exception;
+        }
+
+        $this->audit('admission_applicant_converted', $application->fresh(), $school, metadata: [
+            'student_id' => $student->id,
+        ]);
 
         return redirect()
             ->route('school.students.show', $student)
@@ -256,6 +314,10 @@ class AdmissionController extends Controller
             ],
         ]);
         $cycle->save();
+        $this->audit('admission_settings_updated', $cycle, $school, metadata: [
+            'cycle_id' => $cycle->id,
+            'is_open' => $cycle->is_open,
+        ]);
 
         return back()->with('success', 'Admission settings saved.');
     }
@@ -269,7 +331,12 @@ class AdmissionController extends Controller
             'allowed_domain' => ['nullable', 'string', 'max:191'],
         ]);
 
-        $school->admissionChannels()->create($validated + ['is_active' => true]);
+        $channel = $school->admissionChannels()->create($validated + ['is_active' => true]);
+        $this->audit('admission_channel_created', $channel, $school, metadata: [
+            'channel_id' => $channel->id,
+            'type' => $channel->type,
+            'allowed_domain_configured' => filled($channel->allowed_domain),
+        ]);
 
         return back()->with('success', 'Admission channel added.');
     }
@@ -294,6 +361,11 @@ class AdmissionController extends Controller
             $channel,
             $validated['allowed_domain'] ?? null
         );
+        $this->audit('admission_api_key_created', $created['model'], $school, metadata: [
+            'api_key_id' => $created['model']->id,
+            'channel_id' => $channel?->id,
+            'allowed_domain_configured' => filled($validated['allowed_domain'] ?? null),
+        ]);
 
         return back()
             ->with('success', 'API key created. Store it now; only its hash is retained.')
@@ -305,6 +377,9 @@ class AdmissionController extends Controller
         $school = $this->school();
         abort_unless((int) $apiKey->school_id === (int) $school->id, 404);
         $apiKey->update(['is_active' => false]);
+        $this->audit('admission_api_key_revoked', $apiKey, $school, metadata: [
+            'api_key_id' => $apiKey->id,
+        ]);
 
         return back()->with('success', 'API key revoked.');
     }
@@ -340,5 +415,24 @@ class AdmissionController extends Controller
         } catch (Throwable $exception) {
             report($exception);
         }
+    }
+
+    private function audit(
+        string $action,
+        ?Model $auditable,
+        School $school,
+        array $oldValues = [],
+        array $newValues = [],
+        array $metadata = []
+    ): void {
+        app(AuditLogService::class)->log(
+            $action,
+            $auditable,
+            $school,
+            oldValues: $oldValues,
+            newValues: $newValues,
+            metadata: $metadata,
+            request: request()
+        );
     }
 }

@@ -8,6 +8,7 @@ Use this checklist before planning any guided update.
 - Export the database manually when shell dumps are unavailable.
 - Confirm uploaded-file backup scope excludes unsafe folders.
 - Verify the backup record.
+- Confirm backup request, verification, and restore-plan review entries are present in audit or backup logs.
 - Confirm the update preflight backup requirement passes.
 
 ## Review
@@ -24,3 +25,4 @@ Use this checklist before planning any guided update.
 - Running destructive shell commands.
 - Restoring databases or files.
 - Displaying `.env` contents or sensitive absolute paths.
+- Serving backup files from public routes or public storage disks.

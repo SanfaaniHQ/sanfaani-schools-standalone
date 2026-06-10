@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Backup;
 use App\Models\BackupLog;
 use App\Models\BackupRestorePlan;
+use App\Services\AuditLogService;
 use App\Services\Backups\BackupPreflightService;
 use App\Services\Backups\BackupRetentionService;
+use App\Services\Backups\BackupLogService;
 use App\Services\Backups\BackupRestorePlanService;
 use App\Services\Backups\BackupService;
 use App\Services\Backups\BackupVerificationService;
@@ -22,7 +24,9 @@ class BackupController extends Controller
         private BackupPreflightService $preflight,
         private BackupVerificationService $verification,
         private BackupRetentionService $retention,
+        private BackupLogService $logs,
         private BackupRestorePlanService $restorePlans,
+        private AuditLogService $auditLog,
     ) {}
 
     public function index(): View
@@ -70,6 +74,10 @@ class BackupController extends Controller
         $this->authorizeBackupAccess();
 
         $backup = $this->backups->createManualBackup($request->user(), trigger: 'manual_web');
+        $this->auditLog->log('backup_requested', $backup, metadata: [
+            'status' => $backup->status,
+            'trigger' => $backup->trigger,
+        ], request: $request);
 
         return redirect()
             ->route('admin.backups.show', $backup)
@@ -101,6 +109,9 @@ class BackupController extends Controller
         $this->authorizeBackupRecord($backup);
 
         $verification = $this->verification->verify($backup, auth()->user());
+        $this->auditLog->log('backup_verification_run', $backup->fresh(), metadata: [
+            'verification_status' => $verification->status,
+        ], request: request());
 
         return redirect()
             ->route('admin.backups.show', $backup)
@@ -117,6 +128,17 @@ class BackupController extends Controller
 
         $backup->load(['items', 'latestVerification']);
         $plan = $backup->restorePlan ?: $this->restorePlans->createForBackup($backup, auth()->user());
+        $this->logs->log(
+            'backup.restore_plan_viewed',
+            'Manual restore plan was opened for review. No restore was performed.',
+            $backup,
+            severity: 'info',
+            actor: auth()->user(),
+        );
+        $this->auditLog->log('backup_restore_plan_viewed', $backup, metadata: [
+            'plan_id' => $plan instanceof BackupRestorePlan ? $plan->id : $plan->fresh()?->id,
+            'manual_only' => true,
+        ], request: request());
 
         return view('admin.backups.restore-plan', [
             'label' => $decision['label'],
@@ -131,6 +153,9 @@ class BackupController extends Controller
         $this->authorizeBackupAccess();
 
         $count = $this->retention->pruneExpired(auth()->user());
+        $this->auditLog->log('backup_retention_pruned', null, metadata: [
+            'pruned_count' => $count,
+        ], request: request());
 
         return redirect()
             ->route('admin.backups.index')

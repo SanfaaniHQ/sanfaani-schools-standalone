@@ -5,9 +5,11 @@ namespace Tests\Feature\Updates;
 use App\Models\UpdateLog;
 use App\Models\UpdatePackage;
 use App\Models\UpdateRollbackPlan;
+use App\Models\User;
 use App\Services\Updates\UpdateManifestService;
 use App\Services\Updates\UpdatePreflightService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -84,6 +86,21 @@ class UpdatePreflightTest extends TestCase
         $this->assertGreaterThan(0, UpdateLog::count());
     }
 
+    public function test_preflight_route_is_audit_logged_and_metadata_only(): void
+    {
+        $package = $this->package();
+
+        $this->actingAs($this->superAdmin())
+            ->post(route('admin.updates.preflight', $package))
+            ->assertRedirect(route('admin.updates.show', $package));
+
+        $package->refresh();
+        $this->assertDatabaseHas('audit_logs', ['action' => 'update_preflight_run']);
+        $this->assertFalse((bool) data_get($package->metadata, 'extracted'));
+        $this->assertFalse((bool) data_get($package->metadata, 'applied'));
+        $this->assertFalse((bool) data_get($package->metadata, 'migrations_run'));
+    }
+
     public function test_rollback_plan_metadata_is_created_for_preflight(): void
     {
         $package = $this->package();
@@ -130,5 +147,15 @@ class UpdatePreflightTest extends TestCase
             'validated_at' => now(),
             'metadata' => ['extracted' => false, 'applied' => false],
         ]);
+    }
+
+    private function superAdmin(): User
+    {
+        Role::findOrCreate('super_admin');
+
+        $user = User::factory()->create();
+        $user->assignRole('super_admin');
+
+        return $user;
     }
 }

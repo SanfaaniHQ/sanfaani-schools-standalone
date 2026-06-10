@@ -21,7 +21,7 @@ class UpdatePackageService
     public function validationRules(): array
     {
         return [
-            'package' => ['required', 'file', 'max:'.$this->maxPackageKilobytes()],
+            'package' => ['required', 'file', 'mimes:zip', 'max:'.$this->maxPackageKilobytes()],
             'manifest_json' => ['required', 'string'],
         ];
     }
@@ -125,6 +125,15 @@ class UpdatePackageService
 
         if (! in_array($extension, $allowed, true)) {
             $errors[] = 'Update package extension is not allowed.';
+        }
+
+        $mime = $file->getMimeType() ?: $file->getClientMimeType();
+        $allowedMimes = collect(config('updates.allowed_package_mimes', ['application/zip']))
+            ->map(fn (mixed $value): string => strtolower((string) $value))
+            ->all();
+
+        if (filled($mime) && ! in_array(strtolower((string) $mime), $allowedMimes, true)) {
+            $errors[] = 'Update package MIME type is not allowed.';
         }
 
         if ($file->getSize() !== false && $file->getSize() > $this->maxPackageBytes()) {

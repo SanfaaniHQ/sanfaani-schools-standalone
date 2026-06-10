@@ -7,11 +7,14 @@ The backup manager now has a safe foundation for standalone, managed, and platfo
 - `config/backups.php` controls backup visibility, scope, retention, max archive metadata size, pre-update requirements, and shared-hosting-safe defaults.
 - `backups`, `backup_items`, `backup_logs`, `backup_verifications`, and `backup_restore_plans` tables track backup metadata without exposing contents.
 - Admin backup UI is feature-gated, deployment-aware, license-aware, and blocked in demo mode.
+- Backup pages and maintenance download routes sit behind authenticated super-admin routes. Unauthorized users are redirected or forbidden before backup metadata or files are reached.
 - Manual backup requests create metadata records for database exports, uploaded file roots, and sanitized configuration.
 - Verification checks metadata presence, checksum where available, required item records, and unknown statuses fail closed.
 - Retention marks/prunes expired backup records safely.
 - Restore plans are manual guidance only and do not execute restore operations.
+- Restore-plan views, backup requests, verifications, and retention pruning are audit logged. The restore-plan audit trail records that the plan is manual only.
 - Update preflight can satisfy the backup requirement when a recent verified backup exists.
+- Backup error messages shown in the UI are generic, while audit metadata is passed through secret and path redaction so full server paths are not exposed to operators.
 
 ## Not Implemented Yet
 
@@ -38,3 +41,4 @@ The backup manager now has a safe foundation for standalone, managed, and platfo
 - Managed backup tools must not touch non-target client data.
 - Restore plan metadata must not claim a restore was performed.
 - Pre-update backup checks must require a recent verified backup or block readiness.
+- Download responses must remain private/no-store and must not be added to public admissions, API, or website routes.

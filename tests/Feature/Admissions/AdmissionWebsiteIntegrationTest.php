@@ -25,14 +25,42 @@ class AdmissionWebsiteIntegrationTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->get('/admissions/embed?channel=main-website')
+        $this->withHeaders(['Origin' => 'https://school.example'])
+            ->get('/admissions/embed?channel=main-website')
             ->assertOk()
             ->assertSee('Applicant details')
-            ->assertSee('main-website');
+            ->assertSee('main-website')
+            ->assertHeader('Content-Security-Policy', "frame-ancestors 'self' https://school.example http://school.example");
+
+        $this->withHeaders(['Origin' => 'https://evil.example'])
+            ->get('/admissions/embed?channel=main-website')
+            ->assertForbidden();
 
         $this->post('/admissions/apply', $this->admissionPayload() + ['source_channel' => 'main-website'])
             ->assertCreated();
-        $this->assertSame('main-website', AdmissionApplication::firstOrFail()->source_channel);
+        $application = AdmissionApplication::firstOrFail();
+        $this->assertSame('main-website', $application->source_channel);
+
+        $application->notes()->create([
+            'note' => 'Internal admissions review details.',
+            'visibility' => 'internal',
+        ]);
+
+        $this->withHeaders(['Origin' => 'https://school.example'])
+            ->get('/admissions/embed?channel=main-website')
+            ->assertOk()
+            ->assertDontSee($application->application_number)
+            ->assertDontSee('guardian@example.test')
+            ->assertDontSee('Internal admissions review details.');
+    }
+
+    public function test_embed_can_be_disabled(): void
+    {
+        $school = $this->createSchool();
+        $this->createCycle($school);
+        config()->set('admissions.embed_enabled', false);
+
+        $this->get('/admissions/embed')->assertNotFound();
     }
 
     public function test_public_api_is_disabled_by_default_and_requires_key_and_domain_when_enabled(): void
@@ -54,6 +82,10 @@ class AdmissionWebsiteIntegrationTest extends TestCase
         config()->set('admissions.api_enabled', true);
         $this->getJson('/api/public/admissions/config')->assertUnauthorized();
         $this->withHeaders([
+            'X-Sanfaani-Admission-Key' => 'sad_invalid',
+            'Origin' => 'https://school.example',
+        ])->getJson('/api/public/admissions/config')->assertUnauthorized();
+        $this->withHeaders([
             'X-Sanfaani-Admission-Key' => $created['plain_key'],
             'Origin' => 'https://evil.example',
         ])->getJson('/api/public/admissions/config')->assertForbidden();
@@ -64,7 +96,10 @@ class AdmissionWebsiteIntegrationTest extends TestCase
         ])->getJson('/api/public/admissions/config')
             ->assertOk()
             ->assertJsonPath('school.name', $school->name)
-            ->assertJsonPath('payments.online_enabled', false);
+            ->assertJsonPath('payments.online_enabled', false)
+            ->assertJsonMissingPath('applications')
+            ->assertJsonMissingPath('api_keys')
+            ->assertJsonMissingPath('documents.disk');
 
         $this->withHeaders([
             'X-Sanfaani-Admission-Key' => $created['plain_key'],

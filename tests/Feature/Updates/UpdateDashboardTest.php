@@ -56,6 +56,35 @@ class UpdateDashboardTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_update_pages_require_authenticated_authorized_access(): void
+    {
+        $package = $this->package();
+
+        $this->get(route('admin.updates.index'))->assertRedirect('/login');
+        $this->get(route('admin.updates.upload'))->assertRedirect('/login');
+        $this->get(route('admin.updates.show', $package))->assertRedirect('/login');
+        $this->post(route('admin.updates.store'))->assertRedirect('/login');
+        $this->post(route('admin.updates.preflight', $package))->assertRedirect('/login');
+        $this->post(route('admin.updates.mark-ready', $package))->assertRedirect('/login');
+
+        Role::findOrCreate('school_admin');
+        $user = User::factory()->create();
+        $user->assignRole('school_admin');
+
+        $this->actingAs($user)
+            ->get(route('admin.updates.upload'))
+            ->assertForbidden();
+        $this->actingAs($user)
+            ->post(route('admin.updates.store'))
+            ->assertForbidden();
+        $this->actingAs($user)
+            ->post(route('admin.updates.preflight', $package))
+            ->assertForbidden();
+        $this->actingAs($user)
+            ->post(route('admin.updates.mark-ready', $package))
+            ->assertForbidden();
+    }
+
     public function test_update_ui_does_not_expose_env_secrets(): void
     {
         $package = $this->package();

@@ -23,6 +23,8 @@
         <form method="POST" action="{{ route('admissions.store') }}" enctype="multipart/form-data" class="grid" style="margin-top: 24px">
             @csrf
             <input type="hidden" name="source_channel" value="{{ $sourceChannel }}">
+            <input type="hidden" name="{{ config('admissions.form_timestamp_field', 'admission_started_at') }}" value="{{ now()->timestamp }}">
+            <input type="text" name="{{ config('admissions.honeypot_field', 'admission_website') }}" value="" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden">
 
             <div class="field"><label for="first_name">First name *</label><input id="first_name" name="first_name" value="{{ old('first_name') }}" required></div>
             <div class="field"><label for="last_name">Last name *</label><input id="last_name" name="last_name" value="{{ old('last_name') }}" required></div>

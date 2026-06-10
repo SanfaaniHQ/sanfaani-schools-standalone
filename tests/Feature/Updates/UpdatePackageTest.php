@@ -46,6 +46,7 @@ class UpdatePackageTest extends TestCase
         $this->assertSame(UpdatePackage::STATUS_VALIDATED, $package->status);
         $this->assertSame('sanfaani-1.0.1.zip', $package->filename);
         $this->assertTrue(Storage::disk('updates')->exists($package->path));
+        $this->assertDatabaseHas('audit_logs', ['action' => 'update_package_uploaded']);
     }
 
     public function test_raw_package_is_not_extracted_or_applied(): void
@@ -71,6 +72,19 @@ class UpdatePackageTest extends TestCase
     public function test_package_upload_validates_extension(): void
     {
         $file = UploadedFile::fake()->create('unsafe.exe', 1, 'application/octet-stream');
+
+        $this->actingAs($this->superAdmin())
+            ->from(route('admin.updates.upload'))
+            ->post(route('admin.updates.store'), [
+                'package' => $file,
+                'manifest_json' => json_encode($this->manifest(str_repeat('a', 64))),
+            ])
+            ->assertSessionHasErrors('package');
+    }
+
+    public function test_package_upload_rejects_disallowed_mime_even_with_zip_extension(): void
+    {
+        $file = UploadedFile::fake()->create('unsafe.zip', 1, 'application/x-msdownload');
 
         $this->actingAs($this->superAdmin())
             ->from(route('admin.updates.upload'))
