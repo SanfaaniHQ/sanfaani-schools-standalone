@@ -13,8 +13,10 @@ use App\Models\StudentFeeInvoice;
 use App\Models\Term;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\Finance\SchoolFinanceReportService;
 use App\Services\Finance\SchoolFinanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -40,6 +42,12 @@ class FinanceFoundationTest extends TestCase
         $this->get(route('school.finance.index'))
             ->assertRedirect(route('login'));
 
+        $this->get(route('school.finance.reports'))
+            ->assertRedirect(route('login'));
+
+        $this->get(route('school.finance.audit'))
+            ->assertRedirect(route('login'));
+
         $this->post(route('school.finance.fee-items.store'), [])
             ->assertRedirect(route('login'));
     }
@@ -53,7 +61,13 @@ class FinanceFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Fees & Finance')
             ->assertSee('manual payments')
+            ->assertSee('Finance reports and audit review are available')
             ->assertSee('offline fee capture are deferred');
+
+        $this->get(route('school.finance.reports'))
+            ->assertOk()
+            ->assertSee('Finance Reports')
+            ->assertSee('Import/export remains Stage 12');
 
         $accountant = $this->createUserForSchool($school, 'accountant');
         $this->actAsSchoolRole($accountant, $school, 'accountant');
@@ -62,7 +76,12 @@ class FinanceFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Accountant Dashboard')
             ->assertSee('Fees and accounting foundation')
-            ->assertSee('Advanced finance reports, exports, gateways, and offline fee capture are deferred');
+            ->assertSee('finance reports, and audit review are available')
+            ->assertSee('Import/export remains Stage 12');
+
+        $this->get(route('school.finance.audit'))
+            ->assertOk()
+            ->assertSee('Finance Audit Review');
     }
 
     public function test_unauthorized_school_roles_cannot_manage_finance(): void
@@ -74,6 +93,8 @@ class FinanceFoundationTest extends TestCase
             $this->actAsSchoolRole($user, $school, $role);
 
             $this->get(route('school.finance.index'))->assertForbidden();
+            $this->get(route('school.finance.reports'))->assertForbidden();
+            $this->get(route('school.finance.audit'))->assertForbidden();
 
             $this->post(route('school.finance.fee-items.store'), [
                 'name' => 'Tuition',
@@ -253,6 +274,104 @@ class FinanceFoundationTest extends TestCase
             ->assertSee('100,000.00');
     }
 
+    public function test_finance_reports_calculate_totals_filters_and_school_scope(): void
+    {
+        [$school, $admin, $class, $session, $term, $student, $invoice] = $this->invoiceContext();
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $invoice->forceFill([
+            'issued_at' => '2026-07-05 10:00:00',
+            'due_date' => '2026-07-20',
+        ])->save();
+
+        app(SchoolFinanceService::class)->recordPayment($school, $admin, $invoice, [
+            'amount' => 40000,
+            'payment_date' => '2026-07-10',
+            'method' => 'cash',
+            'reference' => 'JULY-CASH-001',
+        ]);
+
+        $secondClass = $this->createClass($school, 'JSS 2', fake()->unique()->lexify('??'));
+        $secondStudent = $this->createStudent($school, $secondClass, 'FIN-003', 'Bayo');
+        $secondFeeItem = $this->createFeeItem($school, $admin, 'Books', 50000);
+        $this->createAssignment($school, $admin, $secondFeeItem, $secondClass, $session, $term, 50000);
+        $secondInvoice = app(SchoolFinanceService::class)
+            ->generateStudentInvoice($school, $admin, $secondStudent, [
+                'academic_session_id' => $session->id,
+                'term_id' => $term->id,
+            ])['invoice'];
+        $secondInvoice->forceFill([
+            'issued_at' => '2026-08-05 10:00:00',
+            'due_date' => '2026-08-20',
+        ])->save();
+
+        app(SchoolFinanceService::class)->recordPayment($school, $admin, $secondInvoice, [
+            'amount' => 50000,
+            'payment_date' => '2026-08-12',
+            'method' => 'bank_transfer',
+            'reference' => 'AUG-BANK-001',
+        ]);
+
+        [$otherSchool, $otherAdmin, $otherClass, $otherSession, $otherTerm, $otherStudent] = $this->financeContext('school_admin');
+        $otherStudent->forceFill(['first_name' => 'Cross'])->save();
+        $otherFeeItem = $this->createFeeItem($otherSchool, $otherAdmin, 'Other School Fee', 999999);
+        $this->createAssignment($otherSchool, $otherAdmin, $otherFeeItem, $otherClass, $otherSession, $otherTerm, 999999);
+        $otherInvoice = app(SchoolFinanceService::class)
+            ->generateStudentInvoice($otherSchool, $otherAdmin, $otherStudent, [
+                'academic_session_id' => $otherSession->id,
+                'term_id' => $otherTerm->id,
+            ])['invoice'];
+        $otherInvoice->forceFill(['issued_at' => '2026-07-05 10:00:00'])->save();
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $reports = app(SchoolFinanceReportService::class);
+        $report = $reports->report($school);
+
+        $this->assertEquals(150000.00, $report['summary']['total_invoiced']);
+        $this->assertEquals(90000.00, $report['summary']['total_paid']);
+        $this->assertEquals(60000.00, $report['summary']['total_outstanding']);
+        $this->assertSame(1, $report['invoice_status_counts'][StudentFeeInvoice::STATUS_PART_PAID]);
+        $this->assertSame(1, $report['invoice_status_counts'][StudentFeeInvoice::STATUS_PAID]);
+        $this->assertEquals(40000.00, collect($report['payment_methods'])->firstWhere('method', 'cash')['total']);
+        $this->assertEquals(50000.00, collect($report['payment_methods'])->firstWhere('method', 'bank_transfer')['total']);
+        $this->assertEquals(60000.00, collect($report['outstanding_by_class'])->firstWhere('school_class_id', $class->id)['balance']);
+        $this->assertEquals(60000.00, collect($report['student_balances'])->firstWhere('student_id', $student->id)['balance']);
+        $this->assertCount(2, $report['recent_payments']);
+
+        $julyReport = $reports->report($school, [
+            'date_from' => '2026-07-01',
+            'date_to' => '2026-07-31',
+        ]);
+        $this->assertEquals(100000.00, $julyReport['summary']['total_invoiced']);
+        $this->assertEquals(40000.00, $julyReport['summary']['total_paid']);
+        $this->assertEquals(60000.00, $julyReport['summary']['total_outstanding']);
+
+        $classStatusReport = $reports->report($school, [
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'school_class_id' => $class->id,
+            'invoice_status' => StudentFeeInvoice::STATUS_PART_PAID,
+        ]);
+        $this->assertEquals(100000.00, $classStatusReport['summary']['total_invoiced']);
+        $this->assertEquals(40000.00, $classStatusReport['summary']['total_paid']);
+
+        $bankTransferReport = $reports->report($school, [
+            'payment_method' => 'bank_transfer',
+        ]);
+        $this->assertEquals(50000.00, $bankTransferReport['summary']['total_paid']);
+
+        $this->get(route('school.finance.reports'))
+            ->assertOk()
+            ->assertSee('Finance Reports')
+            ->assertSee('150,000.00')
+            ->assertSee('90,000.00')
+            ->assertSee('60,000.00')
+            ->assertSee('Payment Method Summary')
+            ->assertSee('Outstanding By Class')
+            ->assertSee('Student Balances')
+            ->assertDontSee('999,999.00')
+            ->assertDontSee('Cross Student');
+    }
+
     public function test_finance_actions_are_audit_logged_with_safe_metadata(): void
     {
         [$school, $admin, , , , , $invoice] = $this->invoiceContext();
@@ -287,9 +406,45 @@ class FinanceFoundationTest extends TestCase
         $this->assertStringNotContainsString('SECRET-REFERENCE', $encoded);
         $this->assertStringNotContainsString('contains-private-payment-note', $encoded);
         $this->assertTrue($paymentAudit->metadata['has_reference']);
+
+        AuditLog::create([
+            'school_id' => $school->id,
+            'user_id' => $admin->id,
+            'action' => 'student_created',
+            'event' => 'student_created',
+            'category' => 'student',
+            'metadata' => ['secret' => 'raw-student-secret'],
+        ]);
+
+        AuditLog::create([
+            'school_id' => $school->id,
+            'user_id' => $admin->id,
+            'action' => 'finance_payment_recorded',
+            'event' => 'finance_payment_recorded',
+            'category' => 'finance',
+            'metadata' => [
+                'payment_id' => 999,
+                'invoice_id' => $invoice->id,
+                'secret' => 'raw-finance-secret',
+                'reference' => 'RAW-REFERENCE-SHOULD-NOT-SHOW',
+            ],
+        ]);
+
+        $this->get(route('school.finance.audit'))
+            ->assertOk()
+            ->assertSee('Finance Audit Review')
+            ->assertSee('Finance Payment Recorded')
+            ->assertSee('Payment Id')
+            ->assertSee('999')
+            ->assertDontSee('student_created')
+            ->assertDontSee('raw-student-secret')
+            ->assertDontSee('raw-finance-secret')
+            ->assertDontSee('RAW-REFERENCE-SHOULD-NOT-SHOW')
+            ->assertDontSee('SECRET-REFERENCE')
+            ->assertDontSee('contains-private-payment-note');
     }
 
-    public function test_fees_navigation_is_role_aware_and_accounting_reports_remain_deferred(): void
+    public function test_fees_and_accounting_navigation_is_role_aware_and_deferred_boundaries_remain_clear(): void
     {
         config([
             'standalone.product_edition' => 'standalone',
@@ -306,8 +461,13 @@ class FinanceFoundationTest extends TestCase
             ->assertSee('Fees &amp; Finance', false)
             ->assertSee('Fees/accounting foundation')
             ->assertSee('Finance reports and audit pack')
-            ->assertSee('Advanced reports, exports, debt analytics, and full accounting views remain planned for Stage 11')
+            ->assertSee('Finance reports and audit review are available')
+            ->assertSee('Import/export remains Stage 12')
             ->assertDontSee('Payment gateway automation is available');
+
+        $this->assertFalse(Route::has('school.finance.reports.export'));
+        $this->assertFalse(Route::has('school.finance.imports.index'));
+        $this->assertFalse(Route::has('school.finance.offline-capture'));
 
         foreach (['teacher', 'result_officer'] as $role) {
             $user = $this->createUserForSchool($school, $role);

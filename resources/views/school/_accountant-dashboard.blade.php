@@ -6,10 +6,12 @@
             <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Fees and accounting foundation</p>
             <h3 class="mt-2 text-2xl font-semibold text-text-primary">{{ $school->name }}</h3>
             <p class="mt-2 text-sm leading-6 text-text-secondary">
-                Online fee setup, student invoices, manual payment recording, and balances are available. Advanced finance reports, exports, gateways, and offline fee capture are deferred.
+                Online fee setup, student invoices, manual payment recording, finance reports, and audit review are available. Import/export remains Stage 12; gateways and offline fee capture are deferred.
             </p>
             <div class="mt-4 flex flex-wrap gap-2">
                 <a href="{{ route('school.finance.index') }}" class="ui-button-primary">Open Finance</a>
+                <a href="{{ route('school.finance.reports') }}" class="ui-button-secondary">Reports</a>
+                <a href="{{ route('school.finance.audit') }}" class="ui-button-secondary">Audit Review</a>
                 <a href="{{ route('school.finance.invoices.index') }}" class="ui-button-secondary">View Invoices</a>
             </div>
         </x-ui.panel>
@@ -22,10 +24,12 @@
     </section>
 
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-ui.stat-card label="Billed" :value="'NGN ' . number_format($financeSummary['total_billed'] ?? 0, 2)" :meta="'Discount: NGN ' . number_format($financeSummary['total_discount'] ?? 0, 2)" />
+        <x-ui.stat-card label="Paid" :value="'NGN ' . number_format($financeSummary['total_paid'] ?? 0, 2)" :meta="($financeSummary['payments'] ?? 0) . ' payment(s)'" tone="success" />
+        <x-ui.stat-card label="Outstanding" :value="'NGN ' . number_format($financeSummary['total_balance'] ?? 0, 2)" :meta="($financeSummary['outstanding_invoices'] ?? 0) . ' invoice(s)'" tone="warning" />
         <x-ui.stat-card label="Fee Items" :value="$financeSummary['fee_items'] ?? 0" :meta="($financeSummary['active_fee_items'] ?? 0) . ' active'" />
         <x-ui.stat-card label="Assignments" :value="$financeSummary['assignments'] ?? 0" :meta="($financeSummary['active_assignments'] ?? 0) . ' active'" />
         <x-ui.stat-card label="Invoices" :value="$financeSummary['invoices'] ?? 0" :meta="($financeSummary['part_paid_invoices'] ?? 0) . ' part paid'" tone="info" />
-        <x-ui.stat-card label="Payments" :value="$financeSummary['payments'] ?? 0" :meta="'Paid: NGN ' . number_format($financeSummary['total_paid'] ?? 0, 2)" tone="success" />
     </section>
 
     <section class="grid gap-4 lg:grid-cols-2">

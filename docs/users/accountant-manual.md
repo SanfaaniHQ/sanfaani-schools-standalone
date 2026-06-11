@@ -15,4 +15,4 @@ Finance records are restricted to the active school. Teachers, Result Officers, 
 
 ## Planned
 
-Advanced finance reports and audit views are planned for Stage 11. Import/export is planned for Stage 12. Payment gateway automation, offline fee capture, parent/student finance portals, double-entry ledgers, payroll, and procurement are not implemented.
+Finance reports and audit review are available from the finance workspace. Import/export is planned for Stage 12. Payment gateway automation, offline fee capture, parent/student finance portals, double-entry ledgers, payroll, and procurement are not implemented.

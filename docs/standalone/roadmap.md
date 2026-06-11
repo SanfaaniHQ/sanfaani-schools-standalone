@@ -13,6 +13,7 @@ Completed in the local-first foundation:
 - Disabled-by-default attendance-only browser offline capture and validated sync pilot.
 - Administrator monitor for server-known offline attendance sync receipts and attempts.
 - Online fees/accounting foundation for fee setup, student invoices, manual payments, balances, permissions, and audit logs.
+- School-scoped finance reports and finance audit review for admins/accountants.
 - Documentation that the local database is the source of truth.
 
 Next phases:
@@ -23,15 +24,15 @@ Next phases:
 - Add a cloud transport abstraction with tests and timeouts.
 - Add conflict detection before any pull/two-way sync.
 - Add backup sync rules separate from operational sync.
-- Add advanced finance reports, exports, debt analytics, and finance audit views in Stage 11.
 - Add finance import/export workflows in Stage 12.
+- Add deeper debt analytics/export packs after the Stage 11 view-only reports.
 - Add browser offline/PWA support as a later phase.
 
 Non-goals for this foundation:
 
 - Full browser offline/PWA is not complete yet.
 - Offline capture for results, admissions, LMS, fees, CBT, and other portal modules is not implemented.
-- Online payment gateway automation and parent/student finance portal access are not implemented by the Stage 10 foundation.
+- Online payment gateway automation and parent/student finance portal access are not implemented by the school-fees foundation.
 - Double-entry accounting, bank reconciliation, payroll, procurement, and tax accounting are not implemented.
 - Real two-way sync is not complete yet.
 - SaaS billing/signup are not the main standalone flow.

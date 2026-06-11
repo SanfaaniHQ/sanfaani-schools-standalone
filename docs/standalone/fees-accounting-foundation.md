@@ -12,6 +12,8 @@ Stage 10 adds the first online school-fees foundation to Sanfaani Schools Standa
 - Automatic billed, discounted, paid, and outstanding balance calculation.
 - Invoice statuses: `issued`, `part_paid`, `paid`, and `cancelled` where a future safe cancellation workflow uses that state.
 - Student finance history for authorized school finance users.
+- Finance reports for billed, paid, outstanding, status, payment method, class/session/term, recent payment, overdue invoice, and student balance review.
+- Finance audit review for safe finance actions using the existing audit log system.
 - School dashboard and accountant workspace visibility.
 - Audit events for fee items, assignments, invoices, and payments.
 
@@ -74,9 +76,26 @@ The existing audit log system records:
 
 The audit trail contains safe school-scoped IDs and financial totals. It does not create a second finance audit system.
 
+## Finance Reports and Audit Review
+
+Stage 11 adds view-only reports and finance audit visibility on top of the Stage 10 foundation. Reports are school-scoped and available to School Admins and Accountants with `finance.view`.
+
+Report filters include:
+
+- date range;
+- academic session;
+- term;
+- class;
+- invoice status;
+- payment method;
+- student.
+
+Report totals are calculated from `student_fee_invoices` and `student_fee_payments`. Invoice summaries use invoice issue dates for date filters. Payment summaries use payment dates for date filters. Outstanding balances exclude cancelled invoices and group by class and student where possible.
+
+Finance audit review filters the existing `audit_logs` table to safe finance actions only. The UI shows safe identifiers and totals such as invoice ID, payment ID, student ID, class ID, amount, method, status, and reference-presence flags. It does not expose raw payloads, notes, full references, secrets, or stack traces.
+
 ## Deferred Boundaries
 
-- Advanced finance reports, debt analytics, exports, and a full finance audit/reporting pack are planned for Stage 11.
 - Import/export workflows are planned for Stage 12.
 - Payment gateway automation is not implemented by this school-fees foundation.
 - Existing gateway settings and result/admissions payment workflows remain separate and preserved.

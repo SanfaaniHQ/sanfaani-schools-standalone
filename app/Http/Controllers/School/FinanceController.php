@@ -10,6 +10,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentFeeInvoice;
 use App\Services\CurrentSchoolService;
+use App\Services\Finance\SchoolFinanceReportService;
 use App\Services\Finance\SchoolFinanceService;
 use App\Services\SchoolAuthorizationService;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ class FinanceController extends Controller
         private CurrentSchoolService $currentSchool,
         private SchoolAuthorizationService $authorization,
         private SchoolFinanceService $finance,
+        private SchoolFinanceReportService $reports,
     ) {}
 
     public function index(Request $request)
@@ -63,6 +65,48 @@ class FinanceController extends Controller
             'school' => $school,
             'items' => $items,
             'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function reports(Request $request)
+    {
+        $school = $this->schoolOrFail();
+        $this->authorizeFinance($request, $school, 'finance.view');
+        $filters = $this->validatedReportFilters($request, $school);
+
+        return view('school.finance.reports', [
+            'school' => $school,
+            'filters' => $filters,
+            'report' => $this->reports->report($school, $filters),
+            'statuses' => $this->finance->invoiceStatuses(),
+            'paymentMethods' => $this->finance->paymentMethods(),
+            ...$this->financeOptions($school),
+        ]);
+    }
+
+    public function audit(Request $request)
+    {
+        $school = $this->schoolOrFail();
+        $this->authorizeFinance($request, $school, 'finance.view');
+        $filters = $this->validatedAuditFilters($request, $school);
+        $logs = $this->reports->auditLogQuery($school, $filters)
+            ->with('user')
+            ->latest()
+            ->paginate(25)
+            ->withQueryString();
+
+        $logs->getCollection()->transform(function ($log) {
+            $log->safe_finance_metadata = $this->reports->safeAuditMetadata($log);
+
+            return $log;
+        });
+
+        return view('school.finance.audit', [
+            'school' => $school,
+            'filters' => $filters,
+            'logs' => $logs,
+            'actions' => $this->reports->financeAuditActions(),
+            ...$this->financeOptions($school),
         ]);
     }
 
@@ -311,6 +355,59 @@ class FinanceController extends Controller
         if ((int) $invoice->school_id !== (int) $school->id) {
             abort(403, 'You cannot access this invoice.');
         }
+    }
+
+    private function validatedReportFilters(Request $request, School $school): array
+    {
+        $filters = $request->validate([
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'academic_session_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('academic_sessions', 'id')->where('school_id', $school->id),
+            ],
+            'term_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('terms', 'id')->where('school_id', $school->id),
+            ],
+            'school_class_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('school_classes', 'id')->where('school_id', $school->id),
+            ],
+            'invoice_status' => ['nullable', Rule::in($this->finance->invoiceStatuses())],
+            'payment_method' => ['nullable', Rule::in($this->finance->paymentMethods())],
+            'student_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('students', 'id')->where('school_id', $school->id),
+            ],
+        ]);
+
+        return collect($filters)->filter(fn ($value): bool => filled($value))->all();
+    }
+
+    private function validatedAuditFilters(Request $request, School $school): array
+    {
+        $filters = $request->validate([
+            'action' => ['nullable', Rule::in($this->reports->financeAuditActions())],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'school_class_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('school_classes', 'id')->where('school_id', $school->id),
+            ],
+            'student_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('students', 'id')->where('school_id', $school->id),
+            ],
+        ]);
+
+        return collect($filters)->filter(fn ($value): bool => filled($value))->all();
     }
 
     private function financeOptions(School $school): array

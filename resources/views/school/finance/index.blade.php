@@ -6,6 +6,8 @@
                 <p class="mt-1 text-sm text-gray-500">Online fee setup, student invoices, manual payments, and balances for {{ $school->name }}.</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                <a href="{{ route('school.finance.reports') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Reports</a>
+                <a href="{{ route('school.finance.audit') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Audit Review</a>
                 <a href="{{ route('school.finance.fee-items.index') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Fee Items</a>
                 <a href="{{ route('school.finance.assignments.index') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Assignments</a>
                 <a href="{{ route('school.finance.invoices.index') }}" class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">Invoices</a>
@@ -72,7 +74,7 @@
 
             <x-ui.panel tone="info">
                 <p class="text-sm leading-6 text-text-secondary">
-                    This foundation is online only. Advanced finance reports, exports, payment gateway automation, parent/student finance portals, and offline fee capture are deferred to later stages.
+                    This foundation is online only. Finance reports and audit review are available. Import/export remains Stage 12, and payment gateway automation, parent/student finance portals, and offline fee capture are deferred.
                 </p>
             </x-ui.panel>
         </div>

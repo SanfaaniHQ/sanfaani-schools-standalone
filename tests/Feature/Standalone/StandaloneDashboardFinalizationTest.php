@@ -80,7 +80,8 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertSee('Live classes')
             ->assertSee('Fees/accounting foundation')
             ->assertSee('Finance reports and audit pack')
-            ->assertSee('Advanced reports, exports, debt analytics, and full accounting views remain planned for Stage 11')
+            ->assertSee('Finance reports and audit review are available')
+            ->assertSee('Import/export remains Stage 12')
             ->assertSee('Full browser offline/PWA')
             ->assertSee('Planned')
             ->assertSee('attendance-only browser offline capture pilot is disabled by default')
@@ -120,6 +121,7 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertSee('Fees/accounting foundation')
             ->assertSee('Fee items, class/student assignments, student invoices, manual payment recording, and balances are available.')
             ->assertSee('Finance reports and audit pack')
+            ->assertSee('Finance reports and audit review are available')
             ->assertSee('Fees &amp; Finance', false)
             ->assertDontSee('Subscription');
     }

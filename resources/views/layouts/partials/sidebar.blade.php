@@ -137,6 +137,8 @@
             'Finance Operations' => [
                 $item(__('ui.dashboard'), 'school.dashboard', 'school.dashboard', 'home'),
                 $item('Fees & Finance', 'school.finance.index', 'school.finance.*', 'wallet', 'finance.view'),
+                $item('Finance Reports', 'school.finance.reports', 'school.finance.reports', 'bar-chart', 'finance.view'),
+                $item('Finance Audit', 'school.finance.audit', 'school.finance.audit', 'clipboard-list', 'finance.view'),
                 $item('Fee Items', 'school.finance.fee-items.index', 'school.finance.fee-items.*', 'clipboard-list', 'finance.view'),
                 $item('Invoices', 'school.finance.invoices.index', 'school.finance.invoices.*', 'file-text', 'finance.view'),
                 $item(__('ui.students'), 'school.students.index', 'school.students.*', 'users', 'students.view'),
@@ -154,6 +156,8 @@
                 $item(__('ui.teachers'), 'school.teacher-assignments.index', 'school.teacher-assignments.*', 'graduation-cap', 'teacher.assignment.manage'),
                 $item('Attendance', 'school.attendance.index', 'school.attendance.*', 'clipboard-list', 'attendance.view'),
                 $item('Fees & Finance', 'school.finance.index', 'school.finance.*', 'wallet', 'finance.view'),
+                $item('Finance Reports', 'school.finance.reports', 'school.finance.reports', 'bar-chart', 'finance.view'),
+                $item('Finance Audit', 'school.finance.audit', 'school.finance.audit', 'clipboard-list', 'finance.view'),
                 $item(__('ui.classes'), 'school.classes.index', 'school.classes.*', 'layout-grid'),
                 $item(__('ui.subjects'), 'school.subjects.index', 'school.subjects.*', 'book-open'),
                 $item(__('ui.sessions'), 'school.sessions.index', 'school.sessions.*', 'calendar'),

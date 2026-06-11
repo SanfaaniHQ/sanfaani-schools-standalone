@@ -457,8 +457,8 @@ class StandaloneDashboardSummaryService
             ],
             [
                 'label' => 'Finance reports and audit pack',
-                'status' => 'Planned',
-                'detail' => 'Advanced reports, exports, debt analytics, and full accounting views remain planned for Stage 11.',
+                'status' => 'Available',
+                'detail' => 'Finance reports and audit review are available. Import/export remains Stage 12; gateway automation, offline fee capture, and full accounting views remain deferred.',
             ],
             [
                 'label' => 'Offline attendance capture',

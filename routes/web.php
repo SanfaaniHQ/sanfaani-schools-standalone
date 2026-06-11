@@ -960,6 +960,14 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                             ->middleware('feature.school:finance.view')
                             ->name('index');
 
+                        Route::get('/reports', [FinanceController::class, 'reports'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('reports');
+
+                        Route::get('/audit', [FinanceController::class, 'audit'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('audit');
+
                         Route::get('/fee-items', [FinanceController::class, 'feeItems'])
                             ->middleware('feature.school:finance.view')
                             ->name('fee-items.index');
