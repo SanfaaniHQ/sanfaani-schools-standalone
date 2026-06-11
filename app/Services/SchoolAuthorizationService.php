@@ -24,6 +24,8 @@ class SchoolAuthorizationService
         'support.manage' => 'support.access',
         'attendance.view' => 'attendance',
         'attendance.manage' => 'attendance',
+        'finance.view' => 'school_finance',
+        'finance.manage' => 'school_finance',
         'cbt.manage' => 'cbt_exams',
         'cbt.question_bank' => 'cbt_question_bank',
         'cbt.mark_theory' => 'cbt_theory_marking',

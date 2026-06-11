@@ -46,7 +46,7 @@ class UserWorkspaceService
 
         if ($contexts->isEmpty() && $user->school_id) {
             foreach ($user->roles->pluck('name') as $roleName) {
-                if (! in_array($roleName, ['school_admin', 'result_officer', 'teacher'], true)) {
+                if (! in_array($roleName, ['school_admin', 'result_officer', 'teacher', 'accountant'], true)) {
                     continue;
                 }
 

@@ -127,6 +127,12 @@ class SchoolRoleFeatureService
                 'support.manage' => 'Support Access',
                 'support.direct_escalation' => 'Direct Support Escalation',
             ],
+            'accountant' => [
+                'finance.view' => 'View School Finance',
+                'finance.manage' => 'Manage School Finance',
+                'students.view' => 'View Students',
+                'support.manage' => 'Support Access',
+            ],
         ];
 
         return $features[$roleName] ?? [];

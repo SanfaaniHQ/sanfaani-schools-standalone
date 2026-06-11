@@ -197,6 +197,10 @@ class StandaloneDashboardSummaryService
             'admission_applications' => $school->admissionApplications()->count(),
             'attendance_records' => $school->attendanceRecords()->count(),
             'offline_attendance_receipts' => $offlineAttendanceHealth['receipt_total'],
+            'finance_fee_items' => $school->financeFeeItems()->count(),
+            'finance_fee_invoices' => $school->studentFeeInvoices()->count(),
+            'finance_fee_payments' => $school->studentFeePayments()->count(),
+            'finance_fee_balance' => (float) $school->studentFeeInvoices()->sum('balance_amount'),
             'results' => $school->studentResults()->count(),
             'published_results' => $school->studentResults()->where('status', 'published')->count(),
             'cbt_question_banks' => $school->cbtQuestionBanks()->count(),
@@ -229,6 +233,13 @@ class StandaloneDashboardSummaryService
                     ? 'Online attendance, the attendance-only browser offline capture pilot, and server-side sync monitor are available.'
                     : 'Online attendance is available; the attendance-only offline pilot is disabled by default.',
                 $this->route('school.attendance.index')
+            ),
+            $this->checklistItem(
+                'fees_accounting_foundation',
+                'Fees/accounting foundation',
+                Route::has('school.finance.index'),
+                'Fee items, class/student assignments, student invoices, manual payment recording, and balances are available.',
+                $this->route('school.finance.index')
             ),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
             $this->checklistItem('result_settings', 'Result and report settings', $resultSettingsReady, $resultSettingsReady ? 'Report or access settings are configured.' : 'Configure report cards or result access rules.', $this->route('school.report-card-settings.edit')),
@@ -298,6 +309,12 @@ class StandaloneDashboardSummaryService
                     'href' => $this->route('school.attendance.offline-sync-monitor') ?? $this->route('school.attendance.index'),
                 ],
                 [
+                    'label' => 'Finance',
+                    'value' => $counts['finance_fee_invoices'],
+                    'meta' => 'Outstanding NGN '.number_format($counts['finance_fee_balance'], 2),
+                    'href' => $this->route('school.finance.index'),
+                ],
+                [
                     'label' => 'Results',
                     'value' => $counts['results'],
                     'meta' => $counts['published_results'].' published result(s)',
@@ -323,6 +340,7 @@ class StandaloneDashboardSummaryService
             'operations' => [
                 ['label' => 'Admissions', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Attendance', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
+                ['label' => 'Finance', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Results', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'CBT', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
             ],
@@ -334,7 +352,7 @@ class StandaloneDashboardSummaryService
         $workspaceHref = $this->route('workspace.create');
 
         if (! $school) {
-            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Results', 'CBT'])
+            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'Results', 'CBT'])
                 ->map(fn (string $label): array => [
                     'label' => $label,
                     'value' => 0,
@@ -433,6 +451,16 @@ class StandaloneDashboardSummaryService
 
         return [
             [
+                'label' => 'Fees/accounting foundation',
+                'status' => 'Available',
+                'detail' => 'Fee setup, class/student assignments, student invoices, manual payments, and balances are implemented.',
+            ],
+            [
+                'label' => 'Finance reports and audit pack',
+                'status' => 'Planned',
+                'detail' => 'Advanced reports, exports, debt analytics, and full accounting views remain planned for Stage 11.',
+            ],
+            [
                 'label' => 'Offline attendance capture',
                 'status' => $offlineAttendanceEnabled ? 'Available' : 'Disabled',
                 'detail' => $offlineAttendanceEnabled
@@ -441,7 +469,6 @@ class StandaloneDashboardSummaryService
             ],
             ['label' => 'LMS and learning content', 'status' => 'Planned', 'detail' => 'Course delivery and content workflows remain future work.'],
             ['label' => 'Live classes', 'status' => 'Planned', 'detail' => 'No live-class provider is presented as available.'],
-            ['label' => 'Full fees and accounting', 'status' => 'Planned', 'detail' => 'Current payments are limited to existing admissions and scratch-card workflows.'],
             ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];
     }

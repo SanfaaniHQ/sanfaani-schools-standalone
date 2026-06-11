@@ -28,6 +28,8 @@
         @include('school._teacher-dashboard')
     @elseif($roleContext === 'result_officer')
         @include('school._result-officer-dashboard')
+    @elseif($roleContext === 'accountant')
+        @include('school._accountant-dashboard')
     @else
         @include('school._school-admin-dashboard')
     @endif

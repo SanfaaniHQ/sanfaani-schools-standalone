@@ -4,10 +4,12 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClassSubjectAssignment;
+use App\Models\FinanceFeeAssignment;
 use App\Models\LanguagePreference;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\StudentClassEnrollment;
+use App\Models\StudentFeeInvoice;
 use App\Models\StudentPromotionBatch;
 use App\Models\StudentPromotionItem;
 use App\Models\StudentResult;
@@ -219,6 +221,8 @@ class SchoolClassController extends Controller
         return $class->students()->withTrashed()->exists()
             || StudentResult::withTrashed()->where('school_class_id', $class->id)->exists()
             || ClassSubjectAssignment::withTrashed()->where('school_class_id', $class->id)->exists()
+            || FinanceFeeAssignment::where('school_class_id', $class->id)->exists()
+            || StudentFeeInvoice::where('school_class_id', $class->id)->exists()
             || StudentClassEnrollment::where('school_class_id', $class->id)->exists()
             || StudentPromotionBatch::where('from_school_class_id', $class->id)->orWhere('to_school_class_id', $class->id)->exists()
             || StudentPromotionItem::where('from_school_class_id', $class->id)->orWhere('to_school_class_id', $class->id)->exists();

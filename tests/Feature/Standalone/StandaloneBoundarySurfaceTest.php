@@ -121,10 +121,10 @@ class StandaloneBoundarySurfaceTest extends TestCase
             ->assertSee('Sessions')
             ->assertSee('Terms')
             ->assertSee('Admissions')
+            ->assertSee('Fees &amp; Finance', false)
             ->assertSee('Results')
             ->assertSee('CBT')
             ->assertSee('Access status: Active')
-            ->assertDontSee('Finance')
             ->assertDontSee('Subscription');
 
         $this->get(route('school.subscription.show'))->assertNotFound();

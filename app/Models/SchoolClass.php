@@ -38,6 +38,16 @@ class SchoolClass extends Model
         return $this->hasMany(StudentAttendanceRecord::class);
     }
 
+    public function financeFeeAssignments(): HasMany
+    {
+        return $this->hasMany(FinanceFeeAssignment::class);
+    }
+
+    public function feeInvoices(): HasMany
+    {
+        return $this->hasMany(StudentFeeInvoice::class);
+    }
+
     public function admissionApplications(): HasMany
     {
         return $this->hasMany(AdmissionApplication::class, 'requested_class_id');

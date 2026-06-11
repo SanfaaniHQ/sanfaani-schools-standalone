@@ -104,11 +104,12 @@ return [
         ],
         'accountant' => [
             'name' => 'Accountant onboarding',
-            'description' => 'Review payment settings and scratch-card tools used for result access.',
+            'description' => 'Set up school fees, generate student invoices, and record manual payments.',
             'role_name' => 'accountant',
             'steps' => [
-                ['key' => 'review_payment_settings', 'title' => 'Review payment settings', 'action_url' => '#', 'required' => false],
-                ['key' => 'review_scratch_cards', 'title' => 'Review scratch-card tools', 'route_name' => 'school.scratch-cards.index', 'feature_key' => 'scratch_cards'],
+                ['key' => 'configure_fee_items', 'title' => 'Configure fee items', 'route_name' => 'school.finance.fee-items.index'],
+                ['key' => 'configure_fee_assignments', 'title' => 'Assign fees to classes or students', 'route_name' => 'school.finance.assignments.index'],
+                ['key' => 'review_student_invoices', 'title' => 'Review student invoices and payments', 'route_name' => 'school.finance.invoices.index'],
             ],
         ],
     ],

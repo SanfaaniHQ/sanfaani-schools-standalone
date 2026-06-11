@@ -335,6 +335,26 @@ class School extends Model
         return $this->hasMany(PaymentTransaction::class);
     }
 
+    public function financeFeeItems(): HasMany
+    {
+        return $this->hasMany(FinanceFeeItem::class);
+    }
+
+    public function financeFeeAssignments(): HasMany
+    {
+        return $this->hasMany(FinanceFeeAssignment::class);
+    }
+
+    public function studentFeeInvoices(): HasMany
+    {
+        return $this->hasMany(StudentFeeInvoice::class);
+    }
+
+    public function studentFeePayments(): HasMany
+    {
+        return $this->hasMany(StudentFeePayment::class);
+    }
+
     public function scratchCardBatches(): HasMany
     {
         return $this->hasMany(ScratchCardBatch::class);

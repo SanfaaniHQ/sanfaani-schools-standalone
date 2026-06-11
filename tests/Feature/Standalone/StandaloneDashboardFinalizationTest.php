@@ -78,7 +78,9 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertSee('Offline attendance capture')
             ->assertSee('LMS and learning content')
             ->assertSee('Live classes')
-            ->assertSee('Full fees and accounting')
+            ->assertSee('Fees/accounting foundation')
+            ->assertSee('Finance reports and audit pack')
+            ->assertSee('Advanced reports, exports, debt analytics, and full accounting views remain planned for Stage 11')
             ->assertSee('Full browser offline/PWA')
             ->assertSee('Planned')
             ->assertSee('attendance-only browser offline capture pilot is disabled by default')
@@ -94,7 +96,7 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertDontSee('Sales Tasks');
     }
 
-    public function test_school_admin_dashboard_shows_readiness_and_existing_operations_without_saas_finance(): void
+    public function test_school_admin_dashboard_shows_readiness_and_school_finance_foundation_without_saas_billing(): void
     {
         $school = $this->school();
         $admin = $this->schoolUser($school, 'school_admin');
@@ -112,11 +114,13 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertSee('CBT setup')
             ->assertSee('Admissions')
             ->assertSee('Attendance')
+            ->assertSee('Finance')
             ->assertSee('Results')
             ->assertSee('CBT')
-            ->assertSee('Full fees and accounting')
-            ->assertSee('Current payments are limited to existing admissions and scratch-card workflows.')
-            ->assertDontSee('Finance')
+            ->assertSee('Fees/accounting foundation')
+            ->assertSee('Fee items, class/student assignments, student invoices, manual payment recording, and balances are available.')
+            ->assertSee('Finance reports and audit pack')
+            ->assertSee('Fees &amp; Finance', false)
             ->assertDontSee('Subscription');
     }
 

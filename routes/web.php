@@ -71,6 +71,7 @@ use App\Http\Controllers\School\CbtQuestionBankController;
 use App\Http\Controllers\School\CbtQuestionController;
 use App\Http\Controllers\School\ClassUploadController;
 use App\Http\Controllers\School\CommunicationController as SchoolCommunicationController;
+use App\Http\Controllers\School\FinanceController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\MailSettingController as SchoolMailSettingController;
 use App\Http\Controllers\School\ManualResultController;
@@ -857,7 +858,7 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
     ->prefix('school')
     ->name('school.')
     ->group(function () {
-        Route::middleware('role:school_admin|result_officer|teacher|super_admin')
+        Route::middleware('role:school_admin|result_officer|teacher|accountant|super_admin')
             ->group(function () {
                 Route::get('/dashboard', [SchoolAdminDashboardController::class, 'index'])
                     ->name('dashboard');
@@ -949,6 +950,51 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                         Route::post('/classes/{class}', [AttendanceController::class, 'storeClass'])
                             ->middleware('feature.school:attendance.manage')
                             ->name('classes.store');
+                    });
+
+                Route::prefix('finance')
+                    ->name('finance.')
+                    ->middleware('role:school_admin|accountant|super_admin')
+                    ->group(function () {
+                        Route::get('/', [FinanceController::class, 'index'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('index');
+
+                        Route::get('/fee-items', [FinanceController::class, 'feeItems'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('fee-items.index');
+
+                        Route::post('/fee-items', [FinanceController::class, 'storeFeeItem'])
+                            ->middleware('feature.school:finance.manage')
+                            ->name('fee-items.store');
+
+                        Route::get('/assignments', [FinanceController::class, 'assignments'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('assignments.index');
+
+                        Route::post('/assignments', [FinanceController::class, 'storeAssignment'])
+                            ->middleware('feature.school:finance.manage')
+                            ->name('assignments.store');
+
+                        Route::get('/invoices', [FinanceController::class, 'invoices'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('invoices.index');
+
+                        Route::post('/invoices/generate', [FinanceController::class, 'generateInvoices'])
+                            ->middleware('feature.school:finance.manage')
+                            ->name('invoices.generate');
+
+                        Route::get('/invoices/{invoice}', [FinanceController::class, 'showInvoice'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('invoices.show');
+
+                        Route::post('/invoices/{invoice}/payments', [FinanceController::class, 'recordPayment'])
+                            ->middleware('feature.school:finance.manage')
+                            ->name('invoices.payments.store');
+
+                        Route::get('/students/{student}', [FinanceController::class, 'student'])
+                            ->middleware('feature.school:finance.view')
+                            ->name('students.show');
                     });
 
                 Route::middleware('role:school_admin')

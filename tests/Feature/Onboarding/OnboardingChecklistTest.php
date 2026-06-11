@@ -95,7 +95,9 @@ class OnboardingChecklistTest extends TestCase
             ->get(route('onboarding.index'))
             ->assertOk()
             ->assertSee('Accountant onboarding')
-            ->assertSee('Review payment settings');
+            ->assertSee('Configure fee items')
+            ->assertSee('Assign fees to classes or students')
+            ->assertSee('Review student invoices and payments');
     }
 
     public function test_demo_user_receives_demo_safe_checklist_when_linked_to_demo_session(): void

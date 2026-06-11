@@ -4,6 +4,7 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Services\CurrentSchoolService;
+use App\Services\Finance\SchoolFinanceService;
 use App\Services\OnboardingProgressService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\Standalone\StandaloneDashboardSummaryService;
@@ -20,6 +21,7 @@ class SchoolAdminDashboardController extends Controller
         SchoolAuthorizationService $authorization,
         StandaloneEditionService $standalone,
         StandaloneDashboardSummaryService $standaloneDashboard,
+        SchoolFinanceService $finance,
     ) {
         $user = auth()->user();
         $school = $currentSchool->get($user);
@@ -81,9 +83,22 @@ class SchoolAdminDashboardController extends Controller
                 'schoolOnboardingSteps' => $schoolSteps,
                 'schoolOnboardingCompleted' => $schoolCompleted,
                 'schoolOnboardingProgress' => $onboarding->progress($schoolSteps, $schoolCompleted),
+                'financeSummary' => $finance->summary($school),
                 'standaloneSummary' => $standalone->isStandaloneMode()
                     ? $standaloneDashboard->forSchool($school)
                     : null,
+            ]);
+        }
+
+        if ($roleContext === 'accountant') {
+            $data = array_merge($data, [
+                'financeSummary' => $finance->summary($school),
+                'recentInvoices' => $finance->invoicesQuery($school)->limit(5)->get(),
+                'recentPayments' => $school->studentFeePayments()
+                    ->with(['student', 'invoice'])
+                    ->latest('id')
+                    ->limit(5)
+                    ->get(),
             ]);
         }
 

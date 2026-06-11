@@ -132,6 +132,19 @@
                 $item(__('ui.support'), 'school.support.index', 'school.support.*', 'activity', 'support.manage'),
             ],
         ];
+    } elseif ($roleContext === 'accountant') {
+        $navSections = [
+            'Finance Operations' => [
+                $item(__('ui.dashboard'), 'school.dashboard', 'school.dashboard', 'home'),
+                $item('Fees & Finance', 'school.finance.index', 'school.finance.*', 'wallet', 'finance.view'),
+                $item('Fee Items', 'school.finance.fee-items.index', 'school.finance.fee-items.*', 'clipboard-list', 'finance.view'),
+                $item('Invoices', 'school.finance.invoices.index', 'school.finance.invoices.*', 'file-text', 'finance.view'),
+                $item(__('ui.students'), 'school.students.index', 'school.students.*', 'users', 'students.view'),
+            ],
+            __('ui.assigned_tools') => [
+                $item(__('ui.support'), 'school.support.index', 'school.support.*', 'activity', 'support.manage'),
+            ],
+        ];
     } else {
         $navSections = [
             __('ui.school_operations') => [
@@ -140,6 +153,7 @@
                 $item(__('ui.student_360'), 'school.students.index', 'school.students.*', 'activity', 'students.view'),
                 $item(__('ui.teachers'), 'school.teacher-assignments.index', 'school.teacher-assignments.*', 'graduation-cap', 'teacher.assignment.manage'),
                 $item('Attendance', 'school.attendance.index', 'school.attendance.*', 'clipboard-list', 'attendance.view'),
+                $item('Fees & Finance', 'school.finance.index', 'school.finance.*', 'wallet', 'finance.view'),
                 $item(__('ui.classes'), 'school.classes.index', 'school.classes.*', 'layout-grid'),
                 $item(__('ui.subjects'), 'school.subjects.index', 'school.subjects.*', 'book-open'),
                 $item(__('ui.sessions'), 'school.sessions.index', 'school.sessions.*', 'calendar'),

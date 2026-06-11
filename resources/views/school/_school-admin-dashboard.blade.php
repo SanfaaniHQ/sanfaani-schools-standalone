@@ -3,6 +3,7 @@
     $schoolStatusLabel = $standalone->hidesSaasSurfaces() ? 'Access status' : 'Subscription status';
     $attentionItems = collect([
         ['label' => 'Pending scratch card payments', 'value' => $pendingScratchCardRequests, 'tone' => 'warning', 'href' => route('school.scratch-cards.index')],
+        ['label' => 'Outstanding fee invoices', 'value' => $financeSummary['outstanding_invoices'] ?? 0, 'tone' => 'warning', 'href' => route('school.finance.invoices.index')],
         ['label' => 'Draft result records', 'value' => $draftResults, 'tone' => 'warning', 'href' => route('school.results.manual.index')],
         ['label' => 'Reviewed results waiting publish', 'value' => $reviewedResults, 'tone' => 'success', 'href' => route('school.results.publishing.index')],
         ['label' => 'Setup gaps', 'value' => ($activeSession ? 0 : 1) + ($activeTerm ? 0 : 1) + ($totalClasses > 0 ? 0 : 1) + ($totalSubjects > 0 ? 0 : 1), 'tone' => 'danger', 'href' => route('school.profile.edit')],
@@ -16,6 +17,7 @@
         ['title' => 'Terms', 'body' => 'Operational terms attached to sessions.', 'href' => route('school.terms.index'), 'feature' => null],
         ['title' => 'Admissions', 'body' => 'Applications, settings, channels, and conversion workflow.', 'href' => route('admin.admissions.index'), 'feature' => null],
         ['title' => 'Attendance', 'body' => 'Daily registers, filtered reports, status counts, and student history.', 'href' => route('school.attendance.index'), 'feature' => 'attendance.view'],
+        ['title' => 'Fees & Finance', 'body' => 'Fee setup, student invoices, manual payments, and balances.', 'href' => route('school.finance.index'), 'feature' => 'finance.view'],
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
         ['title' => 'CBT', 'body' => 'Question banks, exams, marking, and CBT result publishing.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],
@@ -102,6 +104,7 @@
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <x-ui.stat-card label="Students" :value="$totalStudents" :meta="$totalSchoolUsers . ' users in school scope'" />
         <x-ui.stat-card label="Results" :value="$totalResults" :meta="$publishedResults . ' published, ' . $draftResults . ' draft'" tone="info" />
+        <x-ui.stat-card label="Finance" :value="$financeSummary['invoices'] ?? 0" :meta="'Balance: NGN ' . number_format($financeSummary['total_balance'] ?? 0, 2)" tone="warning" />
         <x-ui.stat-card label="Scratch Cards" :value="$totalScratchCardRequests" :meta="$unusedScratchCards . ' unused / ' . $usedScratchCards . ' used'" />
         <x-ui.stat-card label="Academic Setup" :value="$totalClasses . ' / ' . $totalSubjects" :meta="$totalSessions . ' sessions, ' . $totalTerms . ' terms'" />
     </section>

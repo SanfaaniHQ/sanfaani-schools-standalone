@@ -78,6 +78,16 @@ class Student extends Model
         return $this->hasMany(PaymentTransaction::class);
     }
 
+    public function feeInvoices(): HasMany
+    {
+        return $this->hasMany(StudentFeeInvoice::class);
+    }
+
+    public function feePayments(): HasMany
+    {
+        return $this->hasMany(StudentFeePayment::class);
+    }
+
     public function usedScratchCards(): HasMany
     {
         return $this->hasMany(ScratchCard::class, 'used_by_student_id');

@@ -45,7 +45,7 @@ class CurrentSchoolService
      * 2. Regular user with active role: session('active_role_context')
      * 3. Fallback: user's first role from database
      *
-     * Valid role values: 'school_admin', 'teacher', 'result_officer', 'super_admin'
+     * Valid role values: 'school_admin', 'teacher', 'result_officer', 'accountant', 'super_admin'
      *
      * @param  User|null  $user  The user to get role context for (defaults to authenticated user)
      * @return string|null The role context name or null if user is not authenticated

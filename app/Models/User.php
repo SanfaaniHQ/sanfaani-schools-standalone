@@ -56,6 +56,26 @@ class User extends Authenticatable
         return $this->hasMany(StudentAttendanceRecord::class, 'recorded_by');
     }
 
+    public function createdFinanceFeeItems(): HasMany
+    {
+        return $this->hasMany(FinanceFeeItem::class, 'created_by');
+    }
+
+    public function createdFinanceFeeAssignments(): HasMany
+    {
+        return $this->hasMany(FinanceFeeAssignment::class, 'created_by');
+    }
+
+    public function createdFeeInvoices(): HasMany
+    {
+        return $this->hasMany(StudentFeeInvoice::class, 'created_by');
+    }
+
+    public function receivedFeePayments(): HasMany
+    {
+        return $this->hasMany(StudentFeePayment::class, 'received_by');
+    }
+
     public function cbtAttempts(): HasMany
     {
         return $this->hasMany(CbtAttempt::class);

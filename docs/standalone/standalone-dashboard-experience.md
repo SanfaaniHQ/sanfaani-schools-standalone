@@ -1,6 +1,6 @@
 # Standalone Dashboard Experience
 
-The standalone dashboard is the operating home for one private school installation. It reuses the existing Super Admin, School Admin, Teacher, and Result Officer dashboards instead of creating a parallel dashboard system.
+The standalone dashboard is the operating home for one private school installation. It reuses the existing Super Admin, School Admin, Teacher, Result Officer, and Accountant dashboards instead of creating a parallel dashboard system.
 
 ## Installation Owner
 
@@ -12,7 +12,7 @@ The Super Admin dashboard is the installation-owner view. It summarizes:
 - backup and guided-update readiness;
 - local-first sync status;
 - high-level standalone system health from `docs/standalone/system-health-and-scheduler-monitoring.md`;
-- admissions, attendance, results, and CBT activity;
+- admissions, attendance, fees/finance, results, and CBT activity;
 - a full school setup checklist.
 
 The owner opens the existing school workspace to perform school-scoped work. SaaS subscriptions, demo sessions, marketplace promotion, lead pipelines, and sales tasks are not the main standalone flow and remain hidden by deployment gates.
@@ -27,12 +27,13 @@ The School Admin dashboard keeps the existing operational modules and adds a rea
 - classes and subjects;
 - staff and student records;
 - attendance foundation;
+- fees/accounting foundation;
 - admissions cycles;
 - result and report settings;
 - CBT setup;
 - backup, license, and system-health signals owned by the installation administrator.
 
-Admissions, attendance, results, CBT, scratch cards, communication, promotions, and user management continue to use their existing controllers, routes, services, feature checks, and authorization.
+Admissions, attendance, fees/finance, results, CBT, scratch cards, communication, promotions, and user management continue to use their existing controllers, routes, services, feature checks, and authorization.
 
 ## Teacher
 
@@ -44,17 +45,18 @@ The Result Officer dashboard remains focused on result entry, upload, review, pu
 
 ## Accountant And Bursar Boundary
 
-There is no complete accountant or bursar dashboard in this release. Existing financial actions are limited to the admission-payment and scratch-card payment workflows already implemented. Full fees and accounting is planned and must not be presented as complete.
+The Accountant dashboard provides the Stage 10 school-fees foundation: fee setup, assignments, student invoices, manual payment recording, balances, and recent finance activity. It does not provide advanced reporting, exports, gateway automation, offline fee capture, parent/student finance access, or double-entry accounting.
 
 ## Planned Modules
 
 The dashboard labels these areas as available or **Planned**:
 
 - attendance foundation is available for online class attendance;
-- offline attendance capture is planned for a later stage;
+- attendance-only offline capture and its server-side sync monitor are available when enabled;
+- fees/accounting foundation is available;
+- advanced finance reports and audit views remain planned for Stage 11;
 - LMS and learning content;
 - live classes;
-- full fees and accounting;
 - full browser offline/PWA.
 
 They are status labels, not links to placeholder implementations.
@@ -63,4 +65,4 @@ They are status labels, not links to placeholder implementations.
 
 The local database is the source of truth. A school can operate from a local computer or LAN server while that server and database are available. Attendance is currently online-first against that school database.
 
-Browser offline attendance capture and full browser offline/PWA are not complete yet. The dashboard must not claim that every browser task works without a connection to the school server.
+The attendance-only browser offline capture pilot does not make finance or the full portal available offline. The dashboard must not claim that fee capture or every browser task works without a connection to the school server.
