@@ -61,6 +61,7 @@ use App\Http\Controllers\Public\SchoolPublicPageController as PublicSchoolPublic
 use App\Http\Controllers\PublicResultController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
+use App\Http\Controllers\School\AttendanceController;
 use App\Http\Controllers\School\AuditLogController as SchoolAuditLogController;
 use App\Http\Controllers\School\BrandingController as SchoolBrandingController;
 use App\Http\Controllers\School\CbtDashboardController;
@@ -916,6 +917,31 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                 Route::get('/students', [StudentController::class, 'index'])
                     ->middleware('feature.school:students.view,students.view_assigned')
                     ->name('students.index');
+
+                Route::prefix('attendance')
+                    ->name('attendance.')
+                    ->middleware('role:school_admin|teacher|super_admin')
+                    ->group(function () {
+                        Route::get('/', [AttendanceController::class, 'index'])
+                            ->middleware('feature.school:attendance.view')
+                            ->name('index');
+
+                        Route::get('/reports', [AttendanceController::class, 'reports'])
+                            ->middleware('feature.school:attendance.view')
+                            ->name('reports');
+
+                        Route::get('/students/{student}', [AttendanceController::class, 'student'])
+                            ->middleware('feature.school:attendance.view')
+                            ->name('students.show');
+
+                        Route::get('/classes/{class}', [AttendanceController::class, 'showClass'])
+                            ->middleware('feature.school:attendance.view')
+                            ->name('classes.show');
+
+                        Route::post('/classes/{class}', [AttendanceController::class, 'storeClass'])
+                            ->middleware('feature.school:attendance.manage')
+                            ->name('classes.store');
+                    });
 
                 Route::middleware('role:school_admin')
                     ->group(function () {

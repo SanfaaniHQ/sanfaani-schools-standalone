@@ -119,6 +119,8 @@ class SchoolRoleFeatureService
                 'teacher.assignments.view' => 'View Assignments',
                 'teacher.results.create' => 'Create Results',
                 'teacher.results.submit' => 'Submit Results',
+                'attendance.view' => 'View Attendance',
+                'attendance.manage' => 'Mark Class Attendance',
                 'cbt.question_bank' => 'Manage CBT Question Bank',
                 'cbt.mark_theory' => 'Mark CBT Theory Questions',
                 'students.view_assigned' => 'View Assigned Students',

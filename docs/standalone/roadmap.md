@@ -9,6 +9,7 @@ Completed in the local-first foundation:
 - Safe sync outbox schema.
 - `standalone:sync --dry-run`.
 - Refusal of real sync when disabled or missing endpoint/token.
+- Online attendance foundation for class registers and summaries.
 - Documentation that the local database is the source of truth.
 
 Next phases:
@@ -19,11 +20,13 @@ Next phases:
 - Add a cloud transport abstraction with tests and timeouts.
 - Add conflict detection before any pull/two-way sync.
 - Add backup sync rules separate from operational sync.
+- Add browser offline attendance capture and sync after the online foundation is stable.
 - Add browser offline/PWA support as a later phase.
 
 Non-goals for this foundation:
 
 - Full browser offline/PWA is not complete yet.
+- Browser offline attendance capture is not complete yet.
 - Real two-way sync is not complete yet.
 - SaaS billing/signup are not the main standalone flow.
 - Marketplace package builder is not the main standalone user flow.

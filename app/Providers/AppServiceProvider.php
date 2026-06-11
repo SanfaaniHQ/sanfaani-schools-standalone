@@ -97,6 +97,8 @@ class AppServiceProvider extends ServiceProvider
             'support.manage',
             'support.direct_escalation',
             'teacher.assignment.manage',
+            'attendance.view',
+            'attendance.manage',
             'cbt.manage',
             'cbt.question_bank',
             'cbt.mark_theory',

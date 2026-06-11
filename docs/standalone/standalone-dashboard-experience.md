@@ -12,7 +12,7 @@ The Super Admin dashboard is the installation-owner view. It summarizes:
 - backup and guided-update readiness;
 - local-first sync status;
 - high-level standalone system health from `docs/standalone/system-health-and-scheduler-monitoring.md`;
-- admissions, results, and CBT activity;
+- admissions, attendance, results, and CBT activity;
 - a full school setup checklist.
 
 The owner opens the existing school workspace to perform school-scoped work. SaaS subscriptions, demo sessions, marketplace promotion, lead pipelines, and sales tasks are not the main standalone flow and remain hidden by deployment gates.
@@ -26,16 +26,17 @@ The School Admin dashboard keeps the existing operational modules and adds a rea
 - active session and term;
 - classes and subjects;
 - staff and student records;
+- attendance foundation;
 - admissions cycles;
 - result and report settings;
 - CBT setup;
 - backup, license, and system-health signals owned by the installation administrator.
 
-Admissions, results, CBT, scratch cards, communication, promotions, and user management continue to use their existing controllers, routes, services, feature checks, and authorization.
+Admissions, attendance, results, CBT, scratch cards, communication, promotions, and user management continue to use their existing controllers, routes, services, feature checks, and authorization.
 
 ## Teacher
 
-The Teacher dashboard remains assignment-scoped. It shows assigned classes, subjects, students, result work, and the existing CBT question-bank or theory-marking links only when those role features are enabled.
+The Teacher dashboard remains assignment-scoped. It shows assigned classes, attendance, subjects, students, result work, and the existing CBT question-bank or theory-marking links only when those role features are enabled.
 
 ## Result Officer
 
@@ -47,9 +48,10 @@ There is no complete accountant or bursar dashboard in this release. Existing fi
 
 ## Planned Modules
 
-The dashboard labels these areas as **Planned**:
+The dashboard labels these areas as available or **Planned**:
 
-- attendance tracking;
+- attendance foundation is available for online class attendance;
+- offline attendance capture is planned for a later stage;
 - LMS and learning content;
 - live classes;
 - full fees and accounting;
@@ -59,6 +61,6 @@ They are status labels, not links to placeholder implementations.
 
 ## Local-First Wording
 
-The local database is the source of truth. A school can operate from a local computer or LAN server while that server and database are available. Selected school tasks can be captured offline and synced when internet returns where queued workflows support it.
+The local database is the source of truth. A school can operate from a local computer or LAN server while that server and database are available. Attendance is currently online-first against that school database.
 
-Full browser offline/PWA is not complete yet. The dashboard must not claim that every browser task works without a connection to the school server.
+Browser offline attendance capture and full browser offline/PWA are not complete yet. The dashboard must not claim that every browser task works without a connection to the school server.

@@ -44,6 +44,11 @@ class Term extends Model
         return $this->hasMany(ClassSubjectAssignment::class);
     }
 
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(StudentAttendanceRecord::class);
+    }
+
     public function teacherClassAssignments(): HasMany
     {
         return $this->hasMany(TeacherClassAssignment::class);

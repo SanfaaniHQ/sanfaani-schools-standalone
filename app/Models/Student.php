@@ -50,6 +50,11 @@ class Student extends Model
         return $this->hasMany(StudentResult::class);
     }
 
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(StudentAttendanceRecord::class);
+    }
+
     public function classEnrollments(): HasMany
     {
         return $this->hasMany(StudentClassEnrollment::class);

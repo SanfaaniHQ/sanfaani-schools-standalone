@@ -274,6 +274,18 @@ return [
             'authorization_features' => ['cbt.manage', 'cbt.question_bank', 'cbt.publish_results'],
             'description' => 'Computer-based testing modules and result integration.',
         ],
+        'attendance' => [
+            'enabled' => true,
+            'category' => 'academics',
+            'deployment_modes' => $allDeploymentModes,
+            'license_modes' => $allLicenseModes,
+            'requires_school' => true,
+            'super_admin_bypass' => true,
+            'hidden_when_disabled' => true,
+            'entitlement_keys' => ['attendance'],
+            'authorization_features' => ['attendance.view', 'attendance.manage'],
+            'description' => 'Online attendance recording, class summaries, and student attendance history.',
+        ],
         'advanced_reports' => [
             'enabled' => true,
             'category' => 'reports',

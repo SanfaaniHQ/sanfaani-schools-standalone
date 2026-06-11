@@ -176,6 +176,7 @@ class StandaloneDashboardSummaryService
             'students' => $school->students()->count(),
             'admission_cycles' => $school->admissionCycles()->count(),
             'admission_applications' => $school->admissionApplications()->count(),
+            'attendance_records' => $school->attendanceRecords()->count(),
             'results' => $school->studentResults()->count(),
             'published_results' => $school->studentResults()->where('status', 'published')->count(),
             'cbt_question_banks' => $school->cbtQuestionBanks()->count(),
@@ -200,6 +201,7 @@ class StandaloneDashboardSummaryService
             $this->checklistItem('subjects', 'Subjects configured', $counts['subjects'] > 0, $counts['subjects'].' subject(s) available.', $this->route('school.subjects.index')),
             $this->checklistItem('staff', 'Staff and role accounts', $counts['users'] > 0, $counts['users'].' user account(s) in school scope.', $this->route('school.staff.index')),
             $this->checklistItem('students', 'Student records', $counts['students'] > 0, $counts['students'].' student record(s).', $this->route('school.students.index')),
+            $this->checklistItem('attendance_foundation', 'Attendance foundation', Route::has('school.attendance.index'), 'Online class attendance is available; browser offline capture remains planned.', $this->route('school.attendance.index')),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
             $this->checklistItem('result_settings', 'Result and report settings', $resultSettingsReady, $resultSettingsReady ? 'Report or access settings are configured.' : 'Configure report cards or result access rules.', $this->route('school.report-card-settings.edit')),
             $this->checklistItem('cbt', 'CBT setup', $counts['cbt_question_banks'] > 0 || $counts['cbt_exams'] > 0, $counts['cbt_question_banks'].' bank(s), '.$counts['cbt_exams'].' exam(s).', $this->route('school.cbt.dashboard')),
@@ -255,6 +257,12 @@ class StandaloneDashboardSummaryService
                     'href' => $this->route('admin.admissions.index'),
                 ],
                 [
+                    'label' => 'Attendance',
+                    'value' => $counts['attendance_records'],
+                    'meta' => 'Online attendance record(s)',
+                    'href' => $this->route('school.attendance.index'),
+                ],
+                [
                     'label' => 'Results',
                     'value' => $counts['results'],
                     'meta' => $counts['published_results'].' published result(s)',
@@ -279,6 +287,7 @@ class StandaloneDashboardSummaryService
             'checklist' => [],
             'operations' => [
                 ['label' => 'Admissions', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
+                ['label' => 'Attendance', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Results', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'CBT', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
             ],
@@ -290,7 +299,7 @@ class StandaloneDashboardSummaryService
         $workspaceHref = $this->route('workspace.create');
 
         if (! $school) {
-            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Results', 'CBT'])
+            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Results', 'CBT'])
                 ->map(fn (string $label): array => [
                     'label' => $label,
                     'value' => 0,
@@ -386,7 +395,7 @@ class StandaloneDashboardSummaryService
     private function plannedModules(): array
     {
         return [
-            ['label' => 'Attendance tracking', 'status' => 'Planned', 'detail' => 'Not included in the current standalone operations release.'],
+            ['label' => 'Offline attendance capture', 'status' => 'Planned', 'detail' => 'Browser offline attendance capture and sync remain future Stage 8 work.'],
             ['label' => 'LMS and learning content', 'status' => 'Planned', 'detail' => 'Course delivery and content workflows remain future work.'],
             ['label' => 'Live classes', 'status' => 'Planned', 'detail' => 'No live-class provider is presented as available.'],
             ['label' => 'Full fees and accounting', 'status' => 'Planned', 'detail' => 'Current payments are limited to existing admissions and scratch-card workflows.'],
@@ -396,7 +405,7 @@ class StandaloneDashboardSummaryService
 
     private function offlineStatement(): string
     {
-        return 'Local-first means the school server and local database remain the source of truth. Selected school tasks can be captured offline and synced when internet returns where queued workflows support it. Full browser offline/PWA behavior is not complete.';
+        return 'Local-first means the school server and local database remain the source of truth. Browser offline attendance capture is not complete; full browser offline/PWA behavior remains planned.';
     }
 
     private function route(string $name): ?string

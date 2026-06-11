@@ -22,6 +22,8 @@ class SchoolAuthorizationService
         'report_cards.comments' => 'report_card_auto_comments',
         'student.bulk_upload' => 'student_bulk_upload',
         'support.manage' => 'support.access',
+        'attendance.view' => 'attendance',
+        'attendance.manage' => 'attendance',
         'cbt.manage' => 'cbt_exams',
         'cbt.question_bank' => 'cbt_question_bank',
         'cbt.mark_theory' => 'cbt_theory_marking',

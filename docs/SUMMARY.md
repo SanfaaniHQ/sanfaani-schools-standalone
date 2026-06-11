@@ -16,6 +16,8 @@
   - [Demo Automation](demo/demo-automation.md)
   - [Guided Onboarding](onboarding/guided-onboarding.md)
   - [Marketing Automation](marketing/marketing-automation.md)
+- Standalone Operations
+  - [Attendance Foundation](standalone/attendance-foundation.md)
 - Roadmap and Acceptance
   - [Final Commercialization Roadmap](roadmap/final-commercialization-roadmap.md)
   - [Commercialization Acceptance Checklist](roadmap/commercialization-acceptance-checklist.md)

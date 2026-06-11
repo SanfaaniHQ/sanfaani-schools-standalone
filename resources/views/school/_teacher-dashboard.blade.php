@@ -70,6 +70,12 @@
                         <span class="mt-1 block text-sm text-text-secondary">Open Student 360 for visible classes.</span>
                     </a>
                 @endif
+                @if(($features['attendance.view']['enabled'] ?? true))
+                    <a href="{{ route('school.attendance.index') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">Attendance</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Mark or review attendance for assigned classes.</span>
+                    </a>
+                @endif
                 @if(($features['cbt.question_bank']['enabled'] ?? false))
                     <a href="{{ route('school.cbt.question-banks.index') }}" class="ui-card ui-card-hover block p-4">
                         <span class="font-semibold text-text-primary">CBT Question Bank</span>

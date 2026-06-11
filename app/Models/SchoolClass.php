@@ -33,6 +33,11 @@ class SchoolClass extends Model
         return $this->hasMany(Student::class);
     }
 
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(StudentAttendanceRecord::class);
+    }
+
     public function admissionApplications(): HasMany
     {
         return $this->hasMany(AdmissionApplication::class, 'requested_class_id');
