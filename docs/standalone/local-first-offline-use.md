@@ -11,12 +11,13 @@ What is supported in this stage:
 - License activation foundation.
 - Optional sync configuration that is disabled by default.
 - A sync outbox foundation for future selected-data push.
+- An optional attendance-only browser offline capture pilot using IndexedDB and authenticated Laravel validation.
 
 What is not complete yet:
 
-- Full browser offline/PWA support is not complete yet.
+- Full browser offline/PWA is not complete yet; only selected class attendance capture is supported when enabled.
 - Real two-way sync is not complete yet.
 - Automatic capture of every model change is not enabled yet.
 - Conflict resolution between local and cloud records is not implemented yet.
 
-When internet returns, selected data can later be pushed to Sanfaani cloud through the sync foundation. Until that stage is explicitly implemented and tested, the local database remains authoritative.
+When internet returns, browser attendance records can be posted to the local or hosted Laravel server. Browser storage is temporary, can be lost if cleared, and is not visible to the server before sync. The Laravel database remains authoritative.

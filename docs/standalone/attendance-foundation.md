@@ -2,7 +2,7 @@
 
 The attendance module is the online-first attendance foundation for standalone school operations. It uses the existing schools, classes, students, academic sessions, terms, users, roles, role feature settings, dashboards, reports, and audit logs.
 
-This is not the browser offline attendance capture stage. Attendance is recorded through authenticated web requests against the school database. Offline browser capture and sync remain planned for a later stage.
+The online workflow remains the default. Stage 8 adds an optional, disabled-by-default browser offline capture pilot for the existing class attendance form. The pilot reuses this service, authorization, duplicate handling, reports, and audit trail.
 
 ## Purpose
 
@@ -121,13 +121,17 @@ Implemented in this stage:
 - online attendance dashboard;
 - online class attendance marking;
 - online reports and student history;
-- audit logging and authorization.
+- audit logging and authorization;
+- optional attendance-only IndexedDB capture;
+- authenticated offline attendance sync;
+- per-record server validation and idempotency receipts;
+- pending, synced, and failed browser states.
 
-Not implemented in this stage:
+Not implemented:
 
-- browser offline attendance capture;
-- offline queueing or sync for attendance;
+- full portal offline mode;
+- offline results, admissions, LMS, fees, CBT, or live classes;
 - biometric/device attendance imports;
 - parent or student attendance portals.
 
-Offline attendance capture remains planned for future Stage 8 after this online foundation is stable.
+Browser storage is temporary and can be lost if cleared. The Laravel database remains authoritative, and the server cannot see browser-local pending records before sync. See `docs/standalone/offline-attendance-capture.md`.

@@ -2,6 +2,7 @@
 
 namespace App\Services\Attendance;
 
+use App\Models\AttendanceOfflineSyncReceipt;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -14,9 +15,13 @@ use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AttendanceService
 {
@@ -88,17 +93,19 @@ class AttendanceService
         ?int $academicSessionId = null,
         ?int $termId = null,
         string $source = 'web',
+        array $metadata = [],
     ): array {
         $date = $this->attendanceDate($date);
         [$academicSession, $term] = $this->resolveAcademicContext($school, $academicSessionId, $termId);
         $this->assertCanManageClass($recordedBy, $school, $class, $academicSession?->id, $term?->id);
 
         $rows = $this->validatedRows($school, $class, $records);
+        $baseMetadata = $this->attendanceMetadata($source, $metadata);
         $created = 0;
         $updated = 0;
         $saved = collect();
 
-        DB::transaction(function () use ($rows, $school, $class, $recordedBy, $date, $academicSession, $term, $source, &$created, &$updated, $saved): void {
+        DB::transaction(function () use ($rows, $school, $class, $recordedBy, $date, $academicSession, $term, $source, $baseMetadata, $metadata, &$created, &$updated, $saved): void {
             foreach ($rows as $row) {
                 $record = StudentAttendanceRecord::query()
                     ->where('school_id', $school->id)
@@ -107,6 +114,7 @@ class AttendanceService
                     ->whereDate('attendance_date', $date->toDateString())
                     ->first();
 
+                $oldStatus = $record?->status;
                 $attributes = [
                     'academic_session_id' => $academicSession?->id,
                     'term_id' => $term?->id,
@@ -114,9 +122,7 @@ class AttendanceService
                     'status' => $row['status'],
                     'note' => $row['note'],
                     'source' => $source,
-                    'metadata' => [
-                        'submitted_via' => 'online_attendance_foundation',
-                    ],
+                    'metadata' => $this->mergedAttendanceMetadata($record, $baseMetadata),
                 ];
 
                 if ($record) {
@@ -142,7 +148,7 @@ class AttendanceService
                                 'recorded_by' => $recordedBy->id,
                                 'changed_fields' => $changedFields,
                                 'source' => $source,
-                            ],
+                            ] + $this->attendanceAuditMetadata($metadata, $oldStatus, $row['status']),
                         );
                     }
 
@@ -171,7 +177,7 @@ class AttendanceService
                         'attendance_date' => $date->toDateString(),
                         'recorded_by' => $recordedBy->id,
                         'source' => $source,
-                    ],
+                    ] + $this->attendanceAuditMetadata($metadata, null, $row['status']),
                 );
             }
 
@@ -187,7 +193,7 @@ class AttendanceService
                     'school_class_id' => $class->id,
                     'submitted_by' => $recordedBy->id,
                     'source' => $source,
-                ],
+                ] + $this->attendanceAuditMetadata($metadata, null, null),
             );
         });
 
@@ -196,6 +202,216 @@ class AttendanceService
             'updated' => $updated,
             'records' => $saved,
         ];
+    }
+
+    public function syncBrowserOfflineRecords(School $school, User $recordedBy, array $records): array
+    {
+        $results = [];
+        $summary = [
+            'synced' => 0,
+            'skipped_duplicate' => 0,
+            'failed_validation' => 0,
+            'failed_permission' => 0,
+            'conflict' => 0,
+        ];
+
+        foreach (array_values($records) as $index => $record) {
+            $result = ['index' => $index] + $this->syncBrowserOfflineRecord($school, $recordedBy, (array) $record);
+            $summary[$result['status']] = ($summary[$result['status']] ?? 0) + 1;
+            $results[] = $result;
+        }
+
+        return [
+            'results' => $results,
+            'summary' => ['total' => count($results)] + $summary,
+        ];
+    }
+
+    private function syncBrowserOfflineRecord(School $school, User $recordedBy, array $record): array
+    {
+        $validator = Validator::make($record, [
+            'client_uuid' => ['required', 'string', 'uuid', 'max:100'],
+            'school_class_id' => ['required', 'integer'],
+            'student_id' => ['required', 'integer'],
+            'attendance_date' => ['required', 'date_format:Y-m-d'],
+            'status' => ['required', Rule::in(StudentAttendanceRecord::STATUSES)],
+            'note' => ['nullable', 'string', 'max:500'],
+            'captured_at' => ['nullable', 'date'],
+            'academic_session_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('academic_sessions', 'id')->where('school_id', $school->id),
+            ],
+            'term_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('terms', 'id')->where('school_id', $school->id),
+            ],
+            'source' => ['required', 'in:browser_offline'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->offlineSyncResult(
+                (string) ($record['client_uuid'] ?? ''),
+                'failed_validation',
+                $validator->errors()->first() ?: 'The offline attendance record is invalid.'
+            );
+        }
+
+        $data = $validator->validated();
+        $clientUuid = (string) $data['client_uuid'];
+        $class = $school->schoolClasses()
+            ->whereKey((int) $data['school_class_id'])
+            ->first();
+
+        if (! $class) {
+            return $this->offlineSyncResult(
+                $clientUuid,
+                'failed_permission',
+                'You cannot sync attendance for this class.'
+            );
+        }
+
+        $payloadHash = null;
+
+        try {
+            [$academicSession, $term] = $this->resolveAcademicContext(
+                $school,
+                isset($data['academic_session_id']) ? (int) $data['academic_session_id'] : null,
+                isset($data['term_id']) ? (int) $data['term_id'] : null,
+            );
+            $this->assertCanManageClass(
+                $recordedBy,
+                $school,
+                $class,
+                $academicSession?->id,
+                $term?->id
+            );
+
+            $row = $this->validatedRows($school, $class, [[
+                'student_id' => (int) $data['student_id'],
+                'status' => (string) $data['status'],
+                'note' => $data['note'] ?? null,
+            ]])->firstOrFail();
+            $date = $this->attendanceDate($data['attendance_date']);
+            $payloadHash = $this->offlinePayloadHash([
+                'school_class_id' => $class->id,
+                'student_id' => $row['student_id'],
+                'attendance_date' => $date->toDateString(),
+                'status' => $row['status'],
+                'note' => $row['note'],
+                'captured_at' => $data['captured_at'] ?? null,
+                'academic_session_id' => $academicSession?->id,
+                'term_id' => $term?->id,
+                'source' => 'browser_offline',
+            ]);
+
+            $processed = AttendanceOfflineSyncReceipt::query()
+                ->where('school_id', $school->id)
+                ->where('client_uuid', $clientUuid)
+                ->first();
+
+            if ($processed) {
+                return $this->offlineReceiptResult($processed, $payloadHash);
+            }
+
+            return DB::transaction(function () use (
+                $school,
+                $recordedBy,
+                $class,
+                $date,
+                $row,
+                $academicSession,
+                $term,
+                $clientUuid,
+                $payloadHash,
+                $data
+            ): array {
+                $receipt = AttendanceOfflineSyncReceipt::create([
+                    'school_id' => $school->id,
+                    'client_uuid' => $clientUuid,
+                    'processed_by' => $recordedBy->id,
+                    'payload_hash' => $payloadHash,
+                    'result_status' => 'processing',
+                ]);
+
+                $existing = StudentAttendanceRecord::query()
+                    ->where('school_id', $school->id)
+                    ->where('school_class_id', $class->id)
+                    ->where('student_id', $row['student_id'])
+                    ->whereDate('attendance_date', $date->toDateString())
+                    ->lockForUpdate()
+                    ->first();
+
+                $result = $this->recordClassAttendance(
+                    $school,
+                    $recordedBy,
+                    $class,
+                    $date,
+                    [$row],
+                    $academicSession?->id,
+                    $term?->id,
+                    'browser_offline',
+                    [
+                        'client_uuid' => $clientUuid,
+                        'captured_at' => $data['captured_at'] ?? null,
+                    ],
+                );
+
+                /** @var StudentAttendanceRecord|null $saved */
+                $saved = $result['records']->first();
+                $status = $existing ? 'conflict' : 'synced';
+
+                $receipt->forceFill([
+                    'attendance_record_id' => $saved?->id,
+                    'result_status' => $status,
+                    'processed_at' => now(),
+                ])->save();
+
+                return $this->offlineSyncResult(
+                    $clientUuid,
+                    $status,
+                    $existing
+                        ? 'Existing attendance row updated through attendance duplicate rules.'
+                        : 'Attendance record synced.',
+                    $saved,
+                    true
+                );
+            });
+        } catch (AuthorizationException) {
+            return $this->offlineSyncResult(
+                $clientUuid,
+                'failed_permission',
+                'You cannot sync attendance for this class.'
+            );
+        } catch (ValidationException $exception) {
+            return $this->offlineSyncResult(
+                $clientUuid,
+                'failed_validation',
+                collect($exception->errors())->flatten()->first() ?: 'The offline attendance record is invalid.'
+            );
+        } catch (QueryException) {
+            $processed = AttendanceOfflineSyncReceipt::query()
+                ->where('school_id', $school->id)
+                ->where('client_uuid', $clientUuid)
+                ->first();
+
+            if ($processed && $payloadHash) {
+                return $this->offlineReceiptResult($processed, $payloadHash);
+            }
+
+            return $this->offlineSyncResult(
+                $clientUuid,
+                'conflict',
+                'The attendance record changed while this offline item was syncing. Refresh the register before retrying.'
+            );
+        } catch (Throwable) {
+            return $this->offlineSyncResult(
+                $clientUuid,
+                'failed_validation',
+                'The offline attendance record could not be synced.'
+            );
+        }
     }
 
     public function classDailySummaries(School $school, Collection $classes, Carbon|string|null $date = null): Collection
@@ -544,6 +760,86 @@ class AttendanceService
             ->map(fn ($id): int => (int) $id)
             ->unique()
             ->values();
+    }
+
+    private function attendanceMetadata(string $source, array $metadata): array
+    {
+        $result = [
+            'submitted_via' => $source === 'browser_offline'
+                ? 'browser_offline_attendance_capture'
+                : 'online_attendance_foundation',
+        ];
+
+        if ($source === 'browser_offline') {
+            $result['offline_capture'] = [
+                'client_uuid' => (string) ($metadata['client_uuid'] ?? ''),
+                'captured_at' => $metadata['captured_at'] ?? null,
+            ];
+        }
+
+        return $result;
+    }
+
+    private function mergedAttendanceMetadata(?StudentAttendanceRecord $record, array $metadata): array
+    {
+        return array_replace_recursive((array) ($record?->metadata ?? []), $metadata);
+    }
+
+    private function attendanceAuditMetadata(array $metadata, ?string $previousStatus, ?string $submittedStatus): array
+    {
+        return collect([
+            'client_uuid' => $metadata['client_uuid'] ?? null,
+            'captured_at' => $metadata['captured_at'] ?? null,
+            'previous_status' => $previousStatus,
+            'submitted_status' => $submittedStatus,
+        ])->filter(fn (mixed $value): bool => filled($value))->all();
+    }
+
+    private function offlinePayloadHash(array $payload): string
+    {
+        $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
+
+        return hash('sha256', $json === false ? '' : $json);
+    }
+
+    private function offlineReceiptResult(AttendanceOfflineSyncReceipt $receipt, string $payloadHash): array
+    {
+        if (! hash_equals($receipt->payload_hash, $payloadHash)) {
+            return $this->offlineSyncResult(
+                $receipt->client_uuid,
+                'conflict',
+                'This client UUID was already used for a different attendance payload.',
+                $receipt
+            );
+        }
+
+        return $this->offlineSyncResult(
+            $receipt->client_uuid,
+            'skipped_duplicate',
+            'This offline attendance record was already processed.',
+            $receipt,
+            true
+        );
+    }
+
+    private function offlineSyncResult(
+        string $clientUuid,
+        string $status,
+        string $message,
+        StudentAttendanceRecord|AttendanceOfflineSyncReceipt|null $record = null,
+        bool $accepted = false
+    ): array {
+        $attendanceRecordId = $record instanceof AttendanceOfflineSyncReceipt
+            ? $record->attendance_record_id
+            : $record?->id;
+
+        return [
+            'client_uuid' => $clientUuid,
+            'status' => $status,
+            'message' => $message,
+            'attendance_record_id' => $attendanceRecordId,
+            'accepted' => $accepted,
+        ];
     }
 
     private function attendanceDate(Carbon|string|null $date): Carbon

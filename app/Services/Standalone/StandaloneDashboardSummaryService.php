@@ -201,7 +201,15 @@ class StandaloneDashboardSummaryService
             $this->checklistItem('subjects', 'Subjects configured', $counts['subjects'] > 0, $counts['subjects'].' subject(s) available.', $this->route('school.subjects.index')),
             $this->checklistItem('staff', 'Staff and role accounts', $counts['users'] > 0, $counts['users'].' user account(s) in school scope.', $this->route('school.staff.index')),
             $this->checklistItem('students', 'Student records', $counts['students'] > 0, $counts['students'].' student record(s).', $this->route('school.students.index')),
-            $this->checklistItem('attendance_foundation', 'Attendance foundation', Route::has('school.attendance.index'), 'Online class attendance is available; browser offline capture remains planned.', $this->route('school.attendance.index')),
+            $this->checklistItem(
+                'attendance_foundation',
+                'Attendance foundation',
+                Route::has('school.attendance.index'),
+                $this->edition->offlineAttendanceSyncEnabled()
+                    ? 'Online attendance and the attendance-only browser offline capture pilot are available.'
+                    : 'Online attendance is available; the attendance-only offline pilot is disabled by default.',
+                $this->route('school.attendance.index')
+            ),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
             $this->checklistItem('result_settings', 'Result and report settings', $resultSettingsReady, $resultSettingsReady ? 'Report or access settings are configured.' : 'Configure report cards or result access rules.', $this->route('school.report-card-settings.edit')),
             $this->checklistItem('cbt', 'CBT setup', $counts['cbt_question_banks'] > 0 || $counts['cbt_exams'] > 0, $counts['cbt_question_banks'].' bank(s), '.$counts['cbt_exams'].' exam(s).', $this->route('school.cbt.dashboard')),
@@ -394,18 +402,32 @@ class StandaloneDashboardSummaryService
 
     private function plannedModules(): array
     {
+        $offlineAttendanceEnabled = $this->edition->offlineAttendanceSyncEnabled();
+
         return [
-            ['label' => 'Offline attendance capture', 'status' => 'Planned', 'detail' => 'Browser offline attendance capture and sync remain future Stage 8 work.'],
+            [
+                'label' => 'Offline attendance capture',
+                'status' => $offlineAttendanceEnabled ? 'Available' : 'Disabled',
+                'detail' => $offlineAttendanceEnabled
+                    ? 'Attendance-only browser capture and validated sync are enabled.'
+                    : 'The attendance-only browser pilot is available only when capture and sync are enabled.',
+            ],
             ['label' => 'LMS and learning content', 'status' => 'Planned', 'detail' => 'Course delivery and content workflows remain future work.'],
             ['label' => 'Live classes', 'status' => 'Planned', 'detail' => 'No live-class provider is presented as available.'],
             ['label' => 'Full fees and accounting', 'status' => 'Planned', 'detail' => 'Current payments are limited to existing admissions and scratch-card workflows.'],
-            ['label' => 'Full browser offline/PWA', 'status' => 'Planned', 'detail' => 'Local-first server operation is available; full browser offline behavior is not complete.'],
+            ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];
     }
 
     private function offlineStatement(): string
     {
-        return 'Local-first means the school server and local database remain the source of truth. Browser offline attendance capture is not complete; full browser offline/PWA behavior remains planned.';
+        $attendance = $this->edition->offlineAttendanceSyncEnabled()
+            ? 'The attendance-only browser offline capture pilot is enabled.'
+            : 'The attendance-only browser offline capture pilot is disabled by default.';
+
+        return 'Local-first means the school server and hosted Laravel database remain the source of truth. '
+            .$attendance
+            .' Full portal offline mode is not implemented, and the server cannot see browser-local pending attendance until it syncs.';
     }
 
     private function route(string $name): ?string

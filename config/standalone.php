@@ -29,6 +29,15 @@ return [
         'backup_enabled' => (bool) env('SANFAANI_STANDALONE_BACKUP_SYNC_ENABLED', false),
     ],
 
+    'pwa_offline' => [
+        'capture_enabled' => (bool) env('SANFAANI_PWA_OFFLINE_CAPTURE_ENABLED', false),
+        'sync_enabled' => (bool) env('SANFAANI_PWA_OFFLINE_SYNC_ENABLED', false),
+        'allowed_modules' => array_values(array_filter(array_map(
+            fn (string $module): string => strtolower(trim($module)),
+            explode(',', (string) env('SANFAANI_PWA_OFFLINE_ALLOWED_MODULES', 'attendance'))
+        ))),
+    ],
+
     'scheduler_monitor' => [
         'enabled' => (bool) env('SANFAANI_SCHEDULER_MONITOR_ENABLED', true),
         'cache_store' => env('SANFAANI_SCHEDULER_HEARTBEAT_CACHE_STORE', 'file'),
@@ -83,6 +92,9 @@ return [
         'SANFAANI_STANDALONE_SYNC_ENDPOINT' => '',
         'SANFAANI_STANDALONE_SYNC_TOKEN' => '',
         'SANFAANI_STANDALONE_BACKUP_SYNC_ENABLED' => 'false',
+        'SANFAANI_PWA_OFFLINE_CAPTURE_ENABLED' => 'false',
+        'SANFAANI_PWA_OFFLINE_SYNC_ENABLED' => 'false',
+        'SANFAANI_PWA_OFFLINE_ALLOWED_MODULES' => 'attendance',
         'SANFAANI_STANDALONE_HIDE_SAAS_SURFACES' => 'true',
         'SANFAANI_STANDALONE_HIDE_MARKETPLACE_SURFACES' => 'true',
         'SANFAANI_STANDALONE_HIDE_DEMO_SURFACES' => 'true',

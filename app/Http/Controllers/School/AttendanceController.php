@@ -11,7 +11,10 @@ use App\Models\User;
 use App\Services\Attendance\AttendanceService;
 use App\Services\CurrentSchoolService;
 use App\Services\SchoolAuthorizationService;
+use App\Services\Standalone\StandaloneEditionService;
+use App\Services\Standalone\StandaloneSyncService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
@@ -42,7 +45,12 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function showClass(Request $request, SchoolClass $class, AttendanceService $attendance)
+    public function showClass(
+        Request $request,
+        SchoolClass $class,
+        AttendanceService $attendance,
+        StandaloneEditionService $edition
+    )
     {
         $school = $this->currentSchoolOrFail();
         $user = $request->user();
@@ -75,6 +83,8 @@ class AttendanceController extends Controller
             'academicSessions' => $school->academicSessions()->where('status', 'active')->latest()->get(),
             'terms' => $school->terms()->where('status', 'active')->with('academicSession')->latest()->get(),
             'canManage' => $canManage,
+            'offlineAttendanceCaptureEnabled' => $canManage && $edition->offlineAttendanceCaptureEnabled(),
+            'offlineAttendanceSyncEnabled' => $canManage && $edition->offlineAttendanceSyncEnabled(),
         ]);
     }
 
@@ -109,6 +119,38 @@ class AttendanceController extends Controller
                 'date' => $data['attendance_date'],
             ])
             ->with('success', "Attendance saved: {$result['created']} created, {$result['updated']} updated.");
+    }
+
+    public function offlineSync(
+        Request $request,
+        AttendanceService $attendance,
+        StandaloneEditionService $edition,
+        StandaloneSyncService $sync
+    ): JsonResponse {
+        $school = $this->currentSchoolOrFail();
+        $user = $request->user();
+        $this->authorizeAttendance($user, $school, 'attendance.manage');
+
+        if (! $edition->offlineAttendanceSyncEnabled()) {
+            return response()->json([
+                'success' => false,
+                'code' => 'offline_attendance_disabled',
+                'message' => 'Offline attendance capture and sync are disabled.',
+            ], 403);
+        }
+
+        $data = $request->validate([
+            'records' => ['required', 'array', 'min:1', 'max:200'],
+            'records.*' => ['required', 'array'],
+        ]);
+
+        $result = $attendance->syncBrowserOfflineRecords($school, $user, $data['records']);
+        $sync->logBrowserOfflineAttendanceSync($school->id, $user->id, $result['summary']);
+
+        return response()->json([
+            'success' => true,
+            ...$result,
+        ]);
     }
 
     public function reports(Request $request, AttendanceService $attendance)

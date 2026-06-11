@@ -55,13 +55,62 @@
                 <x-ui.stat-card label="Attendance %" :value="number_format($summary['attendance_percentage'] ?? 0, 1) . '%'" />
             </section>
 
-            <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <div class="overflow-hidden rounded-2xl bg-white shadow-sm"
+                 @if ($offlineAttendanceSyncEnabled)
+                     data-attendance-offline-root
+                     data-school-id="{{ $school->id }}"
+                     data-class-id="{{ $class->id }}"
+                     data-attendance-date="{{ $date }}"
+                     data-sync-url="{{ route('school.attendance.offline-sync') }}"
+                     data-sync-enabled="true"
+                 @endif>
                 <div class="border-b border-gray-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-gray-900">Daily Register</h3>
                     <p class="mt-1 text-sm text-gray-500">
                         {{ $canManage ? 'Mark each active student for this date.' : 'You can view this class attendance, but cannot mark it.' }}
                     </p>
                 </div>
+
+                @if ($offlineAttendanceSyncEnabled)
+                    <div class="border-b border-amber-200 bg-amber-50 px-6 py-5">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-amber-900">Attendance-only offline capture</p>
+                                <p class="mt-1 text-sm leading-6 text-amber-800">
+                                    Network: <span data-offline-network-status>Checking...</span>.
+                                    Full portal offline mode is not implemented. Only this class attendance form can be stored temporarily in this browser.
+                                </p>
+                                <p class="mt-2 text-sm font-medium text-amber-900">
+                                    Browser storage is temporary. Do not clear browser data before pending attendance has synced.
+                                </p>
+                            </div>
+                            <button type="button"
+                                    data-offline-sync-button
+                                    class="shrink-0 rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50">
+                                Sync Pending Attendance
+                            </button>
+                        </div>
+
+                        <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                            <div class="rounded-xl bg-white/80 px-4 py-3">
+                                <dt class="text-amber-800">Pending offline records</dt>
+                                <dd class="mt-1 text-xl font-semibold text-amber-950" data-offline-pending-count>0</dd>
+                            </div>
+                            <div class="rounded-xl bg-white/80 px-4 py-3">
+                                <dt class="text-amber-800">Failed records</dt>
+                                <dd class="mt-1 text-xl font-semibold text-red-700" data-offline-failed-count>0</dd>
+                            </div>
+                            <div class="rounded-xl bg-white/80 px-4 py-3">
+                                <dt class="text-amber-800">Recently synced</dt>
+                                <dd class="mt-1 text-xl font-semibold text-green-700" data-offline-synced-count>0</dd>
+                            </div>
+                        </dl>
+
+                        <p class="mt-3 text-sm text-gray-600" data-offline-feedback aria-live="polite">
+                            Pending attendance will retry when internet access returns or when you use the sync button.
+                        </p>
+                    </div>
+                @endif
 
                 @if ($rows->isEmpty())
                     <div class="p-6">
@@ -71,7 +120,13 @@
                         />
                     </div>
                 @else
-                    <form method="POST" action="{{ route('school.attendance.classes.store', $class) }}">
+                    <form method="POST"
+                          action="{{ route('school.attendance.classes.store', $class) }}"
+                          @if ($offlineAttendanceSyncEnabled)
+                              data-attendance-offline-form
+                              data-school-id="{{ $school->id }}"
+                              data-class-id="{{ $class->id }}"
+                          @endif>
                         @csrf
                         <input type="hidden" name="attendance_date" value="{{ $date }}">
                         <input type="hidden" name="academic_session_id" value="{{ $activeSession?->id }}">
@@ -87,6 +142,9 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Note</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Recorded By</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Updated</th>
+                                        @if ($offlineAttendanceSyncEnabled)
+                                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Offline State</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
@@ -118,6 +176,12 @@
                                             </td>
                                             <td class="px-6 py-4 text-sm text-gray-600">{{ $record?->recordedBy?->name ?? 'Not recorded' }}</td>
                                             <td class="px-6 py-4 text-sm text-gray-600">{{ $record?->updated_at?->format('d M Y H:i') ?? '-' }}</td>
+                                            @if ($offlineAttendanceSyncEnabled)
+                                                <td class="px-6 py-4">
+                                                    <span class="text-xs text-gray-500"
+                                                          data-offline-state-student-id="{{ $student->id }}">Not queued</span>
+                                                </td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>

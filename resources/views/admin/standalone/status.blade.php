@@ -31,8 +31,10 @@
     <div class="space-y-6">
         <x-ui.alert
             tone="warning"
-            title="Browser offline/PWA is not complete"
-            body="This foundation supports local-first deployment on a school computer, LAN server, VPS, or cPanel account where the database is local. Full browser offline/PWA behavior is a later phase."
+            title="Attendance-only browser offline pilot"
+            :body="$editionStatus['offline_attendance_sync_enabled']
+                ? 'Offline attendance capture and its authenticated sync endpoint are enabled. Full portal offline mode is not implemented, and browser-local pending records are invisible to the server until sync.'
+                : 'Offline attendance capture and sync are disabled by default. Full portal offline mode is not implemented, and browser-local pending records are invisible to the server until sync.'"
         />
 
         @foreach ($editionStatus['warnings'] as $warning)
@@ -210,6 +212,22 @@
                     <tr>
                         <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Backup sync status</th>
                         <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $yesNo($editionStatus['backup_sync_enabled']) }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Offline attendance capture</th>
+                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $yesNo($editionStatus['offline_attendance_capture_enabled']) }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Offline attendance sync endpoint</th>
+                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $yesNo($editionStatus['offline_attendance_sync_enabled']) }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Offline modules allowed</th>
+                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ implode(', ', $editionStatus['pwa_offline_allowed_modules']) ?: 'None' }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Full portal offline</th>
+                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">Not implemented</td>
                     </tr>
                 </tbody>
             </table>

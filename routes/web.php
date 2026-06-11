@@ -934,6 +934,10 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                             ->middleware('feature.school:attendance.view')
                             ->name('students.show');
 
+                        Route::post('/offline-sync', [AttendanceController::class, 'offlineSync'])
+                            ->middleware('feature.school:attendance.manage')
+                            ->name('offline-sync');
+
                         Route::get('/classes/{class}', [AttendanceController::class, 'showClass'])
                             ->middleware('feature.school:attendance.view')
                             ->name('classes.show');

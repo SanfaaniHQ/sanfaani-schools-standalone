@@ -61,7 +61,10 @@ class StandaloneStatusPageTest extends TestCase
             ->assertSee('Sync')
             ->assertSee('Missing')
             ->assertSee('No sync has run yet')
-            ->assertSee('Browser offline/PWA is not complete');
+            ->assertSee('Attendance-only browser offline pilot')
+            ->assertSee('Offline attendance sync endpoint')
+            ->assertSee('Full portal offline')
+            ->assertSee('Not implemented');
     }
 
     public function test_health_summary_appears_on_standalone_status_page_without_exposing_secrets(): void

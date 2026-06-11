@@ -104,7 +104,7 @@
 
             <x-ui.panel class="mt-6" tone="info">
                 <p class="text-sm text-text-secondary">
-                    Browser offline attendance capture is not implemented in this stage. This screen records online attendance directly against the school database.
+                    Attendance-only browser offline capture appears on class registers only when the pilot is enabled. Full portal offline mode is not implemented.
                 </p>
             </x-ui.panel>
         </div>

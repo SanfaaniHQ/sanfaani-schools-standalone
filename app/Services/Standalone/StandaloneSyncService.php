@@ -26,6 +26,9 @@ class StandaloneSyncService
             'token_configured' => $this->edition->syncTokenConfigured(),
             'backup_sync_enabled' => $this->edition->backupSyncEnabled(),
             'tables_ready' => $tablesReady,
+            'offline_attendance_capture_enabled' => $this->edition->offlineAttendanceCaptureEnabled(),
+            'offline_attendance_sync_enabled' => $this->edition->offlineAttendanceSyncEnabled(),
+            'offline_allowed_modules' => $this->edition->pwaOfflineAllowedModules(),
             'pending_count' => $tablesReady ? StandaloneSyncOutbox::query()->where('status', StandaloneSyncOutbox::STATUS_PENDING)->count() : null,
             'failed_count' => $tablesReady ? StandaloneSyncOutbox::query()->where('status', StandaloneSyncOutbox::STATUS_FAILED)->count() : null,
             'last_sync' => $lastLog ? [
@@ -160,6 +163,16 @@ class StandaloneSyncService
             'message' => 'Real cloud transport is not implemented in this stage; no local data was deleted or changed.',
             'pending_count' => $items->count(),
         ];
+    }
+
+    public function logBrowserOfflineAttendanceSync(?int $schoolId, ?int $userId, array $summary): ?StandaloneSyncLog
+    {
+        return $this->log('browser_push', 'processed', 'Browser offline attendance sync processed by Laravel validation.', [
+            'module' => 'attendance',
+            'school_id' => $schoolId,
+            'user_id' => $userId,
+            'summary' => $summary,
+        ]);
     }
 
     private function refuse(string $code, string $message): array

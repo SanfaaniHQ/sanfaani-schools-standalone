@@ -107,6 +107,43 @@ class StandaloneEditionService
         return (bool) config('standalone.sync.backup_enabled', false);
     }
 
+    public function pwaOfflineCaptureEnabled(): bool
+    {
+        return (bool) config('standalone.pwa_offline.capture_enabled', false);
+    }
+
+    public function pwaOfflineSyncEnabled(): bool
+    {
+        return (bool) config('standalone.pwa_offline.sync_enabled', false);
+    }
+
+    public function pwaOfflineAllowedModules(): array
+    {
+        return collect((array) config('standalone.pwa_offline.allowed_modules', []))
+            ->map(fn (mixed $module): string => $this->normalize($module))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    public function pwaOfflineModuleAllowed(string $module): bool
+    {
+        return in_array($this->normalize($module), $this->pwaOfflineAllowedModules(), true);
+    }
+
+    public function offlineAttendanceCaptureEnabled(): bool
+    {
+        return $this->pwaOfflineCaptureEnabled()
+            && $this->pwaOfflineModuleAllowed('attendance');
+    }
+
+    public function offlineAttendanceSyncEnabled(): bool
+    {
+        return $this->offlineAttendanceCaptureEnabled()
+            && $this->pwaOfflineSyncEnabled();
+    }
+
     public function recommendedEnvironment(): array
     {
         return (array) config('standalone.recommended_env', []);
@@ -211,6 +248,11 @@ class StandaloneEditionService
             'sync_endpoint_configured' => $this->syncEndpoint() !== null,
             'sync_token_configured' => $this->syncTokenConfigured(),
             'backup_sync_enabled' => $this->backupSyncEnabled(),
+            'pwa_offline_capture_enabled' => $this->pwaOfflineCaptureEnabled(),
+            'pwa_offline_sync_enabled' => $this->pwaOfflineSyncEnabled(),
+            'pwa_offline_allowed_modules' => $this->pwaOfflineAllowedModules(),
+            'offline_attendance_capture_enabled' => $this->offlineAttendanceCaptureEnabled(),
+            'offline_attendance_sync_enabled' => $this->offlineAttendanceSyncEnabled(),
             'recommended_env' => $this->recommendedEnvironment(),
             'demoted_flows' => $this->demotedFlows(),
             'surface_gates' => $this->surfaceGates(),

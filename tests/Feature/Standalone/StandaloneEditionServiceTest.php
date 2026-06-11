@@ -53,6 +53,9 @@ class StandaloneEditionServiceTest extends TestCase
         $this->assertFalse($service->cloudSyncEnabled());
         $this->assertNull($service->syncEndpoint());
         $this->assertFalse($service->backupSyncEnabled());
+        $this->assertFalse($service->offlineAttendanceCaptureEnabled());
+        $this->assertFalse($service->offlineAttendanceSyncEnabled());
+        $this->assertSame(['attendance'], $service->pwaOfflineAllowedModules());
         $this->assertSame('single_school', $service->recommendedEnvironment()['SANFAANI_DEPLOYMENT_MODE']);
         $this->assertTrue($service->standaloneNavigationEnabled());
         $this->assertTrue($service->privateHomepageEnabled());
