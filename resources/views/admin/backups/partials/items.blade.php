@@ -13,7 +13,9 @@
             <tbody class="divide-y divide-border-subtle">
                 @forelse ($items as $item)
                     @php
-                        $reference = $item->path ? str_replace([base_path(), storage_path()], ['[app]', '[storage]'], $item->path) : 'Metadata only';
+                        $reference = $item->path
+                            ? (app(\App\Services\Security\SecretRedactionService::class)->redact((string) $item->path) ?? 'Metadata only')
+                            : 'Metadata only';
                     @endphp
                     <tr>
                         <td class="px-4 py-3 font-semibold text-text-primary">{{ str($item->item_type)->title() }}</td>

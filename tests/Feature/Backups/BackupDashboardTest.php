@@ -102,9 +102,30 @@ class BackupDashboardTest extends TestCase
         $cacheControl = (string) $response->headers->get('Cache-Control');
         $this->assertStringContainsString('no-store', $cacheControl);
         $this->assertStringContainsString('private', $cacheControl);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'database_backup_download_requested']);
         $this->assertDatabaseHas('audit_logs', ['action' => 'database_backup_downloaded']);
 
         File::delete($path);
+    }
+
+    public function test_backup_download_failure_is_audited_and_sanitized(): void
+    {
+        $this->mock(DatabaseBackupService::class, function ($mock): void {
+            $mock->shouldReceive('pathFor')
+                ->once()
+                ->with('missing.sql')
+                ->andThrow(new RuntimeException(base_path('storage/app/private/backups/database/missing.sql')));
+        });
+
+        $this->actingAs($this->superAdmin())
+            ->get(route('admin.system-maintenance.backups.download', 'missing.sql'))
+            ->assertNotFound()
+            ->assertDontSee(base_path());
+
+        $this->assertDatabaseHas('audit_logs', ['action' => 'database_backup_download_requested']);
+        $log = AuditLog::where('action', 'database_backup_download_failed')->firstOrFail();
+        $this->assertStringNotContainsString(base_path(), json_encode($log->metadata, JSON_THROW_ON_ERROR));
+        $this->assertStringContainsString('[app]', json_encode($log->metadata, JSON_THROW_ON_ERROR));
     }
 
     public function test_demo_mode_cannot_access_backup_manager(): void

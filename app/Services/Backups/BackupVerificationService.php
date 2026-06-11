@@ -7,6 +7,7 @@ use App\Models\BackupVerification;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class BackupVerificationService
 {
@@ -25,11 +26,18 @@ class BackupVerificationService
         }
 
         $metadataExists = filled($backup->path) && Storage::disk($backup->disk)->exists($backup->path);
-        $checksumValid = $this->checksumValid($backup, $metadataExists);
+        $metadataSize = $this->metadataSize($backup, $metadataExists);
+        $metadataReadable = $metadataExists && $metadataSize !== null && $metadataSize > 0;
+        $checksumValid = $this->checksumValid($backup, $metadataReadable);
+        $manifest = $this->manifestConsistency($backup, $metadataReadable);
         $requiredItemsPresent = $this->requiredItemsPresent($backup);
         $hasWarnings = $backup->items->contains(fn ($item): bool => in_array($item->status, ['warning', 'disabled', 'failed'], true));
 
-        $status = $metadataExists && $requiredItemsPresent && ($checksumValid !== false) && ! $hasWarnings
+        $status = $metadataReadable
+            && $requiredItemsPresent
+            && $checksumValid === true
+            && $manifest['consistent']
+            && ! $hasWarnings
             ? BackupVerification::STATUS_VERIFIED
             : BackupVerification::STATUS_WARNING;
 
@@ -39,7 +47,12 @@ class BackupVerificationService
 
         return $this->record($backup, $status, $checksumValid, $metadataExists, $requiredItemsPresent, $message, [
             'metadata_file_present' => $metadataExists,
+            'metadata_file_readable' => $metadataReadable,
+            'metadata_file_size_bytes' => $metadataSize ?? 0,
             'required_items_present' => $requiredItemsPresent,
+            'checksum_available' => filled($backup->checksum),
+            'manifest_consistent' => $manifest['consistent'],
+            'manifest_checks' => $manifest['checks'],
             'items_with_warnings' => $backup->items->whereIn('status', ['warning', 'disabled', 'failed'])->pluck('source_label')->values()->all(),
         ], $actor);
     }
@@ -121,15 +134,70 @@ class BackupVerificationService
         return $verification;
     }
 
-    private function checksumValid(Backup $backup, bool $metadataExists): ?bool
+    private function metadataSize(Backup $backup, bool $metadataExists): ?int
     {
-        if (! $metadataExists || ! filled($backup->checksum)) {
+        if (! $metadataExists) {
             return null;
         }
 
-        $contents = Storage::disk($backup->disk)->get($backup->path);
+        try {
+            return Storage::disk($backup->disk)->size($backup->path);
+        } catch (Throwable) {
+            return null;
+        }
+    }
 
-        return hash_equals((string) $backup->checksum, hash('sha256', (string) $contents));
+    private function checksumValid(Backup $backup, bool $metadataReadable): ?bool
+    {
+        if (! $metadataReadable || ! filled($backup->checksum)) {
+            return null;
+        }
+
+        try {
+            $contents = Storage::disk($backup->disk)->get($backup->path);
+
+            return hash_equals((string) $backup->checksum, hash('sha256', (string) $contents));
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function manifestConsistency(Backup $backup, bool $metadataReadable): array
+    {
+        $checks = [
+            'json_readable' => false,
+            'backup_id_matches' => false,
+            'type_matches' => false,
+            'safe_foundation_only' => false,
+            'restore_not_performed' => false,
+            'env_not_exported' => false,
+        ];
+
+        if (! $metadataReadable) {
+            return ['consistent' => false, 'checks' => $checks];
+        }
+
+        try {
+            $manifest = json_decode((string) Storage::disk($backup->disk)->get($backup->path), true, flags: JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            return ['consistent' => false, 'checks' => $checks];
+        }
+
+        if (! is_array($manifest)) {
+            return ['consistent' => false, 'checks' => $checks];
+        }
+
+        $checks['json_readable'] = true;
+        $checks['backup_id_matches'] = (string) ($manifest['backup_id'] ?? '') === (string) $backup->id;
+        $checks['type_matches'] = (string) ($manifest['type'] ?? '') === (string) $backup->type;
+        $checks['safe_foundation_only'] = (bool) ($manifest['safe_foundation_only'] ?? false);
+        $checks['restore_not_performed'] = (bool) data_get($manifest, 'restore_performed') === false;
+        $checks['env_not_exported'] = (bool) data_get($manifest, 'env_exported') === false;
+
+        return [
+            'consistent' => collect($checks)->every(fn (bool $passed): bool => $passed),
+            'checks' => $checks,
+        ];
     }
 
     private function requiredItemsPresent(Backup $backup): bool

@@ -5,7 +5,7 @@
             description="Backup metadata, verification, retention, and pre-update readiness."
         >
             <x-slot name="actions">
-                <form method="POST" action="{{ route('admin.backups.prune') }}">
+                <form method="POST" action="{{ route('admin.backups.prune') }}" data-confirm="Prune expired backup metadata records now? Backup files are not restored or exposed by this action.">
                     @csrf
                     <x-ui.action-button type="submit" variant="secondary">Prune expired</x-ui.action-button>
                 </form>
@@ -32,6 +32,12 @@
             </p>
         </x-ui.alert>
 
+        <x-ui.alert
+            tone="info"
+            title="Retention and pruning"
+            body="Pruning marks expired backup metadata as pruned for audit clarity. It does not restore data, expose files publicly, or delete external hosting backups."
+        />
+
         <section class="grid gap-4 md:grid-cols-3">
             <x-ui.stat-card
                 label="Latest backup"
@@ -41,7 +47,7 @@
             <x-ui.stat-card
                 label="Retention policy"
                 :value="$retentionPolicy['retention_days'].' days'"
-                :meta="'Maximum archive metadata: '.$retentionPolicy['max_archive_mb'].' MB.'"
+                :meta="'Safe prune only: '.($retentionPolicy['safe_prune_only'] ? 'yes' : 'review').'. Maximum archive metadata: '.$retentionPolicy['max_archive_mb'].' MB.'"
             />
             <x-ui.stat-card
                 label="Pre-update readiness"

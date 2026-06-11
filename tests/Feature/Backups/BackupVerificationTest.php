@@ -34,6 +34,9 @@ class BackupVerificationTest extends TestCase
         $verification = app(BackupVerificationService::class)->verify($backup, $this->superAdmin());
 
         $this->assertInstanceOf(BackupVerification::class, $verification);
+        $this->assertSame(BackupVerification::STATUS_VERIFIED, $verification->status);
+        $this->assertTrue((bool) data_get($verification->context, 'manifest_consistent'));
+        $this->assertGreaterThan(0, data_get($verification->context, 'metadata_file_size_bytes'));
         $this->assertDatabaseHas('backup_verifications', ['backup_id' => $backup->id]);
     }
 
@@ -58,6 +61,46 @@ class BackupVerificationTest extends TestCase
         $this->assertSame(BackupVerification::STATUS_FAILED, $verification->status);
     }
 
+    public function test_empty_metadata_file_reports_safe_warning_status(): void
+    {
+        $backup = $this->backupWithMetadata();
+        Storage::disk('local')->put($backup->path, '');
+        $backup->forceFill([
+            'size_bytes' => 0,
+            'checksum' => hash('sha256', ''),
+        ])->save();
+
+        $verification = app(BackupVerificationService::class)->verify($backup);
+
+        $this->assertSame(BackupVerification::STATUS_WARNING, $verification->status);
+        $this->assertFalse((bool) data_get($verification->context, 'metadata_file_readable'));
+        $this->assertSame(0, data_get($verification->context, 'metadata_file_size_bytes'));
+    }
+
+    public function test_inconsistent_manifest_reports_safe_warning_status(): void
+    {
+        $backup = $this->backupWithMetadata();
+        $payload = json_encode([
+            'backup_id' => $backup->id + 1000,
+            'type' => Backup::TYPE_PRE_UPDATE,
+            'safe_foundation_only' => false,
+            'restore_performed' => true,
+            'env_exported' => true,
+        ], JSON_THROW_ON_ERROR);
+        Storage::disk('local')->put($backup->path, $payload);
+        $backup->forceFill([
+            'size_bytes' => strlen($payload),
+            'checksum' => hash('sha256', $payload),
+        ])->save();
+
+        $verification = app(BackupVerificationService::class)->verify($backup);
+
+        $this->assertSame(BackupVerification::STATUS_WARNING, $verification->status);
+        $this->assertFalse((bool) data_get($verification->context, 'manifest_consistent'));
+        $this->assertFalse((bool) data_get($verification->context, 'manifest_checks.backup_id_matches'));
+        $this->assertFalse((bool) data_get($verification->context, 'manifest_checks.restore_not_performed'));
+    }
+
     public function test_log_service_redacts_secrets(): void
     {
         $backup = $this->backupWithMetadata();
@@ -78,9 +121,7 @@ class BackupVerificationTest extends TestCase
 
     private function backupWithMetadata(string $status = Backup::STATUS_COMPLETED): Backup
     {
-        $payload = json_encode(['backup' => true], JSON_THROW_ON_ERROR);
         $path = 'backups/metadata/manual.json';
-        Storage::disk('local')->put($path, $payload);
 
         $backup = Backup::create([
             'type' => Backup::TYPE_MANUAL,
@@ -88,11 +129,25 @@ class BackupVerificationTest extends TestCase
             'disk' => 'local',
             'path' => $path,
             'filename' => basename($path),
-            'size_bytes' => strlen($payload),
-            'checksum' => hash('sha256', $payload),
+            'size_bytes' => null,
+            'checksum' => null,
             'trigger' => 'test',
             'metadata' => [],
         ]);
+
+        $payload = json_encode([
+            'backup_id' => $backup->id,
+            'type' => $backup->type,
+            'status' => 'metadata_recorded',
+            'safe_foundation_only' => true,
+            'restore_performed' => false,
+            'env_exported' => false,
+        ], JSON_THROW_ON_ERROR);
+        Storage::disk('local')->put($path, $payload);
+        $backup->forceFill([
+            'size_bytes' => strlen($payload),
+            'checksum' => hash('sha256', $payload),
+        ])->save();
 
         foreach ([BackupItem::TYPE_DATABASE, BackupItem::TYPE_FILES, BackupItem::TYPE_CONFIG] as $type) {
             BackupItem::create([

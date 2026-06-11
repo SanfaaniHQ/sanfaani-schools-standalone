@@ -63,4 +63,35 @@ class BackupRetentionTest extends TestCase
 
         $this->assertDatabaseHas('backups', ['status' => Backup::STATUS_PRUNED]);
     }
+
+    public function test_prune_route_requires_authorization_and_is_audited(): void
+    {
+        Backup::create([
+            'type' => Backup::TYPE_MANUAL,
+            'status' => Backup::STATUS_COMPLETED,
+            'disk' => 'local',
+            'filename' => 'expired.json',
+            'trigger' => 'test',
+            'expires_at' => now()->subDay(),
+            'metadata' => [],
+        ]);
+
+        $this->post(route('admin.backups.prune'))
+            ->assertRedirect('/login');
+
+        $this->actingAs($this->schoolAdmin())
+            ->post(route('admin.backups.prune'))
+            ->assertForbidden();
+
+        $this->actingAs($this->superAdmin())
+            ->post(route('admin.backups.prune'))
+            ->assertRedirect(route('admin.backups.index'));
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'backup_retention_pruned',
+        ]);
+        $this->assertDatabaseHas('backup_logs', [
+            'event' => 'backup.retention_pruned',
+        ]);
+    }
 }

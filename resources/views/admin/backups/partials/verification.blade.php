@@ -20,6 +20,34 @@
             </div>
         </dl>
         <p class="mt-4 text-sm text-text-secondary">{{ $verification->message }}</p>
+
+        @if ($verification->context)
+            <div class="mt-4 rounded-md border border-border-subtle bg-bg-primary p-4">
+                <h4 class="text-sm font-semibold text-text-primary">Safe verification details</h4>
+                <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                    <div>
+                        <dt class="text-text-secondary">Metadata file</dt>
+                        <dd class="mt-1 font-semibold text-text-primary">{{ data_get($verification->context, 'metadata_file_readable') ? 'Readable' : 'Review needed' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-text-secondary">Metadata size</dt>
+                        <dd class="mt-1 font-mono text-text-primary">{{ number_format((int) data_get($verification->context, 'metadata_file_size_bytes', 0)) }} bytes</dd>
+                    </div>
+                    <div>
+                        <dt class="text-text-secondary">Manifest consistency</dt>
+                        <dd class="mt-1 font-semibold text-text-primary">{{ data_get($verification->context, 'manifest_consistent') ? 'Passed' : 'Review needed' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-text-secondary">Checksum available</dt>
+                        <dd class="mt-1 font-semibold text-text-primary">{{ data_get($verification->context, 'checksum_available') ? 'Yes' : 'No' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-text-secondary">Warning items</dt>
+                        <dd class="mt-1 font-mono text-text-primary">{{ count((array) data_get($verification->context, 'items_with_warnings', [])) }}</dd>
+                    </div>
+                </dl>
+            </div>
+        @endif
     @else
         <p class="mt-2 text-sm text-text-secondary">No verification has been recorded yet.</p>
     @endif

@@ -8,6 +8,7 @@ Use this checklist before planning any guided update.
 - Export the database manually when shell dumps are unavailable.
 - Confirm uploaded-file backup scope excludes unsafe folders.
 - Verify the backup record.
+- Confirm verification reports non-zero metadata, checksum validity, required items, and manifest consistency.
 - Confirm backup request, verification, and restore-plan review entries are present in audit or backup logs.
 - Confirm the update preflight backup requirement passes.
 
@@ -17,6 +18,7 @@ Use this checklist before planning any guided update.
 - Read migration notes and database changes.
 - Prepare a maintenance window.
 - Confirm rollback means restoring a verified backup manually.
+- Confirm a restore drill has been tested in staging or a local copy when the update touches database or uploaded-file behavior.
 
 ## Not Allowed From The Web UI
 

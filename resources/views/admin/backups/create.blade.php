@@ -16,7 +16,11 @@
                 The request records backup metadata for database, uploaded files, and sanitized configuration. Database export remains manual when shell dump access is unavailable.
             </p>
 
-            <dl class="mt-4 grid gap-3 sm:grid-cols-3">
+            <dl class="mt-4 grid gap-3 sm:grid-cols-4">
+                <div class="rounded-md border border-border-subtle bg-bg-secondary p-3">
+                    <dt class="text-xs uppercase text-text-tertiary">Backup type</dt>
+                    <dd class="mt-1 font-semibold text-text-primary">Manual metadata</dd>
+                </div>
                 @foreach ($scopes as $scope => $enabled)
                     <div class="rounded-md border border-border-subtle bg-bg-secondary p-3">
                         <dt class="text-xs uppercase text-text-tertiary">{{ str($scope)->title() }}</dt>
@@ -45,6 +49,7 @@
                     <li>No .env values or database passwords are stored.</li>
                     <li>No vendor, node_modules, cache, logs, sessions, or public/build.zip paths are included.</li>
                     <li>No full application archive is created from the browser.</li>
+                    <li>Run verification and review the restore plan before using this record for update readiness.</li>
                 </ul>
             </x-ui.panel>
         </div>

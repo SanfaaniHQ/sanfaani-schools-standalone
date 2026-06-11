@@ -27,6 +27,8 @@ class BackupRestorePlanService
                     'manual_only' => true,
                     'destructive_operations_run' => false,
                     'shared_hosting_safe' => true,
+                    'restore_drill_recommended' => true,
+                    'production_restore_requires_support_review' => true,
                 ],
             ]
         );
@@ -51,9 +53,24 @@ class BackupRestorePlanService
                 'body' => 'Review PHP, Laravel, database, and storage settings before any manual restore.',
             ],
             [
+                'label' => 'Create a fresh pre-restore backup',
+                'status' => 'required',
+                'body' => 'Before touching production, export the current database and uploaded files so the present state can be recovered if the restore is wrong.',
+            ],
+            [
                 'label' => 'Download hosting backups manually',
                 'status' => 'planned',
                 'body' => 'Use cPanel Backup Wizard, Namecheap tools, or phpMyAdmin outside the application.',
+            ],
+            [
+                'label' => 'Test restore in staging or a local copy first',
+                'status' => 'required',
+                'body' => 'Never test a restore directly on production first. Use a staging copy, local server, or support-controlled clone.',
+            ],
+            [
+                'label' => 'Contact Sanfaani support for production restore review',
+                'status' => 'required',
+                'body' => 'Confirm the target database, uploaded-file path, app version, license state, and maintenance window with support before production restore work starts.',
             ],
             [
                 'label' => 'Restore files outside the browser',
@@ -61,9 +78,9 @@ class BackupRestorePlanService
                 'body' => 'Restore uploaded files manually and avoid overwriting vendor, cache, sessions, logs, and environment secrets.',
             ],
             [
-                'label' => 'Verify before reopening',
+                'label' => 'Verify application workflows before reopening',
                 'status' => 'planned',
-                'body' => 'Run smoke checks and review logs before taking the school out of maintenance mode.',
+                'body' => 'Check login, students, staff, classes, sessions, admissions, results, CBT, branding, report cards, scheduler, queue, mail, and logs before taking the school out of maintenance mode.',
             ],
         ];
     }
@@ -72,8 +89,11 @@ class BackupRestorePlanService
     {
         return [
             'This wizard does not execute restore operations.',
+            'No restore operation has been executed automatically.',
+            'Do not test restore directly on production first.',
             'Never paste .env secrets or database passwords into the backup UI.',
             'Run migrations manually only after reviewing release notes and database changes.',
+            'Contact Sanfaani support before production restore work when data loss is possible.',
         ];
     }
 }

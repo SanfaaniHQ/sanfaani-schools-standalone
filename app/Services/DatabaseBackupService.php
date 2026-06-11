@@ -76,12 +76,19 @@ class DatabaseBackupService
     {
         $fileName = basename($fileName);
         $path = $this->directory().DIRECTORY_SEPARATOR.$fileName;
+        $realDirectory = realpath($this->directory());
+        $realPath = realpath($path);
 
-        if (! File::exists($path) || pathinfo($path, PATHINFO_EXTENSION) !== 'sql') {
+        if (
+            ! $realDirectory
+            || ! $realPath
+            || ! str_starts_with($realPath, $realDirectory.DIRECTORY_SEPARATOR)
+            || pathinfo($realPath, PATHINFO_EXTENSION) !== 'sql'
+        ) {
             throw new RuntimeException('Backup file was not found.');
         }
 
-        return $path;
+        return $realPath;
     }
 
     private function writeHeader(SplFileObject $file, string $driver): void

@@ -40,18 +40,22 @@ Adjust retention based on storage, legal, and school contract requirements.
 ## Restore Process
 
 1. Put the app in maintenance mode if available.
-2. Restore application files.
-3. Restore the database through phpMyAdmin import.
-4. Restore `.env` securely.
-5. Restore `storage/app/public`.
-6. Run:
+2. Create a fresh pre-restore backup of the current production database and uploaded files.
+3. Confirm the target database, app version, PHP version, and storage path.
+4. Restore application files.
+5. Restore the database through phpMyAdmin import.
+6. Restore `.env` securely.
+7. Restore `storage/app/public`.
+8. Run:
 
 ```bash
 php artisan optimize:clear
 php artisan storage:link
 ```
 
-7. Test login, school dashboard, platform logo, school logo, result checker, scratch card validation, and email/log mail.
+9. Test login, owner dashboard, school dashboard, admissions, results, CBT, platform logo, school logo, report cards, result checker, scratch card validation, scheduler, queue, system health, and email/log mail.
+
+Run a restore drill in staging or a local copy before production. Never use production as the first restore test.
 
 ## Optional Safe Tooling
 

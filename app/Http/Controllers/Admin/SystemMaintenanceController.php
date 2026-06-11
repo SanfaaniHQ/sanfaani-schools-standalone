@@ -111,14 +111,28 @@ class SystemMaintenanceController extends Controller
         DatabaseBackupService $backups,
         AuditLogService $auditLog
     ): BinaryFileResponse {
+        $safeFileName = basename($fileName);
+
+        $auditLog->log('database_backup_download_requested', null, null, metadata: [
+            'file_name' => $safeFileName,
+        ], request: $request);
+
         try {
             $path = $backups->pathFor($fileName);
         } catch (RuntimeException $exception) {
-            abort(404, $exception->getMessage());
+            $auditLog->log('database_backup_download_failed', null, null, metadata: [
+                'file_name' => $safeFileName,
+                'message' => app(SecretRedactionService::class)->redact($exception),
+            ], request: $request);
+
+            abort(404, 'Backup file was not found.');
         }
 
         $auditLog->log('database_backup_downloaded', null, null, metadata: [
             'file_name' => basename($path),
+            'private_response' => true,
+            'no_store' => true,
+            'nosniff' => true,
         ], request: $request);
 
         $response = response()->download($path, basename($path), [

@@ -1,7 +1,9 @@
 <x-ui.panel>
     <h3 class="text-base font-semibold text-text-primary">Rollback and restore plan</h3>
     @if ($plan)
-        <p class="mt-1 text-sm text-text-secondary">Status: {{ str($plan->status)->replace('_', ' ')->title() }}. Restore is manual and planned only.</p>
+        <p class="mt-1 text-sm text-text-secondary">
+            Status: {{ str($plan->status)->replace('_', ' ')->title() }}. Restore is manual and planned only; no automated restore has been executed.
+        </p>
 
         @if ($plan->warnings)
             <div class="mt-4 rounded-md border border-amber-500/20 bg-amber-500/10 p-4">

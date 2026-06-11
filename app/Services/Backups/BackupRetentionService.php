@@ -36,6 +36,10 @@ class BackupRetentionService
                     'Backup metadata was marked expired by retention policy. No restore operation was run.',
                     $backup,
                     severity: 'info',
+                    context: [
+                        'retention_days' => $this->policy()['retention_days'],
+                        'safe_prune_only' => true,
+                    ],
                     actor: $actor,
                 );
             });
@@ -66,7 +70,11 @@ class BackupRetentionService
                     'Backup metadata was pruned safely. Backup contents were not restored or exposed.',
                     $backup,
                     severity: 'info',
-                    context: ['metadata_file_deleted' => false],
+                    context: [
+                        'metadata_file_deleted' => false,
+                        'backup_file_deleted' => false,
+                        'safe_prune_only' => true,
+                    ],
                     actor: $actor,
                 );
             });

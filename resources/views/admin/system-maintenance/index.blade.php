@@ -27,10 +27,15 @@
                 Backups are stored outside the public web root in storage/app/private/backups/database. Download files only to trusted devices and remove stale copies according to your data policy.
             </div>
 
+            <div class="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-900">
+                Database backup downloads are private, no-store responses and are audited. Failed download attempts are logged with sanitized details. Do not email SQL backups or place them in public folders.
+            </div>
+
             <div class="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">Manual Database Backup</h3>
                     <p class="mt-2 text-sm text-gray-600">Creates a chunked SQL dump of all application tables. The process avoids loading full tables into memory and is compatible with shared hosting PHP workers.</p>
+                    <p class="mt-2 text-sm text-gray-600">This creates a real SQL export. It does not restore data or overwrite the current database.</p>
                     <form method="POST" action="{{ route('admin.system-maintenance.backups.create') }}" class="mt-5" data-confirm="Generate a new database backup now?" data-loading-text="Creating backup...">
                         @csrf
                         <button type="submit" class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">Create Backup</button>

@@ -145,4 +145,28 @@ class BackupCreationTest extends TestCase
 
         $this->assertFalse((bool) data_get(AuditLog::where('action', 'backup_restore_plan_viewed')->firstOrFail()->metadata, 'restore_performed'));
     }
+
+    public function test_restore_plan_page_requires_authorization_and_shows_non_destructive_drill_guidance(): void
+    {
+        $user = $this->superAdmin();
+        $backup = app(BackupService::class)->createManualBackup($user);
+
+        $this->get(route('admin.backups.restore-plan', $backup))
+            ->assertRedirect('/login');
+
+        $this->actingAs($this->schoolAdmin())
+            ->get(route('admin.backups.restore-plan', $backup))
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->get(route('admin.backups.restore-plan', $backup))
+            ->assertOk()
+            ->assertSee('Restore execution is not implemented')
+            ->assertSee('No restore operation has been executed automatically')
+            ->assertSee('Pre-restore checklist')
+            ->assertSee('Restore drill guidance')
+            ->assertSee('Contact Sanfaani support')
+            ->assertSee('Never use the live school portal as the first restore test')
+            ->assertDontSee('Restore executed successfully');
+    }
 }
