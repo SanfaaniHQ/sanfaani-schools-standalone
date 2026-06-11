@@ -3,6 +3,7 @@
 namespace Tests\Feature\School;
 
 use App\Models\AcademicSession;
+use App\Models\AttendanceOfflineSyncReceipt;
 use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\SchoolClass;
@@ -12,6 +13,7 @@ use App\Models\TeacherClassAssignment;
 use App\Models\Term;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\Attendance\AttendanceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -48,6 +50,21 @@ class OfflineAttendanceSyncTest extends TestCase
         $this->postJson(route('school.attendance.offline-sync'), [
             'records' => [],
         ])->assertUnauthorized();
+    }
+
+    public function test_offline_sync_monitor_requires_authentication(): void
+    {
+        $this->get(route('school.attendance.offline-sync-monitor'))
+            ->assertRedirect(route('login'));
+    }
+
+    public function test_offline_sync_monitor_forbids_unauthorized_roles(): void
+    {
+        [$school, $officer] = $this->attendanceContext('result_officer');
+        $this->actAsSchoolRole($officer, $school, 'result_officer');
+
+        $this->get(route('school.attendance.offline-sync-monitor'))
+            ->assertForbidden();
     }
 
     public function test_offline_sync_endpoint_is_disabled_by_default(): void
@@ -235,6 +252,222 @@ class OfflineAttendanceSyncTest extends TestCase
         $this->assertDatabaseCount('student_attendance_records', 1);
         $this->assertDatabaseCount('attendance_offline_sync_receipts', 1);
         $this->assertSame('present', StudentAttendanceRecord::query()->firstOrFail()->status);
+    }
+
+    public function test_school_admin_can_view_offline_sync_monitor_receipts_with_safe_boundary_wording(): void
+    {
+        $this->enableOfflineAttendance();
+        [$school, $admin, $class, , , $student] = $this->attendanceContext('school_admin');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $uuid = (string) Str::uuid();
+
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($class, $student, $uuid, [
+                'note' => 'sync-secret RuntimeException: payload-secret-marker at C:\secret\Sync.php:42',
+            ])],
+        ])->assertJsonPath('results.0.status', 'synced');
+
+        $this->get(route('school.attendance.offline-sync-monitor'))
+            ->assertOk()
+            ->assertSee('Offline Attendance Sync Monitor')
+            ->assertSee('Server receipts')
+            ->assertSee($class->name)
+            ->assertSee(substr($uuid, 0, 15))
+            ->assertSee('Browser-local pending records are invisible to Laravel until the browser attempts sync')
+            ->assertSee('full portal offline mode is not implemented')
+            ->assertDontSee('sync-secret')
+            ->assertDontSee('RuntimeException: payload-secret-marker')
+            ->assertDontSee('C:\secret\Sync.php:42')
+            ->assertDontSee('payload-secret-marker')
+            ->assertDontSee($student->admission_number)
+            ->assertDontSee($student->fullName());
+    }
+
+    public function test_offline_sync_monitor_summary_counts_server_known_statuses(): void
+    {
+        $this->enableOfflineAttendance();
+        [$school, $admin, $class, , , $student] = $this->attendanceContext('school_admin');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $uuid = (string) Str::uuid();
+        $payload = $this->payload($class, $student, $uuid);
+
+        $this->postJson(route('school.attendance.offline-sync'), ['records' => [$payload]])
+            ->assertJsonPath('results.0.status', 'synced');
+        $this->postJson(route('school.attendance.offline-sync'), ['records' => [$payload]])
+            ->assertJsonPath('results.0.status', 'skipped_duplicate');
+        $this->postJson(route('school.attendance.offline-sync'), ['records' => [[...$payload, 'status' => 'absent']]])
+            ->assertJsonPath('results.0.status', 'conflict');
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($class, $student, null, ['status' => 'missing'])],
+        ])->assertJsonPath('results.0.status', 'failed_validation');
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payloadId(999999, $student->id)],
+        ])->assertJsonPath('results.0.status', 'failed_permission');
+
+        $summary = app(AttendanceService::class)->offlineSyncMonitor($school, $admin)['summary'];
+
+        $this->assertSame(1, $summary['receipt_total']);
+        $this->assertSame(1, $summary['synced_count']);
+        $this->assertSame(1, $summary['skipped_duplicate_count']);
+        $this->assertSame(1, $summary['conflict_count']);
+        $this->assertSame(1, $summary['failed_validation_count']);
+        $this->assertSame(1, $summary['failed_permission_count']);
+    }
+
+    public function test_offline_sync_monitor_filters_by_status_class_and_date_range(): void
+    {
+        $this->enableOfflineAttendance();
+        [$school, $admin, $class, , , $student] = $this->attendanceContext('school_admin');
+        $otherClass = $this->createClass($school, 'JSS 2');
+        $otherStudent = $this->createStudent($school, $otherClass, 'OFF-FILTER-2');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $syncedUuid = (string) Str::uuid();
+        $conflictUuid = (string) Str::uuid();
+        $otherSyncedUuid = (string) Str::uuid();
+
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($class, $student, $syncedUuid)],
+        ])->assertJsonPath('results.0.status', 'synced');
+        AttendanceOfflineSyncReceipt::query()
+            ->where('client_uuid', $syncedUuid)
+            ->update([
+                'processed_at' => '2026-06-10 08:00:00',
+                'created_at' => '2026-06-10 08:00:00',
+                'updated_at' => '2026-06-10 08:00:00',
+            ]);
+
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($otherClass, $otherStudent, $otherSyncedUuid, [
+                'attendance_date' => '2026-06-12',
+                'status' => 'late',
+            ])],
+        ])->assertJsonPath('results.0.status', 'synced');
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($otherClass, $otherStudent, $conflictUuid, [
+                'attendance_date' => '2026-06-12',
+                'status' => 'absent',
+            ])],
+        ])->assertJsonPath('results.0.status', 'conflict');
+        AttendanceOfflineSyncReceipt::query()
+            ->where('client_uuid', $conflictUuid)
+            ->update([
+                'processed_at' => '2026-06-12 08:00:00',
+                'created_at' => '2026-06-12 08:00:00',
+                'updated_at' => '2026-06-12 08:00:00',
+            ]);
+
+        $this->get(route('school.attendance.offline-sync-monitor', ['status' => 'synced']))
+            ->assertOk()
+            ->assertSee(substr($syncedUuid, 0, 15))
+            ->assertDontSee(substr($conflictUuid, 0, 15));
+
+        $this->get(route('school.attendance.offline-sync-monitor', ['school_class_id' => $otherClass->id]))
+            ->assertOk()
+            ->assertSee($otherClass->name)
+            ->assertDontSee(substr($syncedUuid, 0, 15));
+
+        $this->get(route('school.attendance.offline-sync-monitor', [
+            'date_from' => '2026-06-12',
+            'date_to' => '2026-06-12',
+        ]))
+            ->assertOk()
+            ->assertSee(substr($conflictUuid, 0, 15))
+            ->assertDontSee(substr($syncedUuid, 0, 15));
+    }
+
+    public function test_teacher_monitor_visibility_is_limited_to_own_or_assigned_class_receipts(): void
+    {
+        $this->enableOfflineAttendance();
+        [$school, $teacher, $class, $session, $term, $student] = $this->attendanceContext('teacher');
+        $otherClass = $this->createClass($school, 'JSS 3');
+        $otherStudent = $this->createStudent($school, $otherClass, 'OFF-TEACHER-HIDDEN');
+        $teacherUuid = (string) Str::uuid();
+        $adminUuid = (string) Str::uuid();
+
+        TeacherClassAssignment::create([
+            'school_id' => $school->id,
+            'teacher_user_id' => $teacher->id,
+            'school_class_id' => $class->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'role_type' => 'class_teacher',
+            'status' => 'active',
+        ]);
+
+        $this->actAsSchoolRole($teacher, $school, 'teacher');
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($class, $student, $teacherUuid, [
+                'academic_session_id' => $session->id,
+                'term_id' => $term->id,
+            ])],
+        ])->assertJsonPath('results.0.status', 'synced');
+
+        $admin = $this->createUserForSchool($school, 'school_admin');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($otherClass, $otherStudent, $adminUuid)],
+        ])->assertJsonPath('results.0.status', 'synced');
+
+        $this->actAsSchoolRole($teacher, $school, 'teacher');
+        $this->get(route('school.attendance.offline-sync-monitor'))
+            ->assertOk()
+            ->assertSee(substr($teacherUuid, 0, 15))
+            ->assertDontSee(substr($adminUuid, 0, 15))
+            ->assertDontSee($otherClass->name);
+
+        $this->get(route('school.attendance.offline-sync-monitor', ['school_class_id' => $otherClass->id]))
+            ->assertForbidden();
+    }
+
+    public function test_cross_school_offline_sync_receipts_are_not_visible_in_monitor(): void
+    {
+        $this->enableOfflineAttendance();
+        [$school, $admin, $class, , , $student] = $this->attendanceContext('school_admin');
+        [$otherSchool, $otherAdmin, $otherClass, , , $otherStudent] = $this->attendanceContext('school_admin');
+        $uuid = (string) Str::uuid();
+        $otherUuid = (string) Str::uuid();
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($class, $student, $uuid)],
+        ])->assertJsonPath('results.0.status', 'synced');
+
+        $this->actAsSchoolRole($otherAdmin, $otherSchool, 'school_admin');
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($otherClass, $otherStudent, $otherUuid)],
+        ])->assertJsonPath('results.0.status', 'synced');
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $this->get(route('school.attendance.offline-sync-monitor'))
+            ->assertOk()
+            ->assertSee(substr($uuid, 0, 15))
+            ->assertDontSee(substr($otherUuid, 0, 15))
+            ->assertDontSee($otherSchool->name);
+    }
+
+    public function test_dashboard_and_standalone_status_show_high_level_offline_sync_health(): void
+    {
+        $this->enableOfflineAttendance();
+        [$school, $admin, $class, , , $student] = $this->attendanceContext('school_admin');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $this->postJson(route('school.attendance.offline-sync'), [
+            'records' => [$this->payload($class, $student)],
+        ])->assertJsonPath('results.0.status', 'synced');
+
+        $this->get(route('school.dashboard'))
+            ->assertOk()
+            ->assertSee('Offline attendance sync')
+            ->assertSee('1 receipts');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('super_admin');
+
+        $this->actingAs($owner)
+            ->get(route('admin.standalone.status'))
+            ->assertOk()
+            ->assertSee('Offline attendance receipts')
+            ->assertSee('Offline synced');
     }
 
     public function test_new_client_uuid_updates_existing_student_class_date_without_duplicate_row(): void

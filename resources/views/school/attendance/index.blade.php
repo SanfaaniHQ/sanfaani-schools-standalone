@@ -7,10 +7,16 @@
                     Online attendance foundation for {{ $school->name }}.
                 </p>
             </div>
-            <a href="{{ route('school.attendance.reports', ['date' => $date]) }}"
-               class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Reports
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('school.attendance.offline-sync-monitor', ['date_from' => $date, 'date_to' => $date]) }}"
+                   class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Offline Sync Monitor
+                </a>
+                <a href="{{ route('school.attendance.reports', ['date' => $date]) }}"
+                   class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Reports
+                </a>
+            </div>
         </div>
     </x-slot>
 

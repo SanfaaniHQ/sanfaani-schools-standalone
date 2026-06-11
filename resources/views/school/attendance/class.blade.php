@@ -8,6 +8,10 @@
                 <p class="mt-1 text-sm text-gray-500">{{ $school->name }} - {{ \Carbon\Carbon::parse($date)->format('d M Y') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                <a href="{{ route('school.attendance.offline-sync-monitor', ['date_from' => $date, 'date_to' => $date, 'school_class_id' => $class->id]) }}"
+                   class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Offline Sync Monitor
+                </a>
                 <a href="{{ route('school.attendance.reports', ['date' => $date, 'school_class_id' => $class->id]) }}"
                    class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                     Class Report

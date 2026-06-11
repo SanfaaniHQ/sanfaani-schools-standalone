@@ -10,6 +10,7 @@
         $yesNo = fn (bool $value) => $value ? 'Enabled' : 'Disabled';
         $configured = fn (bool $value) => $value ? 'Configured' : 'Missing';
         $lastSync = $syncStatus['last_sync'];
+        $offlineSyncHealth = $syncStatus['offline_attendance_sync_health'] ?? [];
         $healthTone = $systemHealth['overall']['tone'] ?? 'info';
         $contextValue = function (mixed $value): string {
             if (is_bool($value)) {
@@ -88,6 +89,39 @@
                     :tone="$card['tone']"
                 />
             @endforeach
+        </section>
+
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <x-ui.stat-card
+                label="Offline attendance receipts"
+                :value="$offlineSyncHealth['receipt_total'] ?? 0"
+                meta="Server-known durable receipt rows"
+                tone="brand"
+            />
+            <x-ui.stat-card
+                label="Offline synced"
+                :value="$offlineSyncHealth['synced_count'] ?? 0"
+                :meta="'Latest: '.(($offlineSyncHealth['latest_successful_sync_at'] ?? null) ? \Illuminate\Support\Carbon::parse($offlineSyncHealth['latest_successful_sync_at'])->format('d M Y H:i') : 'None recorded')"
+                tone="success"
+            />
+            <x-ui.stat-card
+                label="Skipped duplicates"
+                :value="$offlineSyncHealth['skipped_duplicate_count'] ?? 0"
+                meta="From safe browser sync logs"
+                tone="success"
+            />
+            <x-ui.stat-card
+                label="Conflicts"
+                :value="$offlineSyncHealth['conflict_count'] ?? 0"
+                meta="Server-known conflict attempts"
+                :tone="($offlineSyncHealth['conflict_count'] ?? 0) > 0 ? 'warning' : 'neutral'"
+            />
+            <x-ui.stat-card
+                label="Failed attempts"
+                :value="($offlineSyncHealth['failed_validation_count'] ?? 0) + ($offlineSyncHealth['failed_permission_count'] ?? 0)"
+                meta="Validation + permission failures"
+                :tone="(($offlineSyncHealth['failed_validation_count'] ?? 0) + ($offlineSyncHealth['failed_permission_count'] ?? 0)) > 0 ? 'danger' : 'neutral'"
+            />
         </section>
 
         <x-ui.panel

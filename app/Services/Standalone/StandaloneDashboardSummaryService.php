@@ -33,6 +33,9 @@ class StandaloneDashboardSummaryService
 
         $editionStatus = $this->edition->status();
         $syncStatus = $this->sync->status();
+        $offlineAttendanceHealth = $school
+            ? $this->sync->offlineAttendanceSyncHealth($school)
+            : $this->sync->offlineAttendanceSyncHealth();
         $healthSummary = $this->health->summary($school);
         $licenseStatus = $this->licenses->status($school);
         $licenseReady = $this->licenseReady($licenseStatus);
@@ -59,6 +62,10 @@ class StandaloneDashboardSummaryService
 
         if (($syncStatus['failed_count'] ?? 0) > 0) {
             $warnings->push($syncStatus['failed_count'].' local sync item(s) need review.');
+        }
+
+        if (($offlineAttendanceHealth['conflict_count'] + $offlineAttendanceHealth['failed_validation_count'] + $offlineAttendanceHealth['failed_permission_count']) > 0) {
+            $warnings->push('Offline attendance sync has server-known conflicts or failed attempts to review.');
         }
 
         $workspaceHref = $this->route('workspace.create');
@@ -142,6 +149,13 @@ class StandaloneDashboardSummaryService
                     'href' => $this->route('admin.standalone.status'),
                 ],
                 [
+                    'label' => 'Offline attendance sync',
+                    'value' => $offlineAttendanceHealth['receipt_total'].' receipts',
+                    'meta' => $offlineAttendanceHealth['synced_count'].' synced / '.($offlineAttendanceHealth['conflict_count'] + $offlineAttendanceHealth['failed_validation_count'] + $offlineAttendanceHealth['failed_permission_count']).' needs review',
+                    'tone' => ($offlineAttendanceHealth['conflict_count'] + $offlineAttendanceHealth['failed_validation_count'] + $offlineAttendanceHealth['failed_permission_count']) > 0 ? 'warning' : 'info',
+                    'href' => $this->route('admin.standalone.status'),
+                ],
+                [
                     'label' => 'System health',
                     'value' => $healthSummary['overall']['label'],
                     'meta' => $healthSummary['overall']['message'],
@@ -165,9 +179,14 @@ class StandaloneDashboardSummaryService
         $licenseReady = $this->licenseReady($licenseStatus);
         $backupReadiness = $this->backups->preUpdateReadiness($school);
         $healthSummary = $this->health->summary($school);
+        $offlineAttendanceHealth = $this->sync->offlineAttendanceSyncHealth($school);
         $systemWarnings = $healthSummary['overall']['status'] === 'pass'
             ? []
             : ['Standalone system health: '.$healthSummary['overall']['message']];
+
+        if (($offlineAttendanceHealth['conflict_count'] + $offlineAttendanceHealth['failed_validation_count'] + $offlineAttendanceHealth['failed_permission_count']) > 0) {
+            $systemWarnings[] = 'Offline attendance sync has server-known conflicts or failed attempts to review.';
+        }
 
         $counts = [
             'users' => $school->users()->count(),
@@ -177,6 +196,7 @@ class StandaloneDashboardSummaryService
             'admission_cycles' => $school->admissionCycles()->count(),
             'admission_applications' => $school->admissionApplications()->count(),
             'attendance_records' => $school->attendanceRecords()->count(),
+            'offline_attendance_receipts' => $offlineAttendanceHealth['receipt_total'],
             'results' => $school->studentResults()->count(),
             'published_results' => $school->studentResults()->where('status', 'published')->count(),
             'cbt_question_banks' => $school->cbtQuestionBanks()->count(),
@@ -206,7 +226,7 @@ class StandaloneDashboardSummaryService
                 'Attendance foundation',
                 Route::has('school.attendance.index'),
                 $this->edition->offlineAttendanceSyncEnabled()
-                    ? 'Online attendance and the attendance-only browser offline capture pilot are available.'
+                    ? 'Online attendance, the attendance-only browser offline capture pilot, and server-side sync monitor are available.'
                     : 'Online attendance is available; the attendance-only offline pilot is disabled by default.',
                 $this->route('school.attendance.index')
             ),
@@ -250,6 +270,13 @@ class StandaloneDashboardSummaryService
                     'href' => null,
                 ],
                 [
+                    'label' => 'Offline attendance sync',
+                    'value' => $offlineAttendanceHealth['receipt_total'].' receipts',
+                    'meta' => $offlineAttendanceHealth['synced_count'].' synced / '.($offlineAttendanceHealth['conflict_count'] + $offlineAttendanceHealth['failed_validation_count'] + $offlineAttendanceHealth['failed_permission_count']).' needs review',
+                    'tone' => ($offlineAttendanceHealth['conflict_count'] + $offlineAttendanceHealth['failed_validation_count'] + $offlineAttendanceHealth['failed_permission_count']) > 0 ? 'warning' : 'info',
+                    'href' => $this->route('school.attendance.offline-sync-monitor'),
+                ],
+                [
                     'label' => 'System health',
                     'value' => $healthSummary['overall']['label'],
                     'meta' => $healthSummary['overall']['message'],
@@ -267,8 +294,8 @@ class StandaloneDashboardSummaryService
                 [
                     'label' => 'Attendance',
                     'value' => $counts['attendance_records'],
-                    'meta' => 'Online attendance record(s)',
-                    'href' => $this->route('school.attendance.index'),
+                    'meta' => $counts['offline_attendance_receipts'].' offline sync receipt(s)',
+                    'href' => $this->route('school.attendance.offline-sync-monitor') ?? $this->route('school.attendance.index'),
                 ],
                 [
                     'label' => 'Results',

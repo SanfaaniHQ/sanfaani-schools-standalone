@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceOfflineSyncReceipt;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -150,6 +151,62 @@ class AttendanceController extends Controller
         return response()->json([
             'success' => true,
             ...$result,
+        ]);
+    }
+
+    public function offlineSyncMonitor(Request $request, AttendanceService $attendance)
+    {
+        $school = $this->currentSchoolOrFail();
+        $user = $request->user();
+        $authorization = app(SchoolAuthorizationService::class);
+        $this->authorizeAttendance($user, $school, 'attendance.view');
+
+        $data = $request->validate([
+            'status' => ['nullable', Rule::in($attendance->offlineSyncStatuses())],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'school_class_id' => ['nullable', 'integer'],
+            'processed_by' => ['nullable', Rule::exists('users', 'id')],
+        ]);
+
+        $classes = $attendance->classesForUser($school, $user);
+        $visibleClassIds = $classes->pluck('id')->map(fn ($id): int => (int) $id)->values();
+
+        if (filled($data['school_class_id'] ?? null) && ! $visibleClassIds->contains((int) $data['school_class_id'])) {
+            abort(403, 'You cannot monitor offline sync receipts for this class.');
+        }
+
+        if (filled($data['processed_by'] ?? null)) {
+            $selectedUserId = (int) $data['processed_by'];
+            $allowedUserIds = $authorization->roleContext($user) === 'teacher'
+                ? collect([(int) $user->id])
+                : $this->schoolUserIds($school);
+
+            if (! $allowedUserIds->contains($selectedUserId)) {
+                abort(403, 'You cannot filter offline sync receipts by this user.');
+            }
+        }
+
+        $filters = collect($data)
+            ->filter(fn ($value): bool => filled($value))
+            ->all();
+        $recorders = $authorization->roleContext($user) === 'teacher'
+            ? collect([$user->only(['id', 'name'])])->map(fn (array $row) => (object) $row)
+            : $this->schoolUsers($school);
+        $monitor = $attendance->offlineSyncMonitor($school, $user, $filters);
+
+        return view('school.attendance.offline-sync-monitor', [
+            'school' => $school,
+            'classes' => $classes,
+            'recorders' => $recorders,
+            'statuses' => $attendance->offlineSyncStatuses(),
+            'filters' => $filters,
+            'summary' => $monitor['summary'],
+            'receipts' => $monitor['recent_receipts'],
+            'byUser' => $monitor['by_user'],
+            'byClass' => $monitor['by_class'],
+            'byDate' => $monitor['by_date'],
+            'canViewAuditLogs' => $authorization->roleContext($user) === 'school_admin',
         ]);
     }
 
@@ -349,7 +406,11 @@ class AttendanceController extends Controller
                     ->orWhereIn('id', StudentAttendanceRecord::query()
                         ->where('school_id', $school->id)
                         ->whereNotNull('recorded_by')
-                        ->select('recorded_by'));
+                        ->select('recorded_by'))
+                    ->orWhereIn('id', AttendanceOfflineSyncReceipt::query()
+                        ->where('school_id', $school->id)
+                        ->whereNotNull('processed_by')
+                        ->select('processed_by'));
             })
             ->orderBy('name')
             ->get(['id', 'name']);

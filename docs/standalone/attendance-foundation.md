@@ -126,6 +126,7 @@ Implemented in this stage:
 - authenticated offline attendance sync;
 - per-record server validation and idempotency receipts;
 - pending, synced, and failed browser states.
+- read-only server-side sync monitor for submitted receipts, safe attempt summaries, conflicts, and failures.
 
 Not implemented:
 
@@ -135,3 +136,5 @@ Not implemented:
 - parent or student attendance portals.
 
 Browser storage is temporary and can be lost if cleared. The Laravel database remains authoritative, and the server cannot see browser-local pending records before sync. See `docs/standalone/offline-attendance-capture.md`.
+
+School admins and support can review server-known offline attendance sync health at `docs/standalone/offline-sync-monitor.md`. The monitor does not make browser-local pending records visible before sync.

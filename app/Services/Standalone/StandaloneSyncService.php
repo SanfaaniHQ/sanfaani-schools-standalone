@@ -2,13 +2,25 @@
 
 namespace App\Services\Standalone;
 
+use App\Models\AttendanceOfflineSyncReceipt;
+use App\Models\School;
 use App\Models\StandaloneSyncLog;
 use App\Models\StandaloneSyncOutbox;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Schema;
 
 class StandaloneSyncService
 {
+    public const OFFLINE_ATTENDANCE_RESULT_STATUSES = [
+        'synced',
+        'skipped_duplicate',
+        'conflict',
+        'failed_validation',
+        'failed_permission',
+        'processing',
+    ];
+
     public function __construct(
         private StandaloneEditionService $edition,
     ) {}
@@ -29,6 +41,7 @@ class StandaloneSyncService
             'offline_attendance_capture_enabled' => $this->edition->offlineAttendanceCaptureEnabled(),
             'offline_attendance_sync_enabled' => $this->edition->offlineAttendanceSyncEnabled(),
             'offline_allowed_modules' => $this->edition->pwaOfflineAllowedModules(),
+            'offline_attendance_sync_health' => $this->offlineAttendanceSyncHealth(),
             'pending_count' => $tablesReady ? StandaloneSyncOutbox::query()->where('status', StandaloneSyncOutbox::STATUS_PENDING)->count() : null,
             'failed_count' => $tablesReady ? StandaloneSyncOutbox::query()->where('status', StandaloneSyncOutbox::STATUS_FAILED)->count() : null,
             'last_sync' => $lastLog ? [
@@ -175,6 +188,67 @@ class StandaloneSyncService
         ]);
     }
 
+    public function offlineAttendanceSyncHealth(School|int|null $school = null, array $filters = []): array
+    {
+        $schoolId = $school instanceof School ? $school->id : $school;
+        $defaults = $this->emptyOfflineAttendanceSyncHealth();
+
+        if (! $this->offlineAttendanceReceiptTableReady()) {
+            return $defaults;
+        }
+
+        $receiptQuery = $this->offlineAttendanceReceiptQuery($schoolId, $filters);
+        $receiptStatusCounts = $this->receiptStatusCounts($receiptQuery);
+        $attemptSummary = $this->offlineAttendanceAttemptSummary($schoolId, $filters);
+
+        $statusCounts = collect(self::OFFLINE_ATTENDANCE_RESULT_STATUSES)
+            ->mapWithKeys(fn (string $status): array => [
+                $status => max(
+                    (int) ($receiptStatusCounts[$status] ?? 0),
+                    (int) ($attemptSummary['status_counts'][$status] ?? 0)
+                ),
+            ])
+            ->all();
+
+        $latestSuccessfulReceipt = (clone $receiptQuery)
+            ->where('result_status', 'synced')
+            ->whereNotNull('processed_at')
+            ->latest('processed_at')
+            ->first();
+        $latestFailureReceipt = (clone $receiptQuery)
+            ->whereIn('result_status', ['conflict', 'failed_validation', 'failed_permission'])
+            ->whereNotNull('processed_at')
+            ->latest('processed_at')
+            ->first();
+        $latestReceipt = (clone $receiptQuery)
+            ->orderByDesc('processed_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        $latestFailureAttemptAt = $attemptSummary['latest_failure_or_conflict_at'];
+        $latestFailureReceiptAt = $latestFailureReceipt?->processed_at;
+
+        return [
+            ...$defaults,
+            'tables_ready' => true,
+            'receipt_total' => (clone $receiptQuery)->count(),
+            'attempt_total' => $attemptSummary['total'],
+            'status_counts' => $statusCounts,
+            'receipt_status_counts' => $receiptStatusCounts,
+            'attempt_status_counts' => $attemptSummary['status_counts'],
+            'synced_count' => $statusCounts['synced'],
+            'skipped_duplicate_count' => $statusCounts['skipped_duplicate'],
+            'conflict_count' => $statusCounts['conflict'],
+            'failed_validation_count' => $statusCounts['failed_validation'],
+            'failed_permission_count' => $statusCounts['failed_permission'],
+            'processing_count' => $statusCounts['processing'],
+            'latest_sync_attempt_at' => $attemptSummary['latest_attempt_at'],
+            'latest_successful_sync_at' => $latestSuccessfulReceipt?->processed_at,
+            'latest_failure_or_conflict_at' => $this->latestCarbon($latestFailureReceiptAt, $latestFailureAttemptAt),
+            'latest_receipt_at' => $latestReceipt?->processed_at ?? $latestReceipt?->created_at,
+        ];
+    }
+
     private function refuse(string $code, string $message): array
     {
         $this->log('push', 'refused', $message, ['code' => $code]);
@@ -220,6 +294,159 @@ class StandaloneSyncService
         $json = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
 
         return hash('sha256', $json === false ? '' : $json);
+    }
+
+    private function emptyOfflineAttendanceSyncHealth(): array
+    {
+        $statusCounts = collect(self::OFFLINE_ATTENDANCE_RESULT_STATUSES)
+            ->mapWithKeys(fn (string $status): array => [$status => 0])
+            ->all();
+
+        return [
+            'tables_ready' => false,
+            'receipt_total' => 0,
+            'attempt_total' => 0,
+            'status_counts' => $statusCounts,
+            'receipt_status_counts' => $statusCounts,
+            'attempt_status_counts' => $statusCounts,
+            'synced_count' => 0,
+            'skipped_duplicate_count' => 0,
+            'conflict_count' => 0,
+            'failed_validation_count' => 0,
+            'failed_permission_count' => 0,
+            'processing_count' => 0,
+            'latest_sync_attempt_at' => null,
+            'latest_successful_sync_at' => null,
+            'latest_failure_or_conflict_at' => null,
+            'latest_receipt_at' => null,
+        ];
+    }
+
+    private function offlineAttendanceReceiptQuery(?int $schoolId, array $filters)
+    {
+        return AttendanceOfflineSyncReceipt::query()
+            ->when($schoolId, fn ($query) => $query->where('school_id', $schoolId))
+            ->when(filled($filters['processed_by'] ?? null), fn ($query) => $query->where('processed_by', (int) $filters['processed_by']))
+            ->when(filled($filters['status'] ?? null), function ($query) use ($filters): void {
+                $status = (string) $filters['status'];
+
+                if ($status === 'skipped_duplicate') {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+
+                $query->where('result_status', $status);
+            })
+            ->when(filled($filters['date_from'] ?? null), fn ($query) => $this->whereReceiptDate($query, '>=', (string) $filters['date_from']))
+            ->when(filled($filters['date_to'] ?? null), fn ($query) => $this->whereReceiptDate($query, '<=', (string) $filters['date_to']));
+    }
+
+    private function receiptStatusCounts($receiptQuery): array
+    {
+        $counts = (clone $receiptQuery)
+            ->selectRaw('result_status, count(*) as aggregate')
+            ->groupBy('result_status')
+            ->pluck('aggregate', 'result_status')
+            ->map(fn ($count): int => (int) $count)
+            ->all();
+
+        return collect(self::OFFLINE_ATTENDANCE_RESULT_STATUSES)
+            ->mapWithKeys(fn (string $status): array => [$status => (int) ($counts[$status] ?? 0)])
+            ->all();
+    }
+
+    private function offlineAttendanceAttemptSummary(?int $schoolId, array $filters): array
+    {
+        $statusCounts = collect(self::OFFLINE_ATTENDANCE_RESULT_STATUSES)
+            ->mapWithKeys(fn (string $status): array => [$status => 0])
+            ->all();
+        $selectedStatus = filled($filters['status'] ?? null) ? (string) $filters['status'] : null;
+        $selectedUser = filled($filters['processed_by'] ?? null) ? (int) $filters['processed_by'] : null;
+        $latestAttemptAt = null;
+        $latestFailureOrConflictAt = null;
+
+        if (! $this->tablesReady()) {
+            return [
+                'total' => 0,
+                'status_counts' => $statusCounts,
+                'latest_attempt_at' => null,
+                'latest_failure_or_conflict_at' => null,
+            ];
+        }
+
+        $logs = StandaloneSyncLog::query()
+            ->where('direction', 'browser_push')
+            ->where('status', 'processed')
+            ->when(filled($filters['date_from'] ?? null), fn ($query) => $query->whereDate('started_at', '>=', (string) $filters['date_from']))
+            ->when(filled($filters['date_to'] ?? null), fn ($query) => $query->whereDate('started_at', '<=', (string) $filters['date_to']))
+            ->orderByDesc('started_at')
+            ->orderByDesc('id')
+            ->get(['started_at', 'created_at', 'meta']);
+
+        foreach ($logs as $log) {
+            $meta = (array) $log->meta;
+
+            if ($schoolId && (int) ($meta['school_id'] ?? 0) !== (int) $schoolId) {
+                continue;
+            }
+
+            if ($selectedUser && (int) ($meta['user_id'] ?? 0) !== $selectedUser) {
+                continue;
+            }
+
+            $attemptAt = $log->started_at ?? $log->created_at;
+            $latestAttemptAt = $this->latestCarbon($latestAttemptAt, $attemptAt);
+            $summary = (array) ($meta['summary'] ?? []);
+
+            foreach (self::OFFLINE_ATTENDANCE_RESULT_STATUSES as $status) {
+                if ($selectedStatus && $selectedStatus !== $status) {
+                    continue;
+                }
+
+                $statusCounts[$status] += (int) ($summary[$status] ?? 0);
+            }
+
+            if (((int) ($summary['conflict'] ?? 0) + (int) ($summary['failed_validation'] ?? 0) + (int) ($summary['failed_permission'] ?? 0)) > 0) {
+                $latestFailureOrConflictAt = $this->latestCarbon($latestFailureOrConflictAt, $attemptAt);
+            }
+        }
+
+        return [
+            'total' => array_sum($statusCounts),
+            'status_counts' => $statusCounts,
+            'latest_attempt_at' => $latestAttemptAt,
+            'latest_failure_or_conflict_at' => $latestFailureOrConflictAt,
+        ];
+    }
+
+    private function whereReceiptDate($query, string $operator, string $date): void
+    {
+        $query->where(function ($query) use ($operator, $date): void {
+            $query->whereDate('processed_at', $operator, $date)
+                ->orWhere(function ($query) use ($operator, $date): void {
+                    $query->whereNull('processed_at')
+                        ->whereDate('created_at', $operator, $date);
+                });
+        });
+    }
+
+    private function latestCarbon(?CarbonInterface $first, ?CarbonInterface $second): ?CarbonInterface
+    {
+        if (! $first) {
+            return $second;
+        }
+
+        if (! $second) {
+            return $first;
+        }
+
+        return $first->greaterThan($second) ? $first : $second;
+    }
+
+    private function offlineAttendanceReceiptTableReady(): bool
+    {
+        return Schema::hasTable('attendance_offline_sync_receipts');
     }
 
     private function tablesReady(): bool

@@ -57,14 +57,26 @@ Each browser record has a `client_uuid`. A durable attendance offline sync recei
 
 Per-record responses use `synced`, `skipped_duplicate`, `failed_validation`, `failed_permission`, or `conflict`, plus an `accepted` flag so the browser knows whether it can mark the item as synced.
 
-## Audit And Privacy
+## Admin Monitor
 
 Accepted offline attendance uses the existing attendance audit events. Audit metadata includes `source=browser_offline`, client UUID, capture time, class ID, student ID, date, actor, and safe status context.
 
+Stage 9 adds a read-only school monitor at:
+
+```text
+/school/attendance/offline-sync-monitor
+```
+
+The monitor shows server-known receipts, safe sync attempt counts, conflicts, validation failures, permission failures, class/date/user filters, and high-level sync health. It cannot show browser-local pending records before sync because those records still exist only in the browser.
+
+## Audit And Privacy
+
 The browser database still contains operational student IDs and optional attendance notes. Devices and browser profiles must be access-controlled. Avoid sensitive health or family details in notes.
+
+The admin monitor does not expose raw browser payloads, payload hashes, secrets, stack traces, student biodata, or browser IndexedDB contents.
 
 ## Offline Boundary
 
 This pilot does not implement full portal offline mode. Results, admissions, LMS, fees, CBT, live classes, dashboards, and other modules are not available through this browser outbox.
 
-Stage 9 may add an administrator sync monitor. This stage intentionally does not provide a server dashboard for browser-local pending items because the server cannot know they exist until the browser syncs.
+Stage 9 provides server-side monitoring for submitted sync attempts and receipts. It still does not provide a server dashboard for browser-local pending items because the server cannot know they exist until the browser syncs.

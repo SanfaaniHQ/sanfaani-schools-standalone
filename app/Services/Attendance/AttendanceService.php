@@ -10,6 +10,7 @@ use App\Models\StudentAttendanceRecord;
 use App\Models\User;
 use App\Services\AuditLogService;
 use App\Services\SchoolAuthorizationService;
+use App\Services\Standalone\StandaloneSyncService;
 use App\Services\TeacherAssignmentAccessService;
 use Carbon\Carbon;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -28,12 +29,18 @@ class AttendanceService
     public function __construct(
         private AuditLogService $auditLog,
         private SchoolAuthorizationService $authorization,
+        private StandaloneSyncService $sync,
         private TeacherAssignmentAccessService $teacherAssignments,
     ) {}
 
     public function statuses(): array
     {
         return StudentAttendanceRecord::STATUSES;
+    }
+
+    public function offlineSyncStatuses(): array
+    {
+        return StandaloneSyncService::OFFLINE_ATTENDANCE_RESULT_STATUSES;
     }
 
     public function classesForUser(School $school, User $user): Collection
@@ -454,6 +461,59 @@ class AttendanceService
         ];
     }
 
+    public function offlineSyncMonitor(School $school, User $user, array $filters = []): array
+    {
+        $classes = $this->classesForUser($school, $user);
+        $receiptQuery = $this->offlineSyncReceiptQuery($school, $user, $classes, $filters);
+        $receiptStatusCounts = $this->offlineReceiptStatusCounts($receiptQuery);
+        $health = $this->sync->offlineAttendanceSyncHealth($school->id, collect($filters)->except('school_class_id')->all());
+        $attemptStatusCounts = filled($filters['school_class_id'] ?? null)
+            ? collect($this->offlineSyncStatuses())->mapWithKeys(fn (string $status): array => [$status => 0])->all()
+            : $health['attempt_status_counts'];
+        $statusCounts = collect($this->offlineSyncStatuses())
+            ->mapWithKeys(fn (string $status): array => [
+                $status => max((int) ($receiptStatusCounts[$status] ?? 0), (int) ($attemptStatusCounts[$status] ?? 0)),
+            ])
+            ->all();
+
+        $health = [
+            ...$health,
+            'receipt_total' => (clone $receiptQuery)->count(),
+            'receipt_status_counts' => $receiptStatusCounts,
+            'attempt_status_counts' => $attemptStatusCounts,
+            'status_counts' => $statusCounts,
+            'synced_count' => $statusCounts['synced'],
+            'skipped_duplicate_count' => $statusCounts['skipped_duplicate'],
+            'conflict_count' => $statusCounts['conflict'],
+            'failed_validation_count' => $statusCounts['failed_validation'],
+            'failed_permission_count' => $statusCounts['failed_permission'],
+            'processing_count' => $statusCounts['processing'],
+            'attempt_scope_note' => filled($filters['school_class_id'] ?? null)
+                ? 'Skipped duplicate and failed attempt counts are not class-filtered unless the attempt produced a linked receipt.'
+                : null,
+        ];
+
+        $groupRows = (clone $receiptQuery)
+            ->with(['attendanceRecord.schoolClass', 'processedBy'])
+            ->get();
+
+        return [
+            'classes' => $classes,
+            'filters' => $filters,
+            'summary' => $health,
+            'recent_receipts' => (clone $receiptQuery)
+                ->with(['attendanceRecord.schoolClass', 'processedBy'])
+                ->orderByDesc('processed_at')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->paginate(25)
+                ->withQueryString(),
+            'by_user' => $this->offlineReceiptGroupsByUser($groupRows),
+            'by_class' => $this->offlineReceiptGroupsByClass($groupRows),
+            'by_date' => $this->offlineReceiptGroupsByDate($groupRows),
+        ];
+    }
+
     public function attendanceReport(School $school, Collection $classes, array $filters = []): array
     {
         [$dateFrom, $dateTo] = $this->reportDateRange($filters);
@@ -704,6 +764,121 @@ class AttendanceService
         return collect(StudentAttendanceRecord::STATUSES)
             ->mapWithKeys(fn (string $status): array => [$status => (int) $counted->get($status, 0)])
             ->all();
+    }
+
+    private function offlineSyncReceiptQuery(School $school, User $user, Collection $classes, array $filters): Builder
+    {
+        $visibleClassIds = $classes
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
+
+        return AttendanceOfflineSyncReceipt::query()
+            ->where('school_id', $school->id)
+            ->when($this->authorization->roleContext($user) === 'teacher', function (Builder $query) use ($user, $visibleClassIds): void {
+                if ($visibleClassIds->isEmpty()) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+
+                $query->where(function (Builder $query) use ($user, $visibleClassIds): void {
+                    $query->where('processed_by', $user->id)
+                        ->orWhereHas('attendanceRecord', fn (Builder $recordQuery) => $recordQuery->whereIn('school_class_id', $visibleClassIds->all()));
+                });
+            })
+            ->when(filled($filters['status'] ?? null), function (Builder $query) use ($filters): void {
+                $status = (string) $filters['status'];
+
+                if ($status === 'skipped_duplicate') {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+
+                $query->where('result_status', $status);
+            })
+            ->when(filled($filters['school_class_id'] ?? null), fn (Builder $query) => $query->whereHas(
+                'attendanceRecord',
+                fn (Builder $recordQuery) => $recordQuery->where('school_class_id', (int) $filters['school_class_id'])
+            ))
+            ->when(filled($filters['processed_by'] ?? null), fn (Builder $query) => $query->where('processed_by', (int) $filters['processed_by']))
+            ->when(filled($filters['date_from'] ?? null), fn (Builder $query) => $this->whereOfflineReceiptDate($query, '>=', (string) $filters['date_from']))
+            ->when(filled($filters['date_to'] ?? null), fn (Builder $query) => $this->whereOfflineReceiptDate($query, '<=', (string) $filters['date_to']));
+    }
+
+    private function offlineReceiptStatusCounts(Builder $receiptQuery): array
+    {
+        $counts = (clone $receiptQuery)
+            ->selectRaw('result_status, count(*) as aggregate')
+            ->groupBy('result_status')
+            ->pluck('aggregate', 'result_status')
+            ->map(fn ($count): int => (int) $count)
+            ->all();
+
+        return collect($this->offlineSyncStatuses())
+            ->mapWithKeys(fn (string $status): array => [$status => (int) ($counts[$status] ?? 0)])
+            ->all();
+    }
+
+    private function offlineReceiptGroupsByUser(Collection $receipts): Collection
+    {
+        return $receipts
+            ->groupBy(fn (AttendanceOfflineSyncReceipt $receipt): string => (string) ($receipt->processed_by ?: 'system'))
+            ->map(fn (Collection $group): array => [
+                'label' => $group->first()->processedBy?->name ?? 'System',
+                'total' => $group->count(),
+                'synced' => $group->where('result_status', 'synced')->count(),
+                'conflict' => $group->where('result_status', 'conflict')->count(),
+                'latest_at' => $group
+                    ->map(fn (AttendanceOfflineSyncReceipt $receipt) => $receipt->processed_at ?? $receipt->created_at)
+                    ->filter()
+                    ->max(),
+            ])
+            ->sortByDesc('total')
+            ->take(10)
+            ->values();
+    }
+
+    private function offlineReceiptGroupsByClass(Collection $receipts): Collection
+    {
+        return $receipts
+            ->groupBy(fn (AttendanceOfflineSyncReceipt $receipt): string => (string) ($receipt->attendanceRecord?->school_class_id ?: 'unlinked'))
+            ->map(fn (Collection $group): array => [
+                'label' => trim(($group->first()->attendanceRecord?->schoolClass?->name ?? 'Unlinked receipt').' '.($group->first()->attendanceRecord?->schoolClass?->section ?? '')),
+                'total' => $group->count(),
+                'synced' => $group->where('result_status', 'synced')->count(),
+                'conflict' => $group->where('result_status', 'conflict')->count(),
+            ])
+            ->sortByDesc('total')
+            ->take(10)
+            ->values();
+    }
+
+    private function offlineReceiptGroupsByDate(Collection $receipts): Collection
+    {
+        return $receipts
+            ->groupBy(fn (AttendanceOfflineSyncReceipt $receipt): string => ($receipt->processed_at ?? $receipt->created_at)?->toDateString() ?? 'unknown')
+            ->map(fn (Collection $group, string $date): array => [
+                'label' => $date,
+                'total' => $group->count(),
+                'synced' => $group->where('result_status', 'synced')->count(),
+                'conflict' => $group->where('result_status', 'conflict')->count(),
+            ])
+            ->sortByDesc('label')
+            ->take(10)
+            ->values();
+    }
+
+    private function whereOfflineReceiptDate(Builder $query, string $operator, string $date): void
+    {
+        $query->where(function (Builder $query) use ($operator, $date): void {
+            $query->whereDate('processed_at', $operator, $date)
+                ->orWhere(function (Builder $query) use ($operator, $date): void {
+                    $query->whereNull('processed_at')
+                        ->whereDate('created_at', $operator, $date);
+                });
+        });
     }
 
     private function summaryForRecords(Collection $records, ?int $expectedStudents = null): array

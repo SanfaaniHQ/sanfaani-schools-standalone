@@ -16,6 +16,7 @@ Current behavior:
 - The attendance-only browser offline pilot uses its authenticated school endpoint and the existing attendance service; it does not use the cloud transport.
 - Accepted browser attendance UUIDs are stored in `attendance_offline_sync_receipts` for durable, school-scoped idempotency.
 - Browser sync attempts add safe summary rows to `standalone_sync_logs`.
+- School admins can review server-known attendance sync receipts and safe attempt summaries at `/school/attendance/offline-sync-monitor`.
 - No remote API call is required or performed in this stage.
 - No local school data is deleted by the sync foundation.
 
@@ -27,4 +28,6 @@ Future behavior should stay bounded:
 - Conflict resolution must be designed before pull or two-way sync is enabled.
 - Backups should be separate from operational sync and clearly labeled.
 
-The Laravel database is the source of truth. Browser-local attendance records are temporary and invisible to the server until the authenticated attendance sync endpoint receives them. Full portal offline mode and two-way cloud sync remain outside this pilot.
+The Laravel database is the source of truth. Browser-local attendance records are temporary and invisible to the server until the authenticated attendance sync endpoint receives them. The monitor cannot inspect browser IndexedDB queues before sync. Full portal offline mode and two-way cloud sync remain outside this pilot.
+
+See `docs/standalone/offline-sync-monitor.md` for the Stage 9 monitor boundary and triage guidance.
