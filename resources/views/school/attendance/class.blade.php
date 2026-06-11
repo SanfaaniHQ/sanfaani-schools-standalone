@@ -7,10 +7,16 @@
                 </h2>
                 <p class="mt-1 text-sm text-gray-500">{{ $school->name }} - {{ \Carbon\Carbon::parse($date)->format('d M Y') }}</p>
             </div>
-            <a href="{{ route('school.attendance.index', ['date' => $date]) }}"
-               class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Back to Attendance
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('school.attendance.reports', ['date' => $date, 'school_class_id' => $class->id]) }}"
+                   class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Class Report
+                </a>
+                <a href="{{ route('school.attendance.index', ['date' => $date]) }}"
+                   class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Back to Attendance
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -44,6 +50,9 @@
                 @foreach ($statuses as $status)
                     <x-ui.stat-card :label="str($status)->title()" :value="$summary['counts'][$status] ?? 0" />
                 @endforeach
+                <x-ui.stat-card label="Recorded" :value="$summary['total']" />
+                <x-ui.stat-card label="Unmarked" :value="$summary['missing'] ?? 0" />
+                <x-ui.stat-card label="Attendance %" :value="number_format($summary['attendance_percentage'] ?? 0, 1) . '%'" />
             </section>
 
             <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
@@ -76,11 +85,14 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Admission No.</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Note</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Recorded By</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Updated</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
                                     @foreach ($rows as $row)
                                         @php($student = $row['student'])
+                                        @php($record = $row['record'])
                                         <tr>
                                             <td class="px-6 py-4 font-medium text-gray-900">
                                                 <a href="{{ route('school.attendance.students.show', ['student' => $student, 'school_class_id' => $class->id]) }}" class="hover:text-gray-600">
@@ -104,6 +116,8 @@
                                                        class="w-full rounded-xl border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900"
                                                        @disabled(! $canManage)>
                                             </td>
+                                            <td class="px-6 py-4 text-sm text-gray-600">{{ $record?->recordedBy?->name ?? 'Not recorded' }}</td>
+                                            <td class="px-6 py-4 text-sm text-gray-600">{{ $record?->updated_at?->format('d M Y H:i') ?? '-' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

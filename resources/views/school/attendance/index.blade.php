@@ -46,6 +46,8 @@
                     @php($value = $summaries->sum(fn ($summary) => $summary['counts'][$status] ?? 0))
                     <x-ui.stat-card :label="str($status)->title()" :value="$value" />
                 @endforeach
+                <x-ui.stat-card label="Recorded" :value="$summaries->sum('total')" />
+                <x-ui.stat-card label="Unmarked" :value="$summaries->sum(fn ($summary) => $summary['missing'] ?? 0)" />
             </div>
 
             <div class="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm">
@@ -63,6 +65,8 @@
                                     <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">{{ str($status)->title() }}</th>
                                 @endforeach
                                 <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Recorded</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Unmarked</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Attendance %</th>
                                 <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">Action</th>
                             </tr>
                         </thead>
@@ -76,6 +80,8 @@
                                         <td class="px-6 py-4 text-sm text-gray-600">{{ $summary['counts'][$status] ?? 0 }}</td>
                                     @endforeach
                                     <td class="px-6 py-4 text-sm text-gray-600">{{ $summary['total'] }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $summary['missing'] ?? '-' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ number_format($summary['attendance_percentage'] ?? 0, 1) }}%</td>
                                     <td class="px-6 py-4 text-right">
                                         <a href="{{ route('school.attendance.classes.show', ['class' => $summary['class'], 'date' => $date]) }}"
                                            class="text-sm font-medium text-gray-900 hover:text-gray-600">
@@ -85,7 +91,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ count($statuses) + 3 }}" class="px-6 py-12 text-center">
+                                    <td colspan="{{ count($statuses) + 5 }}" class="px-6 py-12 text-center">
                                         <p class="text-sm font-medium text-gray-900">No attendance classes available.</p>
                                         <p class="mt-1 text-sm text-gray-500">School admins see active classes; teachers see assigned classes only.</p>
                                     </td>

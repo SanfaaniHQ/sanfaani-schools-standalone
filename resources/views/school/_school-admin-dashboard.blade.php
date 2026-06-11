@@ -15,7 +15,7 @@
         ['title' => 'Sessions', 'body' => 'Academic years, current session, and archives.', 'href' => route('school.sessions.index'), 'feature' => null],
         ['title' => 'Terms', 'body' => 'Operational terms attached to sessions.', 'href' => route('school.terms.index'), 'feature' => null],
         ['title' => 'Admissions', 'body' => 'Applications, settings, channels, and conversion workflow.', 'href' => route('admin.admissions.index'), 'feature' => null],
-        ['title' => 'Attendance', 'body' => 'Daily class attendance, status counts, and student history.', 'href' => route('school.attendance.index'), 'feature' => 'attendance.view'],
+        ['title' => 'Attendance', 'body' => 'Daily registers, filtered reports, status counts, and student history.', 'href' => route('school.attendance.index'), 'feature' => 'attendance.view'],
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
         ['title' => 'CBT', 'body' => 'Question banks, exams, marking, and CBT result publishing.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],

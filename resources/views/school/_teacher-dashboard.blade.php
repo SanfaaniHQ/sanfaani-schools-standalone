@@ -73,7 +73,7 @@
                 @if(($features['attendance.view']['enabled'] ?? true))
                     <a href="{{ route('school.attendance.index') }}" class="ui-card ui-card-hover block p-4">
                         <span class="font-semibold text-text-primary">Attendance</span>
-                        <span class="mt-1 block text-sm text-text-secondary">Mark or review attendance for assigned classes.</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Mark or review attendance for active class assignments only.</span>
                     </a>
                 @endif
                 @if(($features['cbt.question_bank']['enabled'] ?? false))

@@ -3,11 +3,14 @@
 namespace Tests\Feature\School;
 
 use App\Models\AcademicSession;
+use App\Models\AuditLog;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\StudentAttendanceRecord;
+use App\Models\Subject;
 use App\Models\TeacherClassAssignment;
+use App\Models\TeacherSubjectAssignment;
 use App\Models\Term;
 use App\Models\User;
 use App\Models\UserSchoolRole;
@@ -28,7 +31,7 @@ class AttendanceFoundationTest extends TestCase
         $this->withoutVite();
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        foreach (['super_admin', 'school_admin', 'teacher', 'result_officer', 'accountant'] as $role) {
+        foreach (['super_admin', 'school_admin', 'teacher', 'result_officer', 'accountant', 'parent', 'student'] as $role) {
             Role::findOrCreate($role);
         }
     }
@@ -36,6 +39,9 @@ class AttendanceFoundationTest extends TestCase
     public function test_attendance_routes_require_authentication(): void
     {
         $this->get(route('school.attendance.index'))
+            ->assertRedirect(route('login'));
+
+        $this->get(route('school.attendance.reports'))
             ->assertRedirect(route('login'));
     }
 
@@ -106,11 +112,13 @@ class AttendanceFoundationTest extends TestCase
         $this->post(route('school.attendance.classes.store', $class), $payload)
             ->assertForbidden();
 
-        $accountant = $this->createUserForSchool($school, 'accountant');
-        $this->actAsSchoolRole($accountant, $school, 'accountant');
+        foreach (['result_officer', 'accountant', 'parent', 'student'] as $role) {
+            $user = $this->createUserForSchool($school, $role);
+            $this->actAsSchoolRole($user, $school, $role);
 
-        $this->post(route('school.attendance.classes.store', $class), $payload)
-            ->assertForbidden();
+            $this->post(route('school.attendance.classes.store', $class), $payload)
+                ->assertForbidden();
+        }
 
         $this->assertDatabaseCount('student_attendance_records', 0);
     }
@@ -192,6 +200,7 @@ class AttendanceFoundationTest extends TestCase
             $this->createStudent($school, $class, 'ATT-007', 'Hauwa'),
             $this->createStudent($school, $class, 'ATT-008', 'Ife'),
         ]);
+        $this->createStudent($school, $class, 'ATT-008B', 'Ireti');
         $this->actAsSchoolRole($admin, $school, 'school_admin');
 
         $this->post(route('school.attendance.classes.store', $class), [
@@ -209,6 +218,122 @@ class AttendanceFoundationTest extends TestCase
             'late' => 1,
             'excused' => 1,
         ], $summary['counts']);
+        $this->assertSame(4, $summary['total']);
+        $this->assertSame(1, $summary['missing']);
+        $this->assertEquals(75.0, $summary['attendance_percentage']);
+    }
+
+    public function test_school_admin_can_filter_attendance_reports_by_class_date_status_session_and_term(): void
+    {
+        [$school, $admin, $class, $session, $term] = $this->attendanceContext('school_admin');
+        $otherClass = $this->createClass($school, 'JSS 2', fake()->unique()->lexify('??'));
+        $presentStudent = $this->createStudent($school, $class, 'ATT-011', 'Lami');
+        $absentStudent = $this->createStudent($school, $class, 'ATT-012', 'Musa');
+        $otherClassStudent = $this->createStudent($school, $otherClass, 'ATT-013', 'Nkechi');
+        [$otherSchool, $otherAdmin, $otherSchoolClass] = $this->attendanceContext('school_admin');
+        $otherSchoolStudent = $this->createStudent($otherSchool, $otherSchoolClass, 'OTHER-002', 'Ola');
+
+        StudentAttendanceRecord::create([
+            'school_id' => $school->id,
+            'school_class_id' => $class->id,
+            'student_id' => $presentStudent->id,
+            'recorded_by' => $admin->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'attendance_date' => '2026-06-11',
+            'status' => 'present',
+            'note' => 'Report match',
+            'source' => 'web',
+        ]);
+        StudentAttendanceRecord::create([
+            'school_id' => $school->id,
+            'school_class_id' => $class->id,
+            'student_id' => $absentStudent->id,
+            'recorded_by' => $admin->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'attendance_date' => '2026-06-11',
+            'status' => 'absent',
+            'note' => 'Filtered absent',
+            'source' => 'web',
+        ]);
+        StudentAttendanceRecord::create([
+            'school_id' => $school->id,
+            'school_class_id' => $otherClass->id,
+            'student_id' => $otherClassStudent->id,
+            'recorded_by' => $admin->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'attendance_date' => '2026-06-11',
+            'status' => 'present',
+            'note' => 'Other class',
+            'source' => 'web',
+        ]);
+        StudentAttendanceRecord::create([
+            'school_id' => $otherSchool->id,
+            'school_class_id' => $otherSchoolClass->id,
+            'student_id' => $otherSchoolStudent->id,
+            'recorded_by' => $otherAdmin->id,
+            'attendance_date' => '2026-06-11',
+            'status' => 'present',
+            'note' => 'Other school',
+            'source' => 'web',
+        ]);
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $this->get(route('school.attendance.reports', [
+            'date' => '2026-06-11',
+            'school_class_id' => $class->id,
+            'status' => 'present',
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+        ]))
+            ->assertOk()
+            ->assertSee('Report match')
+            ->assertSee('Lami Student')
+            ->assertSee('100.0%')
+            ->assertDontSee('Filtered absent')
+            ->assertDontSee('Other class')
+            ->assertDontSee('Other school');
+    }
+
+    public function test_date_range_attendance_report_counts_and_percentage_are_correct(): void
+    {
+        [$school, $admin, $class] = $this->attendanceContext('school_admin');
+        $students = collect([
+            $this->createStudent($school, $class, 'ATT-014', 'Pola'),
+            $this->createStudent($school, $class, 'ATT-015', 'Qadir'),
+            $this->createStudent($school, $class, 'ATT-016', 'Reni'),
+            $this->createStudent($school, $class, 'ATT-017', 'Sade'),
+        ]);
+
+        foreach (['present', 'absent', 'late', 'excused'] as $index => $status) {
+            StudentAttendanceRecord::create([
+                'school_id' => $school->id,
+                'school_class_id' => $class->id,
+                'student_id' => $students[$index]->id,
+                'recorded_by' => $admin->id,
+                'attendance_date' => $index < 2 ? '2026-06-10' : '2026-06-11',
+                'status' => $status,
+                'note' => 'Range '.$status,
+                'source' => 'web',
+            ]);
+        }
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $this->get(route('school.attendance.reports', [
+            'date_from' => '2026-06-10',
+            'date_to' => '2026-06-11',
+            'school_class_id' => $class->id,
+        ]))
+            ->assertOk()
+            ->assertSee('Range present')
+            ->assertSee('Range absent')
+            ->assertSee('Range late')
+            ->assertSee('Range excused')
+            ->assertSee('75.0%');
     }
 
     public function test_student_attendance_history_page_lists_records(): void
@@ -233,6 +358,162 @@ class AttendanceFoundationTest extends TestCase
             ->assertSee('Jumoke Student Attendance')
             ->assertSee('Excused')
             ->assertSee('11 Jun 2026');
+    }
+
+    public function test_student_attendance_history_filters_by_date_range_status_session_and_term(): void
+    {
+        [$school, $admin, $class, $session, $term] = $this->attendanceContext('school_admin');
+        $student = $this->createStudent($school, $class, 'ATT-018', 'Teni');
+        $otherSession = AcademicSession::create([
+            'school_id' => $school->id,
+            'name' => '2027/2028',
+            'is_active' => false,
+            'status' => 'active',
+        ]);
+        $otherTerm = Term::create([
+            'school_id' => $school->id,
+            'academic_session_id' => $otherSession->id,
+            'name' => 'Second Term',
+            'is_active' => false,
+            'status' => 'active',
+        ]);
+
+        StudentAttendanceRecord::create([
+            'school_id' => $school->id,
+            'school_class_id' => $class->id,
+            'student_id' => $student->id,
+            'recorded_by' => $admin->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'attendance_date' => '2026-06-10',
+            'status' => 'present',
+            'note' => 'Before filtered window',
+            'source' => 'web',
+        ]);
+        StudentAttendanceRecord::create([
+            'school_id' => $school->id,
+            'school_class_id' => $class->id,
+            'student_id' => $student->id,
+            'recorded_by' => $admin->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'attendance_date' => '2026-06-11',
+            'status' => 'absent',
+            'note' => 'Student history match',
+            'source' => 'web',
+        ]);
+        StudentAttendanceRecord::create([
+            'school_id' => $school->id,
+            'school_class_id' => $class->id,
+            'student_id' => $student->id,
+            'recorded_by' => $admin->id,
+            'academic_session_id' => $otherSession->id,
+            'term_id' => $otherTerm->id,
+            'attendance_date' => '2026-06-12',
+            'status' => 'late',
+            'note' => 'Other term row',
+            'source' => 'web',
+        ]);
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $this->get(route('school.attendance.students.show', [
+            'student' => $student,
+            'date_from' => '2026-06-11',
+            'date_to' => '2026-06-12',
+            'status' => 'absent',
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+        ]))
+            ->assertOk()
+            ->assertSee('Student history match')
+            ->assertSee('0.0%')
+            ->assertDontSee('Before filtered window')
+            ->assertDontSee('Other term row');
+    }
+
+    public function test_teacher_report_access_requires_active_class_assignment_not_subject_only_visibility(): void
+    {
+        [$school, $teacher, $assignedClass, $session, $term] = $this->attendanceContext('teacher');
+        $unassignedClass = $this->createClass($school, 'JSS 3', fake()->unique()->lexify('??'));
+        $assignedStudent = $this->createStudent($school, $assignedClass, 'ATT-019', 'Uche');
+        $unassignedStudent = $this->createStudent($school, $unassignedClass, 'ATT-020', 'Vera');
+        $subject = $this->createSubject($school, 'Mathematics');
+
+        TeacherClassAssignment::create([
+            'school_id' => $school->id,
+            'teacher_user_id' => $teacher->id,
+            'school_class_id' => $assignedClass->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'role_type' => 'class_teacher',
+            'status' => 'active',
+        ]);
+        TeacherSubjectAssignment::create([
+            'school_id' => $school->id,
+            'teacher_user_id' => $teacher->id,
+            'subject_id' => $subject->id,
+            'school_class_id' => $unassignedClass->id,
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'role_type' => 'subject_teacher',
+            'status' => 'active',
+        ]);
+        StudentAttendanceRecord::create([
+            'school_id' => $school->id,
+            'school_class_id' => $assignedClass->id,
+            'student_id' => $assignedStudent->id,
+            'recorded_by' => $teacher->id,
+            'attendance_date' => '2026-06-11',
+            'status' => 'present',
+            'note' => 'Teacher assigned report row',
+            'source' => 'web',
+        ]);
+
+        $this->actAsSchoolRole($teacher, $school, 'teacher');
+
+        $this->get(route('school.attendance.reports', [
+            'date' => '2026-06-11',
+            'school_class_id' => $assignedClass->id,
+        ]))
+            ->assertOk()
+            ->assertSee('Teacher assigned report row');
+
+        $this->get(route('school.attendance.reports', [
+            'date' => '2026-06-11',
+            'school_class_id' => $unassignedClass->id,
+        ]))->assertForbidden();
+
+        $this->get(route('school.attendance.classes.show', $unassignedClass))
+            ->assertForbidden();
+
+        $this->post(route('school.attendance.classes.store', $unassignedClass), [
+            'attendance_date' => '2026-06-11',
+            'academic_session_id' => $session->id,
+            'term_id' => $term->id,
+            'records' => [
+                ['student_id' => $unassignedStudent->id, 'status' => 'present'],
+            ],
+        ])->assertForbidden();
+    }
+
+    public function test_invalid_report_filters_are_rejected(): void
+    {
+        [$school, $admin] = $this->schoolContext('school_admin');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $this->from(route('school.attendance.reports'))
+            ->get(route('school.attendance.reports', [
+                'date_from' => '2026-06-12',
+                'date_to' => '2026-06-11',
+            ]))
+            ->assertRedirect(route('school.attendance.reports'))
+            ->assertSessionHasErrors('date_to');
+
+        $this->from(route('school.attendance.reports'))
+            ->get(route('school.attendance.reports', ['status' => 'missing']))
+            ->assertRedirect(route('school.attendance.reports'))
+            ->assertSessionHasErrors('status');
     }
 
     public function test_attendance_actions_are_audit_logged(): void
@@ -263,6 +544,41 @@ class AttendanceFoundationTest extends TestCase
         ]);
     }
 
+    public function test_attendance_update_audit_log_keeps_safe_before_after_context(): void
+    {
+        [$school, $admin, $class] = $this->attendanceContext('school_admin');
+        $student = $this->createStudent($school, $class, 'ATT-021', 'Wale');
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $this->post(route('school.attendance.classes.store', $class), [
+            'attendance_date' => '2026-06-11',
+            'records' => [
+                ['student_id' => $student->id, 'status' => 'present'],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $this->post(route('school.attendance.classes.store', $class), [
+            'attendance_date' => '2026-06-11',
+            'records' => [
+                ['student_id' => $student->id, 'status' => 'absent', 'note' => 'Called in sick'],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $log = AuditLog::query()
+            ->where('school_id', $school->id)
+            ->where('action', 'attendance_updated')
+            ->firstOrFail();
+
+        $this->assertSame('present', $log->old_values['status']);
+        $this->assertSame('absent', $log->new_values['status']);
+        $this->assertSame($class->id, $log->metadata['school_class_id']);
+        $this->assertSame($student->id, $log->metadata['student_id']);
+        $this->assertSame($admin->id, $log->metadata['recorded_by']);
+        $this->assertContains('status', $log->metadata['changed_fields']);
+        $this->assertArrayNotHasKey('student_name', $log->metadata);
+        $this->assertStringNotContainsString($student->admission_number, json_encode($log->metadata));
+    }
+
     public function test_attendance_navigation_is_role_aware_and_offline_boundary_is_clear(): void
     {
         config([
@@ -290,6 +606,12 @@ class AttendanceFoundationTest extends TestCase
             ->assertOk()
             ->assertDontSee('Attendance Foundation')
             ->assertDontSee('Attendance Dashboard');
+
+        $accountant = $this->createUserForSchool($school, 'accountant');
+        $this->actAsSchoolRole($accountant, $school, 'accountant');
+
+        $this->get(route('school.attendance.index'))
+            ->assertForbidden();
     }
 
     private function attendanceContext(string $role): array
@@ -346,6 +668,18 @@ class AttendanceFoundationTest extends TestCase
             'admission_number' => $admissionNumber,
             'first_name' => $firstName,
             'last_name' => 'Student',
+            'status' => 'active',
+        ]);
+    }
+
+    private function createSubject(School $school, string $name): Subject
+    {
+        return Subject::create([
+            'school_id' => $school->id,
+            'name' => $name,
+            'code' => fake()->unique()->lexify('???'),
+            'assignment_type' => 'core',
+            'is_elective' => false,
             'status' => 'active',
         ]);
     }

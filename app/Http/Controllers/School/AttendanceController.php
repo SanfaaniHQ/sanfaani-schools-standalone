@@ -13,6 +13,7 @@ use App\Services\CurrentSchoolService;
 use App\Services\SchoolAuthorizationService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class AttendanceController extends Controller
@@ -118,27 +119,58 @@ class AttendanceController extends Controller
 
         $data = $request->validate([
             'date' => ['nullable', 'date'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'school_class_id' => ['nullable', 'integer'],
+            'student_id' => ['nullable', Rule::exists('students', 'id')->where('school_id', $school->id)],
+            'status' => ['nullable', Rule::in(StudentAttendanceRecord::STATUSES)],
+            'recorded_by' => ['nullable', Rule::exists('users', 'id')],
+            'academic_session_id' => ['nullable', Rule::exists('academic_sessions', 'id')->where('school_id', $school->id)],
+            'term_id' => ['nullable', Rule::exists('terms', 'id')->where('school_id', $school->id)],
         ]);
-        $date = $data['date'] ?? today()->toDateString();
         $classes = $attendance->classesForUser($school, $user);
+        $visibleClassIds = $classes->pluck('id')->map(fn ($id): int => (int) $id)->values();
 
         if (filled($data['school_class_id'] ?? null)) {
             $selectedClassId = (int) $data['school_class_id'];
 
-            if (! $classes->pluck('id')->contains($selectedClassId)) {
+            if (! $visibleClassIds->contains($selectedClassId)) {
                 abort(403, 'You cannot report on this class.');
             }
-
-            $classes = $classes->where('id', $selectedClassId)->values();
         }
+
+        if (filled($data['student_id'] ?? null)) {
+            $student = Student::query()->where('school_id', $school->id)->findOrFail((int) $data['student_id']);
+
+            if (! $this->studentInAttendanceScope($school, $student, $visibleClassIds)) {
+                abort(403, 'You cannot report on this student.');
+            }
+        }
+
+        if (filled($data['recorded_by'] ?? null) && ! $this->schoolUserIds($school)->contains((int) $data['recorded_by'])) {
+            abort(403, 'You cannot filter attendance by this user.');
+        }
+
+        $filters = $this->normalizedReportFilters($data);
+        $report = $attendance->attendanceReport($school, $classes, $filters);
+        $summaryClasses = filled($filters['school_class_id'] ?? null)
+            ? $classes->where('id', (int) $filters['school_class_id'])->values()
+            : $classes;
 
         return view('school.attendance.reports', [
             'school' => $school,
-            'date' => $date,
-            'classes' => $attendance->classesForUser($school, $user),
-            'selectedClassId' => isset($data['school_class_id']) ? (int) $data['school_class_id'] : null,
-            'summaries' => $attendance->classDailySummaries($school, $classes, $date),
+            'date' => $filters['date'] ?? $report['date_from'],
+            'dateFrom' => $report['date_from'],
+            'dateTo' => $report['date_to'],
+            'classes' => $classes,
+            'students' => $this->studentsForAttendanceFilters($school, $classes, $filters),
+            'recorders' => $this->schoolUsers($school),
+            'academicSessions' => $school->academicSessions()->where('status', 'active')->latest()->get(),
+            'terms' => $school->terms()->where('status', 'active')->with('academicSession')->latest()->get(),
+            'filters' => $filters,
+            'records' => $report['records'],
+            'summary' => $report['summary'],
+            'summaries' => $attendance->classDailySummaries($school, $summaryClasses, $filters['date'] ?? $report['date_from']),
             'statuses' => $attendance->statuses(),
         ]);
     }
@@ -159,9 +191,17 @@ class AttendanceController extends Controller
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'school_class_id' => ['nullable', 'integer'],
+            'status' => ['nullable', Rule::in(StudentAttendanceRecord::STATUSES)],
+            'recorded_by' => ['nullable', Rule::exists('users', 'id')],
+            'academic_session_id' => ['nullable', Rule::exists('academic_sessions', 'id')->where('school_id', $school->id)],
+            'term_id' => ['nullable', Rule::exists('terms', 'id')->where('school_id', $school->id)],
         ]);
         $classes = $attendance->classesForUser($school, $user);
-        $visibleClassIds = $classes->pluck('id')->values();
+        $visibleClassIds = $classes->pluck('id')->map(fn ($id): int => (int) $id)->values();
+
+        if (! $this->studentInAttendanceScope($school, $student, $visibleClassIds)) {
+            abort(403, 'You cannot access this student attendance history.');
+        }
 
         if (filled($data['school_class_id'] ?? null)) {
             $selectedClassId = (int) $data['school_class_id'];
@@ -173,6 +213,10 @@ class AttendanceController extends Controller
             $data['school_class_ids'] = $visibleClassIds->all();
         }
 
+        if (filled($data['recorded_by'] ?? null) && ! $this->schoolUserIds($school)->contains((int) $data['recorded_by'])) {
+            abort(403, 'You cannot filter attendance by this user.');
+        }
+
         return view('school.attendance.student', [
             'school' => $school,
             'student' => $student,
@@ -181,7 +225,100 @@ class AttendanceController extends Controller
             'history' => $attendance->studentAttendanceHistory($school, $student, $data),
             'summary' => $attendance->studentAttendanceSummary($school, $student, $data),
             'statuses' => $attendance->statuses(),
+            'recorders' => $this->schoolUsers($school),
+            'academicSessions' => $school->academicSessions()->where('status', 'active')->latest()->get(),
+            'terms' => $school->terms()->where('status', 'active')->with('academicSession')->latest()->get(),
         ]);
+    }
+
+    private function normalizedReportFilters(array $data): array
+    {
+        $filters = collect($data)
+            ->filter(fn ($value): bool => filled($value))
+            ->all();
+
+        if (blank($filters['date'] ?? null) && blank($filters['date_from'] ?? null) && blank($filters['date_to'] ?? null)) {
+            $filters['date'] = today()->toDateString();
+        }
+
+        return $filters;
+    }
+
+    private function studentsForAttendanceFilters(School $school, Collection $classes, array $filters): Collection
+    {
+        $classIds = $classes
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
+
+        return Student::query()
+            ->where('school_id', $school->id)
+            ->where('status', 'active')
+            ->when(
+                $classIds->isEmpty(),
+                fn ($query) => $query->whereRaw('1 = 0'),
+                fn ($query) => $query->where(function ($query) use ($school, $classIds): void {
+                    $query->whereIn('school_class_id', $classIds->all())
+                        ->orWhereHas('classEnrollments', fn ($enrollmentQuery) => $enrollmentQuery
+                            ->where('school_id', $school->id)
+                            ->whereIn('school_class_id', $classIds->all())
+                            ->current());
+                })
+            )
+            ->when(filled($filters['school_class_id'] ?? null), function ($query) use ($school, $filters): void {
+                $classId = (int) $filters['school_class_id'];
+
+                $query->where(function ($query) use ($school, $classId): void {
+                    $query->where('school_class_id', $classId)
+                        ->orWhereHas('classEnrollments', fn ($enrollmentQuery) => $enrollmentQuery
+                            ->where('school_id', $school->id)
+                            ->where('school_class_id', $classId)
+                            ->current());
+                });
+            })
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'admission_number', 'school_class_id']);
+    }
+
+    private function studentInAttendanceScope(School $school, Student $student, Collection $classIds): bool
+    {
+        if ((int) $student->school_id !== (int) $school->id || $classIds->isEmpty()) {
+            return false;
+        }
+
+        if ($student->school_class_id && $classIds->contains((int) $student->school_class_id)) {
+            return true;
+        }
+
+        return $student->classEnrollments()
+            ->where('school_id', $school->id)
+            ->whereIn('school_class_id', $classIds->all())
+            ->current()
+            ->exists();
+    }
+
+    private function schoolUsers(School $school): Collection
+    {
+        return User::query()
+            ->where(function ($query) use ($school): void {
+                $query->where('school_id', $school->id)
+                    ->orWhereHas('activeSchoolRoles', fn ($roleQuery) => $roleQuery->where('school_id', $school->id))
+                    ->orWhereIn('id', StudentAttendanceRecord::query()
+                        ->where('school_id', $school->id)
+                        ->whereNotNull('recorded_by')
+                        ->select('recorded_by'));
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+    }
+
+    private function schoolUserIds(School $school): Collection
+    {
+        return $this->schoolUsers($school)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
     }
 
     private function authorizeClassAccess(AttendanceService $attendance, User $user, School $school, SchoolClass $class): void

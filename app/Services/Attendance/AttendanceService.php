@@ -38,7 +38,18 @@ class AttendanceService
         }
 
         if ($this->authorization->roleContext($user) === 'teacher') {
-            return $this->teacherAssignments->classesForTeacher($school, $user);
+            $classIds = $this->teacherAttendanceClassIds($school, $user);
+
+            if ($classIds->isEmpty()) {
+                return collect();
+            }
+
+            return $school->schoolClasses()
+                ->whereIn('id', $classIds)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->orderBy('section')
+                ->get();
         }
 
         return $school->schoolClasses()
@@ -56,6 +67,7 @@ class AttendanceService
             ->where('school_id', $school->id)
             ->where('school_class_id', $class->id)
             ->whereDate('attendance_date', $date->toDateString())
+            ->with(['academicSession', 'term', 'recordedBy'])
             ->get()
             ->keyBy('student_id');
 
@@ -110,6 +122,7 @@ class AttendanceService
                 if ($record) {
                     $oldValues = $record->only(['status', 'note', 'academic_session_id', 'term_id', 'recorded_by', 'source']);
                     $record->fill($attributes);
+                    $changedFields = array_keys($record->getDirty());
                     $changed = $record->isDirty();
                     $record->save();
                     $saved->push($record->refresh());
@@ -126,6 +139,9 @@ class AttendanceService
                                 'school_class_id' => $class->id,
                                 'student_id' => $row['student_id'],
                                 'attendance_date' => $date->toDateString(),
+                                'recorded_by' => $recordedBy->id,
+                                'changed_fields' => $changedFields,
+                                'source' => $source,
                             ],
                         );
                     }
@@ -153,6 +169,8 @@ class AttendanceService
                         'school_class_id' => $class->id,
                         'student_id' => $row['student_id'],
                         'attendance_date' => $date->toDateString(),
+                        'recorded_by' => $recordedBy->id,
+                        'source' => $source,
                     ],
                 );
             }
@@ -166,6 +184,8 @@ class AttendanceService
                     'records_submitted' => $rows->count(),
                     'created' => $created,
                     'updated' => $updated,
+                    'school_class_id' => $class->id,
+                    'submitted_by' => $recordedBy->id,
                     'source' => $source,
                 ],
             );
@@ -189,13 +209,14 @@ class AttendanceService
             ->get()
             ->groupBy('school_class_id');
 
-        return $classes->map(function (SchoolClass $class) use ($records): array {
-            $counts = $this->statusCounts($records->get($class->id, collect()));
+        return $classes->map(function (SchoolClass $class) use ($records, $school): array {
+            $classRecords = $records->get($class->id, collect());
+            $expectedStudents = $this->activeStudentsForClass($school, $class)->count();
+            $summary = $this->summaryForRecords($classRecords, $expectedStudents);
 
             return [
                 'class' => $class,
-                'counts' => $counts,
-                'total' => array_sum($counts),
+                ...$summary,
             ];
         });
     }
@@ -208,14 +229,96 @@ class AttendanceService
             ->where('school_class_id', $class->id)
             ->whereDate('attendance_date', $date->toDateString())
             ->get();
-        $counts = $this->statusCounts($records);
+        $expectedStudents = $this->activeStudentsForClass($school, $class)->count();
 
         return [
             'date' => $date->toDateString(),
             'class' => $class,
-            'counts' => $counts,
-            'total' => array_sum($counts),
+            ...$this->summaryForRecords($records, $expectedStudents),
         ];
+    }
+
+    public function attendanceReport(School $school, Collection $classes, array $filters = []): array
+    {
+        [$dateFrom, $dateTo] = $this->reportDateRange($filters);
+        $visibleClassIds = $classes
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
+
+        $records = StudentAttendanceRecord::query()
+            ->where('school_id', $school->id)
+            ->with(['student', 'schoolClass', 'academicSession', 'term', 'recordedBy'])
+            ->when(
+                $visibleClassIds->isEmpty(),
+                fn (Builder $query) => $query->whereRaw('1 = 0'),
+                fn (Builder $query) => $query->whereIn('school_class_id', $visibleClassIds->all())
+            )
+            ->whereDate('attendance_date', '>=', $dateFrom->toDateString())
+            ->whereDate('attendance_date', '<=', $dateTo->toDateString())
+            ->when(filled($filters['school_class_id'] ?? null), fn (Builder $query) => $query->where('school_class_id', (int) $filters['school_class_id']))
+            ->when(filled($filters['student_id'] ?? null), fn (Builder $query) => $query->where('student_id', (int) $filters['student_id']))
+            ->when(filled($filters['status'] ?? null), fn (Builder $query) => $query->where('status', $filters['status']))
+            ->when(filled($filters['recorded_by'] ?? null), fn (Builder $query) => $query->where('recorded_by', (int) $filters['recorded_by']))
+            ->when(filled($filters['academic_session_id'] ?? null), fn (Builder $query) => $query->where('academic_session_id', (int) $filters['academic_session_id']))
+            ->when(filled($filters['term_id'] ?? null), fn (Builder $query) => $query->where('term_id', (int) $filters['term_id']))
+            ->orderByDesc('attendance_date')
+            ->orderBy('school_class_id')
+            ->orderBy('student_id')
+            ->get();
+
+        $summary = $this->summaryForRecords($records);
+
+        if ($this->canCalculateMissingForReport($filters, $dateFrom, $dateTo)) {
+            $class = $school->schoolClasses()->whereKey((int) $filters['school_class_id'])->first();
+
+            if ($class) {
+                $expectedStudents = $this->activeStudentsForClass($school, $class)->count();
+                $markedStudents = StudentAttendanceRecord::query()
+                    ->where('school_id', $school->id)
+                    ->where('school_class_id', $class->id)
+                    ->whereDate('attendance_date', $dateFrom->toDateString())
+                    ->distinct('student_id')
+                    ->count('student_id');
+
+                $summary['expected_students'] = $expectedStudents;
+                $summary['missing'] = max($expectedStudents - $markedStudents, 0);
+            }
+        }
+
+        return [
+            'records' => $records,
+            'summary' => $summary,
+            'date_from' => $dateFrom->toDateString(),
+            'date_to' => $dateTo->toDateString(),
+        ];
+    }
+
+    public function reportDateRange(array $filters = []): array
+    {
+        if (filled($filters['date'] ?? null)) {
+            $date = $this->attendanceDate($filters['date']);
+
+            return [$date, $date->copy()];
+        }
+
+        $dateFrom = filled($filters['date_from'] ?? null)
+            ? $this->attendanceDate($filters['date_from'])
+            : null;
+        $dateTo = filled($filters['date_to'] ?? null)
+            ? $this->attendanceDate($filters['date_to'])
+            : null;
+
+        if (! $dateFrom && ! $dateTo) {
+            $dateFrom = $this->attendanceDate(null);
+            $dateTo = $dateFrom->copy();
+        } elseif (! $dateFrom) {
+            $dateFrom = $dateTo->copy();
+        } elseif (! $dateTo) {
+            $dateTo = $dateFrom->copy();
+        }
+
+        return [$dateFrom, $dateTo];
     }
 
     public function studentAttendanceHistory(
@@ -229,6 +332,10 @@ class AttendanceService
             ->with(['schoolClass', 'academicSession', 'term', 'recordedBy'])
             ->when(filled($filters['school_class_id'] ?? null), fn (Builder $query) => $query->where('school_class_id', (int) $filters['school_class_id']))
             ->when(! empty($filters['school_class_ids'] ?? []), fn (Builder $query) => $query->whereIn('school_class_id', $filters['school_class_ids']))
+            ->when(filled($filters['status'] ?? null), fn (Builder $query) => $query->where('status', $filters['status']))
+            ->when(filled($filters['recorded_by'] ?? null), fn (Builder $query) => $query->where('recorded_by', (int) $filters['recorded_by']))
+            ->when(filled($filters['academic_session_id'] ?? null), fn (Builder $query) => $query->where('academic_session_id', (int) $filters['academic_session_id']))
+            ->when(filled($filters['term_id'] ?? null), fn (Builder $query) => $query->where('term_id', (int) $filters['term_id']))
             ->when(filled($filters['date_from'] ?? null), fn (Builder $query) => $query->whereDate('attendance_date', '>=', $filters['date_from']))
             ->when(filled($filters['date_to'] ?? null), fn (Builder $query) => $query->whereDate('attendance_date', '<=', $filters['date_to']))
             ->orderByDesc('attendance_date')
@@ -244,15 +351,15 @@ class AttendanceService
             ->where('student_id', $student->id)
             ->when(filled($filters['school_class_id'] ?? null), fn (Builder $query) => $query->where('school_class_id', (int) $filters['school_class_id']))
             ->when(! empty($filters['school_class_ids'] ?? []), fn (Builder $query) => $query->whereIn('school_class_id', $filters['school_class_ids']))
+            ->when(filled($filters['status'] ?? null), fn (Builder $query) => $query->where('status', $filters['status']))
+            ->when(filled($filters['recorded_by'] ?? null), fn (Builder $query) => $query->where('recorded_by', (int) $filters['recorded_by']))
+            ->when(filled($filters['academic_session_id'] ?? null), fn (Builder $query) => $query->where('academic_session_id', (int) $filters['academic_session_id']))
+            ->when(filled($filters['term_id'] ?? null), fn (Builder $query) => $query->where('term_id', (int) $filters['term_id']))
             ->when(filled($filters['date_from'] ?? null), fn (Builder $query) => $query->whereDate('attendance_date', '>=', $filters['date_from']))
             ->when(filled($filters['date_to'] ?? null), fn (Builder $query) => $query->whereDate('attendance_date', '<=', $filters['date_to']))
             ->get(['status']);
-        $counts = $this->statusCounts($records);
 
-        return [
-            'counts' => $counts,
-            'total' => array_sum($counts),
-        ];
+        return $this->summaryForRecords($records);
     }
 
     public function assertCanViewClass(User $user, School $school, SchoolClass $class): void
@@ -262,7 +369,7 @@ class AttendanceService
         }
 
         if ($this->authorization->roleContext($user) === 'teacher'
-            && ! $this->teacherAssignments->visibleClassIds($school, $user)->contains((int) $class->id)) {
+            && ! $this->teacherAssignments->hasClassAssignment($school, $user, $class->id)) {
             throw new AuthorizationException('You cannot view attendance for this class.');
         }
     }
@@ -381,6 +488,62 @@ class AttendanceService
         return collect(StudentAttendanceRecord::STATUSES)
             ->mapWithKeys(fn (string $status): array => [$status => (int) $counted->get($status, 0)])
             ->all();
+    }
+
+    private function summaryForRecords(Collection $records, ?int $expectedStudents = null): array
+    {
+        $counts = $this->statusCounts($records);
+        $total = array_sum($counts);
+        $summary = [
+            'counts' => $counts,
+            'total' => $total,
+            'attendance_percentage' => $this->attendancePercentage($counts),
+            'expected_students' => $expectedStudents,
+            'missing' => null,
+        ];
+
+        if ($expectedStudents !== null) {
+            $summary['missing'] = max($expectedStudents - $records->pluck('student_id')->unique()->count(), 0);
+        }
+
+        return $summary;
+    }
+
+    private function attendancePercentage(array $counts): float
+    {
+        $total = array_sum($counts);
+
+        if ($total === 0) {
+            return 0.0;
+        }
+
+        $attended = ($counts[StudentAttendanceRecord::STATUS_PRESENT] ?? 0)
+            + ($counts[StudentAttendanceRecord::STATUS_LATE] ?? 0)
+            + ($counts[StudentAttendanceRecord::STATUS_EXCUSED] ?? 0);
+
+        return round(($attended / $total) * 100, 1);
+    }
+
+    private function canCalculateMissingForReport(array $filters, Carbon $dateFrom, Carbon $dateTo): bool
+    {
+        return $dateFrom->isSameDay($dateTo)
+            && filled($filters['school_class_id'] ?? null)
+            && blank($filters['student_id'] ?? null)
+            && blank($filters['status'] ?? null)
+            && blank($filters['recorded_by'] ?? null)
+            && blank($filters['academic_session_id'] ?? null)
+            && blank($filters['term_id'] ?? null);
+    }
+
+    private function teacherAttendanceClassIds(School $school, User $teacher): Collection
+    {
+        return $this->teacherAssignments
+            ->classAssignmentsQuery($school, $teacher)
+            ->pluck('school_class_id')
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
     }
 
     private function attendanceDate(Carbon|string|null $date): Carbon

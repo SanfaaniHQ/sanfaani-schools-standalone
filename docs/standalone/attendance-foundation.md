@@ -27,7 +27,7 @@ The supported statuses are:
 
 School Admin users can view and manage attendance for their school.
 
-Teachers can view attendance for visible assigned classes. Teachers can mark attendance only for classes assigned through the existing active teacher class assignment workflow. Subject-only visibility does not expand attendance management beyond safe class assignment checks.
+Teachers can view and mark attendance only for classes assigned through the existing active teacher class assignment workflow. Attendance does not use broader subject-only visibility. If a teacher has a subject assignment without an active class assignment, that teacher may still use the normal subject/result tools, but cannot view or manage the class attendance register.
 
 Result Officer, Accountant, Student, Parent, and public users do not receive attendance management access in this stage.
 
@@ -51,15 +51,50 @@ Submitting the same class, student, and date again updates the existing record i
 
 ## Reports And Summaries
 
-The foundation includes simple web reports:
+The foundation includes web reports for daily and date-range review:
 
-- daily class status counts;
+- single date and date-range filters;
+- class, student, status, recorder, academic session, and term filters where safe;
+- total records;
 - present, absent, late, and excused totals;
-- class filter;
-- date filter;
-- student attendance history.
+- attendance percentage;
+- daily class summary;
+- missing or unmarked students for a single selected class and date;
+- detailed record rows with class, student, session, term, recorder, update time, and note.
 
-PDF and spreadsheet exports are intentionally deferred unless a later stage adds them through the existing export helpers.
+Attendance percentage is calculated from marked records:
+
+`(present + late + excused) / total marked records * 100`
+
+Absent records reduce the percentage. If there are no marked records, the percentage is `0.0%`.
+
+PDF, Excel, and CSV attendance exports are intentionally deferred to a later reports/import-export stage. Existing audit-log and scratch-card CSV export helpers were inspected, but this attendance stage keeps exports out of scope.
+
+## Class Attendance Report
+
+A class report can be opened from the class register or the report screen. It shows:
+
+- selected class and selected date or date range;
+- student list and status records;
+- counts by status;
+- attendance percentage;
+- missing or unmarked students when the report is for one class on one date;
+- who recorded the row and when it was last updated.
+
+Missing/unmarked counts are only shown when they are safe to calculate from active students for a single class and day. Date-range reports still show totals and percentages, but do not try to infer expected attendance days.
+
+## Student Attendance History
+
+Student attendance history supports:
+
+- date range;
+- class;
+- status;
+- recorder;
+- academic session;
+- term.
+
+The history page shows status timeline rows with class, session, term, recorder, and notes. Notes are shown to roles that can already view the student's attendance in the current school scope.
 
 ## Audit Logging
 
@@ -69,11 +104,15 @@ Attendance uses the existing audit log service. The module audits:
 - attendance updated;
 - bulk class attendance submitted.
 
-Audit records include school scope, actor, class, student, date, and changed values where applicable.
+Audit records include school scope, actor, class ID, student ID, date, source, recorder ID, bulk submission counts, and changed field names where applicable. Update logs include safe before/after values for status, note, session, term, recorder, and source.
+
+Audit metadata intentionally avoids student names, admission numbers, private contact details, or duplicate audit storage.
 
 ## School Scoping And Privacy
 
-Attendance records are school-scoped. A user from another school cannot view or write a class attendance register. Teachers see only assigned class/student attendance according to existing school authorization and teacher assignment rules.
+Attendance records are school-scoped. A user from another school cannot view or write a class attendance register. Reports are constrained to the current school and the current user's allowed attendance classes.
+
+Teachers see attendance only for active class assignments. They cannot view or mark another teacher's class, cannot use subject-only assignment to reach attendance, cannot access cross-school attendance records, and cannot change records outside their allowed class scope.
 
 ## Offline Boundary
 
@@ -91,4 +130,4 @@ Not implemented in this stage:
 - biometric/device attendance imports;
 - parent or student attendance portals.
 
-Offline attendance capture remains planned for a later stage after this online foundation is stable.
+Offline attendance capture remains planned for future Stage 8 after this online foundation is stable.
