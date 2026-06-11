@@ -63,6 +63,11 @@ class AcademicSession extends Model
         return $this->hasMany(ClassSubjectAssignment::class);
     }
 
+    public function lmsClassrooms(): HasMany
+    {
+        return $this->hasMany(LmsClassroom::class);
+    }
+
     public function teacherClassAssignments(): HasMany
     {
         return $this->hasMany(TeacherClassAssignment::class);

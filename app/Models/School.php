@@ -77,6 +77,26 @@ class School extends Model
         return $this->hasMany(ClassSubjectAssignment::class);
     }
 
+    public function lmsClassrooms(): HasMany
+    {
+        return $this->hasMany(LmsClassroom::class);
+    }
+
+    public function lmsTopics(): HasMany
+    {
+        return $this->hasMany(LmsTopic::class);
+    }
+
+    public function lmsMaterials(): HasMany
+    {
+        return $this->hasMany(LmsMaterial::class);
+    }
+
+    public function lmsResources(): HasMany
+    {
+        return $this->hasMany(LmsResource::class);
+    }
+
     public function studentElectiveSubjects(): HasMany
     {
         return $this->hasMany(StudentElectiveSubject::class);

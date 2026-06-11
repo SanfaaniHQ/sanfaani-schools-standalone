@@ -51,6 +51,26 @@ class User extends Authenticatable
         return $this->hasMany(TeacherResultSubmission::class, 'teacher_user_id');
     }
 
+    public function lmsTeachingMaterials(): HasMany
+    {
+        return $this->hasMany(LmsMaterial::class, 'teacher_user_id');
+    }
+
+    public function createdLmsClassrooms(): HasMany
+    {
+        return $this->hasMany(LmsClassroom::class, 'created_by');
+    }
+
+    public function createdLmsMaterials(): HasMany
+    {
+        return $this->hasMany(LmsMaterial::class, 'created_by');
+    }
+
+    public function uploadedLmsResources(): HasMany
+    {
+        return $this->hasMany(LmsResource::class, 'uploaded_by');
+    }
+
     public function recordedAttendanceRecords(): HasMany
     {
         return $this->hasMany(StudentAttendanceRecord::class, 'recorded_by');

@@ -74,6 +74,10 @@ use App\Http\Controllers\School\CommunicationController as SchoolCommunicationCo
 use App\Http\Controllers\School\FinanceController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ImportExportController;
+use App\Http\Controllers\School\LmsClassroomController;
+use App\Http\Controllers\School\LmsDashboardController;
+use App\Http\Controllers\School\LmsMaterialController;
+use App\Http\Controllers\School\LmsResourceController;
 use App\Http\Controllers\School\MailSettingController as SchoolMailSettingController;
 use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ReportCardSettingController;
@@ -951,6 +955,66 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                         Route::post('/classes/{class}', [AttendanceController::class, 'storeClass'])
                             ->middleware('feature.school:attendance.manage')
                             ->name('classes.store');
+                    });
+
+                Route::prefix('lms')
+                    ->name('lms.')
+                    ->middleware(['role:school_admin|teacher|super_admin', 'feature.school:lms.view,lms.manage,lms.materials.manage'])
+                    ->group(function () {
+                        Route::get('/', LmsDashboardController::class)
+                            ->name('index');
+
+                        Route::get('/classrooms', LmsDashboardController::class)
+                            ->name('classrooms.index');
+
+                        Route::post('/classrooms', [LmsClassroomController::class, 'store'])
+                            ->middleware('feature.school:lms.manage,lms.materials.manage')
+                            ->name('classrooms.store');
+
+                        Route::get('/classrooms/{classroom}', [LmsClassroomController::class, 'show'])
+                            ->name('classrooms.show');
+
+                        Route::patch('/classrooms/{classroom}', [LmsClassroomController::class, 'update'])
+                            ->middleware('feature.school:lms.manage,lms.materials.manage')
+                            ->name('classrooms.update');
+
+                        Route::post('/classrooms/{classroom}/topics', [LmsClassroomController::class, 'storeTopic'])
+                            ->middleware('feature.school:lms.manage,lms.materials.manage')
+                            ->name('topics.store');
+
+                        Route::get('/classrooms/{classroom}/materials/create', [LmsMaterialController::class, 'create'])
+                            ->middleware('feature.school:lms.materials.manage,lms.manage')
+                            ->name('materials.create');
+
+                        Route::post('/classrooms/{classroom}/materials', [LmsMaterialController::class, 'store'])
+                            ->middleware('feature.school:lms.materials.manage,lms.manage')
+                            ->name('materials.store');
+
+                        Route::get('/materials/{material}', [LmsMaterialController::class, 'show'])
+                            ->name('materials.show');
+
+                        Route::patch('/materials/{material}', [LmsMaterialController::class, 'update'])
+                            ->middleware('feature.school:lms.materials.manage,lms.manage')
+                            ->name('materials.update');
+
+                        Route::post('/materials/{material}/publish', [LmsMaterialController::class, 'publish'])
+                            ->middleware('feature.school:lms.materials.manage,lms.manage')
+                            ->name('materials.publish');
+
+                        Route::post('/materials/{material}/unpublish', [LmsMaterialController::class, 'unpublish'])
+                            ->middleware('feature.school:lms.materials.manage,lms.manage')
+                            ->name('materials.unpublish');
+
+                        Route::post('/materials/{material}/archive', [LmsMaterialController::class, 'archive'])
+                            ->middleware('feature.school:lms.materials.manage,lms.manage')
+                            ->name('materials.archive');
+
+                        Route::post('/materials/{material}/resources', [LmsResourceController::class, 'store'])
+                            ->middleware('feature.school:lms.materials.manage,lms.manage')
+                            ->name('resources.store');
+
+                        Route::get('/resources/{resource}/download', [LmsResourceController::class, 'download'])
+                            ->name('resources.download');
                     });
 
                 Route::prefix('finance')

@@ -52,6 +52,11 @@ class Subject extends Model
         return $this->hasMany(TeacherSubjectAssignment::class);
     }
 
+    public function lmsClassrooms(): HasMany
+    {
+        return $this->hasMany(LmsClassroom::class);
+    }
+
     public function assignedTeachers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'teacher_subject_assignments', 'subject_id', 'teacher_user_id')

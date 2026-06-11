@@ -76,6 +76,12 @@
                         <span class="mt-1 block text-sm text-text-secondary">Mark or review attendance for active class assignments only.</span>
                     </a>
                 @endif
+                @if(($features['lms.view']['enabled'] ?? true))
+                    <a href="{{ route('school.lms.index') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">Learning Materials</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Post lessons and resources only for assigned classes and subjects.</span>
+                    </a>
+                @endif
                 @if(($features['cbt.question_bank']['enabled'] ?? false))
                     <a href="{{ route('school.cbt.question-banks.index') }}" class="ui-card ui-card-hover block p-4">
                         <span class="font-semibold text-text-primary">CBT Question Bank</span>

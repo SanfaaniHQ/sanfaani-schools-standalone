@@ -201,6 +201,9 @@ class StandaloneDashboardSummaryService
             'finance_fee_invoices' => $school->studentFeeInvoices()->count(),
             'finance_fee_payments' => $school->studentFeePayments()->count(),
             'finance_fee_balance' => (float) $school->studentFeeInvoices()->sum('balance_amount'),
+            'lms_classrooms' => $school->lmsClassrooms()->count(),
+            'lms_materials' => $school->lmsMaterials()->count(),
+            'lms_published_materials' => $school->lmsMaterials()->where('status', 'published')->count(),
             'results' => $school->studentResults()->count(),
             'published_results' => $school->studentResults()->where('status', 'published')->count(),
             'cbt_question_banks' => $school->cbtQuestionBanks()->count(),
@@ -240,6 +243,13 @@ class StandaloneDashboardSummaryService
                 Route::has('school.finance.index'),
                 'Fee items, class/student assignments, student invoices, manual payment recording, and balances are available.',
                 $this->route('school.finance.index')
+            ),
+            $this->checklistItem(
+                'lms_foundation',
+                'LMS material foundation',
+                Route::has('school.lms.index'),
+                'Online class/subject LMS classrooms, topics, draft/published materials, and private resources are available.',
+                $this->route('school.lms.index')
             ),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
             $this->checklistItem('result_settings', 'Result and report settings', $resultSettingsReady, $resultSettingsReady ? 'Report or access settings are configured.' : 'Configure report cards or result access rules.', $this->route('school.report-card-settings.edit')),
@@ -315,6 +325,12 @@ class StandaloneDashboardSummaryService
                     'href' => $this->route('school.finance.index'),
                 ],
                 [
+                    'label' => 'LMS',
+                    'value' => $counts['lms_classrooms'],
+                    'meta' => $counts['lms_published_materials'].' published material(s)',
+                    'href' => $this->route('school.lms.index'),
+                ],
+                [
                     'label' => 'Results',
                     'value' => $counts['results'],
                     'meta' => $counts['published_results'].' published result(s)',
@@ -341,6 +357,7 @@ class StandaloneDashboardSummaryService
                 ['label' => 'Admissions', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Attendance', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Finance', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
+                ['label' => 'LMS', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Results', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'CBT', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
             ],
@@ -352,7 +369,7 @@ class StandaloneDashboardSummaryService
         $workspaceHref = $this->route('workspace.create');
 
         if (! $school) {
-            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'Results', 'CBT'])
+            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'LMS', 'Results', 'CBT'])
                 ->map(fn (string $label): array => [
                     'label' => $label,
                     'value' => 0,
@@ -472,7 +489,7 @@ class StandaloneDashboardSummaryService
                     ? 'Attendance-only browser capture and validated sync are enabled.'
                     : 'The attendance-only browser pilot is available only when capture and sync are enabled.',
             ],
-            ['label' => 'LMS and learning content', 'status' => 'Planned', 'detail' => 'Course delivery and content workflows remain future work.'],
+            ['label' => 'LMS and learning content', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, and publish workflow are available. CBT integration, live classes, offline LMS, and submissions remain deferred.'],
             ['label' => 'Live classes', 'status' => 'Planned', 'detail' => 'No live-class provider is presented as available.'],
             ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];

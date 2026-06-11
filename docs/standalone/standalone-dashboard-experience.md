@@ -28,6 +28,7 @@ The School Admin dashboard keeps the existing operational modules and adds a rea
 - staff and student records;
 - attendance foundation;
 - fees/accounting foundation;
+- LMS material foundation;
 - admissions cycles;
 - result and report settings;
 - CBT setup;
@@ -37,7 +38,7 @@ Admissions, attendance, fees/finance, results, CBT, scratch cards, communication
 
 ## Teacher
 
-The Teacher dashboard remains assignment-scoped. It shows assigned classes, attendance, subjects, students, result work, and the existing CBT question-bank or theory-marking links only when those role features are enabled.
+The Teacher dashboard remains assignment-scoped. It shows assigned classes, attendance, LMS learning materials, subjects, students, result work, and the existing CBT question-bank or theory-marking links only when those role features are enabled.
 
 ## Result Officer
 
@@ -55,7 +56,7 @@ The dashboard labels these areas as available or **Planned**:
 - attendance-only offline capture and its server-side sync monitor are available when enabled;
 - fees/accounting foundation is available;
 - finance reports, finance CSV export, and audit review are available;
-- LMS and learning content;
+- LMS and learning content foundation is available for online class/subject materials and private resources;
 - live classes;
 - full browser offline/PWA.
 
@@ -66,3 +67,5 @@ They are status labels, not links to placeholder implementations.
 The local database is the source of truth. A school can operate from a local computer or LAN server while that server and database are available. Attendance is currently online-first against that school database.
 
 The attendance-only browser offline capture pilot does not make finance or the full portal available offline. The dashboard must not claim that fee capture or every browser task works without a connection to the school server.
+
+The LMS foundation is also online-first. It must not be described as offline LMS, CBT integration, live classes, assignment submissions/grading, or a parent/student LMS portal.
