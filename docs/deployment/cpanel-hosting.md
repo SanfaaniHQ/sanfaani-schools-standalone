@@ -78,6 +78,8 @@ Create this cron command with the correct PHP path:
 
 For queues, use `sync` for simple shared hosting or database queue plus cron if the host allows it. Long-running queue workers are better suited to VPS/cloud hosting.
 
+After cron is configured, open `/admin/standalone/status` and confirm the scheduler heartbeat is fresh. The health page should show only safe summaries and must not reveal database passwords, `.env` values, license secrets, sync tokens, API keys, or private backup paths. See `docs/standalone/system-health-and-scheduler-monitoring.md`.
+
 ## Permissions
 
 - Directories: `0755`.

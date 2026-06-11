@@ -14,6 +14,7 @@ class StandaloneDashboardSummaryService
     public function __construct(
         private StandaloneEditionService $edition,
         private StandaloneSyncService $sync,
+        private StandaloneSystemHealthService $health,
         private LicenseValidationService $licenses,
         private BackupService $backups,
     ) {}
@@ -32,6 +33,7 @@ class StandaloneDashboardSummaryService
 
         $editionStatus = $this->edition->status();
         $syncStatus = $this->sync->status();
+        $healthSummary = $this->health->summary($school);
         $licenseStatus = $this->licenses->status($school);
         $licenseReady = $this->licenseReady($licenseStatus);
         $latestBackup = $this->latestBackup($school);
@@ -41,6 +43,10 @@ class StandaloneDashboardSummaryService
 
         if (! $school) {
             $warnings->push('No school workspace has been created yet.');
+        }
+
+        if ($healthSummary['overall']['status'] !== 'pass') {
+            $warnings->push('Standalone system health: '.$healthSummary['overall']['message']);
         }
 
         if (! $licenseReady) {
@@ -137,9 +143,9 @@ class StandaloneDashboardSummaryService
                 ],
                 [
                     'label' => 'System health',
-                    'value' => $warnings->isEmpty() ? 'Healthy' : $warnings->count().' warning(s)',
-                    'meta' => $warnings->isEmpty() ? 'No standalone configuration warnings' : 'Review installation health before handover',
-                    'tone' => $warnings->isEmpty() ? 'success' : 'warning',
+                    'value' => $healthSummary['overall']['label'],
+                    'meta' => $healthSummary['overall']['message'],
+                    'tone' => $healthSummary['overall']['tone'],
                     'href' => $this->route('admin.standalone.status'),
                 ],
             ],
@@ -158,7 +164,10 @@ class StandaloneDashboardSummaryService
         $licenseStatus = $this->licenses->status($school);
         $licenseReady = $this->licenseReady($licenseStatus);
         $backupReadiness = $this->backups->preUpdateReadiness($school);
-        $systemWarnings = $this->edition->warnings();
+        $healthSummary = $this->health->summary($school);
+        $systemWarnings = $healthSummary['overall']['status'] === 'pass'
+            ? []
+            : ['Standalone system health: '.$healthSummary['overall']['message']];
 
         $counts = [
             'users' => $school->users()->count(),
@@ -196,7 +205,7 @@ class StandaloneDashboardSummaryService
             $this->checklistItem('cbt', 'CBT setup', $counts['cbt_question_banks'] > 0 || $counts['cbt_exams'] > 0, $counts['cbt_question_banks'].' bank(s), '.$counts['cbt_exams'].' exam(s).', $this->route('school.cbt.dashboard')),
             $this->checklistItem('backup', 'Recent verified backup', (bool) $backupReadiness['ready'], $backupReadiness['message'], $ownerContext ? $this->route('admin.backups.index') : null),
             $this->checklistItem('license', 'Standalone license', $licenseReady, 'Status: '.$this->label($licenseStatus).'.', $ownerContext ? $this->route('admin.license.index') : null),
-            $this->checklistItem('system_health', 'Standalone system health', empty($systemWarnings), empty($systemWarnings) ? 'No standalone configuration warnings.' : count($systemWarnings).' warning(s) need owner review.', $ownerContext ? $this->route('admin.standalone.status') : null),
+            $this->checklistItem('system_health', 'Standalone system health', $healthSummary['overall']['status'] === 'pass', $healthSummary['overall']['message'], $ownerContext ? $this->route('admin.standalone.status') : null),
         ];
 
         return [
@@ -232,9 +241,9 @@ class StandaloneDashboardSummaryService
                 ],
                 [
                     'label' => 'System health',
-                    'value' => empty($systemWarnings) ? 'Healthy' : count($systemWarnings).' warning(s)',
-                    'meta' => empty($systemWarnings) ? 'No standalone configuration warnings' : 'Owner review required',
-                    'tone' => empty($systemWarnings) ? 'success' : 'warning',
+                    'value' => $healthSummary['overall']['label'],
+                    'meta' => $healthSummary['overall']['message'],
+                    'tone' => $healthSummary['overall']['tone'],
                     'href' => null,
                 ],
             ],

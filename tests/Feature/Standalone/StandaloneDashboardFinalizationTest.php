@@ -47,6 +47,12 @@ class StandaloneDashboardFinalizationTest extends TestCase
 
     public function test_owner_dashboard_shows_standalone_health_setup_operations_and_planned_boundaries(): void
     {
+        config([
+            'standalone.sync.enabled' => true,
+            'standalone.sync.endpoint' => 'https://sync.example.test/dashboard-endpoint',
+            'standalone.sync.token' => 'dashboard-sync-token-secret',
+        ]);
+
         $school = $this->school();
         $owner = User::factory()->create();
         $owner->assignRole('super_admin');
@@ -74,6 +80,11 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertSee('Full browser offline/PWA')
             ->assertSee('Planned')
             ->assertSee('Local-first means the school server and local database remain the source of truth.')
+            ->assertDontSee('Database connection')
+            ->assertDontSee('Scheduler/cron heartbeat')
+            ->assertDontSee('Safe health output')
+            ->assertDontSee('https://sync.example.test/dashboard-endpoint')
+            ->assertDontSee('dashboard-sync-token-secret')
             ->assertDontSee('School Subscriptions')
             ->assertDontSee('Demo Sessions')
             ->assertDontSee('Marketing Pipeline')

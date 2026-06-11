@@ -64,13 +64,63 @@ class StandaloneStatusPageTest extends TestCase
             ->assertSee('Browser offline/PWA is not complete');
     }
 
+    public function test_health_summary_appears_on_standalone_status_page_without_exposing_secrets(): void
+    {
+        config([
+            'database.connections.sqlite.password' => 'database-secret-value',
+            'mail.mailers.smtp.password' => 'smtp-secret-value',
+            'standalone.sync.enabled' => true,
+            'standalone.sync.endpoint' => 'https://sync.example.test/private-endpoint',
+            'standalone.sync.token' => 'sync-token-secret-value',
+        ]);
+
+        $admin = $this->userWithRole('super_admin');
+
+        $this->actingAs($admin)
+            ->get(route('admin.standalone.status'))
+            ->assertOk()
+            ->assertSee('System health summary')
+            ->assertSee('Safe output rules')
+            ->assertSee('Runtime and app')
+            ->assertSee('PHP version')
+            ->assertSee('Laravel version')
+            ->assertSee('Database connection')
+            ->assertSee('Storage, disk, and assets')
+            ->assertSee('Disk free space')
+            ->assertSee('Upload limit')
+            ->assertSee('Post size limit')
+            ->assertSee('Scheduler, queue, and mail')
+            ->assertSee('Scheduler/cron heartbeat')
+            ->assertSee('Queue')
+            ->assertSee('Mail configuration')
+            ->assertSee('Standalone readiness')
+            ->assertSee('Installer status')
+            ->assertSee('License status')
+            ->assertSee('Backup status')
+            ->assertSee('Update readiness')
+            ->assertSee('Standalone sync/offline')
+            ->assertSee('Safe health output')
+            ->assertSee('Configured endpoint / Configured token')
+            ->assertDontSee('database-secret-value')
+            ->assertDontSee('smtp-secret-value')
+            ->assertDontSee('sync-token-secret-value')
+            ->assertDontSee('https://sync.example.test/private-endpoint');
+    }
+
     public function test_unauthorized_user_cannot_access_standalone_status_page(): void
     {
+        config([
+            'standalone.sync.endpoint' => 'https://sync.example.test/private-endpoint',
+            'standalone.sync.token' => 'sync-token-secret-value',
+        ]);
+
         $schoolAdmin = $this->userWithRole('school_admin');
 
         $this->actingAs($schoolAdmin)
             ->get(route('admin.standalone.status'))
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertDontSee('sync-token-secret-value')
+            ->assertDontSee('https://sync.example.test/private-endpoint');
     }
 
     private function userWithRole(string $role): User

@@ -29,6 +29,24 @@ return [
         'backup_enabled' => (bool) env('SANFAANI_STANDALONE_BACKUP_SYNC_ENABLED', false),
     ],
 
+    'scheduler_monitor' => [
+        'enabled' => (bool) env('SANFAANI_SCHEDULER_MONITOR_ENABLED', true),
+        'cache_store' => env('SANFAANI_SCHEDULER_HEARTBEAT_CACHE_STORE', 'file'),
+        'schedule_cache_store' => env('SANFAANI_SCHEDULER_MUTEX_CACHE_STORE', 'file'),
+        'cache_key' => env('SANFAANI_SCHEDULER_HEARTBEAT_CACHE_KEY', 'standalone.scheduler.last_heartbeat_at'),
+        'stale_after_minutes' => (int) env('SANFAANI_SCHEDULER_STALE_AFTER_MINUTES', 15),
+        'cache_ttl_days' => (int) env('SANFAANI_SCHEDULER_HEARTBEAT_TTL_DAYS', 7),
+    ],
+
+    'health' => [
+        'disk_free_warning_mb' => (int) env('SANFAANI_HEALTH_DISK_FREE_WARNING_MB', 1024),
+        'writable_paths' => [
+            'storage/app',
+            'storage/framework/cache',
+            'storage/logs',
+        ],
+    ],
+
     'main_flow' => [
         'run_installer',
         'create_school_admin',

@@ -12,6 +12,8 @@ Laravel scheduler cron:
 
 Use the correct PHP binary path for the host.
 
+Standalone installs record a scheduler heartbeat through the scheduled `standalone:scheduler-heartbeat` command. The owner health page uses that heartbeat to warn when cron is not running or has gone stale. See `docs/standalone/system-health-and-scheduler-monitoring.md`.
+
 ## Shared Hosting
 
 - Use `QUEUE_CONNECTION=sync` for simple deployments.

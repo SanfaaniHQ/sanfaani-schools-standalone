@@ -2,7 +2,7 @@
     <x-slot name="header">
         <x-ui.page-header
             title="Standalone Status"
-            description="Local-first school installation status, installer readiness, and safe sync foundation."
+            description="Local-first school installation status, system health, scheduler monitoring, and safe sync foundation."
         />
     </x-slot>
 
@@ -10,6 +10,22 @@
         $yesNo = fn (bool $value) => $value ? 'Enabled' : 'Disabled';
         $configured = fn (bool $value) => $value ? 'Configured' : 'Missing';
         $lastSync = $syncStatus['last_sync'];
+        $healthTone = $systemHealth['overall']['tone'] ?? 'info';
+        $contextValue = function (mixed $value): string {
+            if (is_bool($value)) {
+                return $value ? 'Yes' : 'No';
+            }
+
+            if (is_array($value)) {
+                return json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: 'Unknown';
+            }
+
+            if ($value === null || $value === '') {
+                return 'Unknown';
+            }
+
+            return (string) $value;
+        };
     @endphp
 
     <div class="space-y-6">
@@ -22,6 +38,18 @@
         @foreach ($editionStatus['warnings'] as $warning)
             <x-ui.alert tone="warning" :body="$warning" />
         @endforeach
+
+        <x-ui.alert
+            :tone="$healthTone"
+            title="System health summary"
+            :body="$systemHealth['overall']['message']"
+        />
+
+        <x-ui.alert
+            tone="info"
+            title="Safe output rules"
+            body="This page shows statuses, counts, relative paths, and configured/missing flags only. Database passwords, .env values, license secrets, sync tokens, API keys, and private backup paths are not displayed."
+        />
 
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <x-ui.stat-card
@@ -44,10 +72,92 @@
             <x-ui.stat-card
                 label="Sync"
                 :value="$yesNo($editionStatus['sync_enabled'])"
-                :meta="$configured($editionStatus['sync_endpoint_configured']).' endpoint'"
+                :meta="$configured($editionStatus['sync_endpoint_configured']).' endpoint / '.$configured($editionStatus['sync_token_configured']).' token'"
                 :tone="$editionStatus['sync_enabled'] ? 'info' : 'neutral'"
             />
         </section>
+
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+            @foreach ($systemHealth['cards'] as $card)
+                <x-ui.stat-card
+                    :label="$card['label']"
+                    :value="$card['value']"
+                    :meta="$card['meta']"
+                    :tone="$card['tone']"
+                />
+            @endforeach
+        </section>
+
+        <x-ui.panel
+            title="Health Check Totals"
+            description="Read-only summary generated from Laravel, database, storage, queue, scheduler, license, backup, update, installer, and sync checks."
+        >
+            <dl class="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-5">
+                <div>
+                    <dt class="text-text-secondary">Passing</dt>
+                    <dd class="mt-1 font-mono text-2xl font-semibold text-emerald-700 dark:text-emerald-300">{{ $systemHealth['summary']['pass'] }}</dd>
+                </div>
+                <div>
+                    <dt class="text-text-secondary">Warnings</dt>
+                    <dd class="mt-1 font-mono text-2xl font-semibold text-amber-700 dark:text-amber-300">{{ $systemHealth['summary']['warning'] }}</dd>
+                </div>
+                <div>
+                    <dt class="text-text-secondary">Blocking</dt>
+                    <dd class="mt-1 font-mono text-2xl font-semibold text-rose-700 dark:text-rose-300">{{ $systemHealth['summary']['fail'] }}</dd>
+                </div>
+                <div>
+                    <dt class="text-text-secondary">Informational</dt>
+                    <dd class="mt-1 font-mono text-2xl font-semibold text-text-primary">{{ $systemHealth['summary']['info'] }}</dd>
+                </div>
+                <div>
+                    <dt class="text-text-secondary">Generated</dt>
+                    <dd class="mt-1 text-sm font-semibold text-text-primary">{{ \Illuminate\Support\Carbon::parse($systemHealth['generated_at'])->diffForHumans() }}</dd>
+                </div>
+            </dl>
+        </x-ui.panel>
+
+        @foreach ($systemHealth['sections'] as $section)
+            <x-ui.table-card
+                :title="$section['label']"
+                description="Safe diagnostic summary. Secrets and raw environment values are not printed."
+            >
+                <table class="enterprise-table">
+                    <thead>
+                        <tr>
+                            <th class="px-5 py-3 text-left">Check</th>
+                            <th class="px-5 py-3 text-left">Status</th>
+                            <th class="px-5 py-3 text-left">Message</th>
+                            <th class="px-5 py-3 text-left">Safe details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($section['checks'] as $check)
+                            <tr>
+                                <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $check['label'] }}</td>
+                                <td class="px-5 py-4 text-sm">
+                                    <x-ui.badge :tone="$check['tone']">{{ str($check['status'])->title() }}</x-ui.badge>
+                                </td>
+                                <td class="px-5 py-4 text-sm text-text-secondary">{{ $check['message'] }}</td>
+                                <td class="px-5 py-4 text-xs text-text-secondary">
+                                    @if (empty($check['context']))
+                                        No additional safe details.
+                                    @else
+                                        <dl class="space-y-1">
+                                            @foreach ($check['context'] as $key => $value)
+                                                <div class="flex justify-between gap-3">
+                                                    <dt class="font-medium">{{ str((string) $key)->replace('_', ' ')->title() }}</dt>
+                                                    <dd class="text-right font-mono text-text-primary">{{ $contextValue($value) }}</dd>
+                                                </div>
+                                            @endforeach
+                                        </dl>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </x-ui.table-card>
+        @endforeach
 
         <x-ui.table-card
             title="Standalone Configuration"
@@ -85,7 +195,11 @@
                     </tr>
                     <tr>
                         <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Sync endpoint</th>
-                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $editionStatus['sync_endpoint_configured'] ? $editionStatus['sync_endpoint'] : 'Missing' }}</td>
+                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $configured($editionStatus['sync_endpoint_configured']) }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Sync token</th>
+                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $configured($editionStatus['sync_token_configured']) }}</td>
                     </tr>
                     <tr>
                         <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Last sync status</th>

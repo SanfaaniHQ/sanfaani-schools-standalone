@@ -11,7 +11,7 @@ The Super Admin dashboard is the installation-owner view. It summarizes:
 - school profile and branding readiness;
 - backup and guided-update readiness;
 - local-first sync status;
-- standalone configuration warnings;
+- high-level standalone system health from `docs/standalone/system-health-and-scheduler-monitoring.md`;
 - admissions, results, and CBT activity;
 - a full school setup checklist.
 
