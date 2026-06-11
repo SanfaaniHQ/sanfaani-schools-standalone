@@ -53,7 +53,7 @@ The view displays safe metadata only: finance record IDs, student ID, class ID, 
 
 ## Deferred Boundaries
 
-- Import/export remains deferred to Stage 12.
+- Selected finance CSV export is available from the school Import / Export workspace.
 - Online payment gateway automation is not implemented for school fees.
 - Offline fee capture is not implemented.
 - Parent/student finance portal visibility is not implemented.

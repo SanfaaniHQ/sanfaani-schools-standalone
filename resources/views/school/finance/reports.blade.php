@@ -68,7 +68,7 @@
                     <a href="{{ route('school.finance.reports') }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Clear</a>
                 </div>
                 <p class="text-xs text-gray-500 md:col-span-4">
-                    Date filters apply to invoice issue dates for billed and outstanding summaries, and to payment dates for payment summaries. Import/export remains Stage 12.
+                    Date filters apply to invoice issue dates for billed and outstanding summaries, and to payment dates for payment summaries. Use Import / Export for selected finance CSV export.
                 </p>
             </form>
 
@@ -277,7 +277,7 @@
 
             <x-ui.panel tone="info">
                 <p class="text-sm leading-6 text-text-secondary">
-                    Reports are view-only and school-scoped. Import/export is still deferred to Stage 12; online payment gateway automation, offline fee capture, parent/student finance portals, and double-entry accounting are not implemented here.
+                    Reports are view-only and school-scoped. Selected finance CSV export is available from Import / Export; online payment gateway automation, offline fee capture, parent/student finance portals, and double-entry accounting are not implemented here.
                 </p>
             </x-ui.panel>
         </div>

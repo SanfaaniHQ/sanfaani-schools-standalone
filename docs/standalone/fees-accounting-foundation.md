@@ -96,7 +96,7 @@ Finance audit review filters the existing `audit_logs` table to safe finance act
 
 ## Deferred Boundaries
 
-- Import/export workflows are planned for Stage 12.
+- Selected finance CSV export is available from the school Import / Export workspace.
 - Payment gateway automation is not implemented by this school-fees foundation.
 - Existing gateway settings and result/admissions payment workflows remain separate and preserved.
 - Offline fee capture is not implemented.

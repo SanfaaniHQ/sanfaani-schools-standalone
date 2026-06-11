@@ -73,6 +73,7 @@ use App\Http\Controllers\School\ClassUploadController;
 use App\Http\Controllers\School\CommunicationController as SchoolCommunicationController;
 use App\Http\Controllers\School\FinanceController;
 use App\Http\Controllers\School\GradingScaleController;
+use App\Http\Controllers\School\ImportExportController;
 use App\Http\Controllers\School\MailSettingController as SchoolMailSettingController;
 use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ReportCardSettingController;
@@ -1003,6 +1004,32 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                         Route::get('/students/{student}', [FinanceController::class, 'student'])
                             ->middleware('feature.school:finance.view')
                             ->name('students.show');
+                    });
+
+                Route::prefix('import-export')
+                    ->name('import-export.')
+                    ->middleware('role:school_admin|accountant|super_admin')
+                    ->group(function () {
+                        Route::get('/', [ImportExportController::class, 'index'])
+                            ->name('index');
+
+                        Route::get('/students/export', [ImportExportController::class, 'exportStudents'])
+                            ->name('students.export');
+
+                        Route::get('/students/template', [ImportExportController::class, 'studentTemplate'])
+                            ->name('students.template');
+
+                        Route::post('/students/preview', [ImportExportController::class, 'previewStudents'])
+                            ->name('students.preview');
+
+                        Route::post('/students/import', [ImportExportController::class, 'commitStudents'])
+                            ->name('students.import');
+
+                        Route::get('/attendance/export', [ImportExportController::class, 'exportAttendance'])
+                            ->name('attendance.export');
+
+                        Route::get('/finance/export', [ImportExportController::class, 'exportFinance'])
+                            ->name('finance.export');
                     });
 
                 Route::middleware('role:school_admin')

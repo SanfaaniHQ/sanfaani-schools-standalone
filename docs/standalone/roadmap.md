@@ -14,6 +14,7 @@ Completed in the local-first foundation:
 - Administrator monitor for server-known offline attendance sync receipts and attempts.
 - Online fees/accounting foundation for fee setup, student invoices, manual payments, balances, permissions, and audit logs.
 - School-scoped finance reports and finance audit review for admins/accountants.
+- School-scoped CSV import/export tools for selected student, attendance, and finance data.
 - Documentation that the local database is the source of truth.
 
 Next phases:
@@ -24,7 +25,6 @@ Next phases:
 - Add a cloud transport abstraction with tests and timeouts.
 - Add conflict detection before any pull/two-way sync.
 - Add backup sync rules separate from operational sync.
-- Add finance import/export workflows in Stage 12.
 - Add deeper debt analytics/export packs after the Stage 11 view-only reports.
 - Add browser offline/PWA support as a later phase.
 

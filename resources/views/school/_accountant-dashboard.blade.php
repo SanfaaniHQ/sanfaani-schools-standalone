@@ -6,11 +6,12 @@
             <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Fees and accounting foundation</p>
             <h3 class="mt-2 text-2xl font-semibold text-text-primary">{{ $school->name }}</h3>
             <p class="mt-2 text-sm leading-6 text-text-secondary">
-                Online fee setup, student invoices, manual payment recording, finance reports, and audit review are available. Import/export remains Stage 12; gateways and offline fee capture are deferred.
+                Online fee setup, student invoices, manual payment recording, finance reports, CSV finance export, and audit review are available. Gateways and offline fee capture are deferred.
             </p>
             <div class="mt-4 flex flex-wrap gap-2">
                 <a href="{{ route('school.finance.index') }}" class="ui-button-primary">Open Finance</a>
                 <a href="{{ route('school.finance.reports') }}" class="ui-button-secondary">Reports</a>
+                <a href="{{ route('school.import-export.index') }}" class="ui-button-secondary">Export CSV</a>
                 <a href="{{ route('school.finance.audit') }}" class="ui-button-secondary">Audit Review</a>
                 <a href="{{ route('school.finance.invoices.index') }}" class="ui-button-secondary">View Invoices</a>
             </div>

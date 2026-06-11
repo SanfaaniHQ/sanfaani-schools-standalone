@@ -45,7 +45,7 @@ The Result Officer dashboard remains focused on result entry, upload, review, pu
 
 ## Accountant And Bursar Boundary
 
-The Accountant dashboard provides the school-fees foundation plus Stage 11 reports and audit review: fee setup, assignments, student invoices, manual payment recording, billed/paid/outstanding summaries, balances, recent finance activity, report links, and safe finance audit visibility. It does not provide import/export, gateway automation, offline fee capture, parent/student finance access, or double-entry accounting.
+The Accountant dashboard provides the school-fees foundation plus Stage 11 reports, Stage 12 finance CSV export, and audit review: fee setup, assignments, student invoices, manual payment recording, billed/paid/outstanding summaries, balances, recent finance activity, report links, selected finance export, and safe finance audit visibility. It does not provide gateway automation, offline fee capture, parent/student finance access, or double-entry accounting.
 
 ## Planned Modules
 
@@ -54,7 +54,7 @@ The dashboard labels these areas as available or **Planned**:
 - attendance foundation is available for online class attendance;
 - attendance-only offline capture and its server-side sync monitor are available when enabled;
 - fees/accounting foundation is available;
-- finance reports and audit review are available, while import/export remains Stage 12;
+- finance reports, finance CSV export, and audit review are available;
 - LMS and learning content;
 - live classes;
 - full browser offline/PWA.

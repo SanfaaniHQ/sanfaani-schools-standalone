@@ -61,13 +61,13 @@ class FinanceFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Fees & Finance')
             ->assertSee('manual payments')
-            ->assertSee('Finance reports and audit review are available')
+            ->assertSee('Finance reports, finance CSV export, and audit review are available')
             ->assertSee('offline fee capture are deferred');
 
         $this->get(route('school.finance.reports'))
             ->assertOk()
             ->assertSee('Finance Reports')
-            ->assertSee('Import/export remains Stage 12');
+            ->assertSee('Use Import / Export for selected finance CSV export');
 
         $accountant = $this->createUserForSchool($school, 'accountant');
         $this->actAsSchoolRole($accountant, $school, 'accountant');
@@ -76,8 +76,8 @@ class FinanceFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Accountant Dashboard')
             ->assertSee('Fees and accounting foundation')
-            ->assertSee('finance reports, and audit review are available')
-            ->assertSee('Import/export remains Stage 12');
+            ->assertSee('finance reports, CSV finance export, and audit review are available')
+            ->assertSee('Export CSV');
 
         $this->get(route('school.finance.audit'))
             ->assertOk()
@@ -462,7 +462,7 @@ class FinanceFoundationTest extends TestCase
             ->assertSee('Fees/accounting foundation')
             ->assertSee('Finance reports and audit pack')
             ->assertSee('Finance reports and audit review are available')
-            ->assertSee('Import/export remains Stage 12')
+            ->assertSee('Import/export tools')
             ->assertDontSee('Payment gateway automation is available');
 
         $this->assertFalse(Route::has('school.finance.reports.export'));

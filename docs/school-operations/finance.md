@@ -10,7 +10,8 @@ Use **Fees & Finance** in the school workspace to set up fees and record school 
 4. Open an invoice and record each manual payment.
 5. Use **Reports** to review billed, paid, outstanding, status, method, class, session, term, and student balance summaries.
 6. Use **Audit Review** to inspect safe finance audit entries.
-7. Use the invoice or student finance history to review individual billed, paid, and outstanding amounts.
+7. Use **Import / Export** for selected finance CSV export when a school-scoped operational extract is needed.
+8. Use the invoice or student finance history to review individual billed, paid, and outstanding amounts.
 
 Class invoice generation is idempotent for the same student, academic context, and assignment set. Repeating the same generation preserves the matching existing invoice.
 
@@ -54,7 +55,8 @@ The audit review displays safe finance identifiers, amounts, statuses, dates, me
 
 ## Current Boundary
 
-This module provides online fee setup, student billing, manual payments, balances, receipt history, finance reports, and finance audit review. Import/export is Stage 12 work. Payment gateway automation, offline fee capture, parent/student finance portal access, and full double-entry accounting remain deferred.
+This module provides online fee setup, student billing, manual payments, balances, receipt history, finance reports, finance CSV export, and finance audit review. Payment gateway automation, offline fee capture, parent/student finance portal access, and full double-entry accounting remain deferred.
 
 See `docs/standalone/fees-accounting-foundation.md` for architecture, permissions, audit behavior, and deferred scope.
 See `docs/school-operations/finance-reports-and-audit.md` for the Stage 11 report and audit details.
+See `docs/school-operations/import-export.md` for the Stage 12 CSV import/export boundary.

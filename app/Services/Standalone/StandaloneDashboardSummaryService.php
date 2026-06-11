@@ -458,7 +458,12 @@ class StandaloneDashboardSummaryService
             [
                 'label' => 'Finance reports and audit pack',
                 'status' => 'Available',
-                'detail' => 'Finance reports and audit review are available. Import/export remains Stage 12; gateway automation, offline fee capture, and full accounting views remain deferred.',
+                'detail' => 'Finance reports and audit review are available. Gateway automation, offline fee capture, and full accounting views remain deferred.',
+            ],
+            [
+                'label' => 'Import/export tools',
+                'status' => 'Available',
+                'detail' => 'School-scoped CSV exports and preview-first student import tools are available. Full database export remains in the backup system.',
             ],
             [
                 'label' => 'Offline attendance capture',

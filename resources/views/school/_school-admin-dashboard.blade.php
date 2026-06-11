@@ -18,6 +18,7 @@
         ['title' => 'Admissions', 'body' => 'Applications, settings, channels, and conversion workflow.', 'href' => route('admin.admissions.index'), 'feature' => null],
         ['title' => 'Attendance', 'body' => 'Daily registers, filtered reports, status counts, and student history.', 'href' => route('school.attendance.index'), 'feature' => 'attendance.view'],
         ['title' => 'Fees & Finance', 'body' => 'Fee setup, invoices, manual payments, reports, audit review, and balances.', 'href' => route('school.finance.index'), 'feature' => 'finance.view'],
+        ['title' => 'Import / Export', 'body' => 'Safe CSV templates, previews, and selected operational exports.', 'href' => route('school.import-export.index'), 'feature' => null],
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
         ['title' => 'CBT', 'body' => 'Question banks, exams, marking, and CBT result publishing.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],
