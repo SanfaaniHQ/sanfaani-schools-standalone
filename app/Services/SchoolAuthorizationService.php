@@ -40,6 +40,10 @@ class SchoolAuthorizationService
         'cbt.public_competition' => 'cbt_competition_mode',
         'cbt.certificates' => 'cbt_certificates',
         'pdf.snapshots' => 'pdf_snapshots',
+        'communication.send' => 'communication_tools',
+        'communication.bulk' => 'communication_tools',
+        'communication.logs.view' => 'communication_tools',
+        'communication.templates.manage' => 'communication_tools',
     ];
 
     /** @var array<string, bool> */
@@ -152,10 +156,6 @@ class SchoolAuthorizationService
 
     private function resolve(User $user, School $school, string $featureKey): bool
     {
-        if ($featureKey === 'communication.logs.view') {
-            return false;
-        }
-
         if (! $this->userBelongsToSchool($user, $school)) {
             return false;
         }

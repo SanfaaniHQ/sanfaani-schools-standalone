@@ -10,6 +10,7 @@ use App\Models\Student;
 use App\Models\StudentFeeInvoice;
 use App\Models\StudentFeePayment;
 use App\Models\User;
+use App\Services\Communications\SchoolNotificationService;
 use App\Services\AuditLogService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -19,7 +20,10 @@ use Illuminate\Validation\ValidationException;
 
 class SchoolFinanceService
 {
-    public function __construct(private AuditLogService $auditLog) {}
+    public function __construct(
+        private AuditLogService $auditLog,
+        private SchoolNotificationService $notifications,
+    ) {}
 
     public function invoiceStatuses(): array
     {
@@ -238,6 +242,7 @@ class SchoolFinanceService
                 'items' => $assignments->count(),
                 'generated_by' => $actor->id,
             ]);
+            $this->notifications->logFinanceInvoiceGenerated($school, $actor, $invoice->refresh());
 
             return [
                 'invoice' => $invoice->refresh()->load(['items.feeItem', 'payments', 'student', 'schoolClass', 'academicSession', 'term']),
@@ -337,6 +342,7 @@ class SchoolFinanceService
                 'received_by' => $actor->id,
                 'has_reference' => filled($payment->reference),
             ]);
+            $this->notifications->logFinancePaymentRecorded($school, $actor, $payment->refresh(), $invoice->refresh());
 
             return $payment->refresh();
         });

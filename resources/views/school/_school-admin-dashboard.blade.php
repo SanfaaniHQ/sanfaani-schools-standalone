@@ -24,6 +24,7 @@
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
         ['title' => 'CBT', 'body' => 'Question banks, exams, marking, result publishing, and the assessment engine behind LMS links.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],
+        ['title' => 'Communication Center', 'body' => 'Operational notification logs, templates, provider-ready channels, and safety boundaries.', 'href' => route('school.communications.index'), 'feature' => 'communication.logs.view'],
         ['title' => 'Bulk Communication', 'body' => 'Send school-scoped operational messages.', 'href' => route('school.communications.bulk'), 'feature' => 'communication.bulk'],
         ['title' => 'Promotions', 'body' => 'Move students across sessions without losing history.', 'href' => route('school.student-promotions.index'), 'feature' => 'student.promote'],
         ['title' => 'User Management', 'body' => 'Staff accounts, roles, and feature access.', 'href' => route('school.staff.index'), 'feature' => null],
@@ -112,6 +113,7 @@
         <x-ui.stat-card label="Academic Setup" :value="$totalClasses . ' / ' . $totalSubjects" :meta="$totalSessions . ' sessions, ' . $totalTerms . ' terms'" />
         <x-ui.stat-card label="LMS" value="Online" meta="Materials plus CBT activity links" tone="info" :href="route('school.lms.index')" />
         <x-ui.stat-card label="Live Classes" :value="$upcomingLiveClasses" :meta="$totalLiveClasses . ' total manual provider sessions'" tone="info" :href="route('school.live-classes.index')" />
+        <x-ui.stat-card label="Communications" value="Ready" meta="Logs, templates, and deferred provider channels" tone="info" :href="route('school.communications.index')" />
     </section>
 
     <section class="grid gap-4 lg:grid-cols-2">

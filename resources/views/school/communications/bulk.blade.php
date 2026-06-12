@@ -6,11 +6,21 @@
                 <h2 class="text-xl font-semibold leading-tight text-gray-900">Bulk Communication</h2>
                 <p class="mt-1 text-sm text-gray-500">Send chunked communication by class, arm, session, result status, and staff cohort.</p>
             </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('school.communications.index') }}" class="ui-button-secondary">Communication Center</a>
+                <a href="{{ route('school.communications.logs') }}" class="ui-button-secondary">Notification Logs</a>
+            </div>
         </div>
     </x-slot>
 
     <div class="py-8">
         <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+            <x-ui.panel tone="info" title="Delivery Boundary">
+                <p class="text-sm leading-6 text-text-secondary">
+                    Email remains the active delivery channel for bulk batches. SMS-ready and in-app-ready rows are logged/skipped as future channels unless a safe internal dispatcher is added later. No WhatsApp Business API, SMS provider API, provider credential storage, or public marketing automation is active on this page.
+                </p>
+            </x-ui.panel>
+
             <form method="POST" action="{{ route('school.communications.bulk.send') }}" class="space-y-5 rounded-2xl bg-white p-6 shadow-sm">
                 @csrf
 

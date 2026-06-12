@@ -4,9 +4,11 @@ namespace App\Services\Admissions;
 
 use App\Models\Admissions\AdmissionApplication;
 use App\Models\Admissions\AdmissionStatusLog;
+use App\Models\User;
 use App\Notifications\Admissions\AdmissionDecisionNotification;
 use App\Notifications\Admissions\AdmissionStatusChangedNotification;
 use App\Notifications\Admissions\MissingDocumentNotification;
+use App\Services\Communications\SchoolNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -39,7 +41,9 @@ class AdmissionWorkflowService
             throw ValidationException::withMessages(['status' => 'Unknown admission status.']);
         }
 
-        $updated = DB::transaction(function () use ($application, $toStatus, $changedBy, $note) {
+        $transitionedFrom = null;
+
+        $updated = DB::transaction(function () use ($application, $toStatus, $changedBy, $note, &$transitionedFrom) {
             $locked = AdmissionApplication::whereKey($application->id)->lockForUpdate()->firstOrFail();
             $fromStatus = $locked->status;
 
@@ -67,6 +71,7 @@ class AdmissionWorkflowService
             }
 
             $locked->update($updates);
+            $transitionedFrom = $fromStatus;
 
             AdmissionStatusLog::create([
                 'admission_application_id' => $locked->id,
@@ -81,6 +86,13 @@ class AdmissionWorkflowService
 
         if ($notify) {
             $this->notifyApplicant($updated, $note);
+        }
+
+        if ($transitionedFrom !== null) {
+            app(SchoolNotificationService::class)->logAdmissionStatusChanged(
+                $updated,
+                $changedBy ? User::query()->find($changedBy) : null
+            );
         }
 
         return $updated;

@@ -60,6 +60,8 @@ The recording field stores a URL supplied by the external provider. Sanfaani Sch
 
 The live-class foundation writes audit logs for create, update, start, complete, cancel, and recording-link changes. Audit metadata contains safe IDs and workflow fields only.
 
+Stage 18 also writes safe operational notification log entries when a live class is scheduled, updated, or cancelled. These entries include safe title, class, subject, start time, status, provider label, and related IDs. They do not include meeting passwords, provider secrets, OAuth tokens, or raw provider payloads.
+
 ## Deferred
 
-Provider API automation, Google Meet/Zoom/Teams APIs, generated meeting rooms, OAuth, provider credentials, webhooks, offline live class, live-class attendance tracking, live chat, advanced analytics, video hosting, transcoding, payment-gated access, student portal live classes, and parent portal live classes are not implemented in Stage 17.
+Provider API automation, Google Meet/Zoom/Teams APIs, generated meeting rooms, OAuth, provider credentials, webhooks, offline live class, live-class attendance tracking, live chat, advanced analytics, video hosting, transcoding, payment-gated access, student portal live classes, and parent portal live classes are not implemented in this foundation.

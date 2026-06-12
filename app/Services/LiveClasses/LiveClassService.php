@@ -12,6 +12,7 @@ use App\Models\SchoolClass;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
+use App\Services\Communications\SchoolNotificationService;
 use App\Services\AuditLogService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\TeacherAssignmentAccessService;
@@ -27,6 +28,7 @@ class LiveClassService
         private SchoolAuthorizationService $authorization,
         private AuditLogService $audit,
         private LiveClassProviderRegistry $providers,
+        private SchoolNotificationService $notifications,
     ) {}
 
     public function sessionsForUser(School $school, User $user, array $filters = []): Builder
@@ -89,7 +91,10 @@ class LiveClassService
             $this->audit->log('recording_link_added', $liveClass, $school, metadata: $this->auditMetadata($liveClass, $actor));
         }
 
-        return $liveClass->fresh(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher']);
+        $liveClass = $liveClass->fresh(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher']);
+        $this->notifications->logLiveClassScheduled($school, $actor, $liveClass);
+
+        return $liveClass;
     }
 
     public function update(School $school, User $actor, LiveClass $liveClass, array $data): LiveClass
@@ -122,7 +127,10 @@ class LiveClassService
             );
         }
 
-        return $liveClass->fresh(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher']);
+        $liveClass = $liveClass->fresh(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher']);
+        $this->notifications->logLiveClassUpdated($school, $actor, $liveClass);
+
+        return $liveClass;
     }
 
     public function start(School $school, User $actor, LiveClass $liveClass): LiveClass
@@ -372,6 +380,10 @@ class LiveClassService
         $liveClass->refresh();
 
         $this->audit->log($action, $liveClass, $school, $old, ['status' => $liveClass->status], $this->auditMetadata($liveClass, $actor));
+
+        if ($status === LiveClass::STATUS_CANCELLED) {
+            $this->notifications->logLiveClassCancelled($school, $actor, $liveClass);
+        }
 
         return $liveClass;
     }

@@ -18,6 +18,8 @@
   - [Marketing Automation](marketing/marketing-automation.md)
 - Standalone Operations
   - [Attendance Foundation](standalone/attendance-foundation.md)
+  - [Communication Notification Hardening](standalone/communication-notification-hardening.md)
+  - [School Communications Operations](school-operations/communications.md)
   - [Live Class Foundation](standalone/live-class-foundation.md)
   - [Live Class Provider Abstraction](standalone/live-class-provider-abstraction.md)
   - [Live Classes Operations](school-operations/live-classes.md)

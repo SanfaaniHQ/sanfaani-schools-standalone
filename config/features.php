@@ -374,8 +374,8 @@ return [
             'requires_school' => true,
             'super_admin_bypass' => true,
             'hidden_when_disabled' => true,
-            'authorization_features' => ['communication.send', 'communication.bulk'],
-            'description' => 'School communication center and bulk messaging gates.',
+            'authorization_features' => ['communication.send', 'communication.bulk', 'communication.logs.view', 'communication.templates.manage'],
+            'description' => 'School communication center, operational notification logs, templates, and bulk messaging gates.',
         ],
         'support_tools' => [
             'enabled' => true,

@@ -185,6 +185,16 @@ class School extends Model
         return $this->hasMany(CommunicationLog::class);
     }
 
+    public function notificationTemplates(): HasMany
+    {
+        return $this->hasMany(SchoolNotificationTemplate::class);
+    }
+
+    public function notificationLogs(): HasMany
+    {
+        return $this->hasMany(SchoolNotificationLog::class);
+    }
+
     public function bulkCommunicationBatches(): HasMany
     {
         return $this->hasMany(BulkCommunicationBatch::class);

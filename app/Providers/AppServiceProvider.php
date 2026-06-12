@@ -89,6 +89,8 @@ class AppServiceProvider extends ServiceProvider
         foreach ([
             'communication.send',
             'communication.bulk',
+            'communication.logs.view',
+            'communication.templates.manage',
             'results.publish',
             'results.review',
             'results.manual_entry',

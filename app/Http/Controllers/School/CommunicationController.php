@@ -5,9 +5,13 @@ namespace App\Http\Controllers\School;
 use App\Http\Controllers\Controller;
 use App\Models\BulkCommunicationBatch;
 use App\Models\School;
+use App\Models\SchoolNotificationLog;
+use App\Models\SchoolNotificationTemplate;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\BulkCommunicationService;
+use App\Services\Communications\NotificationRecipientResolver;
+use App\Services\Communications\SchoolNotificationService;
 use App\Services\CommunicationService;
 use App\Services\CurrentSchoolService;
 use App\Services\SchoolAuthorizationService;
@@ -17,6 +21,168 @@ use Illuminate\Validation\Rule;
 
 class CommunicationController extends Controller
 {
+    public function index(Request $request, CurrentSchoolService $currentSchool, SchoolNotificationService $notifications)
+    {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.logs.view');
+
+        $recentLogs = SchoolNotificationLog::query()
+            ->forSchool($school)
+            ->with(['template', 'creator'])
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        $recentTemplates = SchoolNotificationTemplate::query()
+            ->forSchool($school)
+            ->latest()
+            ->limit(6)
+            ->get();
+
+        return view('school.communications.index', [
+            'school' => $school,
+            'recentLogs' => $recentLogs,
+            'recentTemplates' => $recentTemplates,
+            'statusCounts' => $notifications->statusCounts($school),
+            'templateCount' => SchoolNotificationTemplate::query()->forSchool($school)->count(),
+            'activeTemplateCount' => SchoolNotificationTemplate::query()->forSchool($school)->active()->count(),
+            'bulkBatchCount' => BulkCommunicationBatch::query()->forSchool($school)->count(),
+        ]);
+    }
+
+    public function logs(Request $request, CurrentSchoolService $currentSchool)
+    {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.logs.view');
+
+        $filters = $request->validate([
+            'status' => ['nullable', Rule::in(SchoolNotificationLog::STATUSES)],
+            'channel' => ['nullable', Rule::in(SchoolNotificationLog::CHANNELS)],
+            'event_type' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        return view('school.communications.logs.index', [
+            'school' => $school,
+            'filters' => $filters,
+            'channels' => SchoolNotificationLog::CHANNELS,
+            'statuses' => SchoolNotificationLog::STATUSES,
+            'logs' => SchoolNotificationLog::query()
+                ->forSchool($school)
+                ->with(['template', 'creator'])
+                ->status($filters['status'] ?? null)
+                ->channel($filters['channel'] ?? null)
+                ->event($filters['event_type'] ?? null)
+                ->latest()
+                ->paginate(20)
+                ->withQueryString(),
+        ]);
+    }
+
+    public function showLog(Request $request, SchoolNotificationLog $notificationLog, CurrentSchoolService $currentSchool)
+    {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.logs.view');
+        $this->authorizeNotificationLog($notificationLog, $school);
+
+        return view('school.communications.logs.show', [
+            'school' => $school,
+            'notificationLog' => $notificationLog->load(['template', 'creator']),
+        ]);
+    }
+
+    public function templates(Request $request, CurrentSchoolService $currentSchool)
+    {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.templates.manage');
+
+        return view('school.communications.templates.index', [
+            'school' => $school,
+            'templates' => SchoolNotificationTemplate::query()
+                ->forSchool($school)
+                ->withCount('logs')
+                ->latest()
+                ->paginate(20),
+        ]);
+    }
+
+    public function createTemplate(Request $request, CurrentSchoolService $currentSchool)
+    {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.templates.manage');
+
+        return view('school.communications.templates.form', [
+            'school' => $school,
+            'template' => new SchoolNotificationTemplate([
+                'channel' => SchoolNotificationTemplate::CHANNEL_DATABASE,
+                'audience_type' => SchoolNotificationTemplate::AUDIENCE_SCHOOL_ADMIN,
+                'is_active' => true,
+            ]),
+            'channels' => SchoolNotificationTemplate::CHANNELS,
+            'audienceTypes' => SchoolNotificationTemplate::AUDIENCE_TYPES,
+            'action' => route('school.communications.templates.store'),
+            'method' => 'POST',
+        ]);
+    }
+
+    public function storeTemplate(
+        Request $request,
+        CurrentSchoolService $currentSchool,
+        SchoolNotificationService $notifications
+    ) {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.templates.manage');
+
+        $template = $notifications->createTemplate($school, $request->user(), $this->validatedTemplate($request, $school));
+
+        return redirect()
+            ->route('school.communications.templates.edit', $template)
+            ->with('success', 'Notification template created.');
+    }
+
+    public function editTemplate(
+        Request $request,
+        SchoolNotificationTemplate $notificationTemplate,
+        CurrentSchoolService $currentSchool
+    ) {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.templates.manage');
+        $this->authorizeTemplate($notificationTemplate, $school);
+
+        return view('school.communications.templates.form', [
+            'school' => $school,
+            'template' => $notificationTemplate,
+            'channels' => SchoolNotificationTemplate::CHANNELS,
+            'audienceTypes' => SchoolNotificationTemplate::AUDIENCE_TYPES,
+            'action' => route('school.communications.templates.update', $notificationTemplate),
+            'method' => 'PATCH',
+        ]);
+    }
+
+    public function updateTemplate(
+        Request $request,
+        SchoolNotificationTemplate $notificationTemplate,
+        CurrentSchoolService $currentSchool,
+        SchoolNotificationService $notifications
+    ) {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolAdminRole($request);
+        $this->ensureRoleFeature($request, $school, 'communication.templates.manage');
+        $this->authorizeTemplate($notificationTemplate, $school);
+
+        $notifications->updateTemplate($school, $request->user(), $notificationTemplate, $this->validatedTemplate($request, $school, $notificationTemplate));
+
+        return redirect()
+            ->route('school.communications.templates.edit', $notificationTemplate)
+            ->with('success', 'Notification template updated.');
+    }
+
     public function sendStudentMessage(Request $request, Student $student, CurrentSchoolService $currentSchool, CommunicationService $communications)
     {
         $school = $this->currentSchoolOrFail($currentSchool);
@@ -320,6 +486,41 @@ class CommunicationController extends Controller
         if ((int) $batch->school_id !== (int) $school->id) {
             abort(403);
         }
+    }
+
+    private function authorizeTemplate(SchoolNotificationTemplate $template, School $school): void
+    {
+        if ((int) $template->school_id !== (int) $school->id) {
+            abort(403);
+        }
+    }
+
+    private function authorizeNotificationLog(SchoolNotificationLog $notificationLog, School $school): void
+    {
+        if ((int) $notificationLog->school_id !== (int) $school->id) {
+            abort(403);
+        }
+    }
+
+    private function validatedTemplate(Request $request, School $school, ?SchoolNotificationTemplate $template = null): array
+    {
+        return $request->validate([
+            'template_key' => [
+                'required',
+                'string',
+                'max:120',
+                'regex:/^[A-Za-z0-9._-]+$/',
+                Rule::unique('school_notification_templates', 'template_key')
+                    ->where('school_id', $school->id)
+                    ->ignore($template?->id),
+            ],
+            'title' => ['required', 'string', 'max:191'],
+            'subject' => ['nullable', 'string', 'max:191'],
+            'body' => ['required', 'string', 'max:5000'],
+            'channel' => ['required', Rule::in(SchoolNotificationTemplate::CHANNELS)],
+            'audience_type' => ['required', Rule::in(NotificationRecipientResolver::RECIPIENT_TYPES)],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
     }
 
     private function bulkBatchMessage(BulkCommunicationBatch $batch): string

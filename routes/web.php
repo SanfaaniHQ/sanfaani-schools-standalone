@@ -1581,6 +1581,38 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
 
         Route::middleware(['role:school_admin'])
             ->group(function () {
+                Route::get('/communications', [SchoolCommunicationController::class, 'index'])
+                    ->middleware('feature.communication:communication.logs.view')
+                    ->name('communications.index');
+
+                Route::get('/communications/logs', [SchoolCommunicationController::class, 'logs'])
+                    ->middleware('feature.communication:communication.logs.view')
+                    ->name('communications.logs');
+
+                Route::get('/communications/logs/{notificationLog}', [SchoolCommunicationController::class, 'showLog'])
+                    ->middleware('feature.communication:communication.logs.view')
+                    ->name('communications.logs.show');
+
+                Route::get('/communications/templates', [SchoolCommunicationController::class, 'templates'])
+                    ->middleware('feature.communication:communication.templates.manage')
+                    ->name('communications.templates');
+
+                Route::get('/communications/templates/create', [SchoolCommunicationController::class, 'createTemplate'])
+                    ->middleware('feature.communication:communication.templates.manage')
+                    ->name('communications.templates.create');
+
+                Route::post('/communications/templates', [SchoolCommunicationController::class, 'storeTemplate'])
+                    ->middleware('feature.communication:communication.templates.manage')
+                    ->name('communications.templates.store');
+
+                Route::get('/communications/templates/{notificationTemplate}/edit', [SchoolCommunicationController::class, 'editTemplate'])
+                    ->middleware('feature.communication:communication.templates.manage')
+                    ->name('communications.templates.edit');
+
+                Route::patch('/communications/templates/{notificationTemplate}', [SchoolCommunicationController::class, 'updateTemplate'])
+                    ->middleware('feature.communication:communication.templates.manage')
+                    ->name('communications.templates.update');
+
                 Route::post('/students/{student}/communication/send', [SchoolCommunicationController::class, 'sendStudentMessage'])
                     ->middleware('feature.communication:communication.send')
                     ->name('communications.students.send');

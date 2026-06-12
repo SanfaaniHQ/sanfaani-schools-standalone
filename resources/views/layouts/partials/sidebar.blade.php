@@ -181,6 +181,7 @@
             ],
             __('ui.administration') => [
                 $item(__('ui.finance'), 'school.subscription.show', 'school.subscription.*', 'wallet', null, 'platform_subscriptions'),
+                $item('Communication Center', 'school.communications.index', 'school.communications.index', 'mail', 'communication.logs.view'),
                 $item(__('ui.bulk_communication'), 'school.communications.bulk', 'school.communications.bulk*', 'mail', 'communication.bulk'),
                 $item(__('ui.mail_settings'), 'school.mail-settings.edit', 'school.mail-settings.*', 'mail'),
                 $item('Branding', 'school.branding.edit', 'school.branding.*', 'layout-grid'),

@@ -209,6 +209,8 @@ class StandaloneDashboardSummaryService
             'lms_cbt_activities' => $school->lmsCbtActivities()->where('status', LmsCbtActivity::STATUS_ACTIVE)->count(),
             'live_classes' => $school->liveClasses()->count(),
             'scheduled_live_classes' => $school->liveClasses()->where('status', LiveClass::STATUS_SCHEDULED)->count(),
+            'communication_logs' => $school->notificationLogs()->count(),
+            'communication_templates' => $school->notificationTemplates()->count(),
             'results' => $school->studentResults()->count(),
             'published_results' => $school->studentResults()->where('status', 'published')->count(),
             'cbt_question_banks' => $school->cbtQuestionBanks()->count(),
@@ -262,6 +264,13 @@ class StandaloneDashboardSummaryService
                 Route::has('school.live-classes.index'),
                 'Manual internet meeting links, provider abstraction metadata, class/subject scheduling, LMS context links, status workflow, recording links, and audit logging are available.',
                 $this->route('school.live-classes.index')
+            ),
+            $this->checklistItem(
+                'communication_notification_hardening',
+                'Communication and notification hardening',
+                Route::has('school.communications.index'),
+                'School-scoped communication center, notification templates, operational notification logs, safe live-class reminders, and deferred provider channels are available.',
+                $this->route('school.communications.index')
             ),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
             $this->checklistItem('result_settings', 'Result and report settings', $resultSettingsReady, $resultSettingsReady ? 'Report or access settings are configured.' : 'Configure report cards or result access rules.', $this->route('school.report-card-settings.edit')),
@@ -349,6 +358,12 @@ class StandaloneDashboardSummaryService
                     'href' => $this->route('school.live-classes.index'),
                 ],
                 [
+                    'label' => 'Communications',
+                    'value' => $counts['communication_logs'],
+                    'meta' => $counts['communication_templates'].' template(s), '.($counts['communication_logs'] ? 'logged outbox active' : 'ready for operational logs'),
+                    'href' => $this->route('school.communications.index'),
+                ],
+                [
                     'label' => 'Results',
                     'value' => $counts['results'],
                     'meta' => $counts['published_results'].' published result(s)',
@@ -377,6 +392,7 @@ class StandaloneDashboardSummaryService
                 ['label' => 'Finance', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'LMS', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Live Classes', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
+                ['label' => 'Communications', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Results', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'CBT', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
             ],
@@ -388,7 +404,7 @@ class StandaloneDashboardSummaryService
         $workspaceHref = $this->route('workspace.create');
 
         if (! $school) {
-            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'LMS', 'Live Classes', 'Results', 'CBT'])
+            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'LMS', 'Live Classes', 'Communications', 'Results', 'CBT'])
                 ->map(fn (string $label): array => [
                     'label' => $label,
                     'value' => 0,
@@ -508,10 +524,11 @@ class StandaloneDashboardSummaryService
                     ? 'Attendance-only browser capture and validated sync are enabled.'
                     : 'The attendance-only browser pilot is available only when capture and sync are enabled.',
             ],
-            ['label' => 'LMS and CBT activity links', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, publish workflow, and links to existing CBT items are available. CBT remains the assessment engine; offline LMS and submissions remain deferred.'],
-            ['label' => 'Live class foundation', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider abstraction foundation available. Provider API automation remains deferred. Offline live class is not implemented.'],
-            ['label' => 'Live class provider abstraction', 'status' => 'Available', 'detail' => 'Manual provider support, provider registry metadata, provider labels, and future provider boundaries are available without storing credentials or calling external APIs.'],
-            ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, generated meeting rooms, webhooks, and recording sync are not implemented.'],
+                ['label' => 'LMS and CBT activity links', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, publish workflow, and links to existing CBT items are available. CBT remains the assessment engine; offline LMS and submissions remain deferred.'],
+                ['label' => 'Live class foundation', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider abstraction foundation available. Provider API automation remains deferred. Offline live class is not implemented.'],
+                ['label' => 'Live class provider abstraction', 'status' => 'Available', 'detail' => 'Manual provider support, provider registry metadata, provider labels, and future provider boundaries are available without storing credentials or calling external APIs.'],
+                ['label' => 'Communication notification hardening', 'status' => 'Available', 'detail' => 'School-scoped communication center, templates, operational notification logs, safe live-class reminders, and provider-ready deferred SMS/WhatsApp/email channels are available. External provider APIs remain deferred.'],
+                ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, generated meeting rooms, webhooks, and recording sync are not implemented.'],
             ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];
     }

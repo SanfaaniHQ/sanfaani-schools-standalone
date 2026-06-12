@@ -51,6 +51,12 @@
                             Terms
                         </x-nav-link>
 
+                        @schoolFeature('communication.logs.view')
+                            <x-nav-link :href="route('school.communications.index')" :active="request()->routeIs('school.communications.index', 'school.communications.logs*', 'school.communications.templates*')">
+                                Communication Center
+                            </x-nav-link>
+                        @endschoolFeature
+
                         @schoolFeature('communication.bulk')
                             <x-nav-link :href="route('school.communications.bulk')" :active="request()->routeIs('school.communications.bulk*')">
                                 Bulk Communication
@@ -154,6 +160,12 @@
                 <x-responsive-nav-link :href="route('school.terms.index')" :active="request()->routeIs('school.terms.*')">
                     Terms
                 </x-responsive-nav-link>
+                @schoolFeature('communication.logs.view')
+                    <x-responsive-nav-link :href="route('school.communications.index')" :active="request()->routeIs('school.communications.index', 'school.communications.logs*', 'school.communications.templates*')">
+                        Communication Center
+                    </x-responsive-nav-link>
+                @endschoolFeature
+
                 @schoolFeature('communication.bulk')
                     <x-responsive-nav-link :href="route('school.communications.bulk')" :active="request()->routeIs('school.communications.bulk*')">
                         Bulk Communication

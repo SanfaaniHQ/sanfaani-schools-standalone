@@ -6,6 +6,7 @@ use App\Models\LmsClassroom;
 use App\Models\LmsMaterial;
 use App\Models\School;
 use App\Models\User;
+use App\Services\Communications\SchoolNotificationService;
 use App\Services\AuditLogService;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -14,6 +15,7 @@ class LmsMaterialService
     public function __construct(
         private LmsAccessService $access,
         private AuditLogService $audit,
+        private SchoolNotificationService $notifications,
     ) {}
 
     public function materialsForClassroom(School $school, User $user, LmsClassroom $classroom): Builder
@@ -109,6 +111,7 @@ class LmsMaterialService
         ]);
 
         $this->audit->log('lms_material_published', $material, $school, ['status' => $oldStatus], ['status' => $material->status], $this->materialMetadata($material, $actor));
+        $this->notifications->logLmsMaterialPublished($school, $actor, $material->fresh(['classroom.schoolClass', 'classroom.subject']) ?? $material);
 
         return $material->fresh();
     }

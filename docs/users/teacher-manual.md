@@ -19,6 +19,8 @@ LMS resource downloads are private and authorized. Teachers should upload only a
 
 Live class meeting links require internet. Teachers should use the active Manual link provider, paste only school-approved provider links, and should not store provider API keys, OAuth secrets, or private provider payloads in Sanfaani Schools.
 
+Communication templates and the school Communication Center are managed by School Admins. Teachers do not manage school-wide templates or provider-ready channels by default. Live-class schedule changes can create safe operational notification log entries, but meeting passwords are not copied into those logs.
+
 ## Planned
 
 Provider abstraction metadata is available for live classes, but provider API automation remains future work. Offline LMS, live-class attendance tracking, assignment submissions/grading, discussions, analytics, and video hosting may be added later. CBT activity links are available through LMS only for assigned class/subject scopes and do not bypass existing CBT attempt or result rules.
