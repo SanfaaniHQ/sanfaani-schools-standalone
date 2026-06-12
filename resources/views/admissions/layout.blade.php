@@ -1,18 +1,28 @@
+@php
+    $admissionBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+    $admissionTokens = app(\App\Support\Ui\BrandingUiTokens::class);
+    $admissionBrandName = data_get($admissionBranding, 'brand_name', $school->name);
+    $admissionLogo = data_get($admissionBranding, 'logo_url');
+    $admissionInitials = data_get($admissionBranding, 'initials', $school->initials());
+    $admissionPrimary = $admissionTokens->color(data_get($admissionBranding, 'primary_color'), '#047857');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admissions') - {{ $school->name }}</title>
+    <title>@yield('title', 'Admissions') - {{ $admissionBrandName }}</title>
     <style>
-        :root { color-scheme: light; --brand: #047857; --ink: #172033; --muted: #667085; --line: #dfe4ea; --paper: #ffffff; --wash: #f4f7f6; }
+        :root { color-scheme: light; --brand: {{ $admissionPrimary }}; --ink: #172033; --muted: #667085; --line: #dfe4ea; --paper: #ffffff; --wash: #f4f7f6; }
         * { box-sizing: border-box; }
         body { margin: 0; background: var(--wash); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; line-height: 1.5; }
         a { color: var(--brand); }
         .shell { width: min(960px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 48px; }
         .top { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
-        .brand { color: var(--ink); font-size: 20px; font-weight: 800; text-decoration: none; }
+        .brand { align-items: center; color: var(--ink); display: inline-flex; font-size: 20px; font-weight: 800; gap: 10px; text-decoration: none; }
+        .brand-logo { align-items: center; background: var(--brand); border-radius: 8px; color: #fff; display: inline-flex; font-size: 12px; font-weight: 800; height: 36px; justify-content: center; overflow: hidden; width: 36px; }
+        .brand-logo img { background: #fff; height: 100%; object-fit: contain; padding: 3px; width: 100%; }
         .nav { display: flex; flex-wrap: wrap; gap: 16px; font-size: 14px; }
         .card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: clamp(20px, 4vw, 40px); box-shadow: 0 14px 40px rgba(20, 50, 40, .07); }
         .eyebrow { color: var(--brand); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
@@ -40,7 +50,16 @@
 <main class="shell">
     @unless($embed ?? false)
         <header class="top">
-            <a class="brand" href="{{ route('admissions.index') }}">{{ $school->name }}</a>
+            <a class="brand" href="{{ route('admissions.index') }}">
+                <span class="brand-logo">
+                    @if ($admissionLogo)
+                        <img src="{{ $admissionLogo }}" alt="{{ $admissionBrandName }} logo">
+                    @else
+                        {{ $admissionInitials }}
+                    @endif
+                </span>
+                <span>{{ $admissionBrandName }}</span>
+            </a>
             <nav class="nav" aria-label="Admission navigation">
                 <a href="{{ route('admissions.index') }}">Admissions</a>
                 <a href="{{ route('admissions.apply') }}">Apply</a>

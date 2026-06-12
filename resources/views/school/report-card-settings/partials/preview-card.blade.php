@@ -1,6 +1,10 @@
 @php
     $settings = $reportCard['settings'];
     $school = $reportCard['school'];
+    $reportBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+    $reportBrandName = data_get($reportBranding, 'brand_name', $school->name);
+    $reportLogo = data_get($reportBranding, 'logo_url') ?: $school->logoUrl();
+    $reportInitials = data_get($reportBranding, 'initials', $school->initials());
     $student = $reportCard['student'];
     $results = $reportCard['results'];
     $resultClass = $reportCard['resultClass'] ?? $student->schoolClass;
@@ -11,17 +15,17 @@
 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
     <header class="flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-4">
-            @if ($settings->show_logo && $school->logoUrl())
-                <img src="{{ $school->logoUrl() }}" alt="{{ $school->name }}" class="h-16 w-16 rounded-xl border border-gray-200 object-contain">
+            @if ($settings->show_logo && $reportLogo)
+                <img src="{{ $reportLogo }}" alt="{{ $reportBrandName }}" class="h-16 w-16 rounded-xl border border-gray-200 object-contain">
             @elseif ($settings->show_logo)
                 <div class="flex h-16 w-16 items-center justify-center rounded-xl text-lg font-semibold text-white" style="background-color: {{ $primary }}">
-                    {{ $school->initials() }}
+                    {{ $reportInitials }}
                 </div>
             @endif
 
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Report Card Preview</p>
-                <h3 class="text-2xl font-semibold" style="color: {{ $primary }}">{{ $school->name }}</h3>
+                <h3 class="text-2xl font-semibold" style="color: {{ $primary }}">{{ $reportBrandName }}</h3>
                 @if ($settings->show_school_address && $school->address)
                     <p class="mt-1 text-sm text-gray-600">{{ $school->address }}</p>
                 @endif

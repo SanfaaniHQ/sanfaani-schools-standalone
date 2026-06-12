@@ -1,9 +1,22 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $lmsBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+            $lmsBrandName = data_get($lmsBranding, 'brand_name', $school->name);
+            $lmsLogo = data_get($lmsBranding, 'logo_url');
+            $lmsInitials = data_get($lmsBranding, 'initials', $school->initials());
+        @endphp
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+            <div class="flex min-w-0 gap-3">
+                @if ($lmsLogo)
+                    <img src="{{ $lmsLogo }}" alt="{{ $lmsBrandName }} logo" class="h-12 w-12 shrink-0 rounded-md border border-border-subtle bg-white object-contain p-1">
+                @else
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-primary text-sm font-semibold text-white">{{ $lmsInitials }}</span>
+                @endif
+                <div class="min-w-0">
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">Learning Materials</h2>
-                <p class="mt-1 text-sm text-text-secondary">Online class and subject material foundation for {{ $school->name }}.</p>
+                <p class="mt-1 text-sm text-text-secondary">Online class and subject material foundation for {{ $lmsBrandName }}.</p>
+                </div>
             </div>
             <a href="#create-lms-classroom" class="ui-button-primary">New Classroom</a>
         </div>

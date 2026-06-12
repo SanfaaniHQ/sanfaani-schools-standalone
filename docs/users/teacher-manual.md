@@ -15,6 +15,8 @@ Teacher access is based on role context, school assignment, and enabled features
 
 Teachers must not access unrelated schools, unrelated classes, or unrelated student records.
 
+Teachers may see the active school's branding across their assigned dashboard, LMS, live-class, and report-facing surfaces. They do not manage branding, logos, colors, powered-by wording, or white-label settings by default.
+
 LMS resource downloads are private and authorized. Teachers should upload only allowed school learning files and must not share raw storage paths.
 
 Live class meeting links require internet. Teachers should use the active Manual link provider, paste only school-approved provider links, and should not store provider API keys, OAuth secrets, or private provider payloads in Sanfaani Schools.

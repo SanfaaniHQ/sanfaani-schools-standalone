@@ -1,10 +1,23 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $communicationBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+            $communicationBrandName = data_get($communicationBranding, 'brand_name', $school->name);
+            $communicationLogo = data_get($communicationBranding, 'logo_url');
+            $communicationInitials = data_get($communicationBranding, 'initials', $school->initials());
+        @endphp
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+            <div class="flex min-w-0 gap-3">
+                @if ($communicationLogo)
+                    <img src="{{ $communicationLogo }}" alt="{{ $communicationBrandName }} logo" class="h-12 w-12 shrink-0 rounded-md border border-border-subtle bg-white object-contain p-1">
+                @else
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-primary text-sm font-semibold text-white">{{ $communicationInitials }}</span>
+                @endif
+                <div class="min-w-0">
                 <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">School / Communications</p>
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">Communication Center</h2>
-                <p class="mt-1 text-sm text-text-secondary">Operational notifications, templates, bulk batches, and provider-ready communication boundaries for {{ $school->name }}.</p>
+                <p class="mt-1 text-sm text-text-secondary">Operational notifications, templates, bulk batches, and provider-ready communication boundaries for {{ $communicationBrandName }}.</p>
+                </div>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('school.communications.logs') }}" class="ui-button-secondary">Notification Logs</a>

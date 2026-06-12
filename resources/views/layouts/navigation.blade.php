@@ -43,6 +43,10 @@
                             Admission Numbers
                         </x-nav-link>
 
+                        <x-nav-link :href="route('school.branding.edit')" :active="request()->routeIs('school.branding.*')">
+                            Branding
+                        </x-nav-link>
+
                         <x-nav-link :href="route('school.sessions.index')" :active="request()->routeIs('school.sessions.*')">
                             Sessions
                         </x-nav-link>
@@ -153,6 +157,9 @@
 
                 <x-responsive-nav-link :href="route('school.admission-number-settings.edit')" :active="request()->routeIs('school.admission-number-settings.*')">
                     Admission Numbers
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('school.branding.edit')" :active="request()->routeIs('school.branding.*')">
+                    Branding
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('school.sessions.index')" :active="request()->routeIs('school.sessions.*')">
                     Sessions

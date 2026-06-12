@@ -1,5 +1,8 @@
 @php
+    $brandSchool = auth()->check() ? app(\App\Services\CurrentSchoolService::class)->get(auth()->user()) : null;
+    $resolvedBranding = app(\App\Services\Branding\BrandingService::class)->current($brandSchool);
     $brandName = data_get($schoolBranding ?? null, 'name') ?: data_get($platformSettings ?? null, 'platform_name', config('app.name', 'Sanfaani Schools'));
+    $brandName = data_get($resolvedBranding, 'brand_name', $brandName);
     $activeRoleContext = auth()->check() ? app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user()) : null;
     $topbarBehavior = app(\App\Services\System\DeploymentBehaviorService::class);
     $workspaceLabel = $activeRoleContext === 'super_admin'

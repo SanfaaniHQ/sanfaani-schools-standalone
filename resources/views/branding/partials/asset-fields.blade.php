@@ -1,6 +1,6 @@
 <x-ui.panel>
     <h3 class="text-base font-semibold text-text-primary">Brand assets</h3>
-    <p class="mt-1 text-sm text-text-secondary">PNG, JPG, WEBP, and ICO files only. SVG and executable uploads are blocked.</p>
+    <p class="mt-1 text-sm text-text-secondary">PNG, JPG, WEBP, and ICO files only. SVG, executable uploads, private paths, and cross-school asset reuse are blocked.</p>
 
     <div class="mt-4 grid gap-4 md:grid-cols-2">
         <form method="POST" action="{{ $logoAction }}" enctype="multipart/form-data" class="rounded-md border border-border-subtle p-4">

@@ -7,7 +7,9 @@ use App\Models\School;
 use App\Services\Licensing\LicenseEntitlementService;
 use App\Services\System\DeploymentModeService;
 use App\Services\System\FeatureAccessService;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Throwable;
 
 class BrandingResolver
 {
@@ -64,18 +66,26 @@ class BrandingResolver
 
     private function activeSetting(string $scope, ?School $school = null): ?BrandingSetting
     {
-        return BrandingSetting::query()
-            ->where('scope', $scope)
-            ->where('is_active', true)
-            ->where(function ($query) use ($school) {
-                if ($school) {
-                    $query->where('school_id', $school->id)->orWhereNull('school_id');
-                } else {
-                    $query->whereNull('school_id');
-                }
-            })
-            ->latest()
-            ->first();
+        try {
+            if (! Schema::hasTable('branding_settings')) {
+                return null;
+            }
+
+            return BrandingSetting::query()
+                ->where('scope', $scope)
+                ->where('is_active', true)
+                ->where(function ($query) use ($school) {
+                    if ($school) {
+                        $query->where('school_id', $school->id)->orWhereNull('school_id');
+                    } else {
+                        $query->whereNull('school_id');
+                    }
+                })
+                ->latest()
+                ->first();
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     private function fromSetting(?BrandingSetting $setting): array

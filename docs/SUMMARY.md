@@ -20,6 +20,8 @@
   - [Attendance Foundation](standalone/attendance-foundation.md)
   - [Communication Notification Hardening](standalone/communication-notification-hardening.md)
   - [School Communications Operations](school-operations/communications.md)
+  - [Branding White-label Consolidation](standalone/branding-white-label-consolidation.md)
+  - [School Branding Operations](school-operations/branding.md)
   - [Live Class Foundation](standalone/live-class-foundation.md)
   - [Live Class Provider Abstraction](standalone/live-class-provider-abstraction.md)
   - [Live Classes Operations](school-operations/live-classes.md)

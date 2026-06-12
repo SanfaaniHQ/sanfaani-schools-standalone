@@ -1,9 +1,24 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $invoiceBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+            $invoiceBrandName = data_get($invoiceBranding, 'brand_name', $school->name);
+            $invoiceLogo = data_get($invoiceBranding, 'logo_url');
+            $invoiceInitials = data_get($invoiceBranding, 'initials', $school->initials());
+            $invoiceFooter = data_get($invoiceBranding, 'report_footer_text');
+        @endphp
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+            <div class="flex min-w-0 gap-3">
+                @if ($invoiceLogo)
+                    <img src="{{ $invoiceLogo }}" alt="{{ $invoiceBrandName }} logo" class="h-12 w-12 shrink-0 rounded-md border border-border-subtle bg-white object-contain p-1">
+                @else
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-primary text-sm font-semibold text-white">{{ $invoiceInitials }}</span>
+                @endif
+                <div class="min-w-0">
                 <h2 class="text-xl font-semibold leading-tight text-gray-900">Invoice {{ $invoice->invoice_number }}</h2>
                 <p class="mt-1 text-sm text-gray-500">{{ $invoice->student?->fullName() ?? 'Student' }} - {{ $invoice->student?->admission_number }}</p>
+                <p class="mt-1 text-xs text-text-tertiary">{{ $invoiceBrandName }}</p>
+                </div>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('school.finance.students.show', $invoice->student) }}" class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Student History</a>
@@ -124,6 +139,9 @@
                     </form>
                 @else
                     <p class="mt-4 rounded-md border border-border-subtle bg-bg-primary p-3 text-sm text-text-secondary">This invoice has no outstanding balance.</p>
+                @endif
+                @if ($invoiceFooter)
+                    <p class="mt-4 border-t border-border-subtle pt-3 text-xs leading-5 text-text-tertiary">{{ $invoiceFooter }}</p>
                 @endif
             </x-ui.panel>
         </div>

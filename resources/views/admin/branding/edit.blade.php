@@ -50,6 +50,7 @@
                     </div>
                 </div>
 
+                <input type="hidden" name="white_label_enabled" value="0">
                 <label class="mt-4 flex items-center gap-2 text-sm text-text-secondary">
                     <input type="checkbox" name="white_label_enabled" value="1" class="rounded border-border-subtle text-brand-primary" @checked(old('white_label_enabled', data_get($branding, 'white_label_enabled')) && $whiteLabelAvailable) @disabled(! $whiteLabelAvailable)>
                     <span>Enable white-label branding for entitled deployments</span>

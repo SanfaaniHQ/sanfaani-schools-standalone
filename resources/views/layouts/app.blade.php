@@ -175,6 +175,7 @@
                                          ['label' => 'Terms', 'context' => 'Academic terms by session', 'href' => route('school.terms.index'), 'visible' => $roleContext === 'school_admin'],
                                          ['label' => 'Communication Center', 'context' => 'Operational notification logs and templates', 'href' => route('school.communications.index'), 'visible' => $roleContext === 'school_admin' && $canCommand('communication.logs.view')],
                                          ['label' => 'Bulk Communication', 'context' => 'Send school-scoped operational messages', 'href' => route('school.communications.bulk'), 'visible' => $roleContext === 'school_admin' && $canCommand('communication.bulk')],
+                                         ['label' => 'Branding', 'context' => 'School name, logo, colors, and white-label boundary', 'href' => route('school.branding.edit'), 'visible' => $roleContext === 'school_admin'],
                                          ['label' => 'Mail Settings', 'context' => 'School SMTP and delivery policy', 'href' => route('school.mail-settings.edit'), 'visible' => $roleContext === 'school_admin'],
                                          ['label' => 'Audit Logs', 'context' => 'School activity and security trail', 'href' => route('school.audit-logs.index'), 'visible' => $roleContext === 'school_admin'],
                                      ];

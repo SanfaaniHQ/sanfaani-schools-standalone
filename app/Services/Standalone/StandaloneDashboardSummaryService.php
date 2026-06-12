@@ -211,6 +211,7 @@ class StandaloneDashboardSummaryService
             'scheduled_live_classes' => $school->liveClasses()->where('status', LiveClass::STATUS_SCHEDULED)->count(),
             'communication_logs' => $school->notificationLogs()->count(),
             'communication_templates' => $school->notificationTemplates()->count(),
+            'branding_settings' => $school->brandingSettings()->where('scope', 'school')->count(),
             'results' => $school->studentResults()->count(),
             'published_results' => $school->studentResults()->where('status', 'published')->count(),
             'cbt_question_banks' => $school->cbtQuestionBanks()->count(),
@@ -364,6 +365,12 @@ class StandaloneDashboardSummaryService
                     'href' => $this->route('school.communications.index'),
                 ],
                 [
+                    'label' => 'Branding',
+                    'value' => $counts['branding_settings'],
+                    'meta' => $counts['branding_settings'] ? 'School identity settings available' : 'Ready for logo, colors, and powered-by boundary',
+                    'href' => $this->route('school.branding.edit'),
+                ],
+                [
                     'label' => 'Results',
                     'value' => $counts['results'],
                     'meta' => $counts['published_results'].' published result(s)',
@@ -393,6 +400,7 @@ class StandaloneDashboardSummaryService
                 ['label' => 'LMS', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Live Classes', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Communications', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
+                ['label' => 'Branding', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Results', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'CBT', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
             ],
@@ -404,7 +412,7 @@ class StandaloneDashboardSummaryService
         $workspaceHref = $this->route('workspace.create');
 
         if (! $school) {
-            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'LMS', 'Live Classes', 'Communications', 'Results', 'CBT'])
+            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'LMS', 'Live Classes', 'Communications', 'Branding', 'Results', 'CBT'])
                 ->map(fn (string $label): array => [
                     'label' => $label,
                     'value' => 0,
@@ -528,6 +536,7 @@ class StandaloneDashboardSummaryService
                 ['label' => 'Live class foundation', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider abstraction foundation available. Provider API automation remains deferred. Offline live class is not implemented.'],
                 ['label' => 'Live class provider abstraction', 'status' => 'Available', 'detail' => 'Manual provider support, provider registry metadata, provider labels, and future provider boundaries are available without storing credentials or calling external APIs.'],
                 ['label' => 'Communication notification hardening', 'status' => 'Available', 'detail' => 'School-scoped communication center, templates, operational notification logs, safe live-class reminders, and provider-ready deferred SMS/WhatsApp/email channels are available. External provider APIs remain deferred.'],
+                ['label' => 'Branding and white-label consolidation', 'status' => 'Available', 'detail' => 'Resolved school display name, logo, colors, auth/dashboard/module branding, report/invoice/admissions branding hooks, safe uploads, audit logging, and powered-by boundaries are available. Full website, DNS, SSL, and theme builder work remain deferred.'],
                 ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, generated meeting rooms, webhooks, and recording sync are not implemented.'],
             ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];

@@ -18,6 +18,9 @@
         <div class="min-w-0">
             <p class="truncate text-lg font-semibold text-text-primary">{{ $brandName }}</p>
             <p class="mt-1 text-sm text-text-secondary">{{ data_get($branding, 'dashboard_heading', 'School Operations Command Center') }}</p>
+            <p class="mt-1 text-xs text-text-tertiary">
+                {{ data_get($branding, 'white_label_enabled') ? 'White-label identity enabled for entitled school-facing surfaces.' : 'Powered by Sanfaani boundary remains visible where appropriate.' }}
+            </p>
         </div>
     </div>
     <div class="mt-4 flex gap-2">

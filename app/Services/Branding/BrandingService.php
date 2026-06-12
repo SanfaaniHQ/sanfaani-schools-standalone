@@ -5,12 +5,14 @@ namespace App\Services\Branding;
 use App\Models\BrandingSetting;
 use App\Models\School;
 use App\Models\User;
+use App\Services\AuditLogService;
 
 class BrandingService
 {
     public function __construct(
         private BrandingResolver $resolver,
         private BrandingValidationService $validation,
+        private AuditLogService $auditLog,
     ) {}
 
     public function current(?School $school = null): array
@@ -71,8 +73,12 @@ class BrandingService
     private function update(string $scope, ?School $school, array $data, ?User $user): BrandingSetting
     {
         $payload = $this->validation->sanitize($data);
+        $existing = $this->setting($scope, $school);
+        $oldValues = $existing
+            ? $existing->only(array_keys($payload))
+            : [];
 
-        return BrandingSetting::query()->updateOrCreate(
+        $setting = BrandingSetting::query()->updateOrCreate(
             [
                 'scope' => $scope,
                 'school_id' => $school?->id,
@@ -83,5 +89,54 @@ class BrandingService
                 'updated_by' => $user?->id,
             ]),
         );
+
+        $changedFields = $this->changedFields($oldValues, $payload);
+
+        if ($changedFields !== []) {
+            $this->auditBrandingChange($setting, $school, $scope, $changedFields, $payload);
+        }
+
+        return $setting;
+    }
+
+    private function changedFields(array $oldValues, array $newValues): array
+    {
+        return collect($newValues)
+            ->filter(fn (mixed $value, string $field): bool => ! array_key_exists($field, $oldValues) || $oldValues[$field] !== $value)
+            ->keys()
+            ->values()
+            ->all();
+    }
+
+    private function auditBrandingChange(BrandingSetting $setting, ?School $school, string $scope, array $changedFields, array $payload): void
+    {
+        $metadata = [
+            'school_id' => $school?->id,
+            'scope' => $scope,
+            'branding_setting_id' => $setting->id,
+            'changed_fields' => $changedFields,
+            'logo_updated' => in_array('logo_path', $changedFields, true),
+            'favicon_updated' => in_array('favicon_path', $changedFields, true),
+            'primary_color_updated' => in_array('primary_color', $changedFields, true),
+            'secondary_color_updated' => in_array('secondary_color', $changedFields, true),
+            'accent_color_updated' => in_array('accent_color', $changedFields, true),
+            'white_label_enabled' => (bool) ($payload['white_label_enabled'] ?? $setting->white_label_enabled),
+        ];
+
+        $baseAction = $school ? 'school_branding_updated' : $scope.'_branding_updated';
+
+        $this->auditLog->log($baseAction, $setting, $school, metadata: $metadata);
+
+        if ($school && in_array('logo_path', $changedFields, true)) {
+            $this->auditLog->log('school_branding_logo_updated', $setting, $school, metadata: $metadata);
+        }
+
+        if ($school && collect($changedFields)->intersect(['primary_color', 'secondary_color', 'accent_color'])->isNotEmpty()) {
+            $this->auditLog->log('school_branding_colors_updated', $setting, $school, metadata: $metadata);
+        }
+
+        if ($school && in_array('white_label_enabled', $changedFields, true)) {
+            $this->auditLog->log('school_branding_powered_by_updated', $setting, $school, metadata: $metadata);
+        }
     }
 }

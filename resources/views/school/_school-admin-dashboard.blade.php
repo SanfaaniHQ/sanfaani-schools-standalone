@@ -1,5 +1,11 @@
 @php
     $standalone = app(\App\Services\Standalone\StandaloneEditionService::class);
+    $dashboardBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+    $dashboardBrandName = data_get($dashboardBranding, 'brand_name', $school->name);
+    $dashboardLogo = data_get($dashboardBranding, 'logo_url');
+    $dashboardInitials = data_get($dashboardBranding, 'initials', $school->initials());
+    $dashboardHeading = data_get($dashboardBranding, 'dashboard_heading', 'School Operations Command Center');
+    $brandingConfigured = $school->activeBrandingSetting()->exists() || filled($school->logo_path ?: $school->logo);
     $schoolStatusLabel = $standalone->hidesSaasSurfaces() ? 'Access status' : 'Subscription status';
     $attentionItems = collect([
         ['label' => 'Pending scratch card payments', 'value' => $pendingScratchCardRequests, 'tone' => 'warning', 'href' => route('school.scratch-cards.index')],
@@ -26,6 +32,7 @@
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],
         ['title' => 'Communication Center', 'body' => 'Operational notification logs, templates, provider-ready channels, and safety boundaries.', 'href' => route('school.communications.index'), 'feature' => 'communication.logs.view'],
         ['title' => 'Bulk Communication', 'body' => 'Send school-scoped operational messages.', 'href' => route('school.communications.bulk'), 'feature' => 'communication.bulk'],
+        ['title' => 'Branding / White Label', 'body' => 'School display name, logo, colors, portal wording, report footer, and powered-by boundary.', 'href' => route('school.branding.edit'), 'feature' => null],
         ['title' => 'Promotions', 'body' => 'Move students across sessions without losing history.', 'href' => route('school.student-promotions.index'), 'feature' => 'student.promote'],
         ['title' => 'User Management', 'body' => 'Staff accounts, roles, and feature access.', 'href' => route('school.staff.index'), 'feature' => null],
     ];
@@ -46,16 +53,16 @@
             <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">School setup overview</p>
-                    <h3 class="mt-2 text-2xl font-semibold text-text-primary">{{ $school->name }}</h3>
+                    <h3 class="mt-2 text-2xl font-semibold text-text-primary">{{ $dashboardBrandName }}</h3>
                     <p class="mt-2 text-sm leading-6 text-text-secondary">
-                        Session {{ $activeSession?->name ?? 'not set' }} and term {{ $activeTerm?->name ?? 'not set' }} are used for the current school work.
+                        {{ $dashboardHeading }}. Session {{ $activeSession?->name ?? 'not set' }} and term {{ $activeTerm?->name ?? 'not set' }} are used for the current school work.
                     </p>
                 </div>
                 <div class="flex shrink-0 items-center gap-3 rounded-lg border border-border-subtle bg-bg-primary px-4 py-3">
-                    @if ($school->logoUrl())
-                        <img src="{{ $school->logoUrl() }}" alt="{{ $school->name }} logo" class="h-11 w-11 rounded-md bg-white object-contain p-1">
+                    @if ($dashboardLogo)
+                        <img src="{{ $dashboardLogo }}" alt="{{ $dashboardBrandName }} logo" class="h-11 w-11 rounded-md bg-white object-contain p-1">
                     @else
-                        <span class="flex h-11 w-11 items-center justify-center rounded-md bg-brand-primary text-sm font-bold text-white">{{ $school->initials() }}</span>
+                        <span class="flex h-11 w-11 items-center justify-center rounded-md bg-brand-primary text-sm font-bold text-white">{{ $dashboardInitials }}</span>
                     @endif
                     <div>
                         <p class="text-sm font-semibold text-text-primary">{{ ucfirst($school->status) }}</p>
@@ -114,6 +121,7 @@
         <x-ui.stat-card label="LMS" value="Online" meta="Materials plus CBT activity links" tone="info" :href="route('school.lms.index')" />
         <x-ui.stat-card label="Live Classes" :value="$upcomingLiveClasses" :meta="$totalLiveClasses . ' total manual provider sessions'" tone="info" :href="route('school.live-classes.index')" />
         <x-ui.stat-card label="Communications" value="Ready" meta="Logs, templates, and deferred provider channels" tone="info" :href="route('school.communications.index')" />
+        <x-ui.stat-card label="Branding" :value="$brandingConfigured ? 'Configured' : 'Review'" meta="Logo, colors, reports, and powered-by boundary" tone="info" :href="route('school.branding.edit')" />
     </section>
 
     <section class="grid gap-4 lg:grid-cols-2">

@@ -1,9 +1,22 @@
 <x-app-layout>
     <x-slot name="header">
+        @php
+            $liveClassBranding = app(\App\Services\Branding\BrandingService::class)->forSchool($school);
+            $liveClassBrandName = data_get($liveClassBranding, 'brand_name', $school->name);
+            $liveClassLogo = data_get($liveClassBranding, 'logo_url');
+            $liveClassInitials = data_get($liveClassBranding, 'initials', $school->initials());
+        @endphp
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
+            <div class="flex min-w-0 gap-3">
+                @if ($liveClassLogo)
+                    <img src="{{ $liveClassLogo }}" alt="{{ $liveClassBrandName }} logo" class="h-12 w-12 shrink-0 rounded-md border border-border-subtle bg-white object-contain p-1">
+                @else
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-primary text-sm font-semibold text-white">{{ $liveClassInitials }}</span>
+                @endif
+                <div class="min-w-0">
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">Live Classes</h2>
-                <p class="mt-1 text-sm text-text-secondary">Provider-ready manual internet-based class sessions for {{ $school->name }}.</p>
+                <p class="mt-1 text-sm text-text-secondary">Provider-ready manual internet-based class sessions for {{ $liveClassBrandName }}.</p>
+                </div>
             </div>
             @if ($canManage)
                 <a href="{{ route('school.live-classes.create') }}" class="ui-button-primary">Schedule Live Class</a>

@@ -31,6 +31,7 @@ The School Admin dashboard keeps the existing operational modules and adds a rea
 - LMS material foundation and CBT activity links;
 - live class foundation;
 - communication and notification hardening;
+- branding and white-label consolidation;
 - admissions cycles;
 - result and report settings;
 - CBT setup;
@@ -62,6 +63,7 @@ The dashboard labels these areas as available or **Planned**:
 - live class foundation is available for manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links;
 - live class provider abstraction is available for manual provider metadata and future provider boundaries;
 - communication notification hardening is available for school-scoped templates, operational logs, safe live-class reminders, LMS/finance/admission hooks, and provider-ready deferred channels;
+- branding and white-label consolidation is available for resolved school identity, logo, colors, dashboard/module/report hooks, safe uploads, audit logging, and powered-by boundaries;
 - live class provider API automation remains planned;
 - full browser offline/PWA.
 
@@ -73,4 +75,4 @@ The local database is the source of truth. A school can operate from a local com
 
 The attendance-only browser offline capture pilot does not make finance or the full portal available offline. The dashboard must not claim that fee capture or every browser task works without a connection to the school server.
 
-The LMS foundation is also online-first. Stage 15 adds links to existing CBT items, but CBT remains the assessment engine. Stage 16 adds manual live-class scheduling beside LMS. Stage 17 adds provider abstraction metadata while manual links remain active. Stage 18 adds operational communication logs and templates while SMS, WhatsApp, push, public campaigns, provider credentials, and provider APIs remain deferred. The dashboard must not describe LMS as offline LMS, assignment submissions/grading, or a parent/student LMS portal. Live classes must not be described as offline, API-generated, OAuth-enabled, or provider API-integrated.
+The LMS foundation is also online-first. Stage 15 adds links to existing CBT items, but CBT remains the assessment engine. Stage 16 adds manual live-class scheduling beside LMS. Stage 17 adds provider abstraction metadata while manual links remain active. Stage 18 adds operational communication logs and templates while SMS, WhatsApp, push, public campaigns, provider credentials, and provider APIs remain deferred. Stage 19 consolidates school branding and white-label boundaries while public websites, DNS, SSL automation, and full theme builders remain deferred. The dashboard must not describe LMS as offline LMS, assignment submissions/grading, or a parent/student LMS portal. Live classes must not be described as offline, API-generated, OAuth-enabled, or provider API-integrated.
