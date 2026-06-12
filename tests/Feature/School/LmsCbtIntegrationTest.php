@@ -365,7 +365,7 @@ class LmsCbtIntegrationTest extends TestCase
         $this->get(route('school.lms.index'))
             ->assertOk()
             ->assertSee('CBT Activities')
-            ->assertSee('Existing CBT items can now be linked');
+            ->assertSee('Existing CBT items can be linked');
     }
 
     public function test_standalone_dashboard_marks_lms_cbt_available_and_live_offline_lms_deferred(): void
@@ -382,7 +382,7 @@ class LmsCbtIntegrationTest extends TestCase
             ->assertOk()
             ->assertSee('LMS and CBT activity links')
             ->assertSee('CBT remains the assessment engine')
-            ->assertSee('Live classes')
+            ->assertSee('Live class foundation')
             ->assertSee('Full browser offline/PWA');
     }
 

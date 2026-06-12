@@ -29,4 +29,4 @@ Students must still enter CBT through the existing CBT access flow. LMS does not
 
 ## Deferred
 
-Live classes, provider abstraction, offline LMS, assignment submissions/grading, discussion forums, video hosting, analytics, parent LMS portal, and payment-gated content are outside the CBT integration stage.
+Live classes are scheduled in the separate manual-link foundation and do not change CBT behavior. Provider abstraction, live-class provider APIs, offline LMS, assignment submissions/grading, discussion forums, video hosting, analytics, parent LMS portal, and payment-gated content are outside the CBT integration stage.

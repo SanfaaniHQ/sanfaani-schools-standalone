@@ -298,6 +298,18 @@ return [
             'authorization_features' => ['lms.view', 'lms.manage', 'lms.materials.manage', 'lms.assignments.post'],
             'description' => 'Online classroom learning materials, private resources, publish workflow, and existing CBT activity links.',
         ],
+        'live_classes' => [
+            'enabled' => true,
+            'category' => 'academics',
+            'deployment_modes' => $allDeploymentModes,
+            'license_modes' => $allLicenseModes,
+            'requires_school' => true,
+            'super_admin_bypass' => true,
+            'hidden_when_disabled' => true,
+            'entitlement_keys' => ['live_classes'],
+            'authorization_features' => ['live_classes.view', 'live_classes.manage', 'live_classes.recordings.manage'],
+            'description' => 'Manual internet-based live class scheduling with class, subject, LMS, status, and recording-link foundations.',
+        ],
         'advanced_reports' => [
             'enabled' => true,
             'category' => 'reports',

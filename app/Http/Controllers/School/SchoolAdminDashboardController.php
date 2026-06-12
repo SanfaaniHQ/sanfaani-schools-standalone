@@ -69,6 +69,11 @@ class SchoolAdminDashboardController extends Controller
                 'totalTerms' => $school->terms()->count(),
                 'activeTerm' => $school->terms()->where('is_active', true)->first(),
                 'totalStudents' => $school->students()->count(),
+                'totalLiveClasses' => $school->liveClasses()->count(),
+                'upcomingLiveClasses' => $school->liveClasses()
+                    ->where('status', \App\Models\LiveClass::STATUS_SCHEDULED)
+                    ->where('starts_at', '>=', now())
+                    ->count(),
                 'totalResults' => $resultMetrics['total'],
                 'draftResults' => $resultMetrics['draft'],
                 'reviewedResults' => $resultMetrics['reviewed'],
@@ -176,6 +181,8 @@ class SchoolAdminDashboardController extends Controller
             'totalAssignedClasses' => $classAssignments->count(),
             'totalAssignedSubjects' => $subjectAssignments->count(),
             'totalAssignedStudents' => $totalStudents,
+            'upcomingLiveClasses' => app(\App\Services\LiveClasses\LiveClassService::class)
+                ->summaryForUser($school, $user)['upcoming'],
             'draftResults' => $draftResults,
             'submittedResults' => $submittedResults,
             'returnedResults' => $returnedResults,
@@ -321,6 +328,7 @@ class SchoolAdminDashboardController extends Controller
             'totalAssignedClasses' => 0,
             'totalAssignedSubjects' => 0,
             'totalAssignedStudents' => 0,
+            'upcomingLiveClasses' => 0,
             'draftResults' => 0,
             'submittedResults' => 0,
             'returnedResults' => 0,

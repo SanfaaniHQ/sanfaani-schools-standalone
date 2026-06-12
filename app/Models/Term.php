@@ -49,6 +49,11 @@ class Term extends Model
         return $this->hasMany(LmsClassroom::class);
     }
 
+    public function liveClasses(): HasMany
+    {
+        return $this->hasMany(LiveClass::class);
+    }
+
     public function attendanceRecords(): HasMany
     {
         return $this->hasMany(StudentAttendanceRecord::class);

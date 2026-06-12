@@ -94,6 +94,11 @@ class SchoolClass extends Model
         return $this->hasMany(LmsClassroom::class);
     }
 
+    public function liveClasses(): HasMany
+    {
+        return $this->hasMany(LiveClass::class);
+    }
+
     public function assignedTeachers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'teacher_class_assignments', 'school_class_id', 'teacher_user_id')

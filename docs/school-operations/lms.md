@@ -62,4 +62,4 @@ Audit metadata includes safe IDs, status, type, MIME, extension, and size. It do
 
 ## Boundaries
 
-LMS is online-first in this stage. It includes safe links to existing CBT items but does not include offline LMS, live classes, provider abstraction, submissions/grading, discussion forums, advanced analytics, video hosting, parent LMS, or payment-gated content.
+LMS is online-first in this stage. It includes safe links to existing CBT items. Live classes are handled by the separate manual-link Live Classes foundation and require internet. LMS does not include offline LMS, provider abstraction, submissions/grading, discussion forums, advanced analytics, video hosting, parent LMS, or payment-gated content.

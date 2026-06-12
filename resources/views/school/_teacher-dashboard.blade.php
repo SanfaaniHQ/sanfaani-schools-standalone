@@ -26,6 +26,7 @@
     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <x-ui.stat-card label="Assigned Classes" :value="$totalAssignedClasses" :meta="$totalAssignedStudents . ' students'" />
         <x-ui.stat-card label="Assigned Subjects" :value="$totalAssignedSubjects" meta="Active assignments" />
+        <x-ui.stat-card label="Live Classes" :value="$upcomingLiveClasses" meta="Upcoming manual sessions" tone="info" :href="route('school.live-classes.index')" />
         <x-ui.stat-card label="Draft Results" :value="$draftResults" meta="Saved drafts" tone="warning" />
         <x-ui.stat-card label="Submitted Results" :value="$submittedResults" meta="Under review" tone="info" />
     </section>
@@ -80,6 +81,12 @@
                     <a href="{{ route('school.lms.index') }}" class="ui-card ui-card-hover block p-4">
                         <span class="font-semibold text-text-primary">Learning Materials</span>
                         <span class="mt-1 block text-sm text-text-secondary">Post lessons, resources, and eligible CBT activity links only for assigned classes and subjects.</span>
+                    </a>
+                @endif
+                @if(($features['live_classes.view']['enabled'] ?? true))
+                    <a href="{{ route('school.live-classes.index') }}" class="ui-card ui-card-hover block p-4">
+                        <span class="font-semibold text-text-primary">Live Classes</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Schedule and join manual internet sessions only for assigned classes and subjects.</span>
                     </a>
                 @endif
                 @if(($features['cbt.question_bank']['enabled'] ?? false))

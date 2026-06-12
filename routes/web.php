@@ -74,6 +74,7 @@ use App\Http\Controllers\School\CommunicationController as SchoolCommunicationCo
 use App\Http\Controllers\School\FinanceController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ImportExportController;
+use App\Http\Controllers\School\LiveClassController;
 use App\Http\Controllers\School\LmsCbtActivityController;
 use App\Http\Controllers\School\LmsClassroomController;
 use App\Http\Controllers\School\LmsDashboardController;
@@ -1028,6 +1029,45 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
 
                         Route::get('/resources/{resource}/download', [LmsResourceController::class, 'download'])
                             ->name('resources.download');
+                    });
+
+                Route::prefix('live-classes')
+                    ->name('live-classes.')
+                    ->middleware(['role:school_admin|teacher|super_admin', 'feature.school:live_classes.view,live_classes.manage'])
+                    ->group(function () {
+                        Route::get('/', [LiveClassController::class, 'index'])
+                            ->name('index');
+
+                        Route::get('/create', [LiveClassController::class, 'create'])
+                            ->middleware('feature.school:live_classes.manage')
+                            ->name('create');
+
+                        Route::post('/', [LiveClassController::class, 'store'])
+                            ->middleware('feature.school:live_classes.manage')
+                            ->name('store');
+
+                        Route::get('/{liveClass}', [LiveClassController::class, 'show'])
+                            ->name('show');
+
+                        Route::get('/{liveClass}/edit', [LiveClassController::class, 'edit'])
+                            ->middleware('feature.school:live_classes.manage')
+                            ->name('edit');
+
+                        Route::patch('/{liveClass}', [LiveClassController::class, 'update'])
+                            ->middleware('feature.school:live_classes.manage')
+                            ->name('update');
+
+                        Route::post('/{liveClass}/start', [LiveClassController::class, 'start'])
+                            ->middleware('feature.school:live_classes.manage')
+                            ->name('start');
+
+                        Route::post('/{liveClass}/complete', [LiveClassController::class, 'complete'])
+                            ->middleware('feature.school:live_classes.manage')
+                            ->name('complete');
+
+                        Route::post('/{liveClass}/cancel', [LiveClassController::class, 'cancel'])
+                            ->middleware('feature.school:live_classes.manage')
+                            ->name('cancel');
                     });
 
                 Route::prefix('finance')

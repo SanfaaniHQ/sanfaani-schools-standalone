@@ -124,6 +124,8 @@ class SchoolRoleFeatureService
                 'lms.view' => 'View LMS',
                 'lms.materials.manage' => 'Manage Assigned LMS Materials',
                 'lms.assignments.post' => 'Post Assignment Materials',
+                'live_classes.view' => 'View Live Classes',
+                'live_classes.manage' => 'Manage Assigned Live Classes',
                 'cbt.question_bank' => 'Manage CBT Question Bank',
                 'cbt.mark_theory' => 'Mark CBT Theory Questions',
                 'students.view_assigned' => 'View Assigned Students',

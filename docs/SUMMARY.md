@@ -18,6 +18,8 @@
   - [Marketing Automation](marketing/marketing-automation.md)
 - Standalone Operations
   - [Attendance Foundation](standalone/attendance-foundation.md)
+  - [Live Class Foundation](standalone/live-class-foundation.md)
+  - [Live Classes Operations](school-operations/live-classes.md)
 - Roadmap and Acceptance
   - [Final Commercialization Roadmap](roadmap/final-commercialization-roadmap.md)
   - [Commercialization Acceptance Checklist](roadmap/commercialization-acceptance-checklist.md)

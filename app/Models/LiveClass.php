@@ -6,16 +6,26 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class LmsClassroom extends Model
+class LiveClass extends Model
 {
     use HasFactory;
     use SoftDeletes;
 
-    public const STATUS_ACTIVE = 'active';
-    public const STATUS_ARCHIVED = 'archived';
+    public const PROVIDER_MANUAL = 'manual';
+
+    public const STATUS_SCHEDULED = 'scheduled';
+    public const STATUS_LIVE = 'live';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public const STATUSES = [
+        self::STATUS_SCHEDULED,
+        self::STATUS_LIVE,
+        self::STATUS_COMPLETED,
+        self::STATUS_CANCELLED,
+    ];
 
     protected $fillable = [
         'school_id',
@@ -23,11 +33,28 @@ class LmsClassroom extends Model
         'subject_id',
         'academic_session_id',
         'term_id',
+        'lms_classroom_id',
+        'lms_material_id',
+        'teacher_user_id',
         'title',
         'description',
+        'provider',
+        'meeting_url',
+        'meeting_password',
+        'starts_at',
+        'ends_at',
+        'timezone',
         'status',
+        'recording_url',
         'created_by',
         'updated_by',
+        'metadata',
+    ];
+
+    protected $casts = [
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     public function scopeForSchool(Builder $query, School|int $school): Builder
@@ -35,9 +62,14 @@ class LmsClassroom extends Model
         return $query->where('school_id', $school instanceof School ? $school->id : $school);
     }
 
-    public function scopeActive(Builder $query): Builder
+    public function scopeScheduled(Builder $query): Builder
     {
-        return $query->where('status', self::STATUS_ACTIVE);
+        return $query->where('status', self::STATUS_SCHEDULED);
+    }
+
+    public function scopeUpcoming(Builder $query): Builder
+    {
+        return $query->where('starts_at', '>=', now());
     }
 
     public function school(): BelongsTo
@@ -65,24 +97,19 @@ class LmsClassroom extends Model
         return $this->belongsTo(Term::class);
     }
 
-    public function topics(): HasMany
+    public function lmsClassroom(): BelongsTo
     {
-        return $this->hasMany(LmsTopic::class);
+        return $this->belongsTo(LmsClassroom::class);
     }
 
-    public function materials(): HasMany
+    public function lmsMaterial(): BelongsTo
     {
-        return $this->hasMany(LmsMaterial::class);
+        return $this->belongsTo(LmsMaterial::class);
     }
 
-    public function cbtActivities(): HasMany
+    public function teacher(): BelongsTo
     {
-        return $this->hasMany(LmsCbtActivity::class);
-    }
-
-    public function liveClasses(): HasMany
-    {
-        return $this->hasMany(LiveClass::class);
+        return $this->belongsTo(User::class, 'teacher_user_id');
     }
 
     public function creator(): BelongsTo

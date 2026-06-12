@@ -56,6 +56,16 @@ class User extends Authenticatable
         return $this->hasMany(LmsMaterial::class, 'teacher_user_id');
     }
 
+    public function liveClasses(): HasMany
+    {
+        return $this->hasMany(LiveClass::class, 'teacher_user_id');
+    }
+
+    public function createdLiveClasses(): HasMany
+    {
+        return $this->hasMany(LiveClass::class, 'created_by');
+    }
+
     public function createdLmsClassrooms(): HasMany
     {
         return $this->hasMany(LmsClassroom::class, 'created_by');

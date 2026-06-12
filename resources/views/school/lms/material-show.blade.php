@@ -153,7 +153,7 @@
 
         <x-ui.panel tone="info" title="Stage 15 Boundary">
             <p class="text-sm leading-6 text-text-secondary">
-                This material can be an assignment post, but student submissions and grading are deferred. Existing CBT items can be linked here without changing CBT attempt or result rules. Live classes, offline LMS, discussions, analytics, video hosting, and payment-gated content are not implemented here.
+                This material can be an assignment post, but student submissions and grading are deferred. Existing CBT items can be linked here without changing CBT attempt or result rules. Live classes are scheduled in the separate manual-link foundation and require internet. Offline LMS, discussions, analytics, video hosting, and payment-gated content are not implemented here.
             </p>
         </x-ui.panel>
     </div>

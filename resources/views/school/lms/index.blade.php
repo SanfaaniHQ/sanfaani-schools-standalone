@@ -118,7 +118,7 @@
 
         <x-ui.panel tone="info" title="Stage 15 Boundary">
             <p class="text-sm leading-6 text-text-secondary">
-                LMS files use private local storage and authorized downloads. Existing CBT items can now be linked to LMS classrooms or materials while CBT remains the assessment engine. Student LMS viewing is deferred until safe student identity resolution exists. Live classes, offline LMS, submissions/grading, forums, analytics, video hosting, and payment-gated content are not implemented in this stage.
+                LMS files use private local storage and authorized downloads. Existing CBT items can be linked to LMS classrooms or materials while CBT remains the assessment engine. Live classes are handled by the separate manual-link Live Classes foundation and require internet. Student LMS viewing is deferred until safe student identity resolution exists. offline LMS, submissions/grading, forums, analytics, video hosting, and payment-gated content remain deferred here.
             </p>
             <p class="mt-2 text-xs text-text-tertiary">
                 Allowed resources: {{ implode(', ', $allowedExtensions) }}. Maximum size: {{ $maxUploadMb }} MB.
