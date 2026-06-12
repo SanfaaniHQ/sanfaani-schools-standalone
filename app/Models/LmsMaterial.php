@@ -108,6 +108,11 @@ class LmsMaterial extends Model
         return $this->hasMany(LmsResource::class);
     }
 
+    public function cbtActivities(): HasMany
+    {
+        return $this->hasMany(LmsCbtActivity::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

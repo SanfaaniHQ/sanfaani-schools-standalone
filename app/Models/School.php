@@ -97,6 +97,11 @@ class School extends Model
         return $this->hasMany(LmsResource::class);
     }
 
+    public function lmsCbtActivities(): HasMany
+    {
+        return $this->hasMany(LmsCbtActivity::class);
+    }
+
     public function studentElectiveSubjects(): HasMany
     {
         return $this->hasMany(StudentElectiveSubject::class);

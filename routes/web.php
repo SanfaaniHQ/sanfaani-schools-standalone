@@ -74,6 +74,7 @@ use App\Http\Controllers\School\CommunicationController as SchoolCommunicationCo
 use App\Http\Controllers\School\FinanceController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ImportExportController;
+use App\Http\Controllers\School\LmsCbtActivityController;
 use App\Http\Controllers\School\LmsClassroomController;
 use App\Http\Controllers\School\LmsDashboardController;
 use App\Http\Controllers\School\LmsMaterialController;
@@ -982,6 +983,10 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                             ->middleware('feature.school:lms.manage,lms.materials.manage')
                             ->name('topics.store');
 
+                        Route::post('/classrooms/{classroom}/cbt', [LmsCbtActivityController::class, 'storeForClassroom'])
+                            ->middleware(['feature.school:lms.manage,lms.materials.manage', 'feature.school:cbt.manage,cbt.question_bank'])
+                            ->name('classrooms.cbt.store');
+
                         Route::get('/classrooms/{classroom}/materials/create', [LmsMaterialController::class, 'create'])
                             ->middleware('feature.school:lms.materials.manage,lms.manage')
                             ->name('materials.create');
@@ -1008,6 +1013,14 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                         Route::post('/materials/{material}/archive', [LmsMaterialController::class, 'archive'])
                             ->middleware('feature.school:lms.materials.manage,lms.manage')
                             ->name('materials.archive');
+
+                        Route::post('/materials/{material}/cbt', [LmsCbtActivityController::class, 'storeForMaterial'])
+                            ->middleware(['feature.school:lms.manage,lms.materials.manage', 'feature.school:cbt.manage,cbt.question_bank'])
+                            ->name('materials.cbt.store');
+
+                        Route::delete('/cbt-links/{activity}', [LmsCbtActivityController::class, 'destroy'])
+                            ->middleware(['feature.school:lms.manage,lms.materials.manage', 'feature.school:cbt.manage,cbt.question_bank'])
+                            ->name('cbt-links.destroy');
 
                         Route::post('/materials/{material}/resources', [LmsResourceController::class, 'store'])
                             ->middleware('feature.school:lms.materials.manage,lms.manage')

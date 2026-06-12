@@ -55,7 +55,7 @@ class LmsFoundationTest extends TestCase
         $this->get(route('school.lms.index'))
             ->assertOk()
             ->assertSee('Learning Materials')
-            ->assertSee('Stage 14 Boundary')
+            ->assertSee('Stage 15 Boundary')
             ->assertSee('private local storage');
 
         $this->post(route('school.lms.classrooms.store'), [
@@ -286,8 +286,8 @@ class LmsFoundationTest extends TestCase
         $this->get(route('school.lms.index'))
             ->assertOk()
             ->assertSee('Student LMS viewing is deferred')
-            ->assertSee('CBT integration')
-            ->assertSee('live classes')
+            ->assertSee('Existing CBT items')
+            ->assertSee('Live classes')
             ->assertSee('offline LMS')
             ->assertSee('submissions/grading')
             ->assertDontSee(route('school.lms.index').'/student');

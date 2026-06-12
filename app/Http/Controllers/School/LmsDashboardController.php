@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
+use App\Models\LmsCbtActivity;
 use App\Models\LmsMaterial;
 use App\Models\School;
 use App\Services\CurrentSchoolService;
@@ -41,6 +42,7 @@ class LmsDashboardController extends Controller
                 'materials' => $school->lmsMaterials()->count(),
                 'published' => $school->lmsMaterials()->where('status', LmsMaterial::STATUS_PUBLISHED)->count(),
                 'resources' => $school->lmsResources()->where('status', 'active')->count(),
+                'cbtActivities' => $school->lmsCbtActivities()->where('status', LmsCbtActivity::STATUS_ACTIVE)->count(),
             ],
         ]);
     }

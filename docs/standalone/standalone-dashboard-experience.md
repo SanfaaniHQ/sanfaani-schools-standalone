@@ -28,7 +28,7 @@ The School Admin dashboard keeps the existing operational modules and adds a rea
 - staff and student records;
 - attendance foundation;
 - fees/accounting foundation;
-- LMS material foundation;
+- LMS material foundation and CBT activity links;
 - admissions cycles;
 - result and report settings;
 - CBT setup;
@@ -56,7 +56,7 @@ The dashboard labels these areas as available or **Planned**:
 - attendance-only offline capture and its server-side sync monitor are available when enabled;
 - fees/accounting foundation is available;
 - finance reports, finance CSV export, and audit review are available;
-- LMS and learning content foundation is available for online class/subject materials and private resources;
+- LMS and CBT activity links are available for online class/subject materials, private resources, and links to existing CBT items;
 - live classes;
 - full browser offline/PWA.
 
@@ -68,4 +68,4 @@ The local database is the source of truth. A school can operate from a local com
 
 The attendance-only browser offline capture pilot does not make finance or the full portal available offline. The dashboard must not claim that fee capture or every browser task works without a connection to the school server.
 
-The LMS foundation is also online-first. It must not be described as offline LMS, CBT integration, live classes, assignment submissions/grading, or a parent/student LMS portal.
+The LMS foundation is also online-first. Stage 15 adds links to existing CBT items, but CBT remains the assessment engine. The dashboard must not describe LMS as offline LMS, live classes, assignment submissions/grading, or a parent/student LMS portal.

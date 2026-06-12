@@ -272,7 +272,7 @@ return [
             'hidden_when_disabled' => true,
             'entitlement_keys' => ['cbt_exams', 'cbt_question_bank', 'cbt_results'],
             'authorization_features' => ['cbt.manage', 'cbt.question_bank', 'cbt.publish_results'],
-            'description' => 'Computer-based testing modules and result integration.',
+            'description' => 'Computer-based testing modules, LMS activity links, and result integration.',
         ],
         'attendance' => [
             'enabled' => true,
@@ -296,7 +296,7 @@ return [
             'hidden_when_disabled' => true,
             'entitlement_keys' => ['lms'],
             'authorization_features' => ['lms.view', 'lms.manage', 'lms.materials.manage', 'lms.assignments.post'],
-            'description' => 'Online classroom learning materials, private resources, and publish workflow foundation.',
+            'description' => 'Online classroom learning materials, private resources, publish workflow, and existing CBT activity links.',
         ],
         'advanced_reports' => [
             'enabled' => true,

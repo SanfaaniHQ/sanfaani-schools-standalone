@@ -11,6 +11,7 @@ The LMS foundation provides:
 - teacher and school-admin lesson, note, resource, and assignment-material posts;
 - draft, published, and archived material states;
 - private local file upload and authorized download;
+- school-scoped links from LMS classrooms/materials to existing CBT items;
 - audit logs for classroom, material, publish/unpublish/archive, upload, and download actions;
 - school admin and teacher dashboard/sidebar entry points.
 
@@ -23,6 +24,14 @@ Teachers can view LMS and manage materials only for class/subject/session/term s
 Accountants and Result Officers do not receive LMS access by default.
 
 Students and parents do not receive an LMS portal in this stage. Student LMS viewing is deferred because the inspected user/student identity mapping is not safe enough to prove that a user account belongs to exactly one student.
+
+## CBT Integration
+
+Stage 15 adds safe links from LMS classrooms or materials to existing CBT exams, quizzes, or assessments. LMS remains the learning hub and CBT remains the assessment engine.
+
+Teachers can link only CBT items that match their assigned LMS class/subject scope. School Admins can link school-scoped CBT items when the CBT class, subject, session, and term do not conflict with the LMS scope.
+
+LMS views show only safe CBT activity metadata and existing CBT entry/manage links. They do not expose raw question text, options, answers, scores, access codes, invitation tokens, or private attempt payloads.
 
 ## File Security
 
@@ -38,6 +47,6 @@ The UI shows original file names, MIME type, and file size. It does not expose t
 
 ## Deferred
 
-CBT integration remains Stage 15. Live class foundation remains Stage 16. Provider abstraction remains Stage 17.
+Live class foundation remains Stage 16. Provider abstraction remains Stage 17.
 
 Offline LMS, assignment submissions/grading, forums/discussions, advanced analytics, video hosting/transcoding, parent LMS portal, and payment-gated content are not implemented.

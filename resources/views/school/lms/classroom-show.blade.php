@@ -111,6 +111,8 @@
             <div class="mt-4">{{ $materials->links() }}</div>
         </x-ui.panel>
 
+        @include('school.lms.partials.cbt-activities')
+
         <x-ui.panel tone="info" title="Resource Security">
             <p class="text-sm leading-6 text-text-secondary">
                 Files are stored under private local LMS storage and downloaded only after authorization. Allowed resources: {{ implode(', ', $allowedExtensions) }}. Maximum size: {{ $maxUploadMb }} MB. Raw storage paths are not shown.

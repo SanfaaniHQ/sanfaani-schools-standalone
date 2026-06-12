@@ -7,6 +7,7 @@ use App\Models\LmsClassroom;
 use App\Models\School;
 use App\Services\CurrentSchoolService;
 use App\Services\Lms\LmsAccessService;
+use App\Services\Lms\LmsCbtIntegrationService;
 use App\Services\Lms\LmsClassroomService;
 use App\Services\Lms\LmsMaterialService;
 use App\Services\Lms\LmsResourceStorageService;
@@ -38,12 +39,14 @@ class LmsClassroomController extends Controller
         LmsAccessService $access,
         LmsMaterialService $materials,
         LmsResourceStorageService $resources,
+        LmsCbtIntegrationService $cbtIntegration,
     ) {
         $school = $this->currentSchoolOrFail();
         abort_unless((int) $classroom->school_id === (int) $school->id, 403);
         abort_unless($access->canManageClassroom($request->user(), $school, $classroom), 403);
 
         $classroom->load(['schoolClass', 'subject', 'academicSession', 'term', 'topics' => fn ($query) => $query->orderBy('sort_order')->orderBy('id')]);
+        $cbtActivities = $cbtIntegration->classroomActivities($school, $classroom);
 
         return view('school.lms.classroom-show', [
             'school' => $school,
@@ -53,6 +56,13 @@ class LmsClassroomController extends Controller
             'canManageSchool' => $access->canManageSchool($request->user(), $school),
             'allowedExtensions' => $resources->allowedExtensions(),
             'maxUploadMb' => $resources->maxUploadMb(),
+            'cbtActivities' => $cbtActivities,
+            'cbtActivityManagement' => $cbtActivities->mapWithKeys(fn ($activity) => [
+                $activity->id => $cbtIntegration->canManageActivityLink($request->user(), $school, $activity),
+            ]),
+            'eligibleCbtExams' => $cbtIntegration->eligibleExamsForClassroom($school, $request->user(), $classroom),
+            'canManageCbtLinks' => $cbtIntegration->canManageClassroomLinks($request->user(), $school, $classroom),
+            'cbtAttachAction' => route('school.lms.classrooms.cbt.store', $classroom),
         ]);
     }
 

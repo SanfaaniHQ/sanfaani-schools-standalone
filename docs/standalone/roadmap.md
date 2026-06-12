@@ -16,6 +16,7 @@ Completed in the local-first foundation:
 - School-scoped finance reports and finance audit review for admins/accountants.
 - School-scoped CSV import/export tools for selected student, attendance, and finance data.
 - Online LMS foundation for class/subject classrooms, topics, teacher materials, private resources, publish workflow, permissions, and audit logs.
+- LMS-CBT activity links so existing CBT assessments can be attached to LMS classrooms/materials while CBT remains the assessment engine.
 - Documentation that the local database is the source of truth.
 
 Next phases:
@@ -34,7 +35,7 @@ Non-goals for this foundation:
 - Full browser offline/PWA is not complete yet.
 - Offline capture for results, admissions, LMS, fees, CBT, and other portal modules is not implemented. The LMS foundation is online-first only.
 - Online payment gateway automation and parent/student finance portal access are not implemented by the school-fees foundation.
-- CBT integration, live classes, LMS submissions/grading, parent LMS portal, forums, analytics, video hosting, and payment-gated content are not implemented by the LMS foundation.
+- Live classes, LMS submissions/grading, parent LMS portal, forums, analytics, video hosting, and payment-gated content are not implemented by the LMS foundation.
 - Double-entry accounting, bank reconciliation, payroll, procurement, and tax accounting are not implemented.
 - Real two-way sync is not complete yet.
 - SaaS billing/signup are not the main standalone flow.

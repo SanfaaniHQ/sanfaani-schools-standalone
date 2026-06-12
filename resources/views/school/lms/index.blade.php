@@ -23,6 +23,7 @@
             <x-ui.stat-card label="Materials" :value="$stats['materials']" meta="Drafts, published, and archived" tone="info" />
             <x-ui.stat-card label="Published" :value="$stats['published']" meta="Visible after authorization" tone="success" />
             <x-ui.stat-card label="Resources" :value="$stats['resources']" meta="Private local files" tone="warning" />
+            <x-ui.stat-card label="CBT Activities" :value="$stats['cbtActivities']" meta="Linked existing CBT items" tone="info" />
         </section>
 
         <section class="grid gap-4 lg:grid-cols-[1fr_24rem]">
@@ -115,9 +116,9 @@
             </x-ui.panel>
         </section>
 
-        <x-ui.panel tone="info" title="Stage 14 Boundary">
+        <x-ui.panel tone="info" title="Stage 15 Boundary">
             <p class="text-sm leading-6 text-text-secondary">
-                LMS files use private local storage and authorized downloads. Student LMS viewing is deferred until safe student identity resolution exists. CBT integration, live classes, offline LMS, submissions/grading, forums, analytics, video hosting, and payment-gated content are not implemented in this stage.
+                LMS files use private local storage and authorized downloads. Existing CBT items can now be linked to LMS classrooms or materials while CBT remains the assessment engine. Student LMS viewing is deferred until safe student identity resolution exists. Live classes, offline LMS, submissions/grading, forums, analytics, video hosting, and payment-gated content are not implemented in this stage.
             </p>
             <p class="mt-2 text-xs text-text-tertiary">
                 Allowed resources: {{ implode(', ', $allowedExtensions) }}. Maximum size: {{ $maxUploadMb }} MB.

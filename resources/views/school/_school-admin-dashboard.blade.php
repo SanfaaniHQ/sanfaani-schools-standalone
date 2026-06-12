@@ -17,11 +17,11 @@
         ['title' => 'Terms', 'body' => 'Operational terms attached to sessions.', 'href' => route('school.terms.index'), 'feature' => null],
         ['title' => 'Admissions', 'body' => 'Applications, settings, channels, and conversion workflow.', 'href' => route('admin.admissions.index'), 'feature' => null],
         ['title' => 'Attendance', 'body' => 'Daily registers, filtered reports, status counts, and student history.', 'href' => route('school.attendance.index'), 'feature' => 'attendance.view'],
-        ['title' => 'Learning Materials', 'body' => 'Class and subject LMS classrooms, topics, drafts, published materials, and private resources.', 'href' => route('school.lms.index'), 'feature' => 'lms.view'],
+        ['title' => 'Learning Materials', 'body' => 'Class and subject LMS classrooms, topics, drafts, private resources, publishing, and CBT activity links.', 'href' => route('school.lms.index'), 'feature' => 'lms.view'],
         ['title' => 'Fees & Finance', 'body' => 'Fee setup, invoices, manual payments, reports, audit review, and balances.', 'href' => route('school.finance.index'), 'feature' => 'finance.view'],
         ['title' => 'Import / Export', 'body' => 'Safe CSV templates, previews, and selected operational exports.', 'href' => route('school.import-export.index'), 'feature' => null],
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
-        ['title' => 'CBT', 'body' => 'Question banks, exams, marking, and CBT result publishing.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
+        ['title' => 'CBT', 'body' => 'Question banks, exams, marking, result publishing, and the assessment engine behind LMS links.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],
         ['title' => 'Bulk Communication', 'body' => 'Send school-scoped operational messages.', 'href' => route('school.communications.bulk'), 'feature' => 'communication.bulk'],
         ['title' => 'Promotions', 'body' => 'Move students across sessions without losing history.', 'href' => route('school.student-promotions.index'), 'feature' => 'student.promote'],
@@ -109,7 +109,7 @@
         <x-ui.stat-card label="Finance" :value="$financeSummary['invoices'] ?? 0" :meta="'Balance: NGN ' . number_format($financeSummary['total_balance'] ?? 0, 2)" tone="warning" />
         <x-ui.stat-card label="Scratch Cards" :value="$totalScratchCardRequests" :meta="$unusedScratchCards . ' unused / ' . $usedScratchCards . ' used'" />
         <x-ui.stat-card label="Academic Setup" :value="$totalClasses . ' / ' . $totalSubjects" :meta="$totalSessions . ' sessions, ' . $totalTerms . ' terms'" />
-        <x-ui.stat-card label="LMS" value="Online" meta="Class/subject material foundation" tone="info" :href="route('school.lms.index')" />
+        <x-ui.stat-card label="LMS" value="Online" meta="Materials plus CBT activity links" tone="info" :href="route('school.lms.index')" />
     </section>
 
     <section class="grid gap-4 lg:grid-cols-2">

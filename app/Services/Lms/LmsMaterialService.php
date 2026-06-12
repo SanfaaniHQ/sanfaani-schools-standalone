@@ -21,7 +21,8 @@ class LmsMaterialService
         abort_unless((int) $classroom->school_id === (int) $school->id, 403);
         abort_unless($this->access->canManageClassroom($user, $school, $classroom), 403);
 
-        return $classroom->materials()
+        return LmsMaterial::query()
+            ->where('lms_classroom_id', $classroom->id)
             ->where('school_id', $school->id)
             ->with(['topic', 'teacher', 'resources'])
             ->latest('id');
@@ -29,7 +30,8 @@ class LmsMaterialService
 
     public function publishedMaterials(School $school, LmsClassroom $classroom): Builder
     {
-        return $classroom->materials()
+        return LmsMaterial::query()
+            ->where('lms_classroom_id', $classroom->id)
             ->where('school_id', $school->id)
             ->published()
             ->with(['topic', 'resources'])

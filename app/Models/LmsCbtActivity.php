@@ -6,28 +6,38 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class LmsClassroom extends Model
+class LmsCbtActivity extends Model
 {
     use HasFactory;
-    use SoftDeletes;
 
     public const STATUS_ACTIVE = 'active';
     public const STATUS_ARCHIVED = 'archived';
 
+    public const TARGET_CLASSROOM = 'classroom';
+    public const TARGET_MATERIAL = 'material';
+
     protected $fillable = [
         'school_id',
+        'lms_classroom_id',
+        'lms_material_id',
+        'cbt_exam_id',
         'school_class_id',
         'subject_id',
         'academic_session_id',
         'term_id',
+        'target_type',
+        'target_id',
         'title',
         'description',
         'status',
         'created_by',
         'updated_by',
+        'metadata',
+    ];
+
+    protected $casts = [
+        'metadata' => 'array',
     ];
 
     public function scopeForSchool(Builder $query, School|int $school): Builder
@@ -43,6 +53,21 @@ class LmsClassroom extends Model
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class);
+    }
+
+    public function classroom(): BelongsTo
+    {
+        return $this->belongsTo(LmsClassroom::class, 'lms_classroom_id');
+    }
+
+    public function material(): BelongsTo
+    {
+        return $this->belongsTo(LmsMaterial::class, 'lms_material_id');
+    }
+
+    public function exam(): BelongsTo
+    {
+        return $this->belongsTo(CbtExam::class, 'cbt_exam_id');
     }
 
     public function schoolClass(): BelongsTo
@@ -63,21 +88,6 @@ class LmsClassroom extends Model
     public function term(): BelongsTo
     {
         return $this->belongsTo(Term::class);
-    }
-
-    public function topics(): HasMany
-    {
-        return $this->hasMany(LmsTopic::class);
-    }
-
-    public function materials(): HasMany
-    {
-        return $this->hasMany(LmsMaterial::class);
-    }
-
-    public function cbtActivities(): HasMany
-    {
-        return $this->hasMany(LmsCbtActivity::class);
     }
 
     public function creator(): BelongsTo

@@ -9,7 +9,8 @@ The LMS area is available from the school workspace as **Learning Materials** fo
 3. Add topics/modules if the class needs grouped content.
 4. Create materials as drafts.
 5. Upload private resources to saved materials.
-6. Publish when the content should become visible to authorized users.
+6. Link existing CBT activities where assessment is needed.
+7. Publish when the content should become visible to authorized users.
 
 Duplicate classrooms for the same school, class, subject, session, and term are blocked.
 
@@ -28,6 +29,14 @@ The assignment type is an assignment post only. Student submissions and grading 
 
 Teachers can create and manage LMS material only when the existing teacher assignment service confirms that they can teach the selected class and subject for the relevant session and term. Unassigned teachers are denied.
 
+Teachers can link or unlink CBT activities only when the CBT item belongs to the same school, class, and subject as the assigned LMS classroom/material scope.
+
+## CBT Activity Links
+
+LMS classrooms and materials can link to existing CBT exams, quizzes, or assessments. The LMS does not create or duplicate CBT items; it only stores a school-scoped link.
+
+The existing CBT entry, candidate, attempt, scoring, and result-release rules remain unchanged. LMS views do not show raw CBT question content, answer payloads, scores, access codes, tokens, or private attempt data.
+
 ## Download Rules
 
 Resources are stored on the private local disk and downloaded through authorized LMS routes. Raw storage paths are not shown in the UI.
@@ -44,10 +53,13 @@ The LMS writes audit logs for:
 - `lms_material_unpublished`;
 - `lms_material_archived`;
 - `lms_resource_uploaded`;
-- `lms_resource_downloaded`.
+- `lms_resource_downloaded`;
+- `lms_cbt_activity_linked`;
+- `lms_cbt_activity_unlinked`;
+- `lms_cbt_activity_link_failed`.
 
 Audit metadata includes safe IDs, status, type, MIME, extension, and size. It does not include raw file paths or file contents.
 
 ## Boundaries
 
-LMS is online-first in this stage. It does not include offline LMS, CBT integration, live classes, provider abstraction, submissions/grading, discussion forums, advanced analytics, video hosting, parent LMS, or payment-gated content.
+LMS is online-first in this stage. It includes safe links to existing CBT items but does not include offline LMS, live classes, provider abstraction, submissions/grading, discussion forums, advanced analytics, video hosting, parent LMS, or payment-gated content.

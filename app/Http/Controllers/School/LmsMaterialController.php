@@ -8,6 +8,7 @@ use App\Models\LmsMaterial;
 use App\Models\School;
 use App\Services\CurrentSchoolService;
 use App\Services\Lms\LmsAccessService;
+use App\Services\Lms\LmsCbtIntegrationService;
 use App\Services\Lms\LmsMaterialService;
 use App\Services\Lms\LmsResourceStorageService;
 use Illuminate\Http\Request;
@@ -46,11 +47,17 @@ class LmsMaterialController extends Controller
             ->with('success', 'LMS material saved as draft.');
     }
 
-    public function show(Request $request, LmsMaterial $material, LmsAccessService $access, LmsResourceStorageService $resources)
-    {
+    public function show(
+        Request $request,
+        LmsMaterial $material,
+        LmsAccessService $access,
+        LmsResourceStorageService $resources,
+        LmsCbtIntegrationService $cbtIntegration
+    ) {
         $school = $this->currentSchoolOrFail();
         $material->load(['classroom.schoolClass', 'classroom.subject', 'classroom.academicSession', 'classroom.term', 'topic', 'teacher', 'resources']);
         abort_unless($access->canViewMaterial($request->user(), $school, $material), 403);
+        $cbtActivities = $cbtIntegration->materialActivities($school, $material);
 
         return view('school.lms.material-show', [
             'school' => $school,
@@ -58,6 +65,13 @@ class LmsMaterialController extends Controller
             'canManage' => $access->canManageMaterial($request->user(), $school, $material),
             'allowedExtensions' => $resources->allowedExtensions(),
             'maxUploadMb' => $resources->maxUploadMb(),
+            'cbtActivities' => $cbtActivities,
+            'cbtActivityManagement' => $cbtActivities->mapWithKeys(fn ($activity) => [
+                $activity->id => $cbtIntegration->canManageActivityLink($request->user(), $school, $activity),
+            ]),
+            'eligibleCbtExams' => $cbtIntegration->eligibleExamsForMaterial($school, $request->user(), $material),
+            'canManageCbtLinks' => $cbtIntegration->canManageMaterialLinks($request->user(), $school, $material),
+            'cbtAttachAction' => route('school.lms.materials.cbt.store', $material),
         ]);
     }
 

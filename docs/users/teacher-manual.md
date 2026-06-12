@@ -5,7 +5,7 @@ Teacher access is based on role context, school assignment, and enabled features
 ## Current Responsibilities
 
 - Review assigned classes and subjects.
-- Create and publish LMS lessons, notes, resources, and assignment posts only for assigned class/subject scopes when LMS features are enabled.
+- Create and publish LMS lessons, notes, resources, assignment posts, and eligible CBT activity links only for assigned class/subject scopes when LMS and CBT features are enabled.
 - Enter assessment scores where result entry is enabled.
 - Use result submission and review workflows where assigned.
 - Use guided onboarding steps for teacher orientation.
@@ -18,4 +18,4 @@ LMS resource downloads are private and authorized. Teachers should upload only a
 
 ## Planned
 
-CBT integration, live classes, offline LMS, assignment submissions/grading, discussions, analytics, and video hosting may be added later.
+Live classes, offline LMS, assignment submissions/grading, discussions, analytics, and video hosting may be added later. CBT activity links are available through LMS only for assigned class/subject scopes and do not bypass existing CBT attempt or result rules.

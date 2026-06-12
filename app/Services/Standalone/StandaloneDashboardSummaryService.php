@@ -3,6 +3,7 @@
 namespace App\Services\Standalone;
 
 use App\Models\Backup;
+use App\Models\LmsCbtActivity;
 use App\Models\School;
 use App\Models\UpdatePackage;
 use App\Services\Backups\BackupService;
@@ -204,6 +205,7 @@ class StandaloneDashboardSummaryService
             'lms_classrooms' => $school->lmsClassrooms()->count(),
             'lms_materials' => $school->lmsMaterials()->count(),
             'lms_published_materials' => $school->lmsMaterials()->where('status', 'published')->count(),
+            'lms_cbt_activities' => $school->lmsCbtActivities()->where('status', LmsCbtActivity::STATUS_ACTIVE)->count(),
             'results' => $school->studentResults()->count(),
             'published_results' => $school->studentResults()->where('status', 'published')->count(),
             'cbt_question_banks' => $school->cbtQuestionBanks()->count(),
@@ -248,7 +250,7 @@ class StandaloneDashboardSummaryService
                 'lms_foundation',
                 'LMS material foundation',
                 Route::has('school.lms.index'),
-                'Online class/subject LMS classrooms, topics, draft/published materials, and private resources are available.',
+                'Online class/subject LMS classrooms, topics, draft/published materials, private resources, and CBT activity links are available.',
                 $this->route('school.lms.index')
             ),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
@@ -327,7 +329,7 @@ class StandaloneDashboardSummaryService
                 [
                     'label' => 'LMS',
                     'value' => $counts['lms_classrooms'],
-                    'meta' => $counts['lms_published_materials'].' published material(s)',
+                    'meta' => $counts['lms_published_materials'].' published / '.$counts['lms_cbt_activities'].' CBT link(s)',
                     'href' => $this->route('school.lms.index'),
                 ],
                 [
@@ -489,7 +491,7 @@ class StandaloneDashboardSummaryService
                     ? 'Attendance-only browser capture and validated sync are enabled.'
                     : 'The attendance-only browser pilot is available only when capture and sync are enabled.',
             ],
-            ['label' => 'LMS and learning content', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, and publish workflow are available. CBT integration, live classes, offline LMS, and submissions remain deferred.'],
+            ['label' => 'LMS and CBT activity links', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, publish workflow, and links to existing CBT items are available. CBT remains the assessment engine; live classes, offline LMS, and submissions remain deferred.'],
             ['label' => 'Live classes', 'status' => 'Planned', 'detail' => 'No live-class provider is presented as available.'],
             ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];

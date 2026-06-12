@@ -79,7 +79,7 @@
                 @if(($features['lms.view']['enabled'] ?? true))
                     <a href="{{ route('school.lms.index') }}" class="ui-card ui-card-hover block p-4">
                         <span class="font-semibold text-text-primary">Learning Materials</span>
-                        <span class="mt-1 block text-sm text-text-secondary">Post lessons and resources only for assigned classes and subjects.</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Post lessons, resources, and eligible CBT activity links only for assigned classes and subjects.</span>
                     </a>
                 @endif
                 @if(($features['cbt.question_bank']['enabled'] ?? false))

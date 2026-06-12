@@ -141,6 +141,11 @@ class CbtExam extends Model
         return $this->hasMany(CbtAccessCode::class);
     }
 
+    public function lmsCbtActivities(): HasMany
+    {
+        return $this->hasMany(LmsCbtActivity::class);
+    }
+
     public function isOpenForEntry(): bool
     {
         if (! in_array($this->status, ['scheduled', 'open', 'published'], true)) {
