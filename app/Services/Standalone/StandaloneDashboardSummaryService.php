@@ -260,7 +260,7 @@ class StandaloneDashboardSummaryService
                 'live_class_foundation',
                 'Live class foundation',
                 Route::has('school.live-classes.index'),
-                'Manual internet meeting links, class/subject scheduling, LMS context links, status workflow, recording links, and audit logging are available.',
+                'Manual internet meeting links, provider abstraction metadata, class/subject scheduling, LMS context links, status workflow, recording links, and audit logging are available.',
                 $this->route('school.live-classes.index')
             ),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
@@ -345,7 +345,7 @@ class StandaloneDashboardSummaryService
                 [
                     'label' => 'Live Classes',
                     'value' => $counts['live_classes'],
-                    'meta' => $counts['scheduled_live_classes'].' scheduled manual session(s)',
+                    'meta' => $counts['scheduled_live_classes'].' scheduled manual provider session(s)',
                     'href' => $this->route('school.live-classes.index'),
                 ],
                 [
@@ -509,8 +509,9 @@ class StandaloneDashboardSummaryService
                     : 'The attendance-only browser pilot is available only when capture and sync are enabled.',
             ],
             ['label' => 'LMS and CBT activity links', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, publish workflow, and links to existing CBT items are available. CBT remains the assessment engine; offline LMS and submissions remain deferred.'],
-            ['label' => 'Live class foundation', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider automation remains deferred to Stage 17. Offline live class is not implemented.'],
-            ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, and generated meeting rooms are not implemented.'],
+            ['label' => 'Live class foundation', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider abstraction foundation available. Provider API automation remains deferred. Offline live class is not implemented.'],
+            ['label' => 'Live class provider abstraction', 'status' => 'Available', 'detail' => 'Manual provider support, provider registry metadata, provider labels, and future provider boundaries are available without storing credentials or calling external APIs.'],
+            ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, generated meeting rooms, webhooks, and recording sync are not implemented.'],
             ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];
     }

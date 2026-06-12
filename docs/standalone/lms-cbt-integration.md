@@ -58,4 +58,4 @@ Audit metadata includes safe school, classroom, material, CBT exam, class, subje
 
 This stage does not rebuild CBT, replace CBT routes/controllers/results/attempt logic, or create duplicate question-bank/exam systems.
 
-Live class foundation remains Stage 16. Live-class provider abstraction remains Stage 17. Offline LMS, assignment submissions/grading, forums, video hosting/transcoding, advanced LMS analytics, parent LMS portal, and payment-gated content are not implemented.
+Live class foundation remains available from Stage 16, and live-class provider abstraction metadata is available from Stage 17. Provider API automation, offline LMS, assignment submissions/grading, forums, video hosting/transcoding, advanced LMS analytics, parent LMS portal, and payment-gated content are not implemented.

@@ -5,7 +5,7 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <h2 class="text-xl font-semibold leading-tight text-text-primary">{{ $liveClass->title }}</h2>
                     <x-ui.badge :status="$liveClass->status" />
-                    <x-ui.badge tone="outline">Manual link</x-ui.badge>
+                    <x-ui.badge tone="outline">{{ $provider['label'] }}</x-ui.badge>
                 </div>
                 <p class="mt-1 text-sm text-text-secondary">
                     {{ $liveClass->schoolClass?->name }} {{ $liveClass->schoolClass?->section }} / {{ $liveClass->subject?->name ?? 'No subject selected' }}
@@ -74,6 +74,11 @@
 
             <x-ui.panel title="Join Details" description="Visible only to authorized school users.">
                 <div class="space-y-3 text-sm">
+                    <div class="rounded-md border border-border-subtle bg-bg-primary p-3">
+                        <p class="text-xs uppercase tracking-normal text-text-tertiary">Provider</p>
+                        <p class="mt-1 font-semibold text-text-primary">{{ $provider['label'] }}</p>
+                        <p class="mt-1 text-xs leading-5 text-text-secondary">{{ $provider['description'] }}</p>
+                    </div>
                     <a href="{{ $liveClass->meeting_url }}" target="_blank" rel="noopener noreferrer" class="ui-button-primary w-full justify-center">Start / Join Session</a>
                     @if ($liveClass->meeting_password)
                         <div class="rounded-md border border-border-subtle bg-bg-primary p-3">
@@ -140,10 +145,15 @@
             @endif
         </section>
 
-        <x-ui.panel tone="info" title="Stage 16 Boundary">
+        <x-ui.panel tone="info" title="Stage 17 Provider Boundary">
             <p class="text-sm leading-6 text-text-secondary">
                 This foundation stores manual meeting and recording links only. It does not create provider rooms, call provider APIs, store OAuth credentials, host video, transcode recordings, collect live-class attendance, enable chat, or make live classes work offline.
             </p>
+            <div class="mt-3 space-y-1 text-xs leading-5 text-text-tertiary">
+                @foreach ($provider['boundary_notes'] as $note)
+                    <p>{{ $note }}</p>
+                @endforeach
+            </div>
             <p class="mt-2 text-xs leading-5 text-text-tertiary">
                 {{ $studentPortalBoundary }} {{ $parentPortalBoundary }}
             </p>

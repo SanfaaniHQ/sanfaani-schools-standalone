@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Services\CurrentSchoolService;
 use App\Services\LiveClasses\LiveClassAccessService;
+use App\Services\LiveClasses\LiveClassProviderRegistry;
 use App\Services\LiveClasses\LiveClassService;
 use App\Services\TeacherAssignmentAccessService;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ use Illuminate\Validation\Rule;
 
 class LiveClassController extends Controller
 {
-    public function index(Request $request, LiveClassAccessService $access, LiveClassService $liveClasses)
+    public function index(Request $request, LiveClassAccessService $access, LiveClassService $liveClasses, LiveClassProviderRegistry $providers)
     {
         $school = $this->currentSchoolOrFail();
         abort_unless($access->canView($request->user(), $school), 403);
@@ -29,6 +30,9 @@ class LiveClassController extends Controller
             'stats' => $liveClasses->summaryForUser($school, $request->user()),
             'statuses' => LiveClass::STATUSES,
             'filters' => $filters,
+            'providerLabels' => $providers->labels(),
+            'activeProvider' => $providers->detailsFor(),
+            'futureProviders' => $providers->futureProviderSummaries(),
             'canManage' => $access->canView($request->user(), $school)
                 && app(\App\Services\SchoolAuthorizationService::class)->can($request->user(), $school, 'live_classes.manage'),
             'studentPortalSafe' => $access->studentPortalIsSafe(),
@@ -38,7 +42,7 @@ class LiveClassController extends Controller
         ]);
     }
 
-    public function create(Request $request, LiveClassAccessService $access)
+    public function create(Request $request, LiveClassAccessService $access, LiveClassProviderRegistry $providers)
     {
         $school = $this->currentSchoolOrFail();
         abort_unless($access->canView($request->user(), $school), 403);
@@ -54,7 +58,7 @@ class LiveClassController extends Controller
             ]),
             'action' => route('school.live-classes.store'),
             'method' => 'POST',
-        ], $this->formOptions($school, $request->user(), $access)));
+        ], $this->formOptions($school, $request->user(), $access, $providers)));
     }
 
     public function store(Request $request, LiveClassService $liveClasses)
@@ -67,7 +71,7 @@ class LiveClassController extends Controller
             ->with('success', 'Live class scheduled.');
     }
 
-    public function show(Request $request, LiveClass $liveClass, LiveClassAccessService $access)
+    public function show(Request $request, LiveClass $liveClass, LiveClassAccessService $access, LiveClassProviderRegistry $providers)
     {
         $school = $this->currentSchoolOrFail();
         $liveClass->load(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher', 'creator']);
@@ -76,13 +80,14 @@ class LiveClassController extends Controller
         return view('school.live-classes.show', [
             'school' => $school,
             'liveClass' => $liveClass,
+            'provider' => $providers->detailsFor($liveClass->provider),
             'canManage' => $access->canManageLiveClass($request->user(), $school, $liveClass),
             'studentPortalBoundary' => $access->studentPortalBoundaryNote(),
             'parentPortalBoundary' => $access->parentPortalBoundaryNote(),
         ]);
     }
 
-    public function edit(Request $request, LiveClass $liveClass, LiveClassAccessService $access)
+    public function edit(Request $request, LiveClass $liveClass, LiveClassAccessService $access, LiveClassProviderRegistry $providers)
     {
         $school = $this->currentSchoolOrFail();
         abort_unless($access->canManageLiveClass($request->user(), $school, $liveClass), 403);
@@ -94,7 +99,7 @@ class LiveClassController extends Controller
             'liveClass' => $liveClass,
             'action' => route('school.live-classes.update', $liveClass),
             'method' => 'PATCH',
-        ], $this->formOptions($school, $request->user(), $access)));
+        ], $this->formOptions($school, $request->user(), $access, $providers)));
     }
 
     public function update(Request $request, LiveClass $liveClass, LiveClassService $liveClasses)
@@ -140,6 +145,7 @@ class LiveClassController extends Controller
             'teacher_user_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('school_id', $school->id)],
             'title' => ['required', 'string', 'max:191'],
             'description' => ['nullable', 'string', 'max:3000'],
+            'provider' => ['nullable', 'string', 'max:50'],
             'meeting_url' => ['required', 'url', 'max:2048'],
             'meeting_password' => ['nullable', 'string', 'max:191'],
             'starts_at' => ['required', 'date'],
@@ -150,7 +156,7 @@ class LiveClassController extends Controller
         ]);
     }
 
-    private function formOptions(School $school, User $user, LiveClassAccessService $access): array
+    private function formOptions(School $school, User $user, LiveClassAccessService $access, LiveClassProviderRegistry $providers): array
     {
         $teacherAssignments = app(TeacherAssignmentAccessService::class);
 
@@ -203,6 +209,9 @@ class LiveClassController extends Controller
             'lmsClassrooms' => $lmsClassrooms,
             'lmsMaterials' => $lmsMaterials,
             'teachers' => $teachers,
+            'providerOptions' => $providers->selectableOptions(),
+            'futureProviders' => $providers->futureProviderSummaries(),
+            'activeProvider' => $providers->detailsFor(),
         ];
     }
 

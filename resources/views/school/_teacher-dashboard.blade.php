@@ -86,7 +86,7 @@
                 @if(($features['live_classes.view']['enabled'] ?? true))
                     <a href="{{ route('school.live-classes.index') }}" class="ui-card ui-card-hover block p-4">
                         <span class="font-semibold text-text-primary">Live Classes</span>
-                        <span class="mt-1 block text-sm text-text-secondary">Schedule and join manual internet sessions only for assigned classes and subjects.</span>
+                        <span class="mt-1 block text-sm text-text-secondary">Schedule and join manual internet sessions only for assigned classes and subjects; provider automation remains deferred.</span>
                     </a>
                 @endif
                 @if(($features['cbt.question_bank']['enabled'] ?? false))

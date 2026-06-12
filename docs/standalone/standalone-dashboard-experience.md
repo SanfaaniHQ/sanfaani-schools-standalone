@@ -59,7 +59,8 @@ The dashboard labels these areas as available or **Planned**:
 - finance reports, finance CSV export, and audit review are available;
 - LMS and CBT activity links are available for online class/subject materials, private resources, and links to existing CBT items;
 - live class foundation is available for manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links;
-- live class provider automation is planned for Stage 17;
+- live class provider abstraction is available for manual provider metadata and future provider boundaries;
+- live class provider API automation remains planned;
 - full browser offline/PWA.
 
 They are status labels, not links to placeholder implementations.
@@ -70,4 +71,4 @@ The local database is the source of truth. A school can operate from a local com
 
 The attendance-only browser offline capture pilot does not make finance or the full portal available offline. The dashboard must not claim that fee capture or every browser task works without a connection to the school server.
 
-The LMS foundation is also online-first. Stage 15 adds links to existing CBT items, but CBT remains the assessment engine. Stage 16 adds manual live-class scheduling beside LMS. The dashboard must not describe LMS as offline LMS, assignment submissions/grading, or a parent/student LMS portal. Live classes must not be described as offline, API-generated, OAuth-enabled, or provider-integrated.
+The LMS foundation is also online-first. Stage 15 adds links to existing CBT items, but CBT remains the assessment engine. Stage 16 adds manual live-class scheduling beside LMS. Stage 17 adds provider abstraction metadata while manual links remain active. The dashboard must not describe LMS as offline LMS, assignment submissions/grading, or a parent/student LMS portal. Live classes must not be described as offline, API-generated, OAuth-enabled, or provider API-integrated.

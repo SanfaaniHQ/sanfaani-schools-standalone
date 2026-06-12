@@ -8,11 +8,17 @@ The Live Classes area is available from the school workspace for School Admins a
 2. Choose **Schedule Live Class**.
 3. Select an existing class.
 4. Optionally select a subject, session, term, LMS classroom, and LMS material.
-5. Paste a manual meeting link.
+5. Choose the active manual provider and paste a manual meeting link.
 6. Add an optional meeting password, recording link, timezone, and reminder-minute value.
 7. Save the scheduled session.
 
 Live classes are online sessions. They require internet and a working external meeting provider link.
+
+## Provider Abstraction
+
+The active provider is **Manual link**. The provider registry stores safe capability metadata and labels so future automation can be added without changing the live-class workflow.
+
+Google Meet, Zoom, and Microsoft Teams may appear only as disabled future provider metadata. Their API automation is not active, and no OAuth credentials, provider secrets, tokens, webhooks, or generated meeting rooms are stored or used.
 
 ## Teacher Rules
 
@@ -56,4 +62,4 @@ The live-class foundation writes audit logs for create, update, start, complete,
 
 ## Deferred
 
-Provider automation, Google Meet/Zoom/Teams APIs, generated meeting rooms, OAuth, provider credentials, offline live class, live-class attendance tracking, live chat, advanced analytics, video hosting, transcoding, payment-gated access, student portal live classes, and parent portal live classes are not implemented in Stage 16.
+Provider API automation, Google Meet/Zoom/Teams APIs, generated meeting rooms, OAuth, provider credentials, webhooks, offline live class, live-class attendance tracking, live chat, advanced analytics, video hosting, transcoding, payment-gated access, student portal live classes, and parent portal live classes are not implemented in Stage 17.

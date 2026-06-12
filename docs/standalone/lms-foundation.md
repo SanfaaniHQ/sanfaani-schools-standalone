@@ -47,6 +47,6 @@ The UI shows original file names, MIME type, and file size. It does not expose t
 
 ## Deferred
 
-Live class foundation remains Stage 16. Provider abstraction remains Stage 17.
+Live class foundation is available from Stage 16, and provider abstraction metadata is available from Stage 17. Provider API automation remains deferred.
 
 Offline LMS, assignment submissions/grading, forums/discussions, advanced analytics, video hosting/transcoding, parent LMS portal, and payment-gated content are not implemented.

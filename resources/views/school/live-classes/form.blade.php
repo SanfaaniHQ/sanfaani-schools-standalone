@@ -7,7 +7,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">{{ $isEdit ? 'Edit Live Class' : 'Schedule Live Class' }}</h2>
-                <p class="mt-1 text-sm text-text-secondary">Manual provider links only. Internet is required for every session.</p>
+                <p class="mt-1 text-sm text-text-secondary">Manual provider links remain active. Provider automation is not active yet.</p>
             </div>
             <a href="{{ $isEdit ? route('school.live-classes.show', $liveClass) : route('school.live-classes.index') }}" class="ui-button-secondary">Cancel</a>
         </div>
@@ -79,8 +79,18 @@
                 </div>
             </x-ui.panel>
 
-            <x-ui.panel title="Meeting Link">
+            <x-ui.panel title="Provider And Meeting Link">
                 <div class="space-y-4">
+                    <div>
+                        <label for="provider" class="block text-sm font-medium text-text-primary">Provider</label>
+                        <select id="provider" name="provider" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900" required>
+                            @foreach ($providerOptions as $option)
+                                <option value="{{ $option['key'] }}" @selected(old('provider', $liveClass->provider ?: $activeProvider['key']) === $option['key'])>{{ $option['label'] }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-text-tertiary">Provider automation is not active yet. Paste the meeting link manually.</p>
+                        @error('provider') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                    </div>
                     <div>
                         <label for="meeting-url" class="block text-sm font-medium text-text-primary">Manual Meeting URL</label>
                         <input id="meeting-url" name="meeting_url" type="url" value="{{ old('meeting_url', $liveClass->meeting_url) }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900" placeholder="https://meet.example.com/class-room" required>
@@ -164,10 +174,19 @@
         </form>
 
         <aside class="space-y-6">
-            <x-ui.panel tone="info" title="Manual Provider Only">
+            <x-ui.panel tone="info" title="Provider Abstraction">
                 <p class="text-sm leading-6 text-text-secondary">
-                    Paste an existing meeting link from your provider. This stage does not generate rooms, store provider credentials, call OAuth, or connect to Zoom, Google Meet, or Microsoft Teams APIs.
+                    {{ $activeProvider['label'] }} is the only active provider. This stage does not generate rooms, store provider credentials, call OAuth, or connect to Zoom, Google Meet, or Microsoft Teams APIs.
                 </p>
+                @if ($futureProviders !== [])
+                    <div class="mt-3 space-y-2">
+                        @foreach ($futureProviders as $futureProvider)
+                            <p class="rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-xs text-text-secondary">
+                                {{ $futureProvider['label'] }}: future provider metadata only; API automation is disabled.
+                            </p>
+                        @endforeach
+                    </div>
+                @endif
             </x-ui.panel>
             <x-ui.panel tone="warning" title="Online Session Boundary">
                 <p class="text-sm leading-6 text-text-secondary">

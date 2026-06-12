@@ -3,7 +3,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">Live Classes</h2>
-                <p class="mt-1 text-sm text-text-secondary">Manual internet-based class sessions for {{ $school->name }}.</p>
+                <p class="mt-1 text-sm text-text-secondary">Provider-ready manual internet-based class sessions for {{ $school->name }}.</p>
             </div>
             @if ($canManage)
                 <a href="{{ route('school.live-classes.create') }}" class="ui-button-primary">Schedule Live Class</a>
@@ -70,7 +70,7 @@
                             <tr>
                                 <td class="px-3 py-3">
                                     <span class="block font-semibold text-text-primary">{{ $liveClass->title }}</span>
-                                    <span class="mt-1 block text-xs text-text-tertiary">{{ $liveClass->provider === 'manual' ? 'Manual meeting link' : str($liveClass->provider)->title() }}</span>
+                                    <span class="mt-1 block text-xs text-text-tertiary">{{ $providerLabels[$liveClass->provider] ?? str($liveClass->provider)->title() }}</span>
                                 </td>
                                 <td class="px-3 py-3 text-text-secondary">
                                     {{ $liveClass->schoolClass?->name }} {{ $liveClass->schoolClass?->section }}
@@ -104,10 +104,15 @@
             <div class="mt-4">{{ $liveClasses->links() }}</div>
         </x-ui.panel>
 
-        <x-ui.panel tone="info" title="Stage 16 Boundary">
+        <x-ui.panel tone="info" title="Stage 17 Provider Boundary">
             <p class="text-sm leading-6 text-text-secondary">
-                Live classes require internet. Manual meeting links are used only after a school user creates the room with an external provider. Provider automation, Google Meet/Zoom/Teams API integration, OAuth, generated meeting rooms, live-class attendance, chat, analytics, video hosting, transcoding, and offline live class are not implemented in this stage.
+                Live classes require internet. Manual meeting links remain the active provider behavior. Provider automation is not active yet. Google Meet API automation is not implemented. Zoom API automation is not implemented. Microsoft Teams API automation is not implemented. OAuth, provider credentials, generated meeting rooms, webhooks, live-class attendance, chat, analytics, video hosting, transcoding, and offline live class are not implemented in this stage.
             </p>
+            @if ($futureProviders !== [])
+                <p class="mt-2 text-xs leading-5 text-text-tertiary">
+                    Future provider metadata: {{ collect($futureProviders)->pluck('label')->implode(', ') }}. These providers are disabled for API automation and do not store secrets.
+                </p>
+            @endif
             <p class="mt-2 text-xs leading-5 text-text-tertiary">
                 {{ $studentPortalBoundary }} {{ $parentPortalBoundary }}
             </p>

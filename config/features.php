@@ -308,7 +308,7 @@ return [
             'hidden_when_disabled' => true,
             'entitlement_keys' => ['live_classes'],
             'authorization_features' => ['live_classes.view', 'live_classes.manage', 'live_classes.recordings.manage'],
-            'description' => 'Manual internet-based live class scheduling with class, subject, LMS, status, and recording-link foundations.',
+            'description' => 'Manual internet-based live class scheduling with provider abstraction metadata, class, subject, LMS, status, and recording-link foundations.',
         ],
         'advanced_reports' => [
             'enabled' => true,

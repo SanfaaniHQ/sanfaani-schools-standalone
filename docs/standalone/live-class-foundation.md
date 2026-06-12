@@ -11,6 +11,7 @@ Live classes sit beside LMS as an online learning-delivery tool. LMS remains the
 - Live classes can be assigned to existing classes, subjects, sessions, and terms.
 - Live classes can optionally link to an LMS classroom or LMS material in the same school.
 - Each live class stores a manual meeting URL, optional meeting password, optional recording URL, start/end time, timezone, and reminder-minute metadata.
+- Provider abstraction metadata is available for the active manual provider and future provider boundaries.
 - Status workflow is local: scheduled, live, completed, cancelled.
 - Live class actions write school-scoped audit logs.
 - Dashboards and navigation expose Live Classes only to allowed school roles.
@@ -53,8 +54,8 @@ Audit metadata stores safe IDs and workflow fields only: school, live class, cla
 
 ## Deferred To Later Stages
 
-- Provider abstraction is Stage 17.
-- Google Meet, Zoom, and Microsoft Teams API integration is not implemented.
+- Provider abstraction is available as a Stage 17 foundation.
+- Google Meet, Zoom, and Microsoft Teams API automation is not implemented.
 - OAuth, provider credentials, and generated meeting rooms are not implemented.
 - Offline live class is not implemented.
 - Video hosting and transcoding are not implemented.

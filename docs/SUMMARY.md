@@ -19,6 +19,7 @@
 - Standalone Operations
   - [Attendance Foundation](standalone/attendance-foundation.md)
   - [Live Class Foundation](standalone/live-class-foundation.md)
+  - [Live Class Provider Abstraction](standalone/live-class-provider-abstraction.md)
   - [Live Classes Operations](school-operations/live-classes.md)
 - Roadmap and Acceptance
   - [Final Commercialization Roadmap](roadmap/final-commercialization-roadmap.md)

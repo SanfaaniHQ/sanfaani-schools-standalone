@@ -270,7 +270,8 @@ class LiveClassFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Live class foundation')
             ->assertSee('Manual meeting links')
-            ->assertSee('Provider automation remains deferred to Stage 17')
+            ->assertSee('Provider abstraction foundation available')
+            ->assertSee('Provider API automation remains deferred')
             ->assertSee('Offline live class is not implemented');
     }
 

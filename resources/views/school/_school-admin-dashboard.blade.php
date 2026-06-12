@@ -18,7 +18,7 @@
         ['title' => 'Admissions', 'body' => 'Applications, settings, channels, and conversion workflow.', 'href' => route('admin.admissions.index'), 'feature' => null],
         ['title' => 'Attendance', 'body' => 'Daily registers, filtered reports, status counts, and student history.', 'href' => route('school.attendance.index'), 'feature' => 'attendance.view'],
         ['title' => 'Learning Materials', 'body' => 'Class and subject LMS classrooms, topics, drafts, private resources, publishing, and CBT activity links.', 'href' => route('school.lms.index'), 'feature' => 'lms.view'],
-        ['title' => 'Live Classes', 'body' => 'Schedule manual internet meeting links, recordings, and LMS context for class sessions.', 'href' => route('school.live-classes.index'), 'feature' => 'live_classes.view'],
+        ['title' => 'Live Classes', 'body' => 'Schedule manual internet meeting links with manual provider support, recordings, and LMS context for class sessions.', 'href' => route('school.live-classes.index'), 'feature' => 'live_classes.view'],
         ['title' => 'Fees & Finance', 'body' => 'Fee setup, invoices, manual payments, reports, audit review, and balances.', 'href' => route('school.finance.index'), 'feature' => 'finance.view'],
         ['title' => 'Import / Export', 'body' => 'Safe CSV templates, previews, and selected operational exports.', 'href' => route('school.import-export.index'), 'feature' => null],
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
@@ -111,7 +111,7 @@
         <x-ui.stat-card label="Scratch Cards" :value="$totalScratchCardRequests" :meta="$unusedScratchCards . ' unused / ' . $usedScratchCards . ' used'" />
         <x-ui.stat-card label="Academic Setup" :value="$totalClasses . ' / ' . $totalSubjects" :meta="$totalSessions . ' sessions, ' . $totalTerms . ' terms'" />
         <x-ui.stat-card label="LMS" value="Online" meta="Materials plus CBT activity links" tone="info" :href="route('school.lms.index')" />
-        <x-ui.stat-card label="Live Classes" :value="$upcomingLiveClasses" :meta="$totalLiveClasses . ' total manual sessions'" tone="info" :href="route('school.live-classes.index')" />
+        <x-ui.stat-card label="Live Classes" :value="$upcomingLiveClasses" :meta="$totalLiveClasses . ' total manual provider sessions'" tone="info" :href="route('school.live-classes.index')" />
     </section>
 
     <section class="grid gap-4 lg:grid-cols-2">

@@ -2,6 +2,7 @@
 
 namespace App\Services\LiveClasses;
 
+use App\Contracts\LiveClasses\LiveClassProviderInterface;
 use App\Models\AcademicSession;
 use App\Models\LiveClass;
 use App\Models\LmsClassroom;
@@ -25,6 +26,7 @@ class LiveClassService
         private TeacherAssignmentAccessService $teacherAssignments,
         private SchoolAuthorizationService $authorization,
         private AuditLogService $audit,
+        private LiveClassProviderRegistry $providers,
     ) {}
 
     public function sessionsForUser(School $school, User $user, array $filters = []): Builder
@@ -185,6 +187,7 @@ class LiveClassService
     {
         $startsAt = Carbon::parse($data['starts_at']);
         $endsAt = filled($data['ends_at'] ?? null) ? Carbon::parse($data['ends_at']) : null;
+        $provider = $this->providers->assertSelectable($data['provider'] ?? $existing?->provider ?? LiveClass::PROVIDER_MANUAL);
 
         if ($endsAt && $endsAt->lte($startsAt)) {
             throw ValidationException::withMessages([
@@ -203,18 +206,22 @@ class LiveClassService
             'teacher_user_id' => $this->nullableInt($data['teacher_user_id'] ?? null),
             'title' => trim((string) $data['title']),
             'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
-            'provider' => LiveClass::PROVIDER_MANUAL,
-            'meeting_url' => $this->httpUrl('meeting_url', $data['meeting_url'] ?? null, required: true),
+            'provider' => $provider->key(),
+            'meeting_url' => $this->providerUrl($provider, 'meeting_url', $data['meeting_url'] ?? null, required: true),
             'meeting_password' => filled($data['meeting_password'] ?? null) ? trim((string) $data['meeting_password']) : null,
             'starts_at' => $startsAt,
             'ends_at' => $endsAt,
             'timezone' => filled($data['timezone'] ?? null) ? (string) $data['timezone'] : config('app.timezone'),
             'status' => $existing?->status ?? LiveClass::STATUS_SCHEDULED,
-            'recording_url' => $this->httpUrl('recording_url', $data['recording_url'] ?? null),
+            'recording_url' => $this->providerUrl($provider, 'recording_url', $data['recording_url'] ?? null),
             'metadata' => [
                 'reminder_minutes' => $this->nullableInt($data['reminder_minutes'] ?? null),
                 'internet_required' => true,
-                'provider_automation_stage' => 'Stage 17',
+                'provider_key' => $provider->key(),
+                'provider_label' => $provider->label(),
+                'provider_capabilities' => $provider->capabilities(),
+                'provider_abstraction_stage' => 'Stage 17',
+                'provider_automation_deferred' => true,
             ],
         ];
 
@@ -369,7 +376,7 @@ class LiveClassService
         return $liveClass;
     }
 
-    private function httpUrl(string $field, mixed $value, bool $required = false): ?string
+    private function providerUrl(LiveClassProviderInterface $provider, string $field, mixed $value, bool $required = false): ?string
     {
         if (! filled($value)) {
             if ($required) {
@@ -380,9 +387,11 @@ class LiveClassService
         }
 
         $url = trim((string) $value);
-        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        $valid = $field === 'recording_url'
+            ? $provider->validateRecordingUrl($url)
+            : $provider->validateManualMeetingUrl($url);
 
-        if (! filter_var($url, FILTER_VALIDATE_URL) || ! in_array($scheme, ['http', 'https'], true)) {
+        if (! $valid) {
             throw ValidationException::withMessages([
                 $field => 'Enter a valid http or https URL.',
             ]);
@@ -420,11 +429,13 @@ class LiveClassService
         return [
             'school_id' => $liveClass->school_id,
             'live_class_id' => $liveClass->id,
+            'provider' => $liveClass->provider,
             'class_id' => $liveClass->school_class_id,
             'subject_id' => $liveClass->subject_id,
             'session_id' => $liveClass->academic_session_id,
             'term_id' => $liveClass->term_id,
             'lms_classroom_id' => $liveClass->lms_classroom_id,
+            'lms_material_id' => $liveClass->lms_material_id,
             'teacher_user_id' => $liveClass->teacher_user_id,
             'status' => $liveClass->status,
             'starts_at' => $liveClass->starts_at?->toIso8601String(),
