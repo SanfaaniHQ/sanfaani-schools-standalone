@@ -24,6 +24,17 @@
   - [Demo Automation](demo/demo-automation.md)
   - [Guided Onboarding](onboarding/guided-onboarding.md)
   - [Marketing Automation](marketing/marketing-automation.md)
+- Commercial Packaging
+  - [Product Packaging Review](commercial/product-packaging-review.md)
+  - [Buyer-Facing Feature List](commercial/buyer-facing-feature-list.md)
+  - [Pricing And Plan Positioning](commercial/pricing-and-plan-positioning.md)
+  - [Demo Readiness Checklist](commercial/demo-readiness-checklist.md)
+  - [Sales Discovery Guide](commercial/sales-discovery-guide.md)
+  - [Implementation Handoff Checklist](commercial/implementation-handoff-checklist.md)
+  - [Module Boundaries And Limitations](commercial/module-boundaries-and-limitations.md)
+  - [Standalone Vs SaaS Positioning](commercial/standalone-vs-saas-positioning.md)
+  - [Support And Maintenance Positioning](commercial/support-and-maintenance-positioning.md)
+  - [Release Readiness Commercial Checklist](commercial/release-readiness-commercial-checklist.md)
 - Standalone Operations
   - [Product Support Overview](standalone/product-support-overview.md)
   - [Attendance Foundation](standalone/attendance-foundation.md)

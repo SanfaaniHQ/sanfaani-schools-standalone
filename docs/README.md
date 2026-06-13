@@ -26,6 +26,7 @@ The docs must reflect the current product honestly. The following foundations ex
 - Staging release candidate validation and launch preparation workflow.
 - Staging deployment execution checklists, command sequence, env examples, and signoff templates.
 - Stage 23 support runbooks, issue triage, release handoff, and standalone product support overview.
+- Stage 24 commercial packaging review, buyer-facing feature list, pricing/plan positioning, demo readiness, sales discovery, implementation handoff, module boundaries, standalone-vs-SaaS positioning, support/maintenance positioning, and commercial release readiness.
 
 The following systems are planned and must not be described as complete:
 
@@ -112,3 +113,16 @@ Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.
 - `support/issue-triage.md`
 - `support/release-handoff-checklist.md`
 - `standalone/product-support-overview.md`
+
+## Commercial Packaging
+
+- `commercial/product-packaging-review.md`
+- `commercial/buyer-facing-feature-list.md`
+- `commercial/pricing-and-plan-positioning.md`
+- `commercial/demo-readiness-checklist.md`
+- `commercial/sales-discovery-guide.md`
+- `commercial/implementation-handoff-checklist.md`
+- `commercial/module-boundaries-and-limitations.md`
+- `commercial/standalone-vs-saas-positioning.md`
+- `commercial/support-and-maintenance-positioning.md`
+- `commercial/release-readiness-commercial-checklist.md`

@@ -49,6 +49,9 @@ Before the final Namecheap push, run migrations, clear caches, build assets, lis
 See:
 
 - `docs/SUMMARY.md`
+- `docs/commercial/product-packaging-review.md`
+- `docs/commercial/buyer-facing-feature-list.md`
+- `docs/commercial/demo-readiness-checklist.md`
 - `docs/standalone/product-support-overview.md`
 - `docs/support/support-runbooks.md`
 - `docs/support/release-handoff-checklist.md`
