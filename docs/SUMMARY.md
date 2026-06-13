@@ -166,6 +166,11 @@
   - [White-Label Readiness](white-label/white-label-readiness.md)
 - Release Management
   - [Release Workflow](release-notes/release-workflow.md)
+  - [v1 Release Notes](release/v1-release-notes.md)
+  - [v1 Production Readiness Report](release/v1-production-readiness-report.md)
+  - [v1 Go-Live Checklist](release/v1-go-live-checklist.md)
+  - [v1 Known Limitations And Backlog](release/v1-known-limitations-and-backlog.md)
+  - [v1 Deployment Handoff](release/v1-deployment-handoff.md)
   - [Release Candidate QA Report](release/release-candidate-qa-report.md)
   - [v1 Release Candidate Checklist](release/v1-release-candidate-checklist.md)
   - [Release Handoff Checklist](support/release-handoff-checklist.md)

@@ -29,6 +29,7 @@ The docs must reflect the current product honestly. The following foundations ex
 - Stage 24 commercial packaging review, buyer-facing feature list, pricing/plan positioning, demo readiness, sales discovery, implementation handoff, module boundaries, standalone-vs-SaaS positioning, support/maintenance positioning, and commercial release readiness.
 - Stage 25 Next.js school website add-on foundation documents the future separate website repo strategy and Laravel link contract only. It does not create a Next.js app in this Laravel repo.
 - Stage 26 final QA release-candidate report and v1 release-candidate checklist consolidate regression validation, manual QA, protected-file checks, deployment readiness, and deferred launch limitations.
+- Stage 27 v1 production-readiness docs consolidate release notes, go-live conditions, known limitations/backlog, and deployment handoff for `v1.0.0-rc1`.
 
 The following systems are planned and must not be described as complete:
 
@@ -145,3 +146,8 @@ Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.
 
 - `release/release-candidate-qa-report.md`
 - `release/v1-release-candidate-checklist.md`
+- `release/v1-release-notes.md`
+- `release/v1-production-readiness-report.md`
+- `release/v1-go-live-checklist.md`
+- `release/v1-known-limitations-and-backlog.md`
+- `release/v1-deployment-handoff.md`

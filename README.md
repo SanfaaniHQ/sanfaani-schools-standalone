@@ -58,6 +58,11 @@ See:
 - `docs/standalone/product-support-overview.md`
 - `docs/support/support-runbooks.md`
 - `docs/support/release-handoff-checklist.md`
+- `docs/release/v1-release-notes.md`
+- `docs/release/v1-production-readiness-report.md`
+- `docs/release/v1-go-live-checklist.md`
+- `docs/release/v1-known-limitations-and-backlog.md`
+- `docs/release/v1-deployment-handoff.md`
 - `docs/deployment/namecheap-production-deployment.md`
 - `docs/deployment/backup-and-restore.md`
 - `docs/testing/final-deployment-test-checklist.md`
