@@ -97,6 +97,13 @@ class StandaloneDashboardSummaryService
                 $this->route('admin.standalone.status'),
             ),
             $this->checklistItem(
+                'update_system_finalization',
+                'Update system finalization',
+                true,
+                'Guided package compatibility, protected-path validation, preflight readiness, audit logging, and manual review planning are available.',
+                $this->route('admin.updates.index'),
+            ),
+            $this->checklistItem(
                 'school_workspace',
                 'School workspace created',
                 (bool) $school,
@@ -144,7 +151,7 @@ class StandaloneDashboardSummaryService
                     'value' => $latestUpdate ? $this->label($latestUpdate->status) : 'No package',
                     'meta' => $latestUpdate
                         ? 'Package '.$latestUpdate->version
-                        : 'Current version '.(string) config('version.version', '1.0.0'),
+                        : 'Finalized guided review for version '.(string) config('version.version', '1.0.0'),
                     'tone' => $latestUpdate && $latestUpdate->status === UpdatePackage::STATUS_PRECHECK_BLOCKED ? 'warning' : 'neutral',
                     'href' => $this->route('admin.updates.index'),
                 ],
@@ -531,6 +538,11 @@ class StandaloneDashboardSummaryService
         $offlineAttendanceEnabled = $this->edition->offlineAttendanceSyncEnabled();
 
         return [
+            [
+                'label' => 'Update system finalization',
+                'status' => 'Available',
+                'detail' => 'Guided update package validation, manifest compatibility checks, protected-path blocking, support-safe preflight, audit logging, and manual review planning are available without auto-apply.',
+            ],
             [
                 'label' => 'Fees/accounting foundation',
                 'status' => 'Available',

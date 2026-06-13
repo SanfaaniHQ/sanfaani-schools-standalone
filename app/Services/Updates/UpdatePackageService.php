@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
+use ZipArchive;
 
 class UpdatePackageService
 {
@@ -48,6 +50,8 @@ class UpdatePackageService
 
         $checksum = hash_file('sha256', $file->getRealPath());
         $path = $this->storePrivately($file);
+        $compatibility = $this->manifests->compatibility($manifest);
+        $reviewPlan = $this->reviewPlanFromManifest($manifest, $compatibility);
 
         $package = UpdatePackage::create([
             'version' => (string) $manifest['version'],
@@ -68,6 +72,9 @@ class UpdatePackageService
                 'extracted' => false,
                 'applied' => false,
                 'migrations_run' => false,
+                'compatibility' => $compatibility,
+                'manifest_summary' => $this->safeManifestSummary($manifest),
+                'review_plan' => $reviewPlan,
             ],
         ]);
 
@@ -96,11 +103,16 @@ class UpdatePackageService
             throw new RuntimeException('Update package cannot be marked ready until all blocking preflight checks pass.');
         }
 
+        $manifest = $package->manifest ?: [];
+        $compatibility = $this->manifests->compatibility($manifest);
+
         $package->forceFill([
             'status' => UpdatePackage::STATUS_READY_FOR_MANUAL_UPDATE,
             'metadata' => array_merge($package->metadata ?: [], [
                 'ready_for_manual_update_at' => now()->toIso8601String(),
                 'application_performed' => false,
+                'compatibility' => $compatibility,
+                'review_plan' => $this->reviewPlanFromManifest($manifest, $compatibility),
             ]),
         ])->save();
 
@@ -145,7 +157,36 @@ class UpdatePackageService
             $errors[] = 'Update package checksum does not match the manifest metadata.';
         }
 
+        foreach ($this->archivePathIssues($file) as $issue) {
+            $errors[] = $issue;
+        }
+
         return $errors;
+    }
+
+    public function reviewPlan(UpdatePackage $package): array
+    {
+        $manifest = $package->manifest ?: [];
+
+        return $this->reviewPlanFromManifest($manifest, $this->manifests->compatibility($manifest));
+    }
+
+    public function safeManifestSummary(array $manifest): array
+    {
+        return [
+            'version' => $manifest['version'] ?? null,
+            'channel' => $manifest['channel'] ?? null,
+            'release_date' => $manifest['release_date'] ?? null,
+            'target_product' => $manifest['target_product'] ?? $manifest['product_name'] ?? $manifest['product'] ?? null,
+            'target_edition' => $manifest['target_edition'] ?? $manifest['product_edition'] ?? null,
+            'target_version' => $manifest['target_version'] ?? $manifest['to_version'] ?? $manifest['version'] ?? null,
+            'requires_backup' => (bool) ($manifest['requires_backup'] ?? false),
+            'requires_migration' => (bool) ($manifest['requires_migration'] ?? false),
+            'file_count' => count((array) ($manifest['files_changed'] ?? [])),
+            'database_change_count' => count((array) ($manifest['database_changes'] ?? [])),
+            'entitlements_required' => array_values((array) ($manifest['entitlements_required'] ?? [])),
+            'unsafe_path_issues' => $this->manifests->unsafePathIssues($manifest),
+        ];
     }
 
     public function maxPackageKilobytes(): int
@@ -156,6 +197,68 @@ class UpdatePackageService
     private function maxPackageBytes(): int
     {
         return $this->maxPackageKilobytes() * 1024;
+    }
+
+    private function archivePathIssues(UploadedFile $file): array
+    {
+        if (! class_exists(ZipArchive::class) || ! filled($file->getRealPath())) {
+            return [];
+        }
+
+        $zip = new ZipArchive;
+        $opened = $zip->open($file->getRealPath());
+
+        if ($opened !== true) {
+            return ['Update package archive could not be opened for safe inspection.'];
+        }
+
+        try {
+            $issues = [];
+
+            for ($index = 0; $index < $zip->numFiles; $index++) {
+                $entry = $zip->statIndex($index);
+                $name = is_array($entry) ? (string) ($entry['name'] ?? '') : '';
+
+                foreach ($this->manifests->pathIssues($name, 'Package entry') as $issue) {
+                    $issues[] = $issue;
+                }
+            }
+
+            return collect($issues)->unique()->values()->all();
+        } finally {
+            try {
+                $zip->close();
+            } catch (Throwable) {
+                //
+            }
+        }
+    }
+
+    private function reviewPlanFromManifest(array $manifest, array $compatibility): array
+    {
+        return [
+            'generated_at' => now()->toIso8601String(),
+            'safe_foundation_only' => true,
+            'manual_only' => true,
+            'application_performed' => false,
+            'current_version' => $compatibility['current_version'] ?? config('version.version', '1.0.0'),
+            'target_version' => $compatibility['target_version'] ?? $manifest['version'] ?? null,
+            'compatibility_status' => $compatibility['status'] ?? 'review',
+            'requires_backup' => (bool) ($manifest['requires_backup'] ?? false),
+            'requires_migration_review' => (bool) ($manifest['requires_migration'] ?? false)
+                || collect((array) ($manifest['database_changes'] ?? []))->isNotEmpty(),
+            'file_count' => count((array) ($manifest['files_changed'] ?? [])),
+            'database_change_count' => count((array) ($manifest['database_changes'] ?? [])),
+            'protected_paths_blocked' => $this->manifests->protectedPaths(),
+            'steps' => [
+                ['label' => 'Confirm package provenance', 'status' => 'manual_review', 'body' => 'Use only a private Sanfaani package supplied through the agreed support channel.'],
+                ['label' => 'Run preflight', 'status' => 'required', 'body' => 'Review PHP, Laravel, extension, database, storage, license, installer, backup, and manifest checks.'],
+                ['label' => 'Verify backup', 'status' => (bool) ($manifest['requires_backup'] ?? false) ? 'required' : 'recommended', 'body' => 'Create and verify a backup before any manual file work starts.'],
+                ['label' => 'Review changed files', 'status' => 'manual_review', 'body' => 'Compare manifest file counts and release notes before copying files outside the wizard.'],
+                ['label' => 'Plan migration review', 'status' => 'manual_review', 'body' => 'Run migrations only from the approved deployment channel; the web wizard never runs them.'],
+                ['label' => 'Apply outside web UI', 'status' => 'external_only', 'body' => 'No package extraction, shell command, Composer, npm, git, or migration action is performed by this UI.'],
+            ],
+        ];
     }
 
     private function storePrivately(UploadedFile $file): string

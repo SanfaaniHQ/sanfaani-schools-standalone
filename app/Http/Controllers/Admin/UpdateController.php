@@ -33,6 +33,15 @@ class UpdateController extends Controller
     {
         $decision = $this->authorizeUpdateAccess();
         $currentVersion = $this->versions->recordCurrent();
+        $this->auditLog->log('update_center_viewed', metadata: [
+            'current_version' => $currentVersion->version,
+            'channel' => $currentVersion->channel,
+            'decision_status' => $decision['status'],
+        ], request: request());
+        $this->auditLog->log('update_history_viewed', metadata: [
+            'history_limit' => 10,
+            'package_count_visible' => UpdatePackage::count(),
+        ], request: request());
 
         return view('admin.updates.index', [
             'label' => $decision['label'],
@@ -86,6 +95,14 @@ class UpdateController extends Controller
             'channel' => $package->channel,
             'status' => $package->status,
         ], request: $request);
+        $this->auditLog->log('update_package_validated', $package, metadata: [
+            'version' => $package->version,
+            'channel' => $package->channel,
+            'status' => $package->status,
+            'compatibility_status' => data_get($package->metadata, 'compatibility.status'),
+            'stored_private' => true,
+            'application_performed' => false,
+        ], request: $request);
 
         return redirect()
             ->route('admin.updates.show', $package)
@@ -96,12 +113,22 @@ class UpdateController extends Controller
     {
         $decision = $this->authorizeUpdateAccess();
         $updatePackage->load(['uploadedBy', 'logs.creator', 'rollbackPlan']);
+        $compatibility = $this->manifests->compatibility($updatePackage->manifest ?: [], $this->versions->currentVersion());
+        $reviewPlan = data_get($updatePackage->metadata, 'review_plan') ?: $this->packages->reviewPlan($updatePackage);
+        $this->auditLog->log('update_package_reviewed', $updatePackage, metadata: [
+            'version' => $updatePackage->version,
+            'status' => $updatePackage->status,
+            'compatibility_status' => $compatibility['status'] ?? 'review',
+            'application_performed' => false,
+        ], request: request());
 
         return view('admin.updates.show', [
             'label' => $decision['label'],
             'decision' => $decision,
             'updatePackage' => $updatePackage,
             'preflight' => data_get($updatePackage->metadata, 'preflight'),
+            'compatibility' => $compatibility,
+            'reviewPlan' => $reviewPlan,
         ]);
     }
 
@@ -113,6 +140,12 @@ class UpdateController extends Controller
         $this->auditLog->log('update_preflight_run', $updatePackage->fresh(), metadata: [
             'passed' => $result->passed(),
             'summary' => $result->summary(),
+        ], request: request());
+        $this->auditLog->log('update_preflight_ran', $updatePackage->fresh(), metadata: [
+            'passed' => $result->passed(),
+            'summary' => $result->summary(),
+            'blocking_checks' => count($result->blockingChecks()),
+            'application_performed' => false,
         ], request: request());
 
         return redirect()
@@ -133,6 +166,13 @@ class UpdateController extends Controller
             'version' => $package->version,
             'status' => $package->status,
             'application_performed' => false,
+        ], request: request());
+        $this->auditLog->log('update_plan_generated', $package, metadata: [
+            'version' => $package->version,
+            'status' => $package->status,
+            'manual_only' => true,
+            'application_performed' => false,
+            'plan_steps' => count((array) data_get($package->metadata, 'review_plan.steps', [])),
         ], request: request());
 
         return redirect()

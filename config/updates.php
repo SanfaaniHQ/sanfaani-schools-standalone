@@ -47,6 +47,26 @@ return [
         'application/octet-stream',
     ],
 
+    'allowed_product_names' => [
+        'Sanfaani Schools',
+        'Sanfaani Schools Standalone',
+    ],
+
+    'allowed_editions' => [
+        'standalone',
+        'single_school',
+        'saas',
+        'platform',
+        'managed',
+    ],
+
+    'protected_paths' => [
+        '.env',
+        '.env.local',
+        'public/build.zip',
+        'database/migrations/2026_05_01_173857_create_result_publications_table.php',
+    ],
+
     'package_disk' => 'updates',
 
     'package_directory' => 'packages',

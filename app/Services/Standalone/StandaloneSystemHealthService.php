@@ -515,6 +515,9 @@ class StandaloneSystemHealthService
 
         return $this->check('update_readiness', 'Update readiness', $status, $message, [
             'updates_enabled' => true,
+            'update_finalization_available' => true,
+            'guided_review_only' => true,
+            'auto_apply_available' => false,
             'backup_required' => $backupRequired,
             'latest_package_status' => $latest ? $this->label($latest->status) : 'No package',
             'current_version' => (string) config('version.version', 'unknown'),

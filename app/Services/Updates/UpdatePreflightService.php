@@ -4,10 +4,16 @@ namespace App\Services\Updates;
 
 use App\Models\UpdatePackage;
 use App\Models\User;
+use App\Services\Installer\InstallerStateService;
 use App\Services\Backups\BackupVerificationService;
+use App\Services\Licensing\LicenseValidationService;
 use App\Support\Updates\UpdatePreflightResult;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class UpdatePreflightService
 {
@@ -18,6 +24,8 @@ class UpdatePreflightService
         private UpdateRollbackService $rollbacks,
         private SystemVersionService $versions,
         private BackupVerificationService $backups,
+        private InstallerStateService $installer,
+        private LicenseValidationService $licenses,
     ) {}
 
     public function run(UpdatePackage $package, ?User $actor = null): UpdatePreflightResult
@@ -31,11 +39,18 @@ class UpdatePreflightService
 
         $this->checkPackageStatus($package, $result);
         $this->checkManifest($manifest, $result);
+        $this->checkCurrentVersion($manifest, $result);
+        $this->checkCompatibility($manifest, $result);
         $this->checkIntegrity($package, $manifest, $result);
         $this->checkEntitlement($actor, $result);
+        $this->checkLicenseStatus($result);
         $this->checkPhp($manifest, $result);
         $this->checkLaravel($manifest, $result);
+        $this->checkRequiredExtensions($manifest, $result);
+        $this->checkDatabase($result);
         $this->checkWritablePaths($result);
+        $this->checkUpdatePackageDirectory($package, $result);
+        $this->checkInstallerStatus($result);
         $this->checkBackupRequirement($manifest, $result);
         $this->checkMigrationReview($manifest, $result);
         $this->addGuidance($result);
@@ -96,6 +111,70 @@ class UpdatePreflightService
         $result->add('manifest', 'Manifest metadata', 'pass', 'info', 'Manifest metadata includes the required update fields.');
     }
 
+    private function checkCurrentVersion(array $manifest, UpdatePreflightResult $result): void
+    {
+        $current = $this->versions->currentVersion();
+        $target = (string) (data_get($manifest, 'target_version') ?: data_get($manifest, 'to_version') ?: data_get($manifest, 'version', 'unknown'));
+
+        $result->add(
+            'current_version',
+            'Current application version',
+            'info',
+            'info',
+            'Current and target versions are recorded for manual update planning.',
+            false,
+            [
+                'current_version' => $current,
+                'target_version' => $target,
+            ],
+        );
+    }
+
+    private function checkCompatibility(array $manifest, UpdatePreflightResult $result): void
+    {
+        $compatibility = $this->manifests->compatibility($manifest, $this->versions->currentVersion());
+        $errors = (array) ($compatibility['errors'] ?? []);
+        $warnings = (array) ($compatibility['warnings'] ?? []);
+
+        if ($errors !== []) {
+            $result->add(
+                'compatibility',
+                'Compatibility review',
+                'fail',
+                'error',
+                implode(' ', $errors),
+                true,
+                $this->compatibilityContext($compatibility),
+            );
+
+            return;
+        }
+
+        if ($warnings !== []) {
+            $result->add(
+                'compatibility',
+                'Compatibility review',
+                'warning',
+                'warning',
+                implode(' ', $warnings),
+                false,
+                $this->compatibilityContext($compatibility),
+            );
+
+            return;
+        }
+
+        $result->add(
+            'compatibility',
+            'Compatibility review',
+            'pass',
+            'info',
+            'Package compatibility metadata matches this installation.',
+            false,
+            $this->compatibilityContext($compatibility),
+        );
+    }
+
     private function checkIntegrity(UpdatePackage $package, array $manifest, UpdatePreflightResult $result): void
     {
         if (! filled($package->checksum)) {
@@ -124,6 +203,26 @@ class UpdatePreflightService
         }
 
         $result->add('entitlement', 'License and feature entitlement', 'pass', 'info', $decision['message'], false, $decision);
+    }
+
+    private function checkLicenseStatus(UpdatePreflightResult $result): void
+    {
+        $school = $this->entitlements->defaultSchool();
+        $status = $this->licenses->status($school);
+        $ready = in_array($status, ['valid', 'offline_grace', 'validation_disabled', 'subscription_platform'], true);
+
+        $result->add(
+            'license_status',
+            'License status',
+            $ready ? ($status === 'offline_grace' ? 'warning' : 'pass') : 'fail',
+            $ready ? ($status === 'offline_grace' ? 'warning' : 'info') : 'error',
+            $ready ? 'License status allows guided update review.' : 'License status must be resolved before update readiness can pass.',
+            ! $ready,
+            [
+                'status' => str($status)->replace('_', ' ')->title()->toString(),
+                'requires_validation' => $this->licenses->requiresValidation(),
+            ],
+        );
     }
 
     private function checkPhp(array $manifest, UpdatePreflightResult $result): void
@@ -158,6 +257,75 @@ class UpdatePreflightService
         $result->add('laravel_version', 'Laravel version', 'pass', 'info', 'Laravel version satisfies the manifest requirement.');
     }
 
+    private function checkRequiredExtensions(array $manifest, UpdatePreflightResult $result): void
+    {
+        $required = collect((array) data_get($manifest, 'required_extensions', []))
+            ->map(fn (mixed $extension): string => str((string) $extension)->trim()->lower()->replace(['ext-', 'php-', ' '], ['', '', '_'])->toString())
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($required->isEmpty()) {
+            $result->add('required_extensions', 'Required PHP extensions', 'info', 'info', 'No additional PHP extensions are declared by the manifest.');
+
+            return;
+        }
+
+        $missing = $required
+            ->reject(fn (string $extension): bool => extension_loaded($extension))
+            ->values();
+
+        $result->add(
+            'required_extensions',
+            'Required PHP extensions',
+            $missing->isEmpty() ? 'pass' : 'fail',
+            $missing->isEmpty() ? 'info' : 'error',
+            $missing->isEmpty()
+                ? 'Required PHP extensions are loaded.'
+                : 'Required PHP extensions are missing: '.$missing->implode(', ').'.',
+            $missing->isNotEmpty(),
+            [
+                'required_extensions' => $required->all(),
+                'missing_extensions' => $missing->all(),
+            ],
+        );
+    }
+
+    private function checkDatabase(UpdatePreflightResult $result): void
+    {
+        $connection = (string) config('database.default', 'unknown');
+
+        try {
+            DB::connection()->getPdo()->query('select 1');
+            $migrationsTableReady = Schema::hasTable('migrations');
+
+            $result->add(
+                'database_status',
+                'Database and migration repository',
+                $migrationsTableReady ? 'pass' : 'warning',
+                $migrationsTableReady ? 'info' : 'warning',
+                $migrationsTableReady
+                    ? 'Database connection and migration repository are available.'
+                    : 'Database is reachable, but the migration repository table was not found.',
+                false,
+                [
+                    'connection' => $connection,
+                    'migrations_table' => $migrationsTableReady ? 'Present' : 'Missing',
+                ],
+            );
+        } catch (Throwable) {
+            $result->add(
+                'database_status',
+                'Database and migration repository',
+                'fail',
+                'error',
+                'Database connection failed; resolve database readiness before update planning.',
+                true,
+                ['connection' => $connection],
+            );
+        }
+    }
+
     private function checkWritablePaths(UpdatePreflightResult $result): void
     {
         $storageWritable = File::isWritable(storage_path());
@@ -182,6 +350,78 @@ class UpdatePreflightService
         );
     }
 
+    private function checkUpdatePackageDirectory(UpdatePackage $package, UpdatePreflightResult $result): void
+    {
+        $disk = (string) config('updates.package_disk', 'updates');
+        $directory = trim((string) config('updates.package_directory', 'packages'), '/');
+        $packageRecorded = filled($package->path);
+
+        try {
+            $storage = Storage::disk($disk);
+            $packagePresent = $packageRecorded && $storage->exists((string) $package->path);
+            $directoryReady = method_exists($storage, 'directoryExists')
+                ? $storage->directoryExists($directory)
+                : true;
+
+            $status = $packageRecorded ? ($packagePresent ? 'pass' : 'warning') : 'warning';
+            $message = $packageRecorded
+                ? ($packagePresent
+                    ? 'Private update package metadata points to an available stored package.'
+                    : 'Private update package metadata is recorded, but the package file was not found on the configured disk.')
+                : 'Update package storage path metadata is missing.';
+
+            $result->add(
+                'update_package_directory',
+                'Update package directory',
+                $status,
+                $status === 'pass' ? 'info' : 'warning',
+                $message,
+                false,
+                [
+                    'disk' => $disk,
+                    'directory' => $directory,
+                    'directory_ready' => $directoryReady,
+                    'package_path_recorded' => $packageRecorded,
+                    'package_file_present' => $packagePresent,
+                    'private_package_path_hidden' => true,
+                ],
+            );
+        } catch (Throwable) {
+            $result->add(
+                'update_package_directory',
+                'Update package directory',
+                'fail',
+                'error',
+                'Update package storage disk is not available.',
+                true,
+                [
+                    'disk' => $disk,
+                    'directory' => $directory,
+                ],
+            );
+        }
+    }
+
+    private function checkInstallerStatus(UpdatePreflightResult $result): void
+    {
+        $installed = $this->installer->isInstalled();
+
+        $result->add(
+            'installer_status',
+            'Installer status',
+            $installed ? 'pass' : 'warning',
+            $installed ? 'info' : 'warning',
+            $installed
+                ? 'Installer lock or installed configuration is present.'
+                : 'Complete and lock installation before update readiness can pass.',
+            ! $installed,
+            [
+                'installed' => $installed,
+                'installer_access_open' => $this->installer->canAccessInstaller(),
+            ],
+        );
+    }
+
     private function checkBackupRequirement(array $manifest, UpdatePreflightResult $result): void
     {
         $backupRequired = (bool) config('updates.backup_required', true) || (bool) data_get($manifest, 'requires_backup', false);
@@ -203,7 +443,7 @@ class UpdatePreflightService
             $hasRecentBackup ? 'info' : 'pending',
             $hasRecentBackup
                 ? 'A recent verified backup is available for this update preflight.'
-                : 'A recent verified backup is required before update readiness can pass. Create and verify backup metadata in the backup manager first.',
+                : 'A recent verified backup is required before update readiness can pass. Create and verify a backup before update planning continues.',
             ! $hasRecentBackup,
             [
                 'backup_manager_available' => (bool) config('backups.enabled', true),
@@ -231,7 +471,11 @@ class UpdatePreflightService
             'warning',
             'Manifest declares database changes. Review migration notes manually; the web wizard will not run migrations.',
             false,
-            ['migration_notes' => data_get($manifest, 'migration_notes')],
+            [
+                'database_change_count' => count((array) data_get($manifest, 'database_changes', [])),
+                'manual_review_required' => true,
+                'migration_notes_available' => filled(data_get($manifest, 'migration_notes')),
+            ],
         );
     }
 
@@ -252,5 +496,18 @@ class UpdatePreflightService
             'info',
             'This wizard never extracts packages, runs shell commands, or runs migrations from a web request.',
         );
+    }
+
+    private function compatibilityContext(array $compatibility): array
+    {
+        return [
+            'status' => $compatibility['status'] ?? 'review',
+            'current_version' => $compatibility['current_version'] ?? null,
+            'target_version' => $compatibility['target_version'] ?? null,
+            'target_product' => $compatibility['target_product'] ?? null,
+            'target_edition' => $compatibility['target_edition'] ?? null,
+            'deployment_modes' => $compatibility['deployment_modes'] ?? [],
+            'requirements' => $compatibility['requirements'] ?? [],
+        ];
     }
 }

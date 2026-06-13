@@ -30,7 +30,7 @@ class UpdatePackageTest extends TestCase
 
     public function test_update_package_metadata_can_be_stored(): void
     {
-        $file = UploadedFile::fake()->create('sanfaani-1.0.1.zip', 10, 'application/zip');
+        $file = $this->zipUpload('sanfaani-1.0.1.zip');
         $manifest = $this->manifest(hash_file('sha256', $file->getRealPath()));
 
         $this->actingAs($this->superAdmin())
@@ -51,7 +51,7 @@ class UpdatePackageTest extends TestCase
 
     public function test_raw_package_is_not_extracted_or_applied(): void
     {
-        $file = UploadedFile::fake()->create('safe-update.zip', 4, 'application/zip');
+        $file = $this->zipUpload('safe-update.zip');
         $manifest = $this->manifest(hash_file('sha256', $file->getRealPath()));
 
         $this->actingAs($this->superAdmin())
@@ -120,7 +120,7 @@ class UpdatePackageTest extends TestCase
 
     public function test_update_log_and_rollback_plan_are_created_for_package_upload(): void
     {
-        $file = UploadedFile::fake()->create('logged.zip', 2, 'application/zip');
+        $file = $this->zipUpload('logged.zip');
         $manifest = $this->manifest(hash_file('sha256', $file->getRealPath()));
 
         $this->actingAs($this->superAdmin())
@@ -144,6 +144,21 @@ class UpdatePackageTest extends TestCase
             'checksum' => $checksum,
             'minimum_laravel' => app()->version(),
         ]);
+    }
+
+    private function zipUpload(string $name, array $entries = ['README.txt' => 'Safe update package fixture.']): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'update-package-');
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::OVERWRITE);
+
+        foreach ($entries as $entry => $contents) {
+            $zip->addFromString($entry, $contents);
+        }
+
+        $zip->close();
+
+        return new UploadedFile($path, $name, 'application/zip', null, true);
     }
 
     private function configureSaasUpdates(): void
