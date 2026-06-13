@@ -91,6 +91,7 @@ class AppServiceProvider extends ServiceProvider
             'communication.bulk',
             'communication.logs.view',
             'communication.templates.manage',
+            'reports.view',
             'results.publish',
             'results.review',
             'results.manual_entry',

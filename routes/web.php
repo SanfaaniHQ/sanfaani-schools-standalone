@@ -83,6 +83,7 @@ use App\Http\Controllers\School\LmsResourceController;
 use App\Http\Controllers\School\MailSettingController as SchoolMailSettingController;
 use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ReportCardSettingController;
+use App\Http\Controllers\School\ReportsController;
 use App\Http\Controllers\School\ResultAccessPolicyController as SchoolResultAccessPolicyController;
 use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultSystemController as SchoolResultSystemController;
@@ -1282,6 +1283,10 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
 
         Route::middleware('role:school_admin|super_admin')
             ->group(function () {
+                Route::get('/reports', [ReportsController::class, 'index'])
+                    ->middleware('feature.school:reports.view')
+                    ->name('reports.index');
+
                 Route::get('/teacher-assignments', [TeacherAssignmentController::class, 'index'])
                     ->middleware('feature.school:teacher.assignment.manage')
                     ->name('teacher-assignments.index');

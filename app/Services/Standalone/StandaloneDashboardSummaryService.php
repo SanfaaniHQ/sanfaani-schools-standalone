@@ -273,6 +273,13 @@ class StandaloneDashboardSummaryService
                 'School-scoped communication center, notification templates, operational notification logs, safe live-class reminders, and deferred provider channels are available.',
                 $this->route('school.communications.index')
             ),
+            $this->checklistItem(
+                'reports_pack',
+                'Reports Pack',
+                Route::has('school.reports.index'),
+                'Consolidated school-scoped report summaries, safe module links, existing export links, and privacy boundaries are available.',
+                $this->route('school.reports.index')
+            ),
             $this->checklistItem('admissions', 'Admissions cycle', $counts['admission_cycles'] > 0, $openAdmissionCycle ? $openAdmissionCycle->name.' is accepting applications.' : ($counts['admission_cycles'].' cycle(s), none currently open.'), $this->route('admin.admissions.index')),
             $this->checklistItem('result_settings', 'Result and report settings', $resultSettingsReady, $resultSettingsReady ? 'Report or access settings are configured.' : 'Configure report cards or result access rules.', $this->route('school.report-card-settings.edit')),
             $this->checklistItem('cbt', 'CBT setup', $counts['cbt_question_banks'] > 0 || $counts['cbt_exams'] > 0, $counts['cbt_question_banks'].' bank(s), '.$counts['cbt_exams'].' exam(s).', $this->route('school.cbt.dashboard')),
@@ -365,6 +372,12 @@ class StandaloneDashboardSummaryService
                     'href' => $this->route('school.communications.index'),
                 ],
                 [
+                    'label' => 'Reports Center',
+                    'value' => Route::has('school.reports.index') ? 'Ready' : 'Off',
+                    'meta' => 'School-wide summaries with safe links to existing reports',
+                    'href' => $this->route('school.reports.index'),
+                ],
+                [
                     'label' => 'Branding',
                     'value' => $counts['branding_settings'],
                     'meta' => $counts['branding_settings'] ? 'School identity settings available' : 'Ready for logo, colors, and powered-by boundary',
@@ -400,6 +413,7 @@ class StandaloneDashboardSummaryService
                 ['label' => 'LMS', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Live Classes', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Communications', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
+                ['label' => 'Reports Center', 'value' => 'Ready', 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Branding', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'Results', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
                 ['label' => 'CBT', 'value' => 0, 'meta' => 'Create the school workspace first', 'href' => $this->route('workspace.create')],
@@ -412,7 +426,7 @@ class StandaloneDashboardSummaryService
         $workspaceHref = $this->route('workspace.create');
 
         if (! $school) {
-            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'LMS', 'Live Classes', 'Communications', 'Branding', 'Results', 'CBT'])
+            return collect(['Students', 'Classes', 'Subjects', 'Sessions and terms', 'Admissions', 'Attendance', 'Finance', 'LMS', 'Live Classes', 'Communications', 'Reports Center', 'Branding', 'Results', 'CBT'])
                 ->map(fn (string $label): array => [
                     'label' => $label,
                     'value' => 0,
@@ -519,6 +533,11 @@ class StandaloneDashboardSummaryService
                 'label' => 'Finance reports and audit pack',
                 'status' => 'Available',
                 'detail' => 'Finance reports and audit review are available. Gateway automation, offline fee capture, and full accounting views remain deferred.',
+            ],
+            [
+                'label' => 'Reports Pack',
+                'status' => 'Available',
+                'detail' => 'Consolidated school-scoped report summaries, safe cross-module links, privacy boundaries, and existing CSV export links are available without adding a BI engine.',
             ],
             [
                 'label' => 'Import/export tools',

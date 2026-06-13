@@ -169,6 +169,7 @@
                                     ]
                                     : [
                                         ['label' => 'Dashboard', 'context' => 'School operations status', 'href' => route('school.dashboard'), 'visible' => true],
+                                        ['label' => 'Reports Center', 'context' => 'School-wide report summaries and module links', 'href' => route('school.reports.index'), 'visible' => in_array($roleContext, ['school_admin', 'super_admin'], true) && $canCommand('reports.view')],
                                         ['label' => 'Students', 'context' => 'Enrollment, profiles, and lifecycle', 'href' => route('school.students.index'), 'visible' => $canCommand($roleContext === 'teacher' ? 'students.view_assigned' : 'students.view')],
                                         ['label' => 'Results', 'context' => 'Entry, review, publishing pipeline', 'href' => Route::has('school.result-system.index') ? route('school.result-system.index') : route('school.dashboard'), 'visible' => $canCommand('results.manual_entry') || $canCommand('results.review') || $canCommand('results.publish')],
                                          ['label' => 'Sessions', 'context' => 'Academic years and current session', 'href' => route('school.sessions.index'), 'visible' => $roleContext === 'school_admin'],

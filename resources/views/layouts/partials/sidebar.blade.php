@@ -154,6 +154,7 @@
         $navSections = [
             __('ui.school_operations') => [
                 $item(__('ui.dashboard'), 'school.dashboard', 'school.dashboard', 'home'),
+                $item('Reports Center', 'school.reports.index', 'school.reports.*', 'bar-chart', 'reports.view'),
                 $item(__('ui.students'), 'school.students.index', 'school.students.*', 'users', 'students.view'),
                 $item(__('ui.student_360'), 'school.students.index', 'school.students.*', 'activity', 'students.view'),
                 $item(__('ui.teachers'), 'school.teacher-assignments.index', 'school.teacher-assignments.*', 'graduation-cap', 'teacher.assignment.manage'),

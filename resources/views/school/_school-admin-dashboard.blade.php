@@ -16,6 +16,7 @@
     ])->filter(fn ($item) => (int) $item['value'] > 0);
 
     $moduleCards = [
+        ['title' => 'Reports Center', 'body' => 'Consolidated school-scoped report summaries with safe links into existing detailed reports and exports.', 'href' => route('school.reports.index'), 'feature' => 'reports.view'],
         ['title' => 'Students', 'body' => 'Enrollment records and Student 360 profiles.', 'href' => route('school.students.index'), 'feature' => 'students.view'],
         ['title' => 'Classes', 'body' => 'Class arms and academic grouping.', 'href' => route('school.classes.index'), 'feature' => null],
         ['title' => 'Subjects', 'body' => 'Subject catalog and class assignments.', 'href' => route('school.subjects.index'), 'feature' => null],

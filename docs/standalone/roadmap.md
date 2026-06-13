@@ -21,6 +21,7 @@ Completed in the local-first foundation:
 - Live class provider abstraction for manual provider support, provider registry metadata, provider labels, and future provider boundaries without external API calls.
 - Communication and notification hardening for school-scoped templates, operational notification logs, safe live-class reminders, LMS/finance/admission hooks, audit logging, and deferred provider channels.
 - Branding and white-label consolidation for resolved school display name, logo, colors, portal/module/report branding hooks, safe uploads, audit logging, and powered-by boundaries.
+- Reports Pack for a school-scoped Reports Center with safe cross-module summaries, links to existing detailed reports, existing export links, privacy boundaries, and audit logging.
 - Documentation that the local database is the source of truth.
 
 Next phases:
@@ -31,7 +32,7 @@ Next phases:
 - Add a cloud transport abstraction with tests and timeouts.
 - Add conflict detection before any pull/two-way sync.
 - Add backup sync rules separate from operational sync.
-- Add deeper debt analytics/export packs after the Stage 11 view-only reports.
+- Add deeper debt analytics/export packs after the existing view-only reports.
 - Add browser offline/PWA support as a later phase.
 
 Non-goals for this foundation:
@@ -42,6 +43,7 @@ Non-goals for this foundation:
 - Live-class provider API automation, generated meeting rooms, OAuth/API integration, provider credential storage, webhooks, offline live class, live-class attendance tracking, LMS submissions/grading, parent/student live-class portals, forums, analytics, video hosting, and payment-gated content are not implemented.
 - WhatsApp Business API, SMS provider API, provider credential storage, webhooks, push notifications, public marketing campaigns, AI-generated message sending, cross-school broadcasts, and parent/student portal communication are not implemented by the communication hardening foundation.
 - Next.js public school websites, DNS/domain provisioning, SSL automation, full theme builders, drag-and-drop page builders, email provider branding automation, advanced PDF redesign, and cross-school theme sharing are not implemented by the branding consolidation foundation.
+- BI analytics, custom report builders, public report URLs, report delivery, and cross-school reports are not implemented by the Reports Pack.
 - Double-entry accounting, bank reconciliation, payroll, procurement, and tax accounting are not implemented.
 - Real two-way sync is not complete yet.
 - SaaS billing/signup are not the main standalone flow.
