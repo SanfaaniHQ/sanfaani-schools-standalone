@@ -41,6 +41,15 @@ class MarketplacePackageInspectionTest extends TestCase
         $this->assertStringContainsString('Package inspection failed.', $result['output']);
     }
 
+    public function test_inspection_fails_package_containing_env_local(): void
+    {
+        $result = $this->inspectPackage($this->packageWith(['.env.local' => 'APP_KEY=secret']));
+
+        $this->assertSame(1, $result['exit']);
+        $this->assertStringContainsString('[FAIL] env_local_excluded', $result['output']);
+        $this->assertStringContainsString('Package inspection failed.', $result['output']);
+    }
+
     public function test_inspection_fails_package_containing_public_build_zip(): void
     {
         $result = $this->inspectPackage($this->packageWith(['public/build.zip' => 'nested zip']));
@@ -94,6 +103,7 @@ class MarketplacePackageInspectionTest extends TestCase
 
         $this->assertSame(0, $result['exit'], $result['output']);
         $this->assertStringContainsString('[PASS] env_excluded', $result['output']);
+        $this->assertStringContainsString('[PASS] env_local_excluded', $result['output']);
         $this->assertStringContainsString('[PASS] public_build_zip_excluded', $result['output']);
         $this->assertStringContainsString('[PASS] git_excluded', $result['output']);
         $this->assertStringContainsString('[PASS] node_modules_excluded', $result['output']);

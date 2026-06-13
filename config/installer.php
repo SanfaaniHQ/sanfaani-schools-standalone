@@ -27,7 +27,7 @@ return [
     'allow_managed' => false,
 
     'requirements' => [
-        'php_minimum' => '8.2.0',
+        'php_minimum' => '8.3.0',
         'required_extensions' => [
             'ctype',
             'fileinfo',

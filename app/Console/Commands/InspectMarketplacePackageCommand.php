@@ -122,6 +122,13 @@ class InspectMarketplacePackageCommand extends Command
         );
 
         $this->assertAbsent(
+            'env_local_excluded',
+            ! $this->hasSegment($entries, '.env.local'),
+            '.env.local is not present.',
+            '.env.local is present in the package.',
+        );
+
+        $this->assertAbsent(
             'public_build_zip_excluded',
             ! $this->hasPath($entries, 'public/build.zip'),
             'public/build.zip is not present.',

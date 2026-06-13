@@ -7,7 +7,7 @@ Standalone mode is for technical buyers installing one school on their own hosti
 Prepare these items first:
 
 - Domain or subdomain.
-- Hosting account with PHP 8.2 or newer.
+- Hosting account with PHP 8.3 or newer.
 - Laravel-compatible project upload.
 - Domain document root pointing to Laravel `public`, or a safe public-folder mapping.
 - MySQL or MariaDB database.
