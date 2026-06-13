@@ -10,7 +10,7 @@ Add an Apply Now link to:
 https://portal.schooldomain.com/admissions/apply
 ```
 
-This is the simplest and safest phase 1 integration.
+This is the simplest and safest phase 1 integration. The Stage 25 future Next.js website add-on should use this same link-only pattern first.
 
 ## Iframe integration
 

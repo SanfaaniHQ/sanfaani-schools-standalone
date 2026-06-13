@@ -27,6 +27,7 @@ The docs must reflect the current product honestly. The following foundations ex
 - Staging deployment execution checklists, command sequence, env examples, and signoff templates.
 - Stage 23 support runbooks, issue triage, release handoff, and standalone product support overview.
 - Stage 24 commercial packaging review, buyer-facing feature list, pricing/plan positioning, demo readiness, sales discovery, implementation handoff, module boundaries, standalone-vs-SaaS positioning, support/maintenance positioning, and commercial release readiness.
+- Stage 25 Next.js school website add-on foundation documents the future separate website repo strategy and Laravel link contract only. It does not create a Next.js app in this Laravel repo.
 
 The following systems are planned and must not be described as complete:
 
@@ -126,3 +127,15 @@ Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.
 - `commercial/standalone-vs-saas-positioning.md`
 - `commercial/support-and-maintenance-positioning.md`
 - `commercial/release-readiness-commercial-checklist.md`
+
+## Website Add-On
+
+- `website/nextjs-school-website-add-on.md`
+- `website/separate-repo-strategy.md`
+- `website/website-laravel-link-contract.md`
+- `website/admissions-linking-guide.md`
+- `website/portal-login-linking-guide.md`
+- `website/branding-content-guidance.md`
+- `website/security-and-privacy-boundaries.md`
+- `website/future-nextjs-repo-checklist.md`
+- `website/website-deployment-positioning.md`

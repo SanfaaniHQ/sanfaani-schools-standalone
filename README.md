@@ -52,6 +52,9 @@ See:
 - `docs/commercial/product-packaging-review.md`
 - `docs/commercial/buyer-facing-feature-list.md`
 - `docs/commercial/demo-readiness-checklist.md`
+- `docs/website/nextjs-school-website-add-on.md`
+- `docs/website/website-laravel-link-contract.md`
+- `docs/website/admissions-linking-guide.md`
 - `docs/standalone/product-support-overview.md`
 - `docs/support/support-runbooks.md`
 - `docs/support/release-handoff-checklist.md`

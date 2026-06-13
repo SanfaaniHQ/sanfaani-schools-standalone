@@ -8,7 +8,7 @@ This design supports three school situations:
 
 1. An existing website links to or embeds the portal form.
 2. A school without a website uses `/admissions`, `/admissions/apply`, and `/admissions/track`.
-3. A future Next.js school website submits to the secured Laravel API and never becomes the admission database.
+3. A future separate Next.js school website links to Laravel first, with embed or secured API submission as later options. It never becomes the admission database.
 
 ## Workflow
 

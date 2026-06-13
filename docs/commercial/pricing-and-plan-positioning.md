@@ -78,6 +78,7 @@ Positioning note: Enterprise can include stronger service commitments, but autom
 - Data migration or cleanup.
 - Staff training.
 - Custom report work.
+- Separate Next.js public school website add-on.
 - Custom module configuration.
 - Hosting/server management.
 - Domain, SSL, and mail setup.
@@ -87,6 +88,7 @@ Positioning note: Enterprise can include stronger service commitments, but autom
 
 - Unlimited custom feature development.
 - School-fee payment gateway integration.
+- Next.js website hosting, content, or design work unless scoped.
 - External provider API credentials or provider contracts.
 - Manual data entry or migration unless scoped.
 - Hosting, domain, SSL, SMS, WhatsApp, email provider, or payment processor costs.

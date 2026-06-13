@@ -11,6 +11,7 @@ Use this guide to explain what support can include, what needs separate scope, a
 - Backup/update support: backup verification guidance, guided update preflight, update package review, and restore-plan discussion.
 - Training support: admin, teacher, accountant, result officer, and support staff orientation.
 - Commercial customization support: scoped paid changes after written approval.
+- Website add-on support: separate public website planning, content, deployment, and link checks when scoped.
 
 ## What Support Should Clarify
 
@@ -31,6 +32,7 @@ Use this guide to explain what support can include, what needs separate scope, a
 - Data entry or manual migration unless scoped.
 - Hosting cost.
 - Domain or SSL cost.
+- Next.js website hosting, public content writing, photography, SEO, or design customization unless scoped.
 - SMS, WhatsApp, mail, or payment processor fees.
 - Legal compliance guarantees.
 - Enforcement of the school's internal operational policies.
@@ -43,6 +45,7 @@ Use this guide to explain what support can include, what needs separate scope, a
 - License diagnostics are local/commercial readiness foundations, not a remote license server.
 - Payment gateway automation and SaaS billing are not included unless separately implemented and contracted.
 - Provider API automation for live classes is future work.
+- The Next.js public website add-on is future separate-repo work and is not included in Laravel portal support unless scoped.
 
 ## Evidence Rules
 

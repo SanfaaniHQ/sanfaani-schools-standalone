@@ -63,6 +63,7 @@ Sanfaani Schools Standalone gives a private school its own Laravel-based managem
 - White-label branding where license terms and entitlement allow.
 - Reports Center for operational summaries and links to module reports.
 - Not a public website builder, full theme builder, or custom BI builder.
+- Optional future Next.js website add-on can be sold as a separate public front door, but it is not built in this Laravel repo.
 
 ## Installer, License, Backup, And Updates
 

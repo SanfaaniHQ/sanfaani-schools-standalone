@@ -27,6 +27,7 @@ The buyer should understand that Laravel is the source of truth. School records,
 - Manual live-class scheduling with provider abstraction metadata.
 - Communication Center, notification templates, logs, and hooks.
 - White-label school branding inside the Laravel portal.
+- Optional future Next.js public website add-on as a separate repo and public front door.
 - Reports Center and module report links.
 - Installer, local license diagnostics, backup metadata, guided update preflight, system health, and support runbooks.
 
@@ -41,6 +42,12 @@ The buyer should understand that Laravel is the source of truth. School records,
 - AI product.
 - Online update marketplace.
 - Next.js public school website product.
+
+## Optional Website Add-On
+
+The future Next.js school website can be positioned as a separate public branding/admissions front door. It should be sold separately from the Laravel portal and should use links to Laravel for portal login, admissions application, and application tracking in V1.
+
+Do not claim the website exists until the separate repo has been created, implemented, validated, and handed off.
 
 ## Packaging Readiness
 
@@ -60,5 +67,6 @@ Use this review before sales pages, demo scripts, proposals, and buyer handoff:
 - [Buyer-Facing Feature List](buyer-facing-feature-list.md)
 - [Pricing And Plan Positioning](pricing-and-plan-positioning.md)
 - [Module Boundaries And Limitations](module-boundaries-and-limitations.md)
+- [Next.js School Website Add-On](../website/nextjs-school-website-add-on.md)
 - [Standalone Product Support Overview](../standalone/product-support-overview.md)
 - [Support Runbooks](../support/support-runbooks.md)

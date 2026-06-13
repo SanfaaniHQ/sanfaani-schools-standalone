@@ -59,9 +59,17 @@ Managed private installation:
 - Sanfaani or partner support.
 - Deployment, backup, update, and handoff responsibilities defined in contract.
 
+Website add-on:
+
+- Separate public Next.js website repo later.
+- Public marketing/admissions front door.
+- Links to Laravel for portal login, admissions application, and application tracking.
+- No private dashboards or duplicated Laravel data.
+
 ## Related Docs
 
 - [Product Packaging Review](product-packaging-review.md)
 - [Pricing And Plan Positioning](pricing-and-plan-positioning.md)
 - [Standalone Vs SaaS Vs Marketplace](../standalone/standalone-vs-saas-vs-marketplace.md)
 - [Product Mode Capability Matrix](../roadmap/product-mode-capability-matrix.md)
+- [Next.js School Website Add-On](../website/nextjs-school-website-add-on.md)

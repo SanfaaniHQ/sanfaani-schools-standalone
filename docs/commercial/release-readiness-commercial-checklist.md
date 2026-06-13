@@ -19,6 +19,7 @@ Use this checklist before publishing sales copy, running a buyer demo, handing o
 - [ ] Pricing/package positioning is approved by the business owner.
 - [ ] Known limitations are documented.
 - [ ] Sales assets do not overclaim full offline, SaaS billing, payment automation, online update server, auto-update, remote license server, real live-class provider API automation, Next.js website integration, custom BI, or dependency vulnerability remediation.
+- [ ] Website add-on copy states that the future Next.js website repo is separate and has not been created in this Laravel stage.
 - [ ] Support runbooks are updated.
 - [ ] Onboarding checklist is ready.
 - [ ] Release notes or handoff notes are prepared.
@@ -48,6 +49,7 @@ Use this checklist before publishing sales copy, running a buyer demo, handing o
 - [ ] Price, legal terms, tax handling, payment method, renewal, and support SLA are approved outside this code stage.
 - [ ] Customizations are separately scoped.
 - [ ] Hosting/domain/SSL/provider fees are clearly assigned.
+- [ ] Website hosting, domain, SSL, content, design, and maintenance scope are clearly assigned when the website add-on is offered.
 
 ## Validation Commands
 

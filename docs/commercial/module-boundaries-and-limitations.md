@@ -11,7 +11,7 @@ Available:
 
 Boundary:
 
-- Public website integration is future work. A Next.js school website add-on is not completed in this stage.
+- Public website integration is future work. A Next.js school website add-on is not completed in this stage. V1 should link to Laravel admissions rather than duplicate the admissions engine.
 
 ## Attendance
 
@@ -79,6 +79,7 @@ Available:
 Boundary:
 
 - Next.js public website, DNS provisioning, SSL automation, full theme builder, and page builder are future work.
+- Future Next.js website work should happen in a separate repo and should not expose Laravel private data.
 
 ## Reports
 

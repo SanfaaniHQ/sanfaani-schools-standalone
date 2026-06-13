@@ -35,6 +35,16 @@
   - [Standalone Vs SaaS Positioning](commercial/standalone-vs-saas-positioning.md)
   - [Support And Maintenance Positioning](commercial/support-and-maintenance-positioning.md)
   - [Release Readiness Commercial Checklist](commercial/release-readiness-commercial-checklist.md)
+- Website Add-On
+  - [Next.js School Website Add-On](website/nextjs-school-website-add-on.md)
+  - [Separate Repo Strategy](website/separate-repo-strategy.md)
+  - [Website-Laravel Link Contract](website/website-laravel-link-contract.md)
+  - [Admissions Linking Guide](website/admissions-linking-guide.md)
+  - [Portal Login Linking Guide](website/portal-login-linking-guide.md)
+  - [Branding And Content Guidance](website/branding-content-guidance.md)
+  - [Security And Privacy Boundaries](website/security-and-privacy-boundaries.md)
+  - [Future Next.js Repo Checklist](website/future-nextjs-repo-checklist.md)
+  - [Website Deployment Positioning](website/website-deployment-positioning.md)
 - Standalone Operations
   - [Product Support Overview](standalone/product-support-overview.md)
   - [Attendance Foundation](standalone/attendance-foundation.md)
