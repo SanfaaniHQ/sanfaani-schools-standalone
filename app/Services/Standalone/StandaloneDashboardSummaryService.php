@@ -90,6 +90,13 @@ class StandaloneDashboardSummaryService
                 $editionStatus['installed'] ? null : $this->route('installer.welcome'),
             ),
             $this->checklistItem(
+                'installer_license_final_hardening',
+                'Installer and license hardening',
+                true,
+                'Support-safe installer diagnostics, local license redaction, entitlement visibility, and audit logging are available.',
+                $this->route('admin.standalone.status'),
+            ),
+            $this->checklistItem(
                 'school_workspace',
                 'School workspace created',
                 (bool) $school,
@@ -538,6 +545,11 @@ class StandaloneDashboardSummaryService
                 'label' => 'Reports Pack',
                 'status' => 'Available',
                 'detail' => 'Consolidated school-scoped report summaries, safe cross-module links, privacy boundaries, and existing CSV export links are available without adding a BI engine.',
+            ],
+            [
+                'label' => 'Installer and license final hardening',
+                'status' => 'Available',
+                'detail' => 'Support-safe installer readiness checks, local license validation, redacted status display, entitlement visibility, and sensitive-action audit logging are available without SaaS billing or online activation automation.',
             ],
             [
                 'label' => 'Import/export tools',

@@ -53,8 +53,14 @@ class SystemStatusController extends Controller
                 [
                     'title' => 'Standalone License Status',
                     'route_group' => 'standalone_license',
-                    'href' => route('admin.deployment.placeholder', 'standalone-license'),
-                    'body' => 'Visible only when standalone license behavior is enabled.',
+                    'href' => route('admin.license.index'),
+                    'body' => 'View local license status, redacted key display, entitlement diagnostics, and safe audit events.',
+                ],
+                [
+                    'title' => 'Installer and License Diagnostics',
+                    'route_group' => 'standalone_status',
+                    'href' => route('admin.standalone.status'),
+                    'body' => 'Review installer, health, backup, update, and license readiness without exposing secrets.',
                 ],
                 [
                     'title' => 'Guided Updates',

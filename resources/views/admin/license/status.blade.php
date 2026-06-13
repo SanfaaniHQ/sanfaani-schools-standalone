@@ -1,4 +1,19 @@
 <x-app-layout>
+    @php
+        $statusTone = fn (string $status): string => $status === 'pass'
+            ? 'bg-green-100 text-green-700'
+            : ($status === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700');
+        $valueLabel = function (mixed $value): string {
+            if (is_array($value)) {
+                return array_key_exists('enabled', $value)
+                    ? ((bool) $value['enabled'] ? 'enabled' : 'disabled')
+                    : 'configured';
+            }
+
+            return $value ? 'enabled' : 'disabled';
+        };
+    @endphp
+
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -43,30 +58,83 @@
                     @include('admin.license.partials.status-card', ['label' => 'Offline grace', 'value' => $license?->offline_grace_until?->isFuture() ? 'Available' : 'Not available', 'meta' => $license?->offline_grace_until?->toDayDateTimeString()])
                     @include('admin.license.partials.status-card', ['label' => 'Last validation', 'value' => $license?->last_validated_at?->toDayDateTimeString() ?? 'Never'])
                     @include('admin.license.partials.status-card', ['label' => 'Expiry warning', 'value' => $shouldWarnExpiring ? 'Warning active' : 'No warning'])
-                    @include('admin.license.partials.status-card', ['label' => 'Domain matching', 'value' => config('licensing.require_domain_match') ? 'Required' : 'Disabled'])
+                @include('admin.license.partials.status-card', ['label' => 'Domain matching', 'value' => config('licensing.require_domain_match') ? 'Required' : 'Disabled'])
+            </div>
+        </div>
+
+            <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
+                <div class="border-b border-gray-100 px-6 py-4">
+                    <h3 class="text-base font-semibold text-gray-900">Support-Safe Diagnostics</h3>
+                    <p class="mt-1 text-sm text-gray-500">Statuses only. License keys, app keys, database passwords, mail credentials, server URLs, and private paths are hidden.</p>
+                </div>
+                <div class="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
+                    @foreach ($supportDiagnostics as $item)
+                        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                            <p class="text-sm font-medium text-gray-500">{{ $item['label'] }}</p>
+                            <p class="mt-2 break-words text-lg font-semibold text-gray-900">{{ $item['value'] }}</p>
+                            <span class="mt-3 inline-flex rounded-md px-2 py-1 text-xs font-semibold {{ $statusTone($item['status']) }}">
+                                {{ str($item['status'])->upper() }}
+                            </span>
+                        </div>
+                    @endforeach
                 </div>
             </div>
 
             <div class="grid gap-6 lg:grid-cols-2">
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <h3 class="text-base font-semibold text-gray-900">Enabled Entitlements</h3>
+                    <h3 class="text-base font-semibold text-gray-900">License Entitlements</h3>
                     <div class="mt-4 flex flex-wrap gap-2">
                         @forelse ($entitlements as $key => $value)
-                            <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{{ $key }}: {{ is_array($value) ? json_encode($value) : ($value ? 'enabled' : 'disabled') }}</span>
+                            <span class="rounded-full {{ $valueLabel($value) === 'disabled' ? 'bg-slate-100 text-slate-700' : 'bg-indigo-50 text-indigo-700' }} px-3 py-1 text-xs font-semibold">{{ $key }}: {{ $valueLabel($value) }}</span>
                         @empty
                             <p class="text-sm text-gray-500">No license entitlements are active.</p>
                         @endforelse
                     </div>
                 </div>
                 <div class="rounded-2xl bg-white p-6 shadow-sm">
-                    <h3 class="text-base font-semibold text-gray-900">Enabled License Features</h3>
+                    <h3 class="text-base font-semibold text-gray-900">License Feature Flags</h3>
                     <div class="mt-4 flex flex-wrap gap-2">
                         @forelse ($features as $key => $value)
-                            <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">{{ $key }}: {{ is_array($value) ? json_encode($value) : ($value ? 'enabled' : 'disabled') }}</span>
+                            <span class="rounded-full {{ $valueLabel($value) === 'disabled' ? 'bg-slate-100 text-slate-700' : 'bg-emerald-50 text-emerald-700' }} px-3 py-1 text-xs font-semibold">{{ $key }}: {{ $valueLabel($value) }}</span>
                         @empty
                             <p class="text-sm text-gray-500">No license feature flags are active.</p>
                         @endforelse
                     </div>
+                </div>
+            </div>
+
+            <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
+                <div class="border-b border-gray-100 px-6 py-4">
+                    <h3 class="text-base font-semibold text-gray-900">Entitlement and Module Visibility</h3>
+                    <p class="mt-1 text-sm text-gray-500">Shows module access reasons without changing existing feature gates.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-normal text-gray-500">Module</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-normal text-gray-500">Category</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-normal text-gray-500">License value</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-normal text-gray-500">Current access</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-normal text-gray-500">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            @foreach ($entitlementRows as $row)
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ $row['label'] }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ str($row['category'])->replace('_', ' ')->title() }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $row['license_label'] }}</td>
+                                    <td class="px-6 py-4 text-sm">
+                                        <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $row['access_enabled'] ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-700' }}">
+                                            {{ $row['access_label'] }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $row['reason'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

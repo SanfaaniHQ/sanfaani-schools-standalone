@@ -83,7 +83,7 @@
         </div>
 
         <footer class="mt-6 text-xs text-text-muted">
-            Installation lock path: <span class="font-mono">{{ $lockPath ?? storage_path('app/installed.lock') }}</span>
+            Installation lock: <span class="font-mono">{{ $lockLabel ?? 'storage/app/installed.lock' }}</span>
         </footer>
     </main>
 </body>

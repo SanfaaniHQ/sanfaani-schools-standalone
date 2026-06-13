@@ -5,9 +5,14 @@ namespace App\Services\Licensing;
 use App\Models\License;
 use App\Models\LicenseAuditLog;
 use App\Models\School;
+use App\Services\Security\SecretRedactionService;
 
 class LicenseAuditService
 {
+    public function __construct(
+        private SecretRedactionService $redactor,
+    ) {}
+
     public function log(
         string $event,
         string $message,
@@ -22,7 +27,7 @@ class LicenseAuditService
             'event' => $event,
             'severity' => $severity,
             'message' => $message,
-            'context' => $context,
+            'context' => $this->redactor->redactArray($context),
         ]);
     }
 }

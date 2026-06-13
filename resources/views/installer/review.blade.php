@@ -35,6 +35,22 @@
             Finalization writes the installation lock and prevents reinstall. It does not run seeders, migrations, license activation, updates, backups, or demo automation.
         </div>
 
+        <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
+            <p class="text-sm font-semibold text-text-primary">Support-safe diagnostics</p>
+            <p class="mt-1 text-xs text-text-secondary">Share these statuses with Sanfaani support if needed. App keys, database credentials, mail passwords, license keys, and private server paths are not shown.</p>
+            <dl class="mt-4 grid gap-3 sm:grid-cols-2">
+                @foreach ($diagnostics as $item)
+                    <div class="rounded-md border border-border-subtle bg-bg-primary p-3">
+                        <dt class="text-xs uppercase tracking-normal text-text-muted">{{ $item['label'] }}</dt>
+                        <dd class="mt-1 text-sm font-semibold text-text-primary">{{ $item['value'] }}</dd>
+                        <span class="mt-2 inline-flex rounded-md px-2 py-1 text-xs font-semibold {{ $item['status'] === 'pass' ? 'bg-green-100 text-green-700' : ($item['status'] === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
+                            {{ str($item['status'])->upper() }}
+                        </span>
+                    </div>
+                @endforeach
+            </dl>
+        </div>
+
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
             If any item still depends on your host, pause here and ask your hosting provider or Sanfaani managed setup team to verify it before finalizing.
         </div>

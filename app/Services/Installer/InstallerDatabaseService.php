@@ -2,6 +2,7 @@
 
 namespace App\Services\Installer;
 
+use App\Services\Security\SecretRedactionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
@@ -13,7 +14,7 @@ class InstallerDatabaseService
         $status = [
             'connection' => (string) config('database.default'),
             'database_configured' => filled($this->databaseName()),
-            'database_name' => $this->databaseName() ?: 'Not configured',
+            'database_name' => filled($this->databaseName()) ? 'Configured' : 'Not configured',
             'connected' => false,
             'migrations_table_exists' => false,
             'pending_migrations_count' => null,
@@ -68,6 +69,6 @@ class InstallerDatabaseService
             }
         }
 
-        return $message;
+        return app(SecretRedactionService::class)->redact($message) ?: 'Database connection error.';
     }
 }

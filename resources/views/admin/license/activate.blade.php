@@ -19,6 +19,7 @@
                     <label class="block text-sm md:col-span-2">
                         <span class="font-semibold text-gray-700">License key</span>
                         <input type="password" name="license_key" autocomplete="new-password" class="mt-1 w-full rounded-md border-gray-300" required>
+                        <span class="mt-1 block text-xs text-gray-500">Letters, numbers, and hyphens only. The raw key is hashed and never shown again.</span>
                         @error('license_key') <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                     </label>
 
@@ -93,7 +94,7 @@
                 </div>
 
                 <div class="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                    Activation records the current domain and installation fingerprint. It does not contact a real license server yet.
+                    Activation records the current domain and installation fingerprint. It does not contact a real license server, process payments, or remotely deactivate installations in this foundation.
                 </div>
 
                 <div class="flex justify-end gap-3">

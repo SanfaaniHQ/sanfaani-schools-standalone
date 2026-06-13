@@ -22,6 +22,7 @@ Completed in the local-first foundation:
 - Communication and notification hardening for school-scoped templates, operational notification logs, safe live-class reminders, LMS/finance/admission hooks, audit logging, and deferred provider channels.
 - Branding and white-label consolidation for resolved school display name, logo, colors, portal/module/report branding hooks, safe uploads, audit logging, and powered-by boundaries.
 - Reports Pack for a school-scoped Reports Center with safe cross-module summaries, links to existing detailed reports, existing export links, privacy boundaries, and audit logging.
+- Installer and license final hardening for support-safe readiness checks, redacted local license status, entitlement visibility, local activation validation, and audit logging without online activation or billing.
 - Documentation that the local database is the source of truth.
 
 Next phases:
@@ -44,6 +45,7 @@ Non-goals for this foundation:
 - WhatsApp Business API, SMS provider API, provider credential storage, webhooks, push notifications, public marketing campaigns, AI-generated message sending, cross-school broadcasts, and parent/student portal communication are not implemented by the communication hardening foundation.
 - Next.js public school websites, DNS/domain provisioning, SSL automation, full theme builders, drag-and-drop page builders, email provider branding automation, advanced PDF redesign, and cross-school theme sharing are not implemented by the branding consolidation foundation.
 - BI analytics, custom report builders, public report URLs, report delivery, and cross-school reports are not implemented by the Reports Pack.
+- SaaS billing, payment gateway enforcement, online license activation server, automatic remote deactivation, customer billing portal, destructive reinstall/reset tools, and secret management UI are not implemented by the installer/license hardening.
 - Double-entry accounting, bank reconciliation, payroll, procurement, and tax accounting are not implemented.
 - Real two-way sync is not complete yet.
 - SaaS billing/signup are not the main standalone flow.

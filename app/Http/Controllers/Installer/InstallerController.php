@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Installer;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuditLogService;
 use App\Services\Installer\InstallerDatabaseService;
 use App\Services\Installer\InstallerRequirementsService;
 use App\Services\Installer\InstallerSetupService;
@@ -10,9 +11,11 @@ use App\Services\Installer\InstallerStateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use RuntimeException;
+use Throwable;
 
 class InstallerController extends Controller
 {
@@ -21,6 +24,7 @@ class InstallerController extends Controller
         private InstallerRequirementsService $requirements,
         private InstallerDatabaseService $database,
         private InstallerSetupService $setup,
+        private AuditLogService $auditLog,
     ) {}
 
     public function welcome(): View
@@ -30,23 +34,36 @@ class InstallerController extends Controller
 
     public function requirements(): View
     {
+        $checks = $this->requirements->requirements();
+        $this->auditInstallerCheck('requirements', $checks);
+
         return $this->view('requirements', [
             'step' => 'requirements',
-            'checks' => $this->requirements->requirements(),
+            'checks' => $checks,
         ]);
     }
 
     public function permissions(): View
     {
+        $checks = $this->requirements->permissions();
+        $this->auditInstallerCheck('permissions', $checks);
+
         return $this->view('permissions', [
             'step' => 'permissions',
-            'checks' => $this->requirements->permissions(),
+            'checks' => $checks,
         ]);
     }
 
     public function database(): View
     {
         $status = $this->database->status();
+        $this->safeAudit('installer_check_ran', [
+            'check' => 'database',
+            'deployment_mode' => config('sanfaani.deployment.mode'),
+            'installer_enabled' => (bool) config('installer.enabled', false),
+            'connected' => (bool) $status['connected'],
+            'pending_migrations_count' => $status['pending_migrations_count'],
+        ]);
 
         return $this->view('database', [
             'step' => 'database',
@@ -57,28 +74,36 @@ class InstallerController extends Controller
 
     public function environment(): View
     {
+        $checks = $this->requirements->environment();
+        $this->auditInstallerCheck('environment', $checks);
+
         return $this->view('environment', [
             'step' => 'environment',
-            'checks' => $this->requirements->environment(),
+            'checks' => $checks,
         ]);
     }
 
     public function appKey(): View
     {
+        $check = $this->requirements->appKeyStatus();
+        $this->auditInstallerCheck('app_key', [$check]);
+
         return $this->view('app-key', [
             'step' => 'app-key',
-            'check' => $this->requirements->appKeyStatus(),
+            'check' => $check,
         ]);
     }
 
     public function migrations(): View
     {
         $status = $this->database->status();
+        $check = $this->requirements->migrationReadiness($status['pending_migrations_count']);
+        $this->auditInstallerCheck('migrations', [$check]);
 
         return $this->view('migrations', [
             'step' => 'migrations',
             'status' => $status,
-            'check' => $this->requirements->migrationReadiness($status['pending_migrations_count']),
+            'check' => $check,
         ]);
     }
 
@@ -173,12 +198,22 @@ class InstallerController extends Controller
                 ->with('error', 'Complete the owner and school setup before final review.');
         }
 
+        $database = $this->database->status();
+        $this->safeAudit('installer_status_viewed', [
+            'step' => 'review',
+            'deployment_mode' => config('sanfaani.deployment.mode'),
+            'installer_enabled' => (bool) config('installer.enabled', false),
+            'database_connected' => (bool) $database['connected'],
+            'pending_migrations_count' => $database['pending_migrations_count'],
+        ]);
+
         return $this->view('review', [
             'step' => 'review',
             'admin' => Session::get('installer.admin'),
             'school' => Session::get('installer.school'),
             'smtp' => Session::get('installer.smtp', []),
-            'database' => $this->database->status(),
+            'database' => $database,
+            'diagnostics' => $this->requirements->diagnostics($database),
         ]);
     }
 
@@ -189,6 +224,13 @@ class InstallerController extends Controller
                 ->with('error', 'Complete the installer forms before finalizing.');
         }
 
+        $this->safeAudit('installer_completion_attempted', [
+            'deployment_mode' => config('sanfaani.deployment.mode'),
+            'installer_enabled' => (bool) config('installer.enabled', false),
+            'admin_email_present' => filled(Session::get('installer.admin.email')),
+            'school_name_present' => filled(Session::get('installer.school.name')),
+        ]);
+
         try {
             $result = $this->setup->finalizeInstallation(
                 Session::get('installer.admin'),
@@ -196,9 +238,20 @@ class InstallerController extends Controller
                 ['smtp_placeholder' => Session::get('installer.smtp', [])]
             );
         } catch (RuntimeException $exception) {
+            $this->safeAudit('installer_completion_failed', [
+                'deployment_mode' => config('sanfaani.deployment.mode'),
+                'failed_reason_code' => 'finalization_error',
+            ]);
+
             return redirect()->route('installer.review')
                 ->with('error', $exception->getMessage());
         }
+
+        $this->safeAudit('installer_completion_succeeded', [
+            'deployment_mode' => config('sanfaani.deployment.mode'),
+            'school_id' => $result['school']->id,
+            'admin_user_id' => $result['admin']->id,
+        ]);
 
         Session::forget('installer');
 
@@ -208,6 +261,8 @@ class InstallerController extends Controller
             'result' => $result,
             'metadata' => $this->state->installationMetadata(),
             'lockPath' => $this->state->lockPath(),
+            'lockLabel' => $this->lockLabel(),
+            'diagnostics' => $this->requirements->diagnostics($this->database->status()),
         ]);
     }
 
@@ -216,6 +271,39 @@ class InstallerController extends Controller
         return view('installer.'.$view, array_merge($data, [
             'steps' => config('installer.steps', []),
             'lockPath' => $this->state->lockPath(),
+            'lockLabel' => $this->lockLabel(),
         ]));
+    }
+
+    private function auditInstallerCheck(string $check, array $checks): void
+    {
+        $statuses = collect($checks)->countBy('status');
+
+        $this->safeAudit('installer_check_ran', [
+            'check' => $check,
+            'deployment_mode' => config('sanfaani.deployment.mode'),
+            'installer_enabled' => (bool) config('installer.enabled', false),
+            'pass_count' => (int) $statuses->get('pass', 0),
+            'warning_count' => (int) $statuses->get('warning', 0),
+            'fail_count' => (int) $statuses->get('fail', 0),
+        ]);
+    }
+
+    private function safeAudit(string $action, array $metadata = []): void
+    {
+        try {
+            if (! Schema::hasTable('audit_logs')) {
+                return;
+            }
+
+            $this->auditLog->log($action, metadata: $metadata);
+        } catch (Throwable) {
+            //
+        }
+    }
+
+    private function lockLabel(): string
+    {
+        return 'storage/app/'.ltrim((string) config('installer.lock_file', 'installed.lock'), '/\\');
     }
 }

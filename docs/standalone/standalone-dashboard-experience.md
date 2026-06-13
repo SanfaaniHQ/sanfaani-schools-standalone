@@ -7,6 +7,7 @@ The standalone dashboard is the operating home for one private school installati
 The Super Admin dashboard is the installation-owner view. It summarizes:
 
 - installer completion;
+- installer and license hardening status;
 - standalone license status;
 - school profile and branding readiness;
 - backup and guided-update readiness;
@@ -66,6 +67,7 @@ The dashboard labels these areas as available or **Planned**:
 - communication notification hardening is available for school-scoped templates, operational logs, safe live-class reminders, LMS/finance/admission hooks, and provider-ready deferred channels;
 - branding and white-label consolidation is available for resolved school identity, logo, colors, dashboard/module/report hooks, safe uploads, audit logging, and powered-by boundaries;
 - Reports Pack is available for school-scoped summary cards, existing detailed report links, existing export links, privacy boundaries, and audit-safe access logging;
+- installer and license final hardening is available for support-safe installer diagnostics, local license status, redacted key display, entitlement visibility, and audit logging without payment enforcement or online activation automation;
 - live class provider API automation remains planned;
 - full browser offline/PWA.
 
@@ -77,4 +79,4 @@ The local database is the source of truth. A school can operate from a local com
 
 The attendance-only browser offline capture pilot does not make finance or the full portal available offline. The dashboard must not claim that fee capture or every browser task works without a connection to the school server.
 
-The LMS foundation is also online-first. Stage 15 adds links to existing CBT items, but CBT remains the assessment engine. Stage 16 adds manual live-class scheduling beside LMS. Stage 17 adds provider abstraction metadata while manual links remain active. Stage 18 adds operational communication logs and templates while SMS, WhatsApp, push, public campaigns, provider credentials, and provider APIs remain deferred. Stage 19 consolidates school branding and white-label boundaries while public websites, DNS, SSL automation, and full theme builders remain deferred. Stage 20 adds a Reports Center without BI analytics, public reports, custom builders, PDF redesign, report scheduling, report delivery, or cross-school reporting. The dashboard must not describe LMS as offline LMS, assignment submissions/grading, or a parent/student LMS portal. Live classes must not be described as offline, API-generated, OAuth-enabled, or provider API-integrated.
+The LMS foundation is also online-first. Stage 15 adds links to existing CBT items, but CBT remains the assessment engine. Stage 16 adds manual live-class scheduling beside LMS. Stage 17 adds provider abstraction metadata while manual links remain active. Stage 18 adds operational communication logs and templates while SMS, WhatsApp, push, public campaigns, provider credentials, and provider APIs remain deferred. Stage 19 consolidates school branding and white-label boundaries while public websites, DNS, SSL automation, and full theme builders remain deferred. Stage 20 adds a Reports Center without BI analytics, public reports, custom builders, PDF redesign, report scheduling, report delivery, or cross-school reporting. Stage 21 hardens installer/license readiness without SaaS billing, payment gateway enforcement, online activation server, customer billing portal, automatic remote deactivation, or destructive reinstall/reset tooling. The dashboard must not describe LMS as offline LMS, assignment submissions/grading, or a parent/student LMS portal. Live classes must not be described as offline, API-generated, OAuth-enabled, or provider API-integrated.

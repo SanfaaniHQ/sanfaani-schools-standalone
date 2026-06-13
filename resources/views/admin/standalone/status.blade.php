@@ -54,6 +54,12 @@
             body="This page shows statuses, counts, relative paths, and configured/missing flags only. Database passwords, .env values, license secrets, sync tokens, API keys, and private backup paths are not displayed."
         />
 
+        <x-ui.alert
+            tone="success"
+            title="Installer and license hardening available"
+            body="Installer readiness, local license status, entitlement visibility, backup/update readiness, and support diagnostics are available without SaaS billing, payment enforcement, online activation, remote deactivation, or destructive reinstall tools."
+        />
+
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <x-ui.stat-card
                 label="Product edition"

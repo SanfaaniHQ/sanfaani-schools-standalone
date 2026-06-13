@@ -30,6 +30,22 @@
             <p class="mt-1">Confirm the login URL, owner email, school profile, current session and term, SMTP delivery, backups, and license status before inviting staff or parents.</p>
         </div>
 
+        <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
+            <p class="text-sm font-semibold text-text-primary">Post-install diagnostic summary</p>
+            <p class="mt-1 text-xs text-text-secondary">Statuses only. Secrets, raw environment values, and private server paths stay hidden.</p>
+            <dl class="mt-4 grid gap-3 sm:grid-cols-2">
+                @foreach ($diagnostics as $item)
+                    <div class="rounded-md border border-border-subtle bg-bg-primary p-3">
+                        <dt class="text-xs uppercase tracking-normal text-text-muted">{{ $item['label'] }}</dt>
+                        <dd class="mt-1 text-sm font-semibold text-text-primary">{{ $item['value'] }}</dd>
+                        <span class="mt-2 inline-flex rounded-md px-2 py-1 text-xs font-semibold {{ $item['status'] === 'pass' ? 'bg-green-100 text-green-700' : ($item['status'] === 'warning' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
+                            {{ str($item['status'])->upper() }}
+                        </span>
+                    </div>
+                @endforeach
+            </dl>
+        </div>
+
         <a href="{{ route('admin.login') }}" class="inline-flex rounded-md bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90">Go to admin login</a>
     </div>
 @endsection
