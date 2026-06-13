@@ -32,3 +32,5 @@ Target host: `https://doc.sanfaani.net`
 | `/marketplace/packaging` | `docs/marketplace/marketplace-packaging-plan.md` | Marketplace buyers, release team |
 | `/white-label/readiness` | `docs/white-label/white-label-readiness.md` | White-label buyers |
 | `/release-notes/workflow` | `docs/release-notes/release-workflow.md` | Release managers |
+| `/release/candidate-qa-report` | `docs/release/release-candidate-qa-report.md` | Release managers, QA, support |
+| `/release/v1-release-candidate-checklist` | `docs/release/v1-release-candidate-checklist.md` | Release managers, QA |

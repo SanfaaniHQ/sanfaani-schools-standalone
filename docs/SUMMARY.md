@@ -166,6 +166,8 @@
   - [White-Label Readiness](white-label/white-label-readiness.md)
 - Release Management
   - [Release Workflow](release-notes/release-workflow.md)
+  - [Release Candidate QA Report](release/release-candidate-qa-report.md)
+  - [v1 Release Candidate Checklist](release/v1-release-candidate-checklist.md)
   - [Release Handoff Checklist](support/release-handoff-checklist.md)
   - [Changelog](changelog/CHANGELOG.md)
   - [Documentation Maintenance](documentation-maintenance-workflow.md)

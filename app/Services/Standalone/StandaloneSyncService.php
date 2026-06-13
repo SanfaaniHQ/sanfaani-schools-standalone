@@ -9,6 +9,7 @@ use App\Models\StandaloneSyncOutbox;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class StandaloneSyncService
 {
@@ -446,12 +447,20 @@ class StandaloneSyncService
 
     private function offlineAttendanceReceiptTableReady(): bool
     {
-        return Schema::hasTable('attendance_offline_sync_receipts');
+        try {
+            return Schema::hasTable('attendance_offline_sync_receipts');
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     private function tablesReady(): bool
     {
-        return Schema::hasTable('standalone_sync_outbox')
-            && Schema::hasTable('standalone_sync_logs');
+        try {
+            return Schema::hasTable('standalone_sync_outbox')
+                && Schema::hasTable('standalone_sync_logs');
+        } catch (Throwable) {
+            return false;
+        }
     }
 }
