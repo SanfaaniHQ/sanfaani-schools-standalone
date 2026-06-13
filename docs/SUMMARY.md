@@ -18,6 +18,7 @@
   - [Single-School Installer](installation/single-school-installer.md)
   - [Namecheap Shared Hosting](deployment/namecheap-shared-hosting.md)
   - [cPanel Hosting](deployment/cpanel-hosting.md)
+  - [cPanel Production Deployment](deployment/cpanel-production-deployment.md)
   - [VPS Hosting](deployment/vps-hosting.md)
 - Commercial Foundations
   - [License Activation](licensing/license-activation.md)
