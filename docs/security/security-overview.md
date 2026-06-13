@@ -23,4 +23,4 @@ Never commit real `.env` files, database dumps, backups, logs, SMTP passwords, p
 
 ## Further Work
 
-Update manager and backup manager security models are planned.
+Backup and guided update foundations now exist for metadata, verification, preflight, and support-safe diagnostics. Real update application, external update downloads, automated restore execution, online license-server enforcement, and dependency vulnerability remediation remain separate future security work.

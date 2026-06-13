@@ -48,6 +48,10 @@ Before the final Namecheap push, run migrations, clear caches, build assets, lis
 
 See:
 
+- `docs/SUMMARY.md`
+- `docs/standalone/product-support-overview.md`
+- `docs/support/support-runbooks.md`
+- `docs/support/release-handoff-checklist.md`
 - `docs/deployment/namecheap-production-deployment.md`
 - `docs/deployment/backup-and-restore.md`
 - `docs/testing/final-deployment-test-checklist.md`

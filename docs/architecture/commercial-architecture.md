@@ -11,6 +11,8 @@ Sanfaani Schools is one Laravel codebase that can operate as a SaaS platform, a 
 - `FeatureAccessService` evaluates feature access using config, deployment mode, license mode, school context, overrides, subscriptions, and entitlements.
 - `DeploymentBehaviorService` decides route group, dashboard widget, and settings visibility.
 - Installer, licensing, demo, onboarding, and marketing foundations exist as separate services and tables.
+- Backup metadata, verification, retention, and manual restore-plan foundations exist.
+- Guided update package metadata, manifest validation, preflight, and review-plan foundations exist.
 
 ## Commercial Rule
 
@@ -28,7 +30,7 @@ No client, school, buyer, marketplace, or domain-specific behavior should be har
 ## Not Implemented Yet
 
 - Full billing/payment workflow.
-- Update manager.
-- Backup manager.
+- Real update download or automatic update application.
+- Automated production restore execution.
 - Marketplace packaging automation.
 - Full white-label storage and reseller operations.

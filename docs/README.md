@@ -13,7 +13,7 @@ The docs must reflect the current product honestly. The following foundations ex
 - Demo automation foundation.
 - Role-based guided onboarding foundation.
 - Lead nurturing, marketing automation, sales task, and unsubscribe foundation.
-- Guided update package and rollback foundation.
+- Guided update package, preflight, and recovery-plan metadata foundation.
 - Backup metadata and pre-update backup workflow foundation.
 - Marketplace packaging workflow foundation.
 - Namecheap, cPanel, VPS, and cloud deployment readiness guides.
@@ -25,6 +25,7 @@ The docs must reflect the current product honestly. The following foundations ex
 - Final commercialization roadmap and acceptance documentation.
 - Staging release candidate validation and launch preparation workflow.
 - Staging deployment execution checklists, command sequence, env examples, and signoff templates.
+- Stage 23 support runbooks, issue triage, release handoff, and standalone product support overview.
 
 The following systems are planned and must not be described as complete:
 
@@ -104,3 +105,10 @@ Use `SUMMARY.md` as the documentation table of contents, `documentation-url-map.
 - Prefer exact config keys, service names, routes, and feature names.
 - Update release notes and changelog files when user-visible behavior changes.
 - Keep secrets, SMTP credentials, license keys, payment keys, backups, logs, and database dumps out of documentation examples.
+
+## Support Runbooks
+
+- `support/support-runbooks.md`
+- `support/issue-triage.md`
+- `support/release-handoff-checklist.md`
+- `standalone/product-support-overview.md`
