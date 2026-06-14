@@ -19,7 +19,7 @@ class LandingPageController extends Controller
 {
     public function home(StandaloneEditionService $standalone, InstallerStateService $installer): View|RedirectResponse
     {
-        if ($standalone->privateHomepageEnabled()) {
+        if ($standalone->isStandaloneMode()) {
             return $installer->isInstalled()
                 ? redirect()->route('login')
                 : redirect()->route('installer.welcome');
