@@ -15,7 +15,7 @@
                 @endif
                 <div class="min-w-0">
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">Learning Materials</h2>
-                <p class="mt-1 text-sm text-text-secondary">Online class and subject material foundation for {{ $lmsBrandName }}.</p>
+                <p class="mt-1 text-sm text-text-secondary">Online class and subject materials for {{ $lmsBrandName }}.</p>
                 </div>
             </div>
             <a href="#create-lms-classroom" class="ui-button-primary">New Classroom</a>
@@ -131,7 +131,7 @@
 
         <x-ui.panel tone="info" title="Stage 15 Boundary">
             <p class="text-sm leading-6 text-text-secondary">
-                LMS files use private local storage and authorized downloads. Existing CBT items can be linked to LMS classrooms or materials while CBT remains the assessment engine. Live classes are handled by the separate manual-link Live Classes foundation and require internet. Student LMS viewing is deferred until safe student identity resolution exists. offline LMS, submissions/grading, forums, analytics, video hosting, and payment-gated content remain deferred here.
+                LMS files use private local storage and authorized downloads. Existing CBT items can be linked to LMS classrooms or materials while CBT remains the assessment engine. Live classes use manual meeting links and require internet. Student LMS viewing, offline LMS, submissions/grading, forums, analytics, video hosting, and payment-gated content require separate setup.
             </p>
             <p class="mt-2 text-xs text-text-tertiary">
                 Allowed resources: {{ implode(', ', $allowedExtensions) }}. Maximum size: {{ $maxUploadMb }} MB.

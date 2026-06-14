@@ -82,7 +82,7 @@ class InstallerFlowTest extends TestCase
 
         $this->post(route('installer.complete'))
             ->assertOk()
-            ->assertSee('Installation Locked');
+            ->assertSee('School portal is ready');
 
         $this->assertFileExists(app(InstallerStateService::class)->lockPath());
         $this->assertDatabaseHas('schools', ['slug' => 'local-school']);

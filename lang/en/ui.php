@@ -48,7 +48,7 @@ return [
     'legal_terms' => 'Terms',
     'login_heading' => 'Sign in to your school operations workspace',
     'login_hint' => 'School admins use email. Staff may use email or staff code.',
-    'login_intro' => 'Access student records, result workflows, scratch card controls, and communication tools from one secure portal.',
+    'login_intro' => 'Access student records, results, admissions, fees, and communication tools from one secure school portal.',
     'login_panel_heading' => 'Welcome back',
     'login_panel_intro' => 'Use your email address or staff code to continue.',
     'login_to_portal' => 'Login to Portal',

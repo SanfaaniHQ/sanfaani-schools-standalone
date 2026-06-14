@@ -205,7 +205,7 @@ MAIL_FROM_NAME=
 
 SANFAANI_LICENSE_KEY=
 SANFAANI_LICENSE_SERVER_URL=
-# Seller-side generation only; customer portals may leave this blank.
+# Seller-side generation only. Leave blank on normal customer portals.
 SANFAANI_LICENSE_SIGNING_KEY=
 SANFAANI_BACKUPS_ENABLED=true
 SANFAANI_UPDATES_ENABLED=true
@@ -317,10 +317,10 @@ The web backup foundation records metadata, verification, and restore guidance. 
 Before handoff:
 
 - Visit `/install` only when `SANFAANI_INSTALLER_ENABLED=true` and `SANFAANI_INSTALLED=false`.
-- Complete installer requirements, permissions, database, app key, migration readiness, admin, school, SMTP, and review steps.
+- Complete installer requirements, permissions, database connection, portal configuration, security key, prepare database, owner account, school profile, email settings, and review steps.
 - Confirm the install lock exists after completion. Do not manually create `storage/app/installed.lock`.
 - Visit `/admin/license` after login and activate or validate the license.
-- Customer installs do not need the seller `SANFAANI_LICENSE_SIGNING_KEY` unless they are intentionally generating license keys locally.
+- Customer installs do not need the seller `SANFAANI_LICENSE_SIGNING_KEY` to install, log in, or use normal customer activation. Seller license generation remains separate. If signed-key verification is used for a customer portal, Sanfaani must configure that verification securely during approved setup.
 - Confirm license mode and domain matching expectations.
 - Visit `/admin/updates` only as guided-update readiness. The current foundation validates package metadata and preflight state; it does not download, extract, or apply real updates.
 - Confirm a recent verified backup is available before any update review.
@@ -353,6 +353,7 @@ Then verify in the browser:
 - Scheduler heartbeat becomes fresh after cron runs.
 - Backup creation or backup metadata verification works.
 - License page shows expected status.
+- `Admin -> Admissions` shows the public admission form link, copy action, preview action, and website guidance.
 - Update preflight does not claim real update application.
 - Admissions public pages and public result checker routes load if enabled.
 

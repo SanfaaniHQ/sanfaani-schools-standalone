@@ -4,7 +4,7 @@
             <div>
                 <h2 class="text-xl font-semibold leading-tight text-gray-900">Attendance</h2>
                 <p class="mt-1 text-sm text-gray-500">
-                    Online attendance foundation for {{ $school->name }}.
+                    Online attendance for {{ $school->name }}.
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">

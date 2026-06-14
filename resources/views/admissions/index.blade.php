@@ -6,7 +6,7 @@
 <section class="card">
     <div class="eyebrow">School admissions</div>
     <h1>Apply to {{ $school->name }}</h1>
-    <p>The school portal securely receives, reviews, and tracks every application from submission through admission.</p>
+    <p>Submit an admission application online and keep your tracking details for updates from the school.</p>
 
     @if($cycle)
         <div class="notice">
@@ -26,7 +26,7 @@
             <a class="button secondary" href="{{ route('admissions.track') }}">Track an application</a>
         </div>
     @else
-        <div class="notice"><strong>Applications are currently closed.</strong> Please check again later or contact the school.</div>
+        <div class="notice"><strong>Applications are currently closed.</strong> Please check again later or contact the school office for the next admission date.</div>
         <div class="actions">
             <a class="button secondary" href="{{ route('admissions.track') }}">Track an existing application</a>
         </div>

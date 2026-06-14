@@ -33,6 +33,9 @@ class AdmissionController extends Controller
         return view('admin.admissions.index', [
             'school' => $school,
             'cycle' => app(AdmissionWebsiteIntegrationService::class)->currentCycle($school),
+            'publicAdmissionUrl' => route('admissions.index'),
+            'publicFormUrl' => route('admissions.apply'),
+            'publicEmbedUrl' => route('admissions.embed'),
             'totalApplications' => (clone $query)->count(),
             'submittedApplications' => (clone $query)->where('status', AdmissionApplication::STATUS_SUBMITTED)->count(),
             'acceptedApplications' => (clone $query)->whereIn('status', [
@@ -280,6 +283,9 @@ class AdmissionController extends Controller
             'sessions' => $school->academicSessions()->latest()->get(),
             'channels' => $school->admissionChannels()->latest()->get(),
             'apiKeys' => $school->admissionApiKeys()->with('channel')->latest()->get(),
+            'publicAdmissionUrl' => route('admissions.index'),
+            'publicFormUrl' => route('admissions.apply'),
+            'publicEmbedUrl' => route('admissions.embed'),
         ]);
     }
 
@@ -368,7 +374,7 @@ class AdmissionController extends Controller
         ]);
 
         return back()
-            ->with('success', 'API key created. Store it now; only its hash is retained.')
+            ->with('success', 'Website key created. Store it securely now; it will not be shown again.')
             ->with('admission_api_plain_key', $created['plain_key']);
     }
 

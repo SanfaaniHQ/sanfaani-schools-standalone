@@ -74,19 +74,19 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertSee('Attendance')
             ->assertSee('Results')
             ->assertSee('CBT')
-            ->assertSee('Attendance foundation')
+            ->assertSee('Attendance')
             ->assertSee('Offline attendance capture')
             ->assertSee('LMS and CBT activity links')
             ->assertSee('Online class/subject materials, private resources, publish workflow, and links to existing CBT items are available')
             ->assertSee('CBT remains the assessment engine')
-            ->assertSee('Live class foundation')
+            ->assertSee('Live classes')
             ->assertSee('Manual meeting links')
-            ->assertSee('Provider abstraction foundation available')
+            ->assertSee('Provider setup is available')
             ->assertSee('Provider API automation remains deferred')
             ->assertSee('Offline live class is not implemented')
-            ->assertSee('Live class provider abstraction')
+            ->assertSee('Live class provider setup')
             ->assertSee('Live class provider automation')
-            ->assertSee('Fees/accounting foundation')
+            ->assertSee('Fees and accounting')
             ->assertSee('Finance reports and audit pack')
             ->assertSee('Finance reports and audit review are available')
             ->assertSee('Import/export tools')
@@ -106,7 +106,7 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertDontSee('Sales Tasks');
     }
 
-    public function test_school_admin_dashboard_shows_readiness_and_school_finance_foundation_without_saas_billing(): void
+    public function test_school_admin_dashboard_shows_readiness_and_school_finance_without_saas_billing(): void
     {
         $school = $this->school();
         $admin = $this->schoolUser($school, 'school_admin');
@@ -129,11 +129,11 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertSee('Live Classes')
             ->assertSee('Results')
             ->assertSee('CBT')
-            ->assertSee('LMS material foundation')
-            ->assertSee('Live class foundation')
+            ->assertSee('LMS materials')
+            ->assertSee('Live classes')
             ->assertSee('Manual internet meeting links')
-            ->assertSee('provider abstraction metadata')
-            ->assertSee('Fees/accounting foundation')
+            ->assertSee('provider setup details')
+            ->assertSee('Fees and accounting')
             ->assertSee('Fee items, class/student assignments, student invoices, manual payment recording, and balances are available.')
             ->assertSee('Finance reports and audit pack')
             ->assertSee('Finance reports and audit review are available')

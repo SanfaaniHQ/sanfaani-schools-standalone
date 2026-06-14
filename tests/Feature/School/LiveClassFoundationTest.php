@@ -268,9 +268,9 @@ class LiveClassFoundationTest extends TestCase
 
         $this->get(route('school.dashboard'))
             ->assertOk()
-            ->assertSee('Live class foundation')
+            ->assertSee('Live classes')
             ->assertSee('Manual meeting links')
-            ->assertSee('Provider abstraction foundation available')
+            ->assertSee('Provider setup is available')
             ->assertSee('Provider API automation remains deferred')
             ->assertSee('Offline live class is not implemented');
     }

@@ -21,7 +21,7 @@
 
         <x-ui.alert
             tone="warning"
-            title="Foundation mode"
+            title="Guided update mode"
             body="Application of updates is planned and not implemented. This manager does not extract packages, run shell commands, run migrations, or change application files from the web UI."
         >
             <p class="mt-2 text-sm leading-6 text-text-secondary">
@@ -32,7 +32,7 @@
         <section class="grid gap-4 md:grid-cols-3">
             <x-ui.stat-card label="Current version" :value="$currentVersion->version" :meta="str($currentVersion->channel)->title().' channel'" />
             <x-ui.stat-card label="Configured channel" :value="str($channel)->title()" meta="Supported: stable, beta, security." />
-            <x-ui.stat-card label="Entitlement status" :value="str($decision['status'])->replace('_', ' ')->title()" :meta="$decision['message']" tone="info" />
+            <x-ui.stat-card label="License access" :value="str($decision['status'])->replace('_', ' ')->title()" :meta="$decision['message']" tone="info" />
         </section>
 
         <x-ui.table-card

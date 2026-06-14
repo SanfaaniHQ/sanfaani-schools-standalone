@@ -238,9 +238,9 @@ class LiveClassProviderAbstractionTest extends TestCase
 
         $this->get(route('school.dashboard'))
             ->assertOk()
-            ->assertSee('provider abstraction metadata')
-            ->assertSee('Provider abstraction foundation available')
-            ->assertSee('Live class provider abstraction')
+            ->assertSee('provider setup details')
+            ->assertSee('Provider setup is available')
+            ->assertSee('Live class provider setup')
             ->assertSee('Provider API automation remains deferred')
             ->assertSee('Offline live class is not implemented');
     }

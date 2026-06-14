@@ -70,7 +70,7 @@
 
         <x-ui.panel
             title="Deployment Capabilities"
-            description="Foundation flags for future installer, billing, update, and managed-service features."
+            description="Mode-aware flags for installer, billing, update, and managed-service features."
         >
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                 @foreach ($capabilityItems as $label => $enabled)
@@ -99,8 +99,8 @@
         </x-ui.panel>
 
         <x-ui.panel
-            title="Mode-Gated Placeholders"
-            description="These prove route visibility only. The underlying commercial systems are intentionally not implemented here."
+            title="Mode-gated setup states"
+            description="These show which sections are available, disabled, or require setup for the current deployment mode."
         >
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @foreach ($placeholderCards as $card)

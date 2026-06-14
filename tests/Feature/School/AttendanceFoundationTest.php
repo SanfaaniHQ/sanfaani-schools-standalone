@@ -53,7 +53,7 @@ class AttendanceFoundationTest extends TestCase
         $this->get(route('school.attendance.index'))
             ->assertOk()
             ->assertSee('Attendance')
-            ->assertSee('Online attendance foundation')
+            ->assertSee('Online attendance')
             ->assertSee('Attendance-only browser offline capture appears on class registers only when the pilot is enabled')
             ->assertSee('Full portal offline mode is not implemented');
     }
@@ -595,7 +595,7 @@ class AttendanceFoundationTest extends TestCase
         $this->get(route('school.dashboard'))
             ->assertOk()
             ->assertSee('Attendance')
-            ->assertSee('Attendance foundation')
+            ->assertSee('Attendance')
             ->assertSee('Offline attendance capture')
             ->assertSee('attendance-only browser offline capture pilot is disabled by default')
             ->assertSee('Full portal offline mode is not implemented')
@@ -606,7 +606,7 @@ class AttendanceFoundationTest extends TestCase
 
         $this->get(route('school.dashboard'))
             ->assertOk()
-            ->assertDontSee('Attendance Foundation')
+            ->assertDontSee('Attendance setup')
             ->assertDontSee('Attendance Dashboard');
 
         $accountant = $this->createUserForSchool($school, 'accountant');

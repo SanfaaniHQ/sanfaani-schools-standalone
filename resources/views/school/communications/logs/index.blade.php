@@ -4,7 +4,7 @@
             <div>
                 <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Communication Center</p>
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">Notification Logs</h2>
-                <p class="mt-1 text-sm text-text-secondary">School-scoped operational notification outbox for {{ $school->name }}.</p>
+                <p class="mt-1 text-sm text-text-secondary">School-scoped notification log for {{ $school->name }}.</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('school.communications.index') }}" class="ui-button-secondary">Communication Center</a>
@@ -45,7 +45,7 @@
             </form>
         </x-ui.panel>
 
-        <x-ui.panel title="Operational Notification Outbox" description="Entries are prepared and logged. External provider delivery remains deferred unless a future safe provider is configured.">
+        <x-ui.panel title="Operational Notification Log" description="Entries are prepared and logged. External provider delivery requires a configured provider.">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-border-subtle text-sm">
                     <thead>

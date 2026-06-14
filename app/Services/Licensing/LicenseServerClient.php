@@ -10,7 +10,7 @@ class LicenseServerClient
     {
         return [
             'status' => 'skipped',
-            'message' => 'Remote license validation is not enabled in this foundation step.',
+            'message' => 'Remote license validation is not enabled for this installation.',
             'license_id' => $license->id,
         ];
     }

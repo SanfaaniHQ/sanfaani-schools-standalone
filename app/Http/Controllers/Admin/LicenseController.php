@@ -122,7 +122,7 @@ class LicenseController extends Controller
 
             return back()
                 ->withInput($request->except('license_key'))
-                ->with('error', $exception->getMessage());
+                ->with('error', $this->activationErrorMessage($exception));
         }
 
         $this->auditMain('license_activation_succeeded', $license, $school, [
@@ -236,5 +236,28 @@ class LicenseController extends Controller
         return collect($values)
             ->filter(fn (mixed $value): bool => is_array($value) ? (bool) ($value['enabled'] ?? false) : (bool) $value)
             ->count();
+    }
+
+    private function activationErrorMessage(RuntimeException $exception): string
+    {
+        $message = str($exception->getMessage())->lower();
+
+        if ($message->contains('expired')) {
+            return 'This license key has expired. Contact Sanfaani support for a current key.';
+        }
+
+        if ($message->contains(['signature', 'payload', 'format', 'base32', 'signed license'])) {
+            return 'This license key could not be verified. Check the key and contact Sanfaani support if it still fails.';
+        }
+
+        if ($message->contains('signing key')) {
+            return 'License activation is not ready on this portal. Contact Sanfaani support.';
+        }
+
+        if ($message->contains('unsupported license type')) {
+            return 'This license type is not supported for this school portal.';
+        }
+
+        return 'The license could not be activated. Check the details and contact Sanfaani support if the problem continues.';
     }
 }

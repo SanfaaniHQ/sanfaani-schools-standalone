@@ -28,10 +28,27 @@ class AdmissionPublicApplicationTest extends TestCase
 
         $this->assertTrue(config()->has('admissions.enabled'));
         $this->get('/admissions')->assertOk()->assertSee('Apply to');
-        $this->get('/admissions/apply')->assertOk()->assertSee('Applicant details');
+        $this->get('/admissions/apply')
+            ->assertOk()
+            ->assertSee('Applicant details')
+            ->assertSee('Parent or guardian name')
+            ->assertSee('Submitting application...');
 
         config()->set('admissions.public_enabled', false);
         $this->get('/admissions')->assertNotFound();
+    }
+
+    public function test_public_admissions_closed_state_is_clear_and_non_technical(): void
+    {
+        $school = $this->createSchool();
+        $this->createCycle($school, open: false);
+
+        $this->get('/admissions')
+            ->assertOk()
+            ->assertSee('Applications are currently closed.')
+            ->assertSee('contact the school office')
+            ->assertDontSee('feature flag')
+            ->assertDontSee('foundation');
     }
 
     public function test_public_application_generates_number_and_stores_guardian(): void

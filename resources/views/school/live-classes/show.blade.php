@@ -147,7 +147,7 @@
 
         <x-ui.panel tone="info" title="Stage 17 Provider Boundary">
             <p class="text-sm leading-6 text-text-secondary">
-                This foundation stores manual meeting and recording links only. It does not create provider rooms, call provider APIs, store OAuth credentials, host video, transcode recordings, collect live-class attendance, enable chat, or make live classes work offline.
+                This version stores manual meeting and recording links only. It does not create provider rooms, call provider APIs, store OAuth credentials, host video, transcode recordings, collect live-class attendance, enable chat, or make live classes work offline.
             </p>
             <div class="mt-3 space-y-1 text-xs leading-5 text-text-tertiary">
                 @foreach ($provider['boundary_notes'] as $note)

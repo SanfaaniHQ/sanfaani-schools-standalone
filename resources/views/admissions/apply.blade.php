@@ -6,7 +6,7 @@
 <section class="card">
     <div class="eyebrow">Admission application</div>
     <h1 style="font-size: clamp(28px, 4vw, 40px)">Applicant details</h1>
-    <p>Fields marked required must be completed. Documents are stored privately and are available only to authorized school staff.</p>
+    <p>Complete the applicant and parent or guardian details below. Fields marked with an asterisk are required. Uploaded documents are visible only to authorized school staff.</p>
 
     @if(!$cycle)
         <div class="notice"><strong>Applications are currently closed.</strong></div>
@@ -20,7 +20,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('admissions.store') }}" enctype="multipart/form-data" class="grid" style="margin-top: 24px">
+        <form method="POST" action="{{ route('admissions.store') }}" enctype="multipart/form-data" data-loading-text="Submitting application..." class="grid" style="margin-top: 24px">
             @csrf
             <input type="hidden" name="source_channel" value="{{ $sourceChannel }}">
             <input type="hidden" name="{{ config('admissions.form_timestamp_field', 'admission_started_at') }}" value="{{ now()->timestamp }}">
@@ -35,7 +35,7 @@
             <div class="field"><label for="previous_school">Previous school</label><input id="previous_school" name="previous_school" value="{{ old('previous_school') }}"></div>
 
             <div class="field full"><h2 style="margin: 16px 0 0">Parent or guardian</h2></div>
-            <div class="field"><label for="guardian_name">Name *</label><input id="guardian_name" name="guardian_name" value="{{ old('guardian_name') }}" required></div>
+            <div class="field"><label for="guardian_name">Parent or guardian name *</label><input id="guardian_name" name="guardian_name" value="{{ old('guardian_name') }}" required></div>
             <div class="field"><label for="guardian_relationship">Relationship *</label><input id="guardian_relationship" name="guardian_relationship" value="{{ old('guardian_relationship') }}" required></div>
             <div class="field"><label for="guardian_phone">Phone *</label><input id="guardian_phone" name="guardian_phone" value="{{ old('guardian_phone') }}" required></div>
             <div class="field"><label for="guardian_email">Email</label><input id="guardian_email" type="email" name="guardian_email" value="{{ old('guardian_email') }}"></div>
@@ -55,7 +55,7 @@
                     I consent to the school using this information solely to process this admission application.
                 </label>
             </div>
-            <div class="field full"><button class="button" type="submit">Submit application</button></div>
+            <div class="field full"><button class="button" type="submit" data-loading-text="Submitting application...">Submit application</button></div>
         </form>
     @endif
 </section>

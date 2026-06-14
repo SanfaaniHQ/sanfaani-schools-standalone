@@ -3,7 +3,7 @@
 This guide describes the marketplace-style cPanel install path for Sanfaani Schools Standalone:
 
 ```text
-Upload package -> Extract -> Open installer -> Requirements check -> Database setup -> Admin setup -> School setup -> License activation -> Finish install
+Upload package -> Extract -> Create database -> Configure .env -> Open /install -> Complete school setup -> Log in -> Activate license
 ```
 
 The installer helps the buyer complete the Sanfaani Schools setup safely after the hosting account has been prepared. It does not create a cPanel database, change the domain document root, create server cron jobs, purchase SSL, or store real secrets in Git.
@@ -15,12 +15,12 @@ The current `/install` flow supports:
 - Requirements check for PHP and extensions.
 - Permission checks for writable storage and cache paths.
 - Database connection and migration-status checks.
-- Environment guidance for `.env`, app key, queue, cache, session, mail, scheduler, backups, and updates.
-- App key status guidance.
-- Migration readiness guidance.
-- First admin form.
-- First school form.
-- SMTP summary form.
+- Portal configuration guidance for `.env`, security key, queue, cache, session, mail, scheduler, backups, and updates.
+- Security key status guidance.
+- Database table readiness guidance.
+- First owner account form.
+- School profile form.
+- Email settings review.
 - Final review.
 - First school/admin creation.
 - Installer lock creation at `storage/app/installed.lock`.
@@ -184,7 +184,7 @@ SANFAANI_INSTALLER_ENABLED=true
 SANFAANI_INSTALLED=false
 SANFAANI_DATABASE_NAME_GUARD_ENABLED=false
 SANFAANI_DATABASE_NAME_REQUIRED_FRAGMENT=sanfaani_schools
-# Seller key is only needed when this installation will generate license keys.
+# Seller-side generator secret. Leave blank on normal customer portals.
 SANFAANI_LICENSE_SIGNING_KEY=
 
 FILESYSTEM_DISK=public
@@ -221,12 +221,12 @@ Installer steps:
 2. Requirements.
 3. Permissions.
 4. Database.
-5. Environment.
-6. App key.
-7. Migrations.
-8. Admin setup.
-9. School setup.
-10. SMTP summary.
+5. Portal configuration.
+6. Security key.
+7. Prepare database.
+8. Owner account.
+9. School profile.
+10. Email settings.
 11. Review.
 12. Complete.
 
@@ -248,12 +248,16 @@ After the installer completes:
 2. Open `Admin -> License`.
 3. Open license activation.
 4. Enter the license key and license type.
-5. Confirm domain and entitlement values if required.
+5. Confirm domain and included module values if required.
 6. Save and review license status.
 
 Raw license keys are not stored. License records use hashed keys and masked display.
 
-Customer portals do not need `SANFAANI_LICENSE_SIGNING_KEY` just to install, log in, or activate a signed license. That key is required only in a trusted seller environment that generates license keys.
+Customer portals do not need `SANFAANI_LICENSE_SIGNING_KEY` to install, log in, or use normal customer activation. Seller license generation remains separate and must happen only in a trusted Sanfaani seller environment. If signed-key verification is used for a customer portal, Sanfaani must configure that verification securely during approved setup; the school should never enter or receive the seller signing secret.
+
+## Admissions Link Handoff
+
+After login, open `Admin -> Admissions`. The admissions dashboard shows the public admission form link, a copy button, a preview button, and website guidance. Copy the form link into the school website, WhatsApp, SMS, email, or printed admission instructions. If website embedding is enabled, the settings page shows the iframe code that a website manager can add to the school website.
 
 ## Installer Lock
 
@@ -293,6 +297,7 @@ Browser checks:
 - `.env`, `vendor`, logs, and private storage are not publicly readable.
 - Scheduler heartbeat becomes fresh after cron runs.
 - Mail test works.
+- The admissions form link can be copied from `Admin -> Admissions` and added to the school website.
 - First backup is created or documented through the approved backup path.
 - Update preflight is reviewed as metadata/preflight only, not automatic update application.
 

@@ -3,15 +3,15 @@
 @section('content')
     <div class="space-y-5">
         <div>
-            <h2 class="text-xl font-semibold text-text-primary">Migration Readiness</h2>
-            <p class="mt-2 text-sm text-text-secondary">Migrations create or update the database tables the app uses. The installer checks migration state but does not run destructive migrations or seeders.</p>
+            <h2 class="text-xl font-semibold text-text-primary">Prepare database</h2>
+            <p class="mt-2 text-sm text-text-secondary">This step checks whether the database tables needed by the portal are ready. It does not delete data, add sample records, or run database changes from the browser.</p>
         </div>
 
         @include('installer.partials.checks', ['checks' => [$check]])
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
-            <p class="font-semibold text-text-primary">Manual migration guidance</p>
-            <p class="mt-1">Run <span class="font-mono">php artisan migrate --force</span> only after confirming the database target. On cPanel, use terminal access, a deployment task, or managed setup support.</p>
+            <p class="font-semibold text-text-primary">If tables are pending</p>
+            <p class="mt-1">Confirm the database name first, then ask the installer or hosting provider to run <span class="font-mono">php artisan migrate --force</span> from terminal, cPanel, or an approved deployment task.</p>
         </div>
 
         <div class="flex justify-between">

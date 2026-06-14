@@ -120,7 +120,7 @@ class EmailSafetyTest extends TestCase
             ->get(route('admin.license.index'))
             ->assertOk()
             ->assertDontSee($rawKey)
-            ->assertSee('Raw keys are never shown');
+            ->assertSee('Stored key');
     }
 
     private function lead(string $email): LeadRequest

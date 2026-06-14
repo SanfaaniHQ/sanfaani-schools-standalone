@@ -18,6 +18,6 @@
         <h2>School updates</h2>
         @foreach($application->notes as $note)<p class="notice">{{ $note->note }}</p>@endforeach
     @endif
-    <p>For privacy, this page does not display submitted documents, guardian information, internal notes, or other applicants.</p>
+    <p>For privacy, this page shows only the status details needed by the applicant or guardian.</p>
 </section>
 @endsection

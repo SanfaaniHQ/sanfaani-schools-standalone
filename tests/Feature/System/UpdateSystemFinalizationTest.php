@@ -73,7 +73,7 @@ class UpdateSystemFinalizationTest extends TestCase
             ->get(route('admin.updates.index'))
             ->assertOk()
             ->assertSee('2.4.6')
-            ->assertSee('Entitlement status')
+            ->assertSee('License access')
             ->assertDontSee($appKey)
             ->assertDontSee('stage22-app-key-secret')
             ->assertDontSee(base_path())

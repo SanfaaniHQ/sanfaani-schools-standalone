@@ -67,7 +67,7 @@
                                 <option value="{{ $code }}" @selected(old('language_code', $languagePreference?->language_code) === $code)>{{ $language['label'] }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-1 text-xs text-gray-500">Optional foundation for class-level multilingual reporting and RTL support.</p>
+                        <p class="mt-1 text-xs text-gray-500">Optional setup for class-level multilingual reporting and RTL support.</p>
                     </div>
 
                     <div class="flex items-center justify-end gap-3">

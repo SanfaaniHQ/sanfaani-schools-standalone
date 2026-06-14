@@ -3,15 +3,15 @@
 @section('content')
     <div class="space-y-5">
         <div>
-            <h2 class="text-xl font-semibold text-text-primary">App Key Status</h2>
-            <p class="mt-2 text-sm text-text-secondary">The application key protects encrypted values. It must exist before accounts, sessions, and encrypted settings are used.</p>
+            <h2 class="text-xl font-semibold text-text-primary">Security key</h2>
+            <p class="mt-2 text-sm text-text-secondary">The security key protects logins, sessions, and private settings. It must be ready before the owner account is created.</p>
         </div>
 
         @include('installer.partials.checks', ['checks' => [$check]])
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
-            <p class="font-semibold text-text-primary">Shared-hosting note</p>
-            <p class="mt-1">If <span class="font-mono">php artisan key:generate</span> cannot be run on the server, generate the key during packaging or in a managed setup session and paste it into <span class="font-mono">.env</span>.</p>
+            <p class="font-semibold text-text-primary">If the key is missing</p>
+            <p class="mt-1">Ask the installer or hosting provider to generate the Laravel <span class="font-mono">APP_KEY</span> and save it in <span class="font-mono">.env</span>. Refresh this page before continuing.</p>
         </div>
 
         <div class="flex justify-between">

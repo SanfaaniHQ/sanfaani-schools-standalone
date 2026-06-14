@@ -74,7 +74,7 @@
 
             <x-ui.panel tone="info">
                 <p class="text-sm leading-6 text-text-secondary">
-                    This foundation is online only. Finance reports, finance CSV export, and audit review are available. Payment gateway automation, parent/student finance portals, and offline fee capture are deferred.
+                    This finance module is online only. Finance reports, finance CSV export, and audit review are available. Payment gateway automation, parent/student finance portals, and offline fee capture require separate setup.
                 </p>
             </x-ui.panel>
         </div>

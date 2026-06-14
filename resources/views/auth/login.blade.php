@@ -9,11 +9,13 @@
         $brandInitials = data_get($resolvedBranding, 'initials', $brandInitials);
         $supportEmail = $platformSettings->support_email ?? config('sanfaani.support_email');
         $supportPhone = $platformSettings->whatsapp_number ?? config('sanfaani.whatsapp_number');
+        $isStandalonePortal = app(\App\Services\Standalone\StandaloneEditionService::class)->isStandaloneMode();
+        $brandHomeRoute = $isStandalonePortal ? route('login') : route('landing.home');
     @endphp
 
     <div class="grid min-h-screen bg-bg-primary lg:grid-cols-[minmax(0,1fr)_minmax(28rem,0.8fr)]">
-        <section class="hidden overflow-hidden border-e border-border-subtle bg-bg-secondary lg:flex lg:flex-col lg:justify-between lg:p-10 xl:p-12" aria-label="Platform overview">
-            <a href="{{ route('landing.home') }}" class="inline-flex w-fit items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-bg-secondary">
+        <section class="hidden overflow-hidden border-e border-border-subtle bg-bg-secondary lg:flex lg:flex-col lg:justify-between lg:p-10 xl:p-12" aria-label="Portal overview">
+            <a href="{{ $brandHomeRoute }}" class="inline-flex w-fit items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-bg-secondary">
                 @if ($brandLogoUrl)
                     <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-11 w-11 rounded-lg border border-border-subtle bg-white object-contain p-1">
                 @else
@@ -32,7 +34,7 @@
                 </p>
 
                 <div class="mt-8 grid gap-3 sm:grid-cols-3">
-                    @foreach ([['label' => 'Result cycle', 'value' => 'Live'], ['label' => 'Role access', 'value' => 'Scoped'], ['label' => 'Support', 'value' => 'Ready']] as $metric)
+                    @foreach ([['label' => 'Access', 'value' => 'Private'], ['label' => 'Records', 'value' => 'Protected'], ['label' => 'Support', 'value' => 'Available']] as $metric)
                         <div class="rounded-lg border border-border-subtle bg-bg-primary p-4">
                             <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ $metric['label'] }}</p>
                             <p class="mt-2 text-xl font-semibold text-text-primary">{{ $metric['value'] }}</p>
@@ -44,31 +46,16 @@
             <div class="rounded-lg border border-border-subtle bg-bg-primary p-4 shadow-sm" aria-hidden="true">
                 <div class="flex items-center justify-between border-b border-border-subtle pb-3">
                     <div>
-                        <p class="text-sm font-semibold text-text-primary">Operations snapshot</p>
-                        <p class="text-xs text-text-tertiary">Current term readiness</p>
+                        <p class="text-sm font-semibold text-text-primary">Portal access</p>
+                        <p class="text-xs text-text-tertiary">For authorized school users</p>
                     </div>
-                    <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-brand-primary">Operational</span>
-                </div>
-                <div class="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div class="rounded-md bg-bg-secondary p-3">
-                        <p class="text-xs text-text-tertiary">Students</p>
-                        <p class="mt-2 text-2xl font-semibold text-text-primary">1,284</p>
-                    </div>
-                    <div class="rounded-md bg-bg-secondary p-3">
-                        <p class="text-xs text-text-tertiary">Published</p>
-                        <p class="mt-2 text-2xl font-semibold text-brand-primary">92%</p>
-                    </div>
-                    <div class="rounded-md bg-bg-secondary p-3">
-                        <p class="text-xs text-text-tertiary">Pending</p>
-                        <p class="mt-2 text-2xl font-semibold text-amber-600 dark:text-amber-400">18</p>
-                    </div>
+                    <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-brand-primary">Secure</span>
                 </div>
                 <div class="mt-4 overflow-hidden rounded-md border border-border-subtle">
-                    @foreach ([['Aisha Bello', 'JSS 1', 'Published'], ['Umar Abdullahi', 'JSS 2', 'Reviewed'], ['Maryam Yusuf', 'SSS 1', 'Draft']] as $row)
-                        <div class="grid grid-cols-[1fr_4rem_5rem] gap-3 border-b border-border-subtle px-3 py-2 text-xs last:border-b-0">
+                    @foreach ([['Use your school email or staff code', 'Step 1'], ['Enter your password securely', 'Step 2'], ['Open your assigned workspace', 'Step 3']] as $row)
+                        <div class="grid grid-cols-[1fr_4.5rem] gap-3 border-b border-border-subtle px-3 py-2 text-xs last:border-b-0">
                             <span class="truncate font-semibold text-text-primary">{{ $row[0] }}</span>
                             <span class="text-text-secondary">{{ $row[1] }}</span>
-                            <span class="text-text-secondary">{{ $row[2] }}</span>
                         </div>
                     @endforeach
                 </div>
@@ -80,7 +67,7 @@
         <main class="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-10">
             <div class="w-full max-w-md">
                 <div class="mb-6 flex items-center justify-between gap-4 lg:hidden">
-                    <a href="{{ route('landing.home') }}" class="flex min-w-0 items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2">
+                    <a href="{{ $brandHomeRoute }}" class="flex min-w-0 items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2">
                         @if ($brandLogoUrl)
                             <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-10 w-10 rounded-lg border border-border-subtle bg-white object-contain p-1">
                         @else
@@ -147,10 +134,14 @@
                         </button>
                     </form>
 
-                    <div class="mt-6 grid gap-2 text-center text-sm font-semibold text-text-secondary sm:grid-cols-3">
-                        <a href="{{ route('landing.home') }}" class="rounded-md border border-border-subtle px-3 py-2 transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.back_home') }}</a>
+                    <div class="mt-6 grid gap-2 text-center text-sm font-semibold text-text-secondary {{ $isStandalonePortal ? 'sm:grid-cols-1' : 'sm:grid-cols-3' }}">
+                        @unless ($isStandalonePortal)
+                            <a href="{{ route('landing.home') }}" class="rounded-md border border-border-subtle px-3 py-2 transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.back_home') }}</a>
+                        @endunless
                         <a href="{{ route('public.results.index') }}" class="rounded-md border border-border-subtle px-3 py-2 transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.check_result') }}</a>
-                        <a href="{{ route('landing.demo') }}" class="rounded-md border border-border-subtle px-3 py-2 transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.request_demo') }}</a>
+                        @unless ($isStandalonePortal)
+                            <a href="{{ route('landing.demo') }}" class="rounded-md border border-border-subtle px-3 py-2 transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.request_demo') }}</a>
+                        @endunless
                     </div>
                 </section>
 

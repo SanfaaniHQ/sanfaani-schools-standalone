@@ -510,7 +510,7 @@ class StandaloneSystemHealthService
             $message = 'Latest update package has blocked preflight checks.';
         } else {
             $status = 'pass';
-            $message = 'Update readiness foundation is safe for manual review.';
+            $message = 'Update readiness checks are safe for manual review.';
         }
 
         return $this->check('update_readiness', 'Update readiness', $status, $message, [
@@ -530,7 +530,7 @@ class StandaloneSystemHealthService
 
         if (($status['failed_count'] ?? 0) > 0) {
             $checkStatus = 'warning';
-            $message = $status['failed_count'].' sync outbox item(s) need review.';
+            $message = $status['failed_count'].' sync item(s) need review.';
         } elseif ($status['enabled'] && (! $status['endpoint_configured'] || ! $status['token_configured'])) {
             $checkStatus = 'warning';
             $message = 'Standalone sync is enabled but endpoint or token is missing.';

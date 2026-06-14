@@ -3,7 +3,7 @@
 
     <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <x-ui.panel>
-            <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Fees and accounting foundation</p>
+            <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">Fees and accounting</p>
             <h3 class="mt-2 text-2xl font-semibold text-text-primary">{{ $school->name }}</h3>
             <p class="mt-2 text-sm leading-6 text-text-secondary">
                 Online fee setup, student invoices, manual payment recording, finance reports, CSV finance export, and audit review are available. Gateways and offline fee capture are deferred.

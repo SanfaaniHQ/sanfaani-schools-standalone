@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-xl font-semibold leading-tight text-text-primary">Marketing Pipeline</h2>
-            <p class="mt-1 text-sm text-text-secondary">Lead nurturing, sales tasks, renewal reminders, and conversion analytics foundation.</p>
+            <p class="mt-1 text-sm text-text-secondary">Lead nurturing, sales tasks, renewal reminders, and conversion analytics.</p>
         </div>
     </x-slot>
 
@@ -15,13 +15,13 @@
             <x-ui.stat-card label="Trial Leads" :value="$analytics['trial_leads']" meta="Trial-stage prospects" />
             <x-ui.stat-card label="Renewal Reminders" :value="$analytics['renewal_reminders']" meta="License follow-ups" />
             <x-ui.stat-card label="Conversion Milestones" :value="$analytics['conversion_milestones']" meta="Onboarding and conversion signals" tone="success" />
-            <x-ui.stat-card label="WhatsApp Hooks" :value="config('marketing.whatsapp_enabled') ? 'Enabled' : 'Placeholder'" meta="Provider integration is not implemented here" />
+            <x-ui.stat-card label="WhatsApp Hooks" :value="config('marketing.whatsapp_enabled') ? 'Enabled' : 'Requires setup'" meta="Provider integration is not configured here" />
         </section>
 
         <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <a href="{{ route('admin.marketing.leads') }}" class="ui-card ui-card-hover block p-5">
                 <span class="font-semibold text-text-primary">Lead Scores</span>
-                <span class="mt-1 block text-sm text-text-secondary">View CRM leads with scoring foundation.</span>
+                <span class="mt-1 block text-sm text-text-secondary">View CRM leads with scoring signals.</span>
             </a>
             <a href="{{ route('admin.marketing.activities') }}" class="ui-card ui-card-hover block p-5">
                 <span class="font-semibold text-text-primary">Activities</span>

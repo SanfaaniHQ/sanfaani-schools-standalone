@@ -64,8 +64,23 @@ class LicenseActivationTest extends TestCase
             ->withServerVariables(['HTTP_HOST' => 'licensed.test'])
             ->get(route('admin.license.index'))
             ->assertOk()
-            ->assertSee('Masked key')
+            ->assertSee('Stored key')
             ->assertDontSee($rawKey);
+    }
+
+    public function test_license_activation_page_uses_customer_ready_copy(): void
+    {
+        $school = $this->school();
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)
+            ->withServerVariables(['HTTP_HOST' => 'licensed.test'])
+            ->get(route('admin.license.activate'))
+            ->assertOk()
+            ->assertSee('Activate your school license')
+            ->assertSee('Seller-only signing keys are not entered on this customer portal.')
+            ->assertDontSee('hashed before storage')
+            ->assertDontSee('foundation');
     }
 
     public function test_activation_creates_audit_log(): void

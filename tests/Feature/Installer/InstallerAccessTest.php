@@ -40,7 +40,7 @@ class InstallerAccessTest extends TestCase
         $this->get(route('installer.welcome'))
             ->assertOk()
             ->assertSee('Welcome')
-            ->assertSee('Standalone installer');
+            ->assertSee('School setup');
     }
 
     public function test_fresh_single_school_uninstalled_can_access_required_installer_steps(): void

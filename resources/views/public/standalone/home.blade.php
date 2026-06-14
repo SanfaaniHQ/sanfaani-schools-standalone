@@ -35,11 +35,11 @@
 
                         <div class="mt-8 flex flex-col gap-3 sm:flex-row">
                             <a href="{{ route('login') }}" class="ui-button-primary justify-center py-3">
-                                Login to portal
+                                Log in to portal
                             </a>
                             @if ($installerAvailable)
                                 <a href="{{ route('installer.welcome') }}" class="ui-button-secondary justify-center py-3">
-                                    Open installer
+                                    Start school setup
                                 </a>
                             @else
                                 <a href="{{ route('public.results.index') }}" class="ui-button-secondary justify-center py-3">
@@ -73,7 +73,7 @@
                         </div>
 
                         <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-5 text-sm leading-6 text-emerald-950">
-                            Public sales, evaluation, packaging, and customer acquisition screens are hidden in standalone mode. Use the portal, installer, license, backups, updates, and school dashboards for day-to-day operations.
+                            This private school portal keeps public sales and evaluation pages out of the standalone domain. Use the portal, setup flow, license page, backups, updates, and school dashboards for day-to-day operations.
                         </div>
                     </div>
                 </div>

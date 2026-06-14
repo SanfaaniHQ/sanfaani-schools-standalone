@@ -93,7 +93,7 @@ class StandaloneDashboardSummaryService
                 'installer_license_final_hardening',
                 'Installer and license hardening',
                 true,
-                'Support-safe installer diagnostics, local license redaction, entitlement visibility, and audit logging are available.',
+                'Support-safe installer diagnostics, local license redaction, module access, and audit logging are available.',
                 $this->route('admin.standalone.status'),
             ),
             $this->checklistItem(
@@ -252,7 +252,7 @@ class StandaloneDashboardSummaryService
             $this->checklistItem('students', 'Student records', $counts['students'] > 0, $counts['students'].' student record(s).', $this->route('school.students.index')),
             $this->checklistItem(
                 'attendance_foundation',
-                'Attendance foundation',
+                'Attendance',
                 Route::has('school.attendance.index'),
                 $this->edition->offlineAttendanceSyncEnabled()
                     ? 'Online attendance, the attendance-only browser offline capture pilot, and server-side sync monitor are available.'
@@ -261,23 +261,23 @@ class StandaloneDashboardSummaryService
             ),
             $this->checklistItem(
                 'fees_accounting_foundation',
-                'Fees/accounting foundation',
+                'Fees and accounting',
                 Route::has('school.finance.index'),
                 'Fee items, class/student assignments, student invoices, manual payment recording, and balances are available.',
                 $this->route('school.finance.index')
             ),
             $this->checklistItem(
                 'lms_foundation',
-                'LMS material foundation',
+                'LMS materials',
                 Route::has('school.lms.index'),
                 'Online class/subject LMS classrooms, topics, draft/published materials, private resources, and CBT activity links are available.',
                 $this->route('school.lms.index')
             ),
             $this->checklistItem(
                 'live_class_foundation',
-                'Live class foundation',
+                'Live classes',
                 Route::has('school.live-classes.index'),
-                'Manual internet meeting links, provider abstraction metadata, class/subject scheduling, LMS context links, status workflow, recording links, and audit logging are available.',
+                'Manual internet meeting links, provider setup details, class/subject scheduling, LMS context links, status workflow, recording links, and audit logging are available.',
                 $this->route('school.live-classes.index')
             ),
             $this->checklistItem(
@@ -382,7 +382,7 @@ class StandaloneDashboardSummaryService
                 [
                     'label' => 'Communications',
                     'value' => $counts['communication_logs'],
-                    'meta' => $counts['communication_templates'].' template(s), '.($counts['communication_logs'] ? 'logged outbox active' : 'ready for operational logs'),
+                    'meta' => $counts['communication_templates'].' template(s), '.($counts['communication_logs'] ? 'notification log active' : 'ready for operational logs'),
                     'href' => $this->route('school.communications.index'),
                 ],
                 [
@@ -544,7 +544,7 @@ class StandaloneDashboardSummaryService
                 'detail' => 'Guided update package validation, manifest compatibility checks, protected-path blocking, support-safe preflight, audit logging, and manual review planning are available without auto-apply.',
             ],
             [
-                'label' => 'Fees/accounting foundation',
+                'label' => 'Fees and accounting',
                 'status' => 'Available',
                 'detail' => 'Fee setup, class/student assignments, student invoices, manual payments, and balances are implemented.',
             ],
@@ -561,7 +561,7 @@ class StandaloneDashboardSummaryService
             [
                 'label' => 'Installer and license final hardening',
                 'status' => 'Available',
-                'detail' => 'Support-safe installer readiness checks, local license validation, redacted status display, entitlement visibility, and sensitive-action audit logging are available without SaaS billing or online activation automation.',
+                'detail' => 'Support-safe installer readiness checks, local license validation, redacted status display, module access, and sensitive-action audit logging are available without billing or online activation automation.',
             ],
             [
                 'label' => 'Import/export tools',
@@ -576,8 +576,8 @@ class StandaloneDashboardSummaryService
                     : 'The attendance-only browser pilot is available only when capture and sync are enabled.',
             ],
                 ['label' => 'LMS and CBT activity links', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, publish workflow, and links to existing CBT items are available. CBT remains the assessment engine; offline LMS and submissions remain deferred.'],
-                ['label' => 'Live class foundation', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider abstraction foundation available. Provider API automation remains deferred. Offline live class is not implemented.'],
-                ['label' => 'Live class provider abstraction', 'status' => 'Available', 'detail' => 'Manual provider support, provider registry metadata, provider labels, and future provider boundaries are available without storing credentials or calling external APIs.'],
+                ['label' => 'Live classes', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider setup is available. Provider API automation remains deferred. Offline live class is not implemented.'],
+                ['label' => 'Live class provider setup', 'status' => 'Available', 'detail' => 'Manual provider support, provider registry details, provider labels, and future provider boundaries are available without storing credentials or calling external APIs.'],
                 ['label' => 'Communication notification hardening', 'status' => 'Available', 'detail' => 'School-scoped communication center, templates, operational notification logs, safe live-class reminders, and provider-ready deferred SMS/WhatsApp/email channels are available. External provider APIs remain deferred.'],
                 ['label' => 'Branding and white-label consolidation', 'status' => 'Available', 'detail' => 'Resolved school display name, logo, colors, auth/dashboard/module branding, report/invoice/admissions branding hooks, safe uploads, audit logging, and powered-by boundaries are available. Full website, DNS, SSL, and theme builder work remain deferred.'],
                 ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, generated meeting rooms, webhooks, and recording sync are not implemented.'],

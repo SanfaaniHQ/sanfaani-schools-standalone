@@ -143,7 +143,7 @@ class InstallerLicenseFinalHardeningTest extends TestCase
         $this->assertStringNotContainsString('stage21-secret-note', $payload);
     }
 
-    public function test_license_status_redacts_key_and_shows_safe_entitlement_diagnostics(): void
+    public function test_license_status_redacts_key_and_shows_safe_module_diagnostics(): void
     {
         $school = $this->school();
         $admin = $this->superAdmin();
@@ -162,10 +162,10 @@ class InstallerLicenseFinalHardeningTest extends TestCase
             ->withServerVariables(['HTTP_HOST' => 'licensed.test'])
             ->get(route('admin.license.index'))
             ->assertOk()
-            ->assertSee('Support-Safe Diagnostics')
+            ->assertSee('Support-safe diagnostics')
             ->assertSee('Key storage')
             ->assertSee('Hashed and masked')
-            ->assertSee('Entitlement and Module Visibility')
+            ->assertSee('Module access')
             ->assertSee('Advanced Reports')
             ->assertSee('Disabled by license')
             ->assertSee('Remote license server')
@@ -189,7 +189,7 @@ class InstallerLicenseFinalHardeningTest extends TestCase
         $this->actingAs($this->superAdmin())
             ->get(route('admin.license.index'))
             ->assertOk()
-            ->assertSee('No active local license was found')
+            ->assertSee('No school license has been activated yet')
             ->assertSee('Local/test safety')
             ->assertSee('Not hard-blocked');
     }
@@ -204,7 +204,7 @@ class InstallerLicenseFinalHardeningTest extends TestCase
             ->assertSee('Installer and license hardening')
             ->assertSee('Support-safe installer diagnostics')
             ->assertSee('Installer and license final hardening')
-            ->assertSee('SaaS billing or online activation automation');
+            ->assertSee('billing or online activation automation');
     }
 
     private function completeInstallerForms(): void

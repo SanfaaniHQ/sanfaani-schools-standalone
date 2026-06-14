@@ -216,7 +216,7 @@ class StandaloneEditionService
         }
 
         if ($this->isStandalone() && ((bool) config('demo.enabled', false) || (bool) config('sanfaani.deployment.demo_enabled', false))) {
-            $warnings[] = 'Demo/customer acquisition mode is enabled; standalone owners should use installer, license activation, and the local dashboard as the main flow.';
+            $warnings[] = 'Public sales mode is enabled; standalone owners should use installer, license activation, and the local dashboard as the main flow.';
         }
 
         if ($this->isStandalone() && (bool) config('demo.marketplace.enabled', false)) {

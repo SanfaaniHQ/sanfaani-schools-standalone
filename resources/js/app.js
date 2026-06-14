@@ -517,6 +517,33 @@ document.addEventListener('click', (event) => {
     });
 });
 
+document.addEventListener('click', async (event) => {
+    const copyButton = event.target.closest('[data-copy-text]');
+
+    if (!copyButton) {
+        return;
+    }
+
+    const text = copyButton.dataset.copyText || '';
+
+    if (!text) {
+        return;
+    }
+
+    const originalText = copyButton.textContent;
+
+    try {
+        await navigator.clipboard.writeText(text);
+        copyButton.textContent = copyButton.dataset.copiedLabel || 'Copied';
+    } catch (error) {
+        copyButton.textContent = copyButton.dataset.copyFailedLabel || 'Copy failed';
+    }
+
+    window.setTimeout(() => {
+        copyButton.textContent = originalText;
+    }, 1800);
+});
+
 document.querySelectorAll('[data-faq-toggle]').forEach((toggle) => {
     toggle.addEventListener('click', () => {
         const panel = document.querySelector(toggle.dataset.faqToggle);

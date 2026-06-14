@@ -52,6 +52,10 @@
   - [Website Deployment Positioning](website/website-deployment-positioning.md)
 - Standalone Operations
   - [Product Support Overview](standalone/product-support-overview.md)
+  - [Standalone Admissions Overview](standalone/admissions-overview.md)
+  - [Admissions Admin Workflow](standalone/admissions-admin-workflow.md)
+  - [Admissions For Existing Websites](standalone/admissions-for-schools-with-existing-website.md)
+  - [Admissions For Schools Without A Website](standalone/admissions-for-schools-without-website.md)
   - [Attendance Foundation](standalone/attendance-foundation.md)
   - [Offline Attendance Capture](standalone/offline-attendance-capture.md)
   - [Offline Sync Monitor](standalone/offline-sync-monitor.md)

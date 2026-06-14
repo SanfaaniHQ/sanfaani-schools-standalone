@@ -24,7 +24,7 @@
 
         <x-ui.alert
             tone="warning"
-            title="Foundation mode"
+            title="Guided backup mode"
             body="This manager records backup metadata, checks readiness, and creates manual restore plans. It does not run restore operations, expose backup contents, create full-app ZIP files, or display environment secrets."
         >
             <p class="mt-2 text-sm leading-6 text-text-secondary">

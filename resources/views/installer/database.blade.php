@@ -21,7 +21,7 @@
                 <p class="mt-1 text-sm font-semibold {{ $status['connected'] ? 'text-green-700' : 'text-red-700' }}">{{ $status['connected'] ? 'Yes' : 'No' }}</p>
             </div>
             <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
-                <p class="text-xs uppercase tracking-normal text-text-muted">Migrations table</p>
+                <p class="text-xs uppercase tracking-normal text-text-muted">Database table log</p>
                 <p class="mt-1 text-sm font-semibold text-text-primary">{{ $status['migrations_table_exists'] ? 'Found' : 'Not found' }}</p>
             </div>
         </div>

@@ -39,7 +39,7 @@ class InstallerRequirementsService
     {
         return [
             $this->check('.env file exists', File::exists(base_path('.env')), true, File::exists(base_path('.env')) ? 'Configured' : 'Missing', 'Create .env from .env.example and set hosting values.'),
-            $this->check('APP_KEY exists', filled(config('app.key')), true, filled(config('app.key')) ? 'Configured' : 'Missing', 'Generate and paste APP_KEY in .env.'),
+            $this->check('Security key exists', filled(config('app.key')), true, filled(config('app.key')) ? 'Configured' : 'Missing', 'Generate the Laravel APP_KEY and save it in .env.'),
             $this->check('Database configured', filled(config('database.default')), true, (string) config('database.default'), 'Set DB_CONNECTION and database credentials in .env.'),
             $this->check('Queue connection configured', filled(config('queue.default')), false, (string) config('queue.default'), 'Shared hosting can use sync until a worker is available.'),
             $this->check('Cache store configured', filled(config('cache.default')), false, (string) config('cache.default'), 'File cache is acceptable for small shared-hosting installs.'),
@@ -55,16 +55,16 @@ class InstallerRequirementsService
 
     public function appKeyStatus(): array
     {
-        return $this->check('Application key', filled(config('app.key')), true, filled(config('app.key')) ? 'Configured' : 'Missing', 'Use cPanel terminal, local packaging, or hosting tools to generate APP_KEY before going live.');
+        return $this->check('Security key', filled(config('app.key')), true, filled(config('app.key')) ? 'Configured' : 'Missing', 'Use cPanel terminal, local packaging, or hosting tools to generate APP_KEY before going live.');
     }
 
     public function migrationReadiness(?int $pendingMigrations = null): array
     {
         if ($pendingMigrations === null) {
-            return $this->check('Migration status', true, false, 'Unknown', 'Pending migrations could not be counted safely; run migrations manually from hosting tools if needed.');
+            return $this->check('Database table status', true, false, 'Unknown', 'Pending database tables could not be counted safely; run migrations manually from hosting tools if needed.');
         }
 
-        return $this->check('Migration status', $pendingMigrations === 0, false, "{$pendingMigrations} pending", 'Run php artisan migrate from a terminal or hosting migration tool before finalizing.');
+        return $this->check('Database table status', $pendingMigrations === 0, false, "{$pendingMigrations} pending", 'Run php artisan migrate from a terminal or hosting migration tool before finalizing.');
     }
 
     public function summary(): array
@@ -80,7 +80,7 @@ class InstallerRequirementsService
     {
         return [
             $this->diagnostic('PHP', PHP_VERSION, version_compare(PHP_VERSION, (string) config('installer.requirements.php_minimum', '8.2.0'), '>=') ? 'pass' : 'fail'),
-            $this->diagnostic('Application key', filled(config('app.key')) ? 'Configured' : 'Missing', filled(config('app.key')) ? 'pass' : 'fail'),
+            $this->diagnostic('Security key', filled(config('app.key')) ? 'Configured' : 'Missing', filled(config('app.key')) ? 'pass' : 'fail'),
             $this->diagnostic('Database connection', ($databaseStatus['connected'] ?? false) ? 'Connected' : 'Not connected', ($databaseStatus['connected'] ?? false) ? 'pass' : 'warning'),
             $this->diagnostic('Pending migrations', ($databaseStatus['pending_migrations_count'] ?? null) === null ? 'Unknown' : (string) $databaseStatus['pending_migrations_count'], ($databaseStatus['pending_migrations_count'] ?? null) === 0 ? 'pass' : 'warning'),
             $this->diagnostic('Queue', filled(config('queue.default')) ? (string) config('queue.default') : 'Missing', filled(config('queue.default')) ? 'pass' : 'warning'),

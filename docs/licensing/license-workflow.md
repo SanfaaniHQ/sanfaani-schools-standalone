@@ -4,21 +4,21 @@ This workflow explains how Sanfaani Schools Standalone licensing works for marke
 
 ## Simple Model
 
-Sanfaani issues a signed license key for a school and domain. The buyer installs the cPanel package, completes the installer, logs in as the first admin, and activates the license from the admin license page.
+Sanfaani issues a license key for a school and domain. The buyer installs the cPanel package, completes the installer, logs in as the first admin, and activates the license from the admin license page.
 
 The v1 license flow is local-first. It does not contact a remote license server, collect payments, renew subscriptions automatically, or deactivate installations remotely.
 
 ## Buyer Flow
 
 1. The school pays Sanfaani or receives an approved trial/demo.
-2. Sanfaani generates a signed license key for the school, domain, type, dates, and entitlements.
+2. Sanfaani generates a license key for the school, domain, type, dates, and included services.
 3. The school uploads and extracts the cPanel package.
 4. The school creates the database, `.env`, app key, storage permissions, cron, and SMTP settings.
 5. The school opens `https://portal.example.com/install` and completes hosting, admin, and school setup.
 6. The installer writes the installation lock.
 7. The first admin logs in and opens `Admin -> License`.
 8. The admin enters the license key and activates it.
-9. The app verifies the signed key, hashes the raw key, stores the local license record, and shows only masked license status afterward.
+9. The app verifies the key, stores the local license record securely, and shows only masked license status afterward.
 
 License activation is after login in v1. The public installer does not collect the license key.
 
@@ -27,7 +27,7 @@ License activation is after login in v1. The public installer does not collect t
 Generate a license key from a trusted Sanfaani seller environment:
 
 ```bash
-php artisan license:generate --type=annual --school="Demo School" --domain=portal.demo-school.test --starts=2026-01-01 --expires=2027-01-01 --entitlements=standard,white_label --issued-by="Sanfaani"
+php artisan license:generate --type=annual --school="Demo School" --domain=portal.demo-school.test --starts=2026-01-01 --expires=2027-01-01 --entitlements=standard,reports --issued-by="Sanfaani"
 ```
 
 Copy the generated license key and send it to the customer through an approved support or sales channel. Do not send the signing key.
@@ -40,7 +40,7 @@ SANFAANI_LICENSE_SIGNING_KEY=
 
 Use a strong secret value outside Git. The deployed customer `.env` must stay private and must never be publicly readable.
 
-Customer cPanel portals may leave `SANFAANI_LICENSE_SIGNING_KEY` blank unless the customer is intentionally generating license keys locally. Installing the app, logging in, and activating a Sanfaani-issued signed key do not require the seller signing key.
+Customer cPanel portals do not need `SANFAANI_LICENSE_SIGNING_KEY` to install, log in, or use normal customer activation. Seller license generation remains separate. If signed-key verification is used for a customer portal, Sanfaani must configure that verification securely during approved setup; the school should never enter or receive the seller signing secret.
 
 ## License Types
 
@@ -69,9 +69,9 @@ Expired annual, trial, and demo signed keys cannot be activated. Existing local 
 
 Lifetime licenses do not expire unless suspended or revoked by a future support workflow.
 
-## Entitlements
+## Included Services
 
-Entitlements are stored as enabled flags on the local license record. Examples:
+Included services are stored as enabled flags on the local license record. Examples:
 
 - `standard`
 - `white_label`
@@ -79,7 +79,7 @@ Entitlements are stored as enabled flags on the local license record. Examples:
 - `backup_manager`
 - `update_manager`
 
-Feature visibility can use these values through the existing license entitlement service. Limits such as maximum users or students are stored as signed metadata for v1; automatic enforcement can be added later if needed.
+Feature visibility can use these values through the existing license service. Limits such as maximum users or students are stored as signed metadata for v1; automatic enforcement can be added later if needed.
 
 ## Security Notes
 
@@ -98,7 +98,7 @@ The marketplace package prepares the application for upload-and-install cPanel u
 
 1. cPanel setup creates the runtime environment.
 2. `/install` creates the school and first admin.
-3. `Admin -> License` activates the signed license.
+3. `Admin -> License` activates the customer license.
 4. The installation lock prevents public reinstall.
 
 Before the installer is completed, `/` should guide the buyer into setup and `/login` should redirect to `/install`. After the lock exists, `/` should point to login or the portal flow and `/install` should be blocked.

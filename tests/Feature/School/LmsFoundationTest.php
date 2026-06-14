@@ -285,7 +285,8 @@ class LmsFoundationTest extends TestCase
 
         $this->get(route('school.lms.index'))
             ->assertOk()
-            ->assertSee('Student LMS viewing is deferred')
+            ->assertSee('Student LMS viewing')
+            ->assertSee('require separate setup')
             ->assertSee('Existing CBT items')
             ->assertSee('Live classes')
             ->assertSee('offline LMS')

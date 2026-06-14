@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-xl font-semibold leading-tight text-text-primary">Marketing Sequences</h2>
-            <p class="mt-1 text-sm text-text-secondary">Foundation records for future nurture and re-engagement workflows.</p>
+            <p class="mt-1 text-sm text-text-secondary">Saved records for nurture and re-engagement workflows.</p>
         </div>
     </x-slot>
 

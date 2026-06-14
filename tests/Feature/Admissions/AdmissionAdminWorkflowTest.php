@@ -62,6 +62,23 @@ class AdmissionAdminWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_admin_admissions_dashboard_exposes_copy_preview_and_website_actions(): void
+    {
+        $school = $this->createSchool();
+        $this->createCycle($school);
+        $admin = $this->createAdmin($school);
+        $this->actAsAdmin($admin, $school);
+
+        $this->get(route('admin.admissions.index'))
+            ->assertOk()
+            ->assertSee('Public admission form')
+            ->assertSee('Copy form link')
+            ->assertSee('Preview form')
+            ->assertSee('Share with parents')
+            ->assertSee('Add to the school website')
+            ->assertSee(route('admissions.apply'));
+    }
+
     public function test_admin_can_schedule_and_confirm_manual_payment(): void
     {
         $school = $this->createSchool();

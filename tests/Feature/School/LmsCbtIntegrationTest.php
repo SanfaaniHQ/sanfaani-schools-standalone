@@ -382,7 +382,7 @@ class LmsCbtIntegrationTest extends TestCase
             ->assertOk()
             ->assertSee('LMS and CBT activity links')
             ->assertSee('CBT remains the assessment engine')
-            ->assertSee('Live class foundation')
+            ->assertSee('Live classes')
             ->assertSee('Full browser offline/PWA');
     }
 

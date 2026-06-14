@@ -3,7 +3,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-xl font-semibold leading-tight text-text-primary">Safe Update Check</h2>
-                <p class="mt-1 text-sm text-text-secondary">{{ $label }} check placeholder.</p>
+                <p class="mt-1 text-sm text-text-secondary">{{ $label }} readiness check.</p>
             </div>
             <a href="{{ route('admin.updates.index') }}" class="ui-button-secondary min-h-10 px-4 text-sm">Back to updates</a>
         </div>

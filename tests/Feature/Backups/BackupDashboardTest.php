@@ -32,7 +32,7 @@ class BackupDashboardTest extends TestCase
             ->get(route('admin.backups.index'))
             ->assertOk()
             ->assertSee('Platform Backups')
-            ->assertSee('Foundation mode');
+            ->assertSee('Guided backup mode');
     }
 
     public function test_backup_dashboard_is_blocked_when_backup_manager_is_disabled(): void

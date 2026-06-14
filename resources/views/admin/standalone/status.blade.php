@@ -2,7 +2,7 @@
     <x-slot name="header">
         <x-ui.page-header
             title="Standalone Status"
-            description="Local-first school installation status, system health, scheduler monitoring, and safe sync foundation."
+            description="Local-first school installation status, system health, scheduler monitoring, and sync readiness."
         />
     </x-slot>
 
@@ -57,7 +57,7 @@
         <x-ui.alert
             tone="success"
             title="Installer and license hardening available"
-            body="Installer readiness, local license status, entitlement visibility, backup/update readiness, and support diagnostics are available without SaaS billing, payment enforcement, online activation, remote deactivation, or destructive reinstall tools."
+            body="Installer readiness, local license status, module access, backup/update readiness, and support diagnostics are available without billing enforcement, online activation, remote deactivation, or destructive reinstall tools."
         />
 
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -275,8 +275,8 @@
 
         <section class="grid gap-4 lg:grid-cols-3">
             <x-ui.panel
-                title="Sync Foundation"
-                description="Outbox readiness only. No external API call or local data deletion is performed in this stage."
+                title="Sync readiness"
+                description="Local queue readiness only. No external API call or local data deletion is performed from this page."
             >
                 <dl class="space-y-3 text-sm">
                     <div class="flex justify-between gap-3">
@@ -296,13 +296,13 @@
 
             <x-ui.panel
                 class="lg:col-span-2"
-                title="Pending Outbox Preview"
+                title="Pending Sync Preview"
                 description="First pending local records that would be considered by a dry-run sync."
             >
                 @if ($pendingOutboxItems->isEmpty())
                     <x-ui.empty-state
                         title="No pending sync items"
-                        body="The foundation is ready, but no model capture is enabled yet."
+                        body="Sync readiness checks are available, but no model capture is enabled yet."
                     />
                 @else
                     <div class="overflow-x-auto">

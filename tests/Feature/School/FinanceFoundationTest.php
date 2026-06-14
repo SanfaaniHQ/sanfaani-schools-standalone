@@ -62,7 +62,7 @@ class FinanceFoundationTest extends TestCase
             ->assertSee('Fees & Finance')
             ->assertSee('manual payments')
             ->assertSee('Finance reports, finance CSV export, and audit review are available')
-            ->assertSee('offline fee capture are deferred');
+            ->assertSee('offline fee capture require separate setup');
 
         $this->get(route('school.finance.reports'))
             ->assertOk()
@@ -75,7 +75,7 @@ class FinanceFoundationTest extends TestCase
         $this->get(route('school.dashboard'))
             ->assertOk()
             ->assertSee('Accountant Dashboard')
-            ->assertSee('Fees and accounting foundation')
+            ->assertSee('Fees and accounting')
             ->assertSee('finance reports, CSV finance export, and audit review are available')
             ->assertSee('Export CSV');
 
@@ -459,7 +459,7 @@ class FinanceFoundationTest extends TestCase
         $this->get(route('school.dashboard'))
             ->assertOk()
             ->assertSee('Fees &amp; Finance', false)
-            ->assertSee('Fees/accounting foundation')
+            ->assertSee('Fees and accounting')
             ->assertSee('Finance reports and audit pack')
             ->assertSee('Finance reports and audit review are available')
             ->assertSee('Import/export tools')

@@ -1,7 +1,7 @@
 <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
     <div class="border-b border-gray-100 px-6 py-4">
-        <h3 class="text-base font-semibold text-gray-900">Recent License Audit Events</h3>
-        <p class="mt-1 text-sm text-gray-500">Activation, validation, expiry, grace, and entitlement events.</p>
+        <h3 class="text-base font-semibold text-gray-900">Recent license activity</h3>
+        <p class="mt-1 text-sm text-gray-500">Activation, checks, expiry, and temporary access events.</p>
     </div>
     <div class="divide-y divide-gray-100">
         @forelse ($auditLogs as $log)

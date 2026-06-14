@@ -3,16 +3,16 @@
 @section('content')
     <div class="space-y-5">
         <div>
-            <h2 class="text-xl font-semibold text-text-primary">Environment Setup Guidance</h2>
-            <p class="mt-2 text-sm text-text-secondary">Review the hosting environment. This installer does not write to <span class="font-mono">.env</span>; update values manually through your file manager, deployment panel, or managed setup process.</p>
+            <h2 class="text-xl font-semibold text-text-primary">Portal configuration</h2>
+            <p class="mt-2 text-sm text-text-secondary">This step confirms the portal settings already saved on the server. The installer does not edit <span class="font-mono">.env</span>; update hosting values through your file manager or hosting control panel if a check needs attention.</p>
         </div>
 
         @include('installer.partials.checks', ['checks' => $checks])
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
-            <p class="font-semibold text-text-primary">Manual command fallback</p>
-            <p class="mt-1">If terminal access exists, safe commands may be run by the operator. On shared hosting, use cPanel tools or request managed setup instead of forcing shell execution.</p>
-            <p class="mt-2">SaaS customers can skip this entire page because Sanfaani hosts and configures the platform for them.</p>
+            <p class="font-semibold text-text-primary">If a check needs attention</p>
+            <p class="mt-1">Update the matching setting on the server, refresh this page, and continue once the required checks pass. Optional warnings can be reviewed after login if the portal is otherwise ready.</p>
+            <p class="mt-2">If terminal access exists, the installer or hosting provider may run safe setup commands. On shared hosting, use cPanel tools instead of forcing shell execution.</p>
         </div>
 
         <div class="flex justify-between">

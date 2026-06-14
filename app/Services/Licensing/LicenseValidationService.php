@@ -106,40 +106,40 @@ class LicenseValidationService
         $license = $this->current($school);
 
         if (! $license) {
-            return $this->result(false, 'missing', 'No active local license was found.', null, $school, 'warning', [], $log);
+            return $this->result(false, 'missing', 'No school license has been activated yet.', null, $school, 'warning', [], $log);
         }
 
         if ($license->status === 'suspended' || $license->suspended_at) {
-            return $this->result(false, 'suspended', 'The active license is suspended.', $license, $school, 'critical', [], $log);
+            return $this->result(false, 'suspended', 'This school license is suspended. Contact Sanfaani support.', $license, $school, 'critical', [], $log);
         }
 
         if (! in_array($license->status, ['active', 'trial', 'demo'], true)) {
-            return $this->result(false, $license->status ?: 'invalid', 'The active license is not in a usable state.', $license, $school, 'error', [], $log);
+            return $this->result(false, $license->status ?: 'invalid', 'This school license is not currently usable.', $license, $school, 'error', [], $log);
         }
 
         if (! $this->licenseTypeMatchesMode($license, $licenseMode)) {
-            return $this->result(false, 'type_mismatch', 'The active license type does not match this deployment license mode.', $license, $school, 'error', [
+            return $this->result(false, 'type_mismatch', 'This license does not match the portal edition. Contact Sanfaani support.', $license, $school, 'error', [
                 'license_type' => $license->license_type,
                 'license_mode' => $licenseMode,
             ], $log);
         }
 
         if ($license->starts_at && $license->starts_at->isFuture()) {
-            return $this->result(false, 'not_started', 'The active license has not started yet.', $license, $school, 'warning', [], $log);
+            return $this->result(false, 'not_started', 'This school license is not active yet.', $license, $school, 'warning', [], $log);
         }
 
         if ($this->domainMismatch($license)) {
-            return $this->result(false, 'domain_mismatch', 'The active license is not valid for this domain.', $license, $school, 'error', [
+            return $this->result(false, 'domain_mismatch', 'This license is not valid for the current portal domain.', $license, $school, 'error', [
                 'host' => request()?->getHost(),
             ], $log);
         }
 
         if ($this->licenseExpired($license)) {
             if ($this->isWithinOfflineGrace($license)) {
-                return $this->result(true, 'offline_grace', 'The license is expired but still within offline grace.', $license, $school, 'warning', [], $log);
+                return $this->result(true, 'offline_grace', 'The license needs renewal, but temporary offline access is still available.', $license, $school, 'warning', [], $log);
             }
 
-            return $this->result(false, 'expired', 'The active license has expired.', $license, $school, 'error', [], $log);
+            return $this->result(false, 'expired', 'This school license has expired. Contact Sanfaani support to renew it.', $license, $school, 'error', [], $log);
         }
 
         if ($log) {
@@ -149,7 +149,7 @@ class LicenseValidationService
             ])->save();
         }
 
-        return $this->result(true, 'valid', 'The active license is valid.', $license, $school, 'info', [], $log);
+        return $this->result(true, 'valid', 'This license is valid for this school portal.', $license, $school, 'info', [], $log);
     }
 
     private function validateSaasSubscription(?School $school, bool $log): LicenseValidationResult

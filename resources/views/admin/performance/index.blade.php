@@ -15,7 +15,7 @@
         <x-ui.alert
             tone="warning"
             title="Read-only diagnostics"
-            body="This foundation reports hosting and performance readiness. It does not clear caches, run migrations, delete logs, optimize routes, create symlinks, or modify files from the web UI."
+            body="This page reports hosting and performance readiness. It does not clear caches, run migrations, delete logs, optimize routes, create symlinks, or modify files from the web UI."
         />
 
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
