@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\Installer\InstallerStateService;
+use App\Services\Standalone\StandaloneEditionService;
 use App\Services\UserWorkspaceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,8 +17,13 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(StandaloneEditionService $standalone, InstallerStateService $installer): View|RedirectResponse
     {
+        if ($this->shouldRedirectToInstaller($standalone, $installer)) {
+            return redirect()->route('installer.welcome')
+                ->with('status', 'Complete installation before logging in.');
+        }
+
         return view('auth.login');
     }
 
@@ -74,5 +81,11 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function shouldRedirectToInstaller(StandaloneEditionService $standalone, InstallerStateService $installer): bool
+    {
+        return $standalone->isStandaloneMode()
+            && ! $installer->isInstalled();
     }
 }

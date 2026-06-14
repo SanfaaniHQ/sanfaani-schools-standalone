@@ -21,9 +21,11 @@
   - [cPanel Production Deployment](deployment/cpanel-production-deployment.md)
   - [Marketplace cPanel Installation](deployment/marketplace-cpanel-installation.md)
   - [Marketplace Package Checklist](deployment/marketplace-package-checklist.md)
+  - [Shared Hosting MySQL Index Compatibility](deployment/shared-hosting-mysql-index-compatibility.md)
   - [VPS Hosting](deployment/vps-hosting.md)
 - Commercial Foundations
   - [License Activation](licensing/license-activation.md)
+  - [License Workflow](licensing/license-workflow.md)
   - [Demo Automation](demo/demo-automation.md)
   - [Guided Onboarding](onboarding/guided-onboarding.md)
   - [Marketing Automation](marketing/marketing-automation.md)

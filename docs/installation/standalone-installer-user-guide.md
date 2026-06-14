@@ -13,6 +13,8 @@ Prepare these items first:
 - MySQL or MariaDB database.
 - Database credentials: name, username, password, host, and port.
 - `.env` created from `.env.example` and filled with hosting values.
+- `SANFAANI_DEPLOYMENT_MODE=single_school`, `SANFAANI_INSTALLER_ENABLED=true`, and `SANFAANI_INSTALLED=false`.
+- `SANFAANI_DATABASE_NAME_GUARD_ENABLED=false` for cPanel/marketplace installs so normal database names such as `swifarpx_fazportal`, `client_school_portal`, or `portal_db` are accepted.
 - Writable `storage` and `bootstrap/cache` folders.
 - Application key in `.env`.
 - SMTP details if email will be enabled.
@@ -33,9 +35,13 @@ Prepare these items first:
 12. Review everything.
 13. Finalize the installation and write the install lock.
 
+Before the install is complete, `https://your-domain.example/` should point to the setup flow and `/login` should redirect to `/install`. After completion, `/` should point to login or the portal flow, and `/install` should no longer be reusable.
+
 ## Shared Hosting Notes
 
 On shared hosting or cPanel, your hosting provider may need to help with document root, PHP extensions, database credentials, file permissions, storage link, cron, and safe migration execution. The installer gives guidance, but hosting panels still control those items.
+
+Standalone sync migrations use limited indexed string lengths and short index names so older cPanel MySQL key-length limits are supported.
 
 ## What The Installer Does Not Do
 
@@ -43,6 +49,7 @@ On shared hosting or cPanel, your hosting provider may need to help with documen
 - It does not guarantee shell access.
 - It does not write `.env` unless a separate safe mechanism is already supported.
 - It does not activate licenses.
+- It does not generate seller license keys or require `SANFAANI_LICENSE_SIGNING_KEY` for normal customer activation.
 - It does not run backups or restores.
 - It does not apply updates.
 - It does not generate marketplace packages or ZIP files.

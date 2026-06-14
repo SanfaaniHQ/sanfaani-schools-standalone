@@ -123,12 +123,16 @@ Confirm:
 
 Tell the buyer or installer:
 
-- Create the cPanel database manually.
+- Create the cPanel database manually. Normal buyer-selected names such as `swifarpx_fazportal`, `client_school_portal`, or `portal_db` are supported.
 - Create `.env` manually from the safe template.
 - Point the domain to Laravel `public`.
 - Configure SMTP manually.
 - Configure cron manually.
-- Complete `/install`.
-- Activate the license after first admin login.
+- Open `https://portal.example.com/install` and complete `/install`.
+- Before setup, `/` should enter the installer flow and `/login` should not encourage login. After setup, `/` should point to login or the portal flow.
+- Do not manually create `storage/app/installed.lock`; completing the installer creates the school, first admin, and lock together.
+- Activate the license after first admin login from `Admin -> License`.
+- Shared-hosting-safe migrations are supported for the standalone sync tables.
+- Seller-side license generation requires `SANFAANI_LICENSE_SIGNING_KEY`; customer portal activation does not require the generator key.
 - Keep backups outside public web access.
 - Never delete `storage/app/installed.lock` on a live install without support approval.

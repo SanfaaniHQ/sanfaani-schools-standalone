@@ -43,11 +43,24 @@ class InstallerAccessTest extends TestCase
             ->assertSee('Standalone installer');
     }
 
-    public function test_installer_blocked_when_standalone_installer_feature_disabled(): void
+    public function test_fresh_single_school_uninstalled_can_access_required_installer_steps(): void
+    {
+        $this->get(route('installer.welcome'))->assertOk();
+        $this->get(route('installer.requirements'))->assertOk();
+        $this->get(route('installer.school'))->assertOk();
+    }
+
+    public function test_installer_does_not_require_feature_gate_rows_before_installation(): void
     {
         config(['features.features.standalone_installer.enabled' => false]);
 
-        $this->get(route('installer.welcome'))->assertNotFound();
+        $this->get(route('installer.welcome'))->assertOk();
+    }
+
+    public function test_login_redirects_to_installer_before_installation(): void
+    {
+        $this->get(route('login'))
+            ->assertRedirect(route('installer.welcome'));
     }
 
     public function test_installer_blocked_when_installed_lock_exists(): void

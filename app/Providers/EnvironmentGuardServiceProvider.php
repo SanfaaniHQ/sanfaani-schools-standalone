@@ -8,8 +8,6 @@ use RuntimeException;
 
 class EnvironmentGuardServiceProvider extends ServiceProvider
 {
-    private const REQUIRED_DATABASE = 'sanfaani_schools';
-
     private const BLOCKED_COMMANDS = [
         'db:seed',
         'db:wipe',
@@ -25,22 +23,27 @@ class EnvironmentGuardServiceProvider extends ServiceProvider
 
     private function guardDatabaseTarget(): void
     {
+        if (! (bool) config('sanfaani.database.name_guard.enabled', false)) {
+            return;
+        }
+
         if (config('database.default') !== 'mysql') {
             return;
         }
 
-        $db = config('database.connections.mysql.database');
+        $db = (string) config('database.connections.mysql.database');
+        $requiredFragment = (string) config('sanfaani.database.name_guard.required_fragment', 'sanfaani_schools');
 
-        if (! str_contains($db, self::REQUIRED_DATABASE)) {
+        if ($requiredFragment === '' || ! str_contains($db, $requiredFragment)) {
             logger()->critical('FATAL: Wrong database target blocked.', [
                 'database' => $db,
-                'required_database' => self::REQUIRED_DATABASE,
+                'required_database_fragment' => $requiredFragment,
                 'running_in_console' => app()->runningInConsole(),
                 'url' => app()->runningInConsole() ? null : request()->url(),
             ]);
 
             if (app()->runningInConsole()) {
-                throw new RuntimeException('Database configuration error: DB_DATABASE must contain '.self::REQUIRED_DATABASE.'. Current value: '.$db);
+                throw new RuntimeException('Database configuration error: DB_DATABASE must contain '.$requiredFragment.'. Current value: '.$db);
             }
 
             abort(500, 'Database configuration error. Contact administrator immediately.');

@@ -15,10 +15,13 @@ class LicenseActivationService
     public function __construct(
         private LicenseKeyHasher $hasher,
         private LicenseAuditService $audit,
+        private SignedLicenseKeyService $signedKeys,
     ) {}
 
     public function activate(array $data, ?School $school = null, ?Request $request = null): License
     {
+        $data = $this->withSignedLicensePayload($data);
+
         if (! in_array($data['license_type'], config('licensing.types', []), true)) {
             throw new RuntimeException('Unsupported license type.');
         }
@@ -72,6 +75,38 @@ class LicenseActivationService
 
             return $license->fresh() ?? $license;
         });
+    }
+
+    private function withSignedLicensePayload(array $data): array
+    {
+        $licenseKey = (string) ($data['license_key'] ?? '');
+
+        if (! $this->signedKeys->isSigned($licenseKey)) {
+            return $data;
+        }
+
+        $payload = $this->signedKeys->verify($licenseKey);
+
+        return array_merge($data, [
+            'license_type' => $payload['type'],
+            'status' => $payload['status'] ?? 'active',
+            'issued_to_name' => $payload['school'],
+            'domain' => $payload['domain'],
+            'allowed_domains' => $payload['allowed_domains'] ?? [$payload['domain']],
+            'entitlements' => $payload['entitlements'] ?? [],
+            'starts_at' => $payload['starts_at'] ?? null,
+            'expires_at' => $payload['expires_at'] ?? null,
+            'metadata' => array_merge($data['metadata'] ?? [], [
+                'signed_license' => [
+                    'version' => $payload['version'] ?? 1,
+                    'license_id' => $payload['license_id'] ?? null,
+                    'issued_by' => $payload['issued_by'] ?? null,
+                    'issued_at' => $payload['issued_at'] ?? null,
+                    'limits' => $payload['limits'] ?? [],
+                    'notes' => $payload['notes'] ?? null,
+                ],
+            ]),
+        ]);
     }
 
     public function fingerprint(?Request $request = null): string

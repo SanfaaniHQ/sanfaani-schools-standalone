@@ -6,20 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Models\LeadRequest;
 use App\Models\User;
 use App\Services\CommunicationService;
+use App\Services\Installer\InstallerStateService;
 use App\Services\LeadCrmService;
 use App\Services\Standalone\StandaloneEditionService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class LandingPageController extends Controller
 {
-    public function home(StandaloneEditionService $standalone)
+    public function home(StandaloneEditionService $standalone, InstallerStateService $installer): View|RedirectResponse
     {
         if ($standalone->privateHomepageEnabled()) {
-            return view('public.standalone.home', [
-                'standaloneStatus' => $standalone->status(),
-            ]);
+            return $installer->isInstalled()
+                ? redirect()->route('login')
+                : redirect()->route('installer.welcome');
         }
 
         return view('public.landing.home');

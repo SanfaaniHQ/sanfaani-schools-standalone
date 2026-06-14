@@ -16,6 +16,7 @@ return [
 
     'server_url' => env('SANFAANI_LICENSE_SERVER_URL'),
     'license_key' => env('SANFAANI_LICENSE_KEY'),
+    'signing_key' => env('SANFAANI_LICENSE_SIGNING_KEY'),
     'offline_grace_days' => (int) env('SANFAANI_LICENSE_OFFLINE_GRACE_DAYS', 7),
     'validation_enabled' => (bool) env('SANFAANI_LICENSE_VALIDATION_ENABLED', true),
     'require_domain_match' => (bool) env('SANFAANI_LICENSE_REQUIRE_DOMAIN_MATCH', true),

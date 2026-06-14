@@ -86,6 +86,8 @@ return [
         'SANFAANI_DEPLOYMENT_MODE' => DeploymentModeService::MODE_SINGLE_SCHOOL,
         'SANFAANI_INSTALLER_ENABLED' => 'true',
         'SANFAANI_INSTALLED' => 'false',
+        'SANFAANI_DATABASE_NAME_GUARD_ENABLED' => 'false',
+        'SANFAANI_DATABASE_NAME_REQUIRED_FRAGMENT' => 'sanfaani_schools',
         'SANFAANI_LICENSE_MODE' => DeploymentModeService::LICENSE_ANNUAL,
         'SANFAANI_STANDALONE_OFFLINE_MODE' => 'local_first',
         'SANFAANI_STANDALONE_SYNC_ENABLED' => 'false',

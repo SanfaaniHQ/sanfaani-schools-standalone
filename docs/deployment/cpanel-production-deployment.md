@@ -139,6 +139,8 @@ In cPanel:
 4. Record the cPanel-prefixed database name and username for `.env`.
 5. Use `utf8mb4` and InnoDB.
 
+Buyer-selected cPanel database names are supported. Names such as `swifarpx_fazportal`, `client_school_portal`, and `portal_db` are valid. The internal database-name guard is opt-in and should stay disabled for marketplace/customer installs unless Sanfaani deliberately enables it for an internal environment.
+
 Set production database variables in `.env`:
 
 ```dotenv
@@ -177,6 +179,8 @@ SANFAANI_DEPLOYMENT_MODE=single_school
 SANFAANI_LICENSE_MODE=annual
 SANFAANI_INSTALLER_ENABLED=true
 SANFAANI_INSTALLED=false
+SANFAANI_DATABASE_NAME_GUARD_ENABLED=false
+SANFAANI_DATABASE_NAME_REQUIRED_FRAGMENT=sanfaani_schools
 
 DB_CONNECTION=mysql
 DB_HOST=
@@ -201,6 +205,8 @@ MAIL_FROM_NAME=
 
 SANFAANI_LICENSE_KEY=
 SANFAANI_LICENSE_SERVER_URL=
+# Seller-side generation only; customer portals may leave this blank.
+SANFAANI_LICENSE_SIGNING_KEY=
 SANFAANI_BACKUPS_ENABLED=true
 SANFAANI_UPDATES_ENABLED=true
 SANFAANI_UPDATE_BACKUP_REQUIRED=true
@@ -312,8 +318,9 @@ Before handoff:
 
 - Visit `/install` only when `SANFAANI_INSTALLER_ENABLED=true` and `SANFAANI_INSTALLED=false`.
 - Complete installer requirements, permissions, database, app key, migration readiness, admin, school, SMTP, and review steps.
-- Confirm the install lock exists after completion.
+- Confirm the install lock exists after completion. Do not manually create `storage/app/installed.lock`.
 - Visit `/admin/license` after login and activate or validate the license.
+- Customer installs do not need the seller `SANFAANI_LICENSE_SIGNING_KEY` unless they are intentionally generating license keys locally.
 - Confirm license mode and domain matching expectations.
 - Visit `/admin/updates` only as guided-update readiness. The current foundation validates package metadata and preflight state; it does not download, extract, or apply real updates.
 - Confirm a recent verified backup is available before any update review.
@@ -334,6 +341,7 @@ APP_ENV=production APP_DEBUG=false php artisan security:audit
 Then verify in the browser:
 
 - HTTPS loads on the canonical domain.
+- Before setup, `/` redirects into `https://domain.example/install`; after setup, `/` redirects to login or the portal flow.
 - `/up` returns healthy.
 - Login page loads.
 - First admin login works.
@@ -360,7 +368,7 @@ Missing uploads usually mean `php artisan storage:link` was not run, symlinks ar
 
 Mail failures usually mean SMTP credentials, port, encryption, sender verification, or host firewall rules are wrong.
 
-Database errors usually mean the cPanel-prefixed database name or username is wrong, the database user is not assigned, migrations were not run, or shared-hosting index limits need review.
+Database errors usually mean the cPanel-prefixed database name or username is wrong, the database user is not assigned, or migrations were not run. Shared-hosting-safe migration indexes are supported for the standalone sync tables.
 
 Run `php artisan optimize:clear` after fixing `.env`, cache, route, or view-cache issues.
 

@@ -23,6 +23,8 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
 
     private const SCHOOL_CLASSES_MIGRATION = 'database/migrations/2026_04_30_153808_create_school_classes_table.php';
 
+    private const STANDALONE_SYNC_MIGRATION = 'database/migrations/2026_06_10_000001_create_standalone_sync_tables.php';
+
     private const DOC = 'docs/deployment/shared-hosting-mysql-index-compatibility.md';
 
     public function test_app_service_provider_applies_default_string_length_191(): void
@@ -139,6 +141,46 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
         $this->assertStringContainsString("\$table->unique(['school_id', 'name', 'section']);", $migration);
     }
 
+    public function test_standalone_sync_outbox_entity_lookup_columns_are_limited_for_shared_hosting(): void
+    {
+        $migration = $this->standaloneSyncMigration();
+
+        $this->assertStringContainsString("\$table->string('entity_type', 64);", $migration);
+        $this->assertStringContainsString("\$table->string('entity_id', 64)->nullable();", $migration);
+        $this->assertStringNotContainsString("\$table->string('entity_type');", $migration);
+        $this->assertStringNotContainsString("\$table->string('entity_id')->nullable();", $migration);
+    }
+
+    public function test_standalone_sync_outbox_entity_lookup_uses_short_index_name(): void
+    {
+        $migration = $this->standaloneSyncMigration();
+        $columns = $this->indexColumns($migration, 'sync_outbox_entity_idx');
+
+        $this->assertSame(['entity_type', 'entity_id'], $columns);
+        $this->assertLessThanOrEqual(64, strlen('sync_outbox_entity_idx'));
+        $this->assertStringNotContainsString('standalone_sync_outbox_entity_type_entity_id_index', $migration);
+    }
+
+    public function test_standalone_sync_migration_uses_explicit_short_index_names(): void
+    {
+        $migration = $this->standaloneSyncMigration();
+
+        foreach ([
+            'sync_devices_uuid_uidx',
+            'sync_devices_type_idx',
+            'sync_devices_seen_idx',
+            'sync_outbox_uuid_uidx',
+            'sync_outbox_status_idx',
+            'sync_outbox_entity_idx',
+            'sync_outbox_hash_idx',
+            'sync_logs_status_idx',
+            'sync_logs_started_idx',
+        ] as $indexName) {
+            $this->assertStringContainsString($indexName, $migration);
+            $this->assertLessThanOrEqual(64, strlen($indexName));
+        }
+    }
+
     public function test_shared_hosting_mysql_index_compatibility_doc_exists(): void
     {
         $this->assertFileExists(base_path(self::DOC));
@@ -195,6 +237,11 @@ class SharedHostingMigrationCompatibilityTest extends TestCase
     private function marketingEnrollmentsMigration(): string
     {
         return $this->file(self::MARKETING_ENROLLMENTS_MIGRATION);
+    }
+
+    private function standaloneSyncMigration(): string
+    {
+        return $this->file(self::STANDALONE_SYNC_MIGRATION);
     }
 
     private function doc(): string

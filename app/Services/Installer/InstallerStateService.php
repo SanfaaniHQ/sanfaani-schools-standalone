@@ -3,7 +3,6 @@
 namespace App\Services\Installer;
 
 use App\Services\System\DeploymentModeService;
-use App\Services\System\FeatureAccessService;
 use Illuminate\Support\Facades\File;
 use Throwable;
 
@@ -11,7 +10,6 @@ class InstallerStateService
 {
     public function __construct(
         private DeploymentModeService $deployment,
-        private FeatureAccessService $features,
     ) {}
 
     public function isInstalled(): bool
@@ -61,7 +59,7 @@ class InstallerStateService
                 return false;
             }
 
-            return $this->features->enabled((string) config('installer.feature', 'standalone_installer'));
+            return true;
         } catch (Throwable) {
             return false;
         }

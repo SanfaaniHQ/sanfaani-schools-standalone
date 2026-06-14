@@ -81,7 +81,7 @@ class LicenseController extends Controller
         $this->auditMain('license_activation_attempted', null, $requestedSchool, $this->activationMetadata($request->all(), $requestedSchool));
 
         $validator = Validator::make($request->all(), [
-            'license_key' => ['required', 'string', 'min:12', 'max:255', 'regex:/\A[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]\z/'],
+            'license_key' => ['required', 'string', 'min:12', 'max:5000', 'regex:/\A[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9]\z/'],
             'license_type' => ['required', Rule::in(config('licensing.types', []))],
             'status' => ['nullable', Rule::in(config('licensing.status_values', []))],
             'school_id' => ['nullable', Rule::exists('schools', 'id')],

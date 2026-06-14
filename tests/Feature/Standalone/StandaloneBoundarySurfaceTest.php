@@ -5,7 +5,9 @@ namespace Tests\Feature\Standalone;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\Installer\InstallerStateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -21,6 +23,7 @@ class StandaloneBoundarySurfaceTest extends TestCase
         $this->withoutVite();
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->deleteInstallerLock();
 
         foreach (['super_admin', 'school_admin'] as $role) {
             Role::findOrCreate($role);
@@ -34,8 +37,11 @@ class StandaloneBoundarySurfaceTest extends TestCase
             'standalone.surface_gates.hide_marketplace_surfaces' => true,
             'standalone.surface_gates.hide_demo_surfaces' => true,
             'standalone.surface_gates.hide_platform_marketing_surfaces' => true,
+            'installer.enabled' => true,
+            'installer.allow_managed' => false,
             'sanfaani.deployment.mode' => 'single_school',
             'sanfaani.deployment.license_mode' => 'annual',
+            'sanfaani.deployment.installed' => false,
             'sanfaani.deployment.demo_enabled' => true,
             'demo.enabled' => true,
             'demo.marketplace.enabled' => true,
@@ -45,22 +51,31 @@ class StandaloneBoundarySurfaceTest extends TestCase
         ]);
     }
 
-    public function test_public_standalone_home_is_private_and_gates_marketing_demo_and_marketplace_routes(): void
+    protected function tearDown(): void
+    {
+        $this->deleteInstallerLock();
+
+        parent::tearDown();
+    }
+
+    public function test_public_standalone_home_redirects_to_installer_before_install_and_gates_marketing_demo_and_marketplace_routes(): void
     {
         $this->get(route('landing.home'))
-            ->assertOk()
-            ->assertSee('Private single-school installation')
-            ->assertSee('Login to portal')
-            ->assertSee('Laravel portal remains the source of truth')
-            ->assertDontSee('Request Demo')
-            ->assertDontSee('Pricing')
-            ->assertDontSee('Contact Sales');
+            ->assertRedirect(route('installer.welcome'));
 
         $this->get(route('landing.demo'))->assertNotFound();
         $this->get(route('demo.live'))->assertNotFound();
         $this->get(route('landing.features'))->assertNotFound();
         $this->get(route('landing.pricing'))->assertNotFound();
         $this->get(route('landing.contact'))->assertNotFound();
+    }
+
+    public function test_public_standalone_home_redirects_to_login_after_installation(): void
+    {
+        File::put(app(InstallerStateService::class)->lockPath(), json_encode(['installed_at' => now()->toIso8601String()]));
+
+        $this->get(route('landing.home'))
+            ->assertRedirect(route('login'));
     }
 
     public function test_standalone_admin_dashboard_hides_saas_demo_and_customer_acquisition_surfaces(): void
@@ -128,5 +143,10 @@ class StandaloneBoundarySurfaceTest extends TestCase
             ->assertDontSee('Subscription');
 
         $this->get(route('school.subscription.show'))->assertNotFound();
+    }
+
+    private function deleteInstallerLock(): void
+    {
+        File::delete(storage_path('app/installed.lock'));
     }
 }

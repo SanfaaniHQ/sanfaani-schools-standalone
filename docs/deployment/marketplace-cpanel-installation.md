@@ -151,6 +151,8 @@ In cPanel:
 5. Grant required privileges.
 6. Copy the cPanel-prefixed database name and user into `.env`.
 
+Normal buyer-selected cPanel database names are supported, including names such as `swifarpx_fazportal`, `client_school_portal`, and `portal_db`. Do not rename the buyer database just to include `sanfaani_schools`. The optional internal database-name guard is disabled for marketplace installs unless `SANFAANI_DATABASE_NAME_GUARD_ENABLED=true` is explicitly set.
+
 Use:
 
 ```dotenv
@@ -180,6 +182,10 @@ SANFAANI_DEPLOYMENT_MODE=single_school
 SANFAANI_LICENSE_MODE=annual
 SANFAANI_INSTALLER_ENABLED=true
 SANFAANI_INSTALLED=false
+SANFAANI_DATABASE_NAME_GUARD_ENABLED=false
+SANFAANI_DATABASE_NAME_REQUIRED_FRAGMENT=sanfaani_schools
+# Seller key is only needed when this installation will generate license keys.
+SANFAANI_LICENSE_SIGNING_KEY=
 
 FILESYSTEM_DISK=public
 QUEUE_CONNECTION=sync
@@ -207,6 +213,8 @@ After the folder structure, `.env`, database, app key, and permissions are ready
 https://your-domain.example/install
 ```
 
+Before installation is complete, the site root (`https://your-domain.example/`) should send the buyer into this setup flow and `/login` should redirect back to the installer. After installation is complete, the site root should point to the portal login flow.
+
 Installer steps:
 
 1. Welcome.
@@ -230,6 +238,8 @@ php artisan migrate --force
 
 If terminal is unavailable, use the host-approved migration/import path. Do not run destructive migration commands on staging or production.
 
+The standalone sync migrations use shared-hosting-safe string lengths and short index names for older MySQL/cPanel key-length limits.
+
 ## License Activation
 
 After the installer completes:
@@ -243,6 +253,8 @@ After the installer completes:
 
 Raw license keys are not stored. License records use hashed keys and masked display.
 
+Customer portals do not need `SANFAANI_LICENSE_SIGNING_KEY` just to install, log in, or activate a signed license. That key is required only in a trusted seller environment that generates license keys.
+
 ## Installer Lock
 
 Successful completion writes:
@@ -252,6 +264,8 @@ storage/app/installed.lock
 ```
 
 After the lock exists, `/install` returns not found. Do not delete the lock to troubleshoot a live installation. Escalate to Sanfaani support if reinstall or recovery is needed.
+
+Do not manually create `storage/app/installed.lock`. Complete the installer so the first school, first admin, and lock are created together.
 
 ## Post-Install Checks
 
@@ -269,6 +283,7 @@ APP_ENV=production APP_DEBUG=false php artisan security:audit
 Browser checks:
 
 - HTTPS loads.
+- `/` redirects to the installer before setup and to login after setup.
 - `/up` is healthy.
 - `/install` is blocked after completion.
 - Admin login works.
@@ -287,7 +302,7 @@ Browser checks:
 
 500 errors usually mean `.env` syntax is invalid, `APP_KEY` is missing, a PHP extension is missing, database credentials are wrong, or `storage` / `bootstrap/cache` is not writable.
 
-Installer unavailable usually means `SANFAANI_INSTALLER_ENABLED=false`, `SANFAANI_INSTALLED=true`, the deployment mode is not `single_school`, or `storage/app/installed.lock` already exists.
+Installer unavailable usually means `SANFAANI_INSTALLER_ENABLED=false`, `SANFAANI_INSTALLED=true`, the deployment mode is not `single_school`, or `storage/app/installed.lock` already exists. A fresh single-school install must not depend on school, subscription, license, or feature database rows before `/install` opens.
 
 Database check failures usually mean the cPanel-prefixed database name or username is wrong, the user is not assigned to the database, or the database server host is not `localhost`.
 
