@@ -100,7 +100,7 @@
 
         <x-ui.panel
             title="Mode-gated setup states"
-            description="These show which sections are available, disabled, or require setup for the current deployment mode."
+            description="These show which sections are available, disabled, or need attention for the current portal mode."
         >
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @foreach ($placeholderCards as $card)

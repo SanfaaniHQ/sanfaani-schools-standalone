@@ -76,7 +76,7 @@ class StandaloneEditionServiceTest extends TestCase
 
         $warnings = implode(' ', app(StandaloneEditionService::class)->warnings());
 
-        $this->assertStringContainsString('SaaS deployment mode', $warnings);
+        $this->assertStringContainsString('SaaS portal mode', $warnings);
         $this->assertStringContainsString('subscription license mode', $warnings);
         $this->assertStringContainsString('Public sales mode is enabled', $warnings);
         $this->assertStringContainsString('Marketplace live demo is enabled', $warnings);

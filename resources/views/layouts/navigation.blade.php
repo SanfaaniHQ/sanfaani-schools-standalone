@@ -97,7 +97,12 @@
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                        <button class="inline-flex items-center gap-2 px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                            @if (Auth::user()->avatarUrl())
+                                <img src="{{ Auth::user()->avatarUrl() }}" alt="{{ Auth::user()->name }} avatar" class="h-7 w-7 rounded-full object-cover">
+                            @else
+                                <span class="flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 text-xs font-semibold text-white">{{ Auth::user()->initials() }}</span>
+                            @endif
                             <div>{{ Auth::user()->name }}</div>
 
                             <div class="ms-1">

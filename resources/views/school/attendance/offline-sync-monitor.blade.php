@@ -49,7 +49,7 @@
         <x-ui.alert
             tone="warning"
             title="Attendance-only offline pilot"
-            body="Stage 9 monitors server-known offline attendance sync attempts only. Browser-local pending records are invisible to Laravel until the browser attempts sync, and full portal offline mode is not implemented."
+            body="This monitor covers attendance sync attempts that have reached the server. Browser-local pending records appear here only after the browser submits them for sync."
         />
 
         <x-ui.alert
@@ -239,8 +239,8 @@
 
         <x-ui.panel tone="info" title="Stage 8 / Stage 9 Boundary">
             <div class="space-y-2 text-sm leading-6 text-text-secondary">
-                <p>Stage 8 added browser offline attendance capture for the class register. Stage 9 adds this server-side monitor for submitted sync attempts, durable receipts, conflicts, failures, and audit trail context.</p>
-                <p>The hosted Laravel portal/database remains the source of truth. Offline results, admissions, LMS, fees, CBT, live classes, and full portal offline mode are not implemented in this stage.</p>
+                <p>Browser offline attendance capture is available for class registers, and this server-side monitor tracks submitted sync attempts, receipts, conflicts, failures, and audit trail context.</p>
+                <p>The hosted school portal and database remain the source of truth. Other modules require an active connection and continue to run through the online portal.</p>
             </div>
         </x-ui.panel>
     </div>

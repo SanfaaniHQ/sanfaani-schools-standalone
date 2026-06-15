@@ -11,7 +11,7 @@
 
     <div class="space-y-6">
         <x-ui.panel tone="warning">
-            <h3 class="text-base font-semibold text-text-primary">Restore execution is not implemented</h3>
+            <h3 class="text-base font-semibold text-text-primary">Manual Restore Plan</h3>
             <p class="mt-2 text-sm leading-6 text-text-secondary">
                 This page is a manual plan only. It does not run shell commands, copy files, import databases, or roll back migrations.
             </p>

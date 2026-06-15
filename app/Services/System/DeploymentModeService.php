@@ -48,7 +48,7 @@ class DeploymentModeService
             value: config('sanfaani.deployment.mode', self::MODE_SAAS),
             allowed: self::DEPLOYMENT_MODES,
             default: self::MODE_SAAS,
-            label: 'deployment mode'
+            label: 'portal mode'
         );
     }
 

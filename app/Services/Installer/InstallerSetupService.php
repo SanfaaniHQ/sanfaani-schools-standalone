@@ -5,11 +5,14 @@ namespace App\Services\Installer;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\MailSettingService;
 use App\Services\System\DeploymentModeService;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
+use Throwable;
 
 class InstallerSetupService
 {
@@ -21,7 +24,7 @@ class InstallerSetupService
     public function createLocalSchool(array $data): School
     {
         if (! $this->deployment->isSingleSchool()) {
-            throw new RuntimeException('Local school creation is only available in single-school deployment mode.');
+            throw new RuntimeException('Local school creation is only available in single-school portal mode.');
         }
 
         if (School::query()->count() > 1) {
@@ -100,6 +103,8 @@ class InstallerSetupService
             $school = $this->createLocalSchool($schoolData);
             $admin = $this->createOwnerAdmin($adminData, $school);
             $this->assignOwnerRole($admin, $school);
+            $this->configureSchoolMail($school, (array) data_get($metadata, 'smtp_placeholder', []));
+            $this->runSafePostInstallTasks();
 
             $this->state->markInstalled(array_merge($metadata, [
                 'school_id' => $school->id,
@@ -111,5 +116,46 @@ class InstallerSetupService
                 'admin' => $admin,
             ];
         });
+    }
+
+    private function configureSchoolMail(School $school, array $smtp): void
+    {
+        if (($smtp['mailer'] ?? 'log') === 'log' && ! filled($smtp['from_address'] ?? null)) {
+            return;
+        }
+
+        $mailSettings = app(MailSettingService::class);
+
+        if (! $mailSettings->schoolScopeIsReady()) {
+            return;
+        }
+
+        $mailSettings->updateForSchool($school, [
+            'is_enabled' => ($smtp['mailer'] ?? 'log') === 'smtp',
+            'mailer' => $smtp['mailer'] ?? 'log',
+            'host' => $smtp['host'] ?? null,
+            'port' => $smtp['port'] ?? null,
+            'username' => $smtp['username'] ?? null,
+            'password' => $smtp['password'] ?? null,
+            'encryption' => $smtp['encryption'] ?? null,
+            'from_address' => $smtp['from_address'] ?? $school->email,
+            'from_name' => $smtp['from_name'] ?? $school->name,
+        ]);
+    }
+
+    private function runSafePostInstallTasks(): void
+    {
+        foreach ([
+            ['storage:link', []],
+            ['config:clear', []],
+            ['cache:clear', []],
+            ['view:clear', []],
+        ] as [$command, $parameters]) {
+            try {
+                Artisan::call($command, $parameters);
+            } catch (Throwable) {
+                //
+            }
+        }
     }
 }

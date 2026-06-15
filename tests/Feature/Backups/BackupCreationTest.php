@@ -161,7 +161,7 @@ class BackupCreationTest extends TestCase
         $this->actingAs($user)
             ->get(route('admin.backups.restore-plan', $backup))
             ->assertOk()
-            ->assertSee('Restore execution is not implemented')
+            ->assertSee('Manual Restore Plan')
             ->assertSee('No restore operation has been executed automatically')
             ->assertSee('Pre-restore checklist')
             ->assertSee('Restore drill guidance')

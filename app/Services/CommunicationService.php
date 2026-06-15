@@ -239,6 +239,10 @@ class CommunicationService
     private function deliverWithFallback(?School $school, callable $callback): array
     {
         if ($school && ! $this->mailSettings->hasEnabledSchoolMailer($school)) {
+            if (! $this->mailSettings->platformMailerConfigured()) {
+                throw new RuntimeException('Platform fallback is not configured. Please configure platform mail settings or use school SMTP.');
+            }
+
             $this->mailSettings->withPlatformMailContext($callback);
 
             return [
@@ -255,6 +259,13 @@ class CommunicationService
                 'primary_error' => null,
             ];
         } catch (Throwable $primaryException) {
+            if ($this->mailSettings->platformFallbackEnabled() && ! $this->mailSettings->platformMailerConfigured()) {
+                throw new RuntimeException(
+                    'School SMTP failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback is not configured. Please configure platform mail settings or use school SMTP.',
+                    previous: $primaryException
+                );
+            }
+
             if (! $this->shouldTryPlatformFallback($school)) {
                 throw $primaryException;
             }
@@ -278,7 +289,8 @@ class CommunicationService
     private function shouldTryPlatformFallback(?School $school): bool
     {
         return $this->mailSettings->hasEnabledSchoolMailer($school)
-            && $this->mailSettings->platformFallbackEnabled();
+            && $this->mailSettings->platformFallbackEnabled()
+            && $this->mailSettings->platformMailerConfigured();
     }
 
     private function markSent(CommunicationLog $log, array $delivery): void

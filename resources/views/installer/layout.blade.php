@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Sanfaani Schools') }} Installer</title>
+    <title>School Portal Setup - {{ config('app.name', 'Sanfaani Schools') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-bg-secondary text-text-primary antialiased">
@@ -26,27 +26,27 @@
             'review' => 'installer.review',
         ];
         $stepLabels = [
-            'welcome' => 'Welcome',
-            'requirements' => 'Requirements',
-            'permissions' => 'Folder access',
-            'database' => 'Database connection',
-            'environment' => 'Portal configuration',
-            'app-key' => 'Security key',
-            'migrations' => 'Prepare database',
-            'admin' => 'Owner account',
-            'school' => 'School profile',
-            'smtp' => 'Email settings',
-            'review' => 'Review',
-            'complete' => 'Complete',
+            'welcome' => 'School Portal Setup',
+            'requirements' => 'Requirements Check',
+            'permissions' => 'Folder Access',
+            'database' => 'Connect Database',
+            'environment' => 'Application URL',
+            'app-key' => 'Security Key',
+            'migrations' => 'Prepare Database',
+            'admin' => 'Create School Admin',
+            'school' => 'School Profile',
+            'smtp' => 'Email Delivery',
+            'review' => 'Finish Setup',
+            'complete' => 'Ready to Use',
         ];
     @endphp
 
     <main class="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 py-6 sm:px-6 lg:px-8">
         <header class="mb-6 flex flex-col gap-3 border-b border-border-subtle pb-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-normal text-text-muted">School setup</p>
+                <p class="text-xs font-semibold uppercase tracking-normal text-text-muted">School Portal Setup</p>
                 <h1 class="text-2xl font-semibold text-text-primary">{{ config('app.name', 'Sanfaani Schools') }}</h1>
-                <p class="mt-1 text-sm text-text-secondary">A guided setup for this private school portal.</p>
+                <p class="mt-1 text-sm text-text-secondary">A guided setup for your live standalone school portal.</p>
             </div>
             <div class="rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-xs text-text-secondary">
                 Step {{ $currentIndex + 1 }} of {{ max(1, $stepList->count()) }}

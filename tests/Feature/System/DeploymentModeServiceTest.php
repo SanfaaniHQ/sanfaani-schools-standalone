@@ -148,7 +148,7 @@ class DeploymentModeServiceTest extends TestCase
         config(['sanfaani.deployment.mode' => 'enterprise_client']);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported Sanfaani deployment mode [enterprise_client].');
+        $this->expectExceptionMessage('Unsupported Sanfaani portal mode [enterprise_client].');
 
         app(DeploymentModeService::class)->mode();
     }
@@ -174,7 +174,7 @@ class DeploymentModeServiceTest extends TestCase
             ->get(route('admin.system.status'))
             ->assertOk()
             ->assertSee('System Status')
-            ->assertSee('Deployment mode')
+            ->assertSee('Portal mode')
             ->assertSee('License mode')
             ->assertSee('Queue connection')
             ->assertSee('Filesystem disk');

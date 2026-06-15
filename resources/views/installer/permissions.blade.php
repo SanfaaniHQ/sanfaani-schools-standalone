@@ -3,14 +3,14 @@
 @section('content')
     <div class="space-y-5">
         <div>
-            <h2 class="text-xl font-semibold text-text-primary">Folder Permission Check</h2>
-            <p class="mt-2 text-sm text-text-secondary">The application needs write access to runtime folders so it can save cache files, uploaded files, and safe installation state. Public storage links can usually be created from hosting tools if terminal access is unavailable.</p>
+            <h2 class="text-xl font-semibold text-text-primary">Folder Access Check</h2>
+            <p class="mt-2 text-sm text-text-secondary">The portal needs write access to runtime folders so it can save cache files, uploaded files, and safe installation state. Public storage links can usually be created from hosting tools.</p>
         </div>
 
         @include('installer.partials.checks', ['checks' => $checks])
 
         <div class="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            Keep private folders out of public access. The domain document root should point to <span class="font-mono">/public</span>, not the project root that contains <span class="font-mono">.env</span>, <span class="font-mono">storage</span>, logs, backups, or source files.
+            Keep private folders out of public access. The domain document root should point to <span class="font-mono">/public</span>, not the project root that contains private settings, storage, logs, backups, or source files.
         </div>
 
         <div class="flex justify-between">

@@ -68,7 +68,7 @@ class FeatureAccessServiceTest extends TestCase
         ]);
 
         $this->assertFalse(app(FeatureAccessService::class)->enabled('saas_billing'));
-        $this->assertStringContainsString('deployment mode [single_school]', app(FeatureAccessService::class)->reason('saas_billing'));
+        $this->assertStringContainsString('portal mode [single_school]', app(FeatureAccessService::class)->reason('saas_billing'));
     }
 
     public function test_standalone_feature_is_enabled_in_single_school_mode(): void

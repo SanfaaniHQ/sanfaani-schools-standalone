@@ -27,7 +27,7 @@ class StandaloneStatusCommand extends Command
         }
 
         $this->line('Product edition: '.$status['product_label']);
-        $this->line('Deployment mode: '.$status['deployment_mode']);
+        $this->line('Portal mode: '.$status['deployment_mode']);
         $this->line('Installer: '.($status['installer_enabled'] ? 'enabled' : 'disabled'));
         $this->line('Installed: '.($status['installed'] ? 'yes' : 'no'));
         $this->line('License mode: '.$status['license_mode']);

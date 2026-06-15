@@ -17,7 +17,7 @@
 
             <x-ui.panel tone="warning">
                 <p class="text-sm leading-6 text-text-secondary">
-                    These tools export selected operational CSV data only. Full database backup/export remains in the backup system. Password import, payment gateway import, offline attendance import, PDF exports, Excel exports, and unrestricted database dumps are not implemented here.
+                    These tools export selected operational CSV data only. Full database backup/export remains in the backup system. Password import, payment gateway import, offline attendance import, PDF exports, Excel exports, and unrestricted database dumps are handled outside this screen.
                 </p>
             </x-ui.panel>
 

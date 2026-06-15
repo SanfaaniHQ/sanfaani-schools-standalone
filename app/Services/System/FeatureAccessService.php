@@ -127,7 +127,7 @@ class FeatureAccessService
         }
 
         if (! $this->enabledForDeploymentMode($feature)) {
-            return $this->decision(false, "Feature [{$feature}] is disabled for deployment mode [{$this->deployment->mode()}].");
+            return $this->decision(false, "Feature [{$feature}] is disabled for portal mode [{$this->deployment->mode()}].");
         }
 
         if (! $this->enabledForLicenseMode($feature)) {

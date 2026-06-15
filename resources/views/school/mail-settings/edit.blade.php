@@ -96,7 +96,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Encryption</label>
                             <select name="encryption" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
-                                <option value="">None</option>
+                                <option value="none" @selected(in_array(old('encryption', $setting->encryption), [null, '', 'none'], true))>None</option>
                                 <option value="tls" @selected(old('encryption', $setting->encryption) === 'tls')>TLS</option>
                                 <option value="ssl" @selected(old('encryption', $setting->encryption) === 'ssl')>SSL</option>
                             </select>
@@ -144,13 +144,16 @@
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt>Platform fallback</dt>
-                            <dd class="font-medium {{ $platformFallbackEnabled ? 'text-green-700' : 'text-gray-700' }}">{{ $platformFallbackEnabled ? ($platformSetting->is_enabled ? 'Configured' : 'Default') : 'Disabled' }}</dd>
+                            <dd class="font-medium {{ $platformFallbackConfigured ? 'text-green-700' : 'text-amber-700' }}">{{ $platformFallbackEnabled ? ($platformFallbackConfigured ? 'Configured' : 'Not configured') : 'Disabled' }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt>Platform-only mode</dt>
                             <dd class="font-medium {{ $forcePlatformMailer ? 'text-amber-700' : 'text-gray-700' }}">{{ $forcePlatformMailer ? 'Enabled' : 'Off' }}</dd>
                         </div>
                     </dl>
+                    @if ($platformFallbackEnabled && ! $platformFallbackConfigured)
+                        <p class="mt-4 text-xs leading-5 text-amber-700">Platform fallback is not configured. Please configure platform mail settings or use school SMTP.</p>
+                    @endif
                 </div>
 
                 <form id="school-mail-test-form" method="POST" action="{{ route('school.mail-settings.test') }}" data-loading-text="Testing..." class="rounded-lg bg-white p-6 shadow-sm">

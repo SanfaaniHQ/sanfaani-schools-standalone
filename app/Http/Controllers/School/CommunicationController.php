@@ -16,6 +16,7 @@ use App\Services\CommunicationService;
 use App\Services\CurrentSchoolService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\TeacherAssignmentAccessService;
+use App\Support\Notifications\SchoolNotificationTemplateRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -115,14 +116,17 @@ class CommunicationController extends Controller
         $this->authorizeSchoolAdminRole($request);
         $this->ensureRoleFeature($request, $school, 'communication.templates.manage');
 
+        $registry = app(SchoolNotificationTemplateRegistry::class);
+
         return view('school.communications.templates.form', [
             'school' => $school,
             'template' => new SchoolNotificationTemplate([
-                'channel' => SchoolNotificationTemplate::CHANNEL_DATABASE,
+                'channel' => SchoolNotificationTemplate::CHANNEL_EMAIL,
                 'audience_type' => SchoolNotificationTemplate::AUDIENCE_SCHOOL_ADMIN,
                 'is_active' => true,
             ]),
-            'channels' => SchoolNotificationTemplate::CHANNELS,
+            'templateOptions' => $registry->all(),
+            'channelOptions' => $registry->channels(),
             'audienceTypes' => SchoolNotificationTemplate::AUDIENCE_TYPES,
             'action' => route('school.communications.templates.store'),
             'method' => 'POST',
@@ -155,10 +159,13 @@ class CommunicationController extends Controller
         $this->ensureRoleFeature($request, $school, 'communication.templates.manage');
         $this->authorizeTemplate($notificationTemplate, $school);
 
+        $registry = app(SchoolNotificationTemplateRegistry::class);
+
         return view('school.communications.templates.form', [
             'school' => $school,
             'template' => $notificationTemplate,
-            'channels' => SchoolNotificationTemplate::CHANNELS,
+            'templateOptions' => $registry->all(),
+            'channelOptions' => $registry->channels(),
             'audienceTypes' => SchoolNotificationTemplate::AUDIENCE_TYPES,
             'action' => route('school.communications.templates.update', $notificationTemplate),
             'method' => 'PATCH',
@@ -504,6 +511,10 @@ class CommunicationController extends Controller
 
     private function validatedTemplate(Request $request, School $school, ?SchoolNotificationTemplate $template = null): array
     {
+        if ($request->filled('custom_template_key')) {
+            $request->merge(['template_key' => $request->input('custom_template_key')]);
+        }
+
         return $request->validate([
             'template_key' => [
                 'required',
@@ -514,6 +525,7 @@ class CommunicationController extends Controller
                     ->where('school_id', $school->id)
                     ->ignore($template?->id),
             ],
+            'custom_template_key' => ['nullable', 'string', 'max:120', 'regex:/^[A-Za-z0-9._-]+$/'],
             'title' => ['required', 'string', 'max:191'],
             'subject' => ['nullable', 'string', 'max:191'],
             'body' => ['required', 'string', 'max:5000'],

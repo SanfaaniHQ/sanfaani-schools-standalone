@@ -8,6 +8,9 @@ use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationCont
 use App\Http\Controllers\Admin\DemoSessionController as AdminDemoSessionController;
 use App\Http\Controllers\Admin\DeploymentPlaceholderController;
 use App\Http\Controllers\Admin\LeadRequestController;
+use App\Http\Controllers\Admin\LocalBrandingController;
+use App\Http\Controllers\Admin\LocalMailSettingController;
+use App\Http\Controllers\Admin\LocalSchoolAdminController;
 use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\MarketingAutomationController;
@@ -373,6 +376,52 @@ Route::middleware(['auth', 'role:super_admin', 'demo.safe'])
         Route::patch('/platform-settings', [PlatformSettingController::class, 'update'])
             ->name('platform-settings.update')
             ->middleware('deployment.behavior:platform_settings|local_school_settings');
+
+        Route::prefix('local-branding')
+            ->name('local-branding.')
+            ->middleware(['feature:branding_manager', 'deployment.behavior:local_branding|standalone_branding'])
+            ->group(function () {
+                Route::get('/', [LocalBrandingController::class, 'edit'])
+                    ->name('edit');
+                Route::patch('/', [LocalBrandingController::class, 'update'])
+                    ->name('update');
+                Route::post('/logo', [LocalBrandingController::class, 'logo'])
+                    ->name('logo');
+                Route::post('/favicon', [LocalBrandingController::class, 'favicon'])
+                    ->name('favicon');
+                Route::post('/storage-link', [LocalBrandingController::class, 'repairStorageLink'])
+                    ->name('storage-link');
+            });
+
+        Route::prefix('local-mail-settings')
+            ->name('local-mail-settings.')
+            ->middleware('deployment.behavior:local_mail_settings')
+            ->group(function () {
+                Route::get('/', [LocalMailSettingController::class, 'edit'])
+                    ->name('edit');
+                Route::patch('/', [LocalMailSettingController::class, 'update'])
+                    ->name('update');
+                Route::post('/test', [LocalMailSettingController::class, 'test'])
+                    ->name('test');
+            });
+
+        Route::prefix('local-admins')
+            ->name('local-admins.')
+            ->middleware('deployment.behavior:local_dashboard|local_school_settings')
+            ->group(function () {
+                Route::get('/', [LocalSchoolAdminController::class, 'index'])
+                    ->name('index');
+                Route::get('/create', [LocalSchoolAdminController::class, 'create'])
+                    ->name('create');
+                Route::post('/', [LocalSchoolAdminController::class, 'store'])
+                    ->name('store');
+                Route::post('/{admin}/reset-password', [LocalSchoolAdminController::class, 'resetPassword'])
+                    ->name('reset-password');
+                Route::post('/{admin}/disable', [LocalSchoolAdminController::class, 'disable'])
+                    ->name('disable');
+                Route::post('/{admin}/enable', [LocalSchoolAdminController::class, 'enable'])
+                    ->name('enable');
+            });
 
         Route::resource('schools', SchoolController::class)
             ->except(['show', 'destroy'])

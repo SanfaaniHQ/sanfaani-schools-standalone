@@ -28,47 +28,47 @@ class DeploymentPlaceholderController extends Controller
             'standalone-installer' => [
                 'title' => 'Standalone Installer',
                 'route_group' => 'standalone_installer',
-                'body' => 'This placeholder proves installer visibility is controlled by deployment behavior. The guided installer is not implemented in this step.',
+                'body' => 'Use the guided setup flow to prepare the school portal and lock installation when setup is complete.',
             ],
             'standalone-license' => [
                 'title' => 'License Status',
                 'route_group' => 'standalone_license',
-                'body' => 'This placeholder proves local license visibility is controlled by deployment behavior and feature flags. License activation is not implemented in this step.',
+                'body' => 'Review the local license status, entitlement checks, renewal window, and safe activation details.',
             ],
             'standalone-updates' => [
                 'title' => 'Standalone Updates',
                 'route_group' => 'standalone_updates',
-                'body' => 'This placeholder proves update visibility is controlled by deployment behavior. The update wizard is not implemented in this step.',
+                'body' => 'Review guided update packages, preflight checks, and shared-hosting update readiness.',
             ],
             'local-branding' => [
                 'title' => 'Local Branding',
                 'route_group' => 'local_branding',
-                'body' => 'This placeholder proves local branding settings can be separated by deployment mode. Branding storage is not implemented in this step.',
+                'body' => 'Branding is managed from Brand Your Portal. Upload your school logo and choose portal colours to complete your school identity.',
             ],
             'local-mail' => [
                 'title' => 'Local SMTP Settings',
                 'route_group' => 'local_mail_settings',
-                'body' => 'This placeholder proves local mail settings can be separated by deployment mode. The existing mail settings workflow remains unchanged.',
+                'body' => 'Connect your school email account to send admission updates, password resets, invoices, and announcements.',
             ],
             'managed-support' => [
                 'title' => 'Managed Support Tools',
                 'route_group' => 'managed_support',
-                'body' => 'This placeholder proves managed support visibility is controlled by deployment behavior and feature flags. No managed support automation is implemented in this step.',
+                'body' => 'Managed support tools appear here when the installation includes assisted support operations.',
             ],
             'managed-backups' => [
                 'title' => 'Managed Backups',
                 'route_group' => 'managed_backups',
-                'body' => 'This placeholder proves managed backup visibility is controlled by deployment behavior and feature flags. No backup manager is implemented in this step.',
+                'body' => 'Managed backup controls appear here when the installation includes assisted backup operations.',
             ],
             'managed-updates' => [
                 'title' => 'Managed Updates',
                 'route_group' => 'managed_updates',
-                'body' => 'This placeholder proves managed update visibility is controlled by deployment behavior and feature flags. No update manager is implemented in this step.',
+                'body' => 'Managed update controls appear here when the installation includes assisted update operations.',
             ],
             'managed-white-label' => [
                 'title' => 'Managed White Label',
                 'route_group' => 'managed_white_label',
-                'body' => 'This placeholder proves white-label visibility is controlled by deployment behavior and feature flags. No branding storage is implemented in this step.',
+                'body' => 'Managed white-label controls appear here when the license and support plan include them.',
             ],
         ];
     }

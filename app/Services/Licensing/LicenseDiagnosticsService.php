@@ -23,7 +23,7 @@ class LicenseDiagnosticsService
 
         return [
             $this->item('Validation status', $this->label($result->status), $result->valid() ? 'pass' : 'warning'),
-            $this->item('Deployment mode', $this->label($this->deployment->mode()), 'info'),
+            $this->item('Portal mode', $this->label($this->deployment->mode()), 'info'),
             $this->item('License mode', $this->label($this->deployment->licenseMode()), 'info'),
             $this->item('Local license record', $license ? 'Present' : 'Missing', $license ? 'pass' : 'warning'),
             $this->item('Key storage', $license ? 'Hashed and masked' : 'No key stored', 'pass'),

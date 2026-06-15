@@ -1,11 +1,11 @@
 @extends('installer.layout')
 
 @section('content')
-    <form method="POST" action="{{ route('installer.admin.store') }}" data-loading-text="Saving owner account..." class="space-y-5">
+    <form method="POST" action="{{ route('installer.admin.store') }}" data-loading-text="Saving school admin..." class="space-y-5">
         @csrf
         <div>
-            <h2 class="text-xl font-semibold text-text-primary">Owner Admin Setup</h2>
-            <p class="mt-2 text-sm text-text-secondary">Create the first owner login for this standalone school. Use a real email address and share the password only through a secure handover process.</p>
+            <h2 class="text-xl font-semibold text-text-primary">Create School Admin</h2>
+            <p class="mt-2 text-sm text-text-secondary">Create the first school admin login for this portal. Use a real email address and share the password through a secure handover process.</p>
         </div>
 
         <div class="grid gap-4 sm:grid-cols-2">
@@ -32,7 +32,7 @@
 
         <div class="flex justify-between">
             <a href="{{ route('installer.migrations') }}" class="rounded-md border border-border-subtle px-4 py-2 text-sm font-semibold text-text-secondary hover:bg-bg-secondary">Back</a>
-            <button type="submit" data-loading-text="Saving owner account..." class="rounded-md bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90">Save and continue</button>
+            <button type="submit" data-loading-text="Saving school admin..." class="rounded-md bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90">Save and continue</button>
         </div>
     </form>
 @endsection

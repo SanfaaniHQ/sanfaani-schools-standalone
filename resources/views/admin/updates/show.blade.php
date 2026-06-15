@@ -58,7 +58,7 @@
                 <div>
                     <h3 class="text-base font-semibold text-text-primary">Compatibility review</h3>
                     <p class="mt-1 text-sm leading-6 text-text-secondary">
-                        Product, edition, deployment mode, version, PHP, Laravel, and extension requirements are summarized without exposing package contents.
+                        Product, edition, portal mode, version, PHP, Laravel, and extension requirements are summarized without exposing package contents.
                     </p>
                 </div>
                 <x-ui.badge :tone="($compatibility['status'] ?? 'review') === 'compatible' ? 'success' : ((($compatibility['status'] ?? 'review') === 'incompatible') ? 'danger' : 'warning')">

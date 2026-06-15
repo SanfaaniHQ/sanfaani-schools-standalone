@@ -239,6 +239,13 @@ class MailSettingService
                 'mailer' => $setting->mailer,
             ];
         } catch (Throwable $primaryException) {
+            if ($this->platformFallbackEnabled() && ! $this->platformMailerConfigured()) {
+                throw new RuntimeException(
+                    'School SMTP test failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback is not configured. Please configure platform mail settings or use school SMTP.',
+                    previous: $primaryException
+                );
+            }
+
             if (! $this->shouldTryPlatformFallback($setting)) {
                 throw $primaryException;
             }
@@ -336,6 +343,14 @@ class MailSettingService
     {
         $data['is_enabled'] = (bool) ($data['is_enabled'] ?? false);
 
+        if (($data['encryption'] ?? null) === 'none') {
+            $data['encryption'] = null;
+        }
+
+        if (array_key_exists('from_name', $data) && ! filled($data['from_name'])) {
+            $data['from_name'] = config('mail.from.name') ?: config('app.name', 'Sanfaani Schools');
+        }
+
         if (! filled($data['password'] ?? null)) {
             unset($data['password']);
         }
@@ -367,6 +382,34 @@ class MailSettingService
         return (bool) data_get($this->mailGovernance(), 'platform_fallback_enabled', true);
     }
 
+    public function platformMailerConfigured(): bool
+    {
+        $setting = $this->configured();
+
+        if ($setting && $setting->is_enabled) {
+            if ($setting->mailer === 'log') {
+                return true;
+            }
+
+            return $setting->mailer === 'smtp'
+                && filled($setting->host)
+                && filled($setting->from_address)
+                && filled($setting->from_name ?: config('mail.from.name'));
+        }
+
+        $mailer = (string) config('mail.default', 'log');
+
+        if ($mailer === 'log') {
+            return filled(config('mail.from.address'))
+                && filled(config('mail.from.name'));
+        }
+
+        return $mailer === 'smtp'
+            && filled(config('mail.mailers.smtp.host'))
+            && filled(config('mail.from.address'))
+            && filled(config('mail.from.name'));
+    }
+
     public function mailGovernance(): array
     {
         try {
@@ -392,7 +435,8 @@ class MailSettingService
         return filled($setting->school_id)
             && $setting->is_enabled
             && $setting->mailer === 'smtp'
-            && $this->platformFallbackEnabled();
+            && $this->platformFallbackEnabled()
+            && $this->platformMailerConfigured();
     }
 
     private function smtpScheme(MailSetting $setting): ?string

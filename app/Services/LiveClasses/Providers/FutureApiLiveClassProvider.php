@@ -37,7 +37,7 @@ abstract class FutureApiLiveClassProvider extends AbstractLiveClassProvider
     public function boundaryNotes(): array
     {
         return [
-            static::LABEL.' API automation is not implemented.',
+            static::LABEL.' API automation is currently disabled.',
             'OAuth, provider credentials, token refresh, webhooks, generated rooms, and external API calls are not active.',
             'Manual meeting links remain required until a later automation stage safely adds credentials and provider APIs.',
         ];

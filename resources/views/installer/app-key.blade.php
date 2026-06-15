@@ -3,15 +3,15 @@
 @section('content')
     <div class="space-y-5">
         <div>
-            <h2 class="text-xl font-semibold text-text-primary">Security key</h2>
-            <p class="mt-2 text-sm text-text-secondary">The security key protects logins, sessions, and private settings. It must be ready before the owner account is created.</p>
+            <h2 class="text-xl font-semibold text-text-primary">Security Key</h2>
+            <p class="mt-2 text-sm text-text-secondary">The security key protects logins, sessions, and private settings. It must be ready before the school admin account is created.</p>
         </div>
 
         @include('installer.partials.checks', ['checks' => [$check]])
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
             <p class="font-semibold text-text-primary">If the key is missing</p>
-            <p class="mt-1">Ask the installer or hosting provider to generate the Laravel <span class="font-mono">APP_KEY</span> and save it in <span class="font-mono">.env</span>. Refresh this page before continuing.</p>
+            <p class="mt-1">Use your hosting setup tool to generate and save the application security key, then refresh this page before continuing.</p>
         </div>
 
         <div class="flex justify-between">

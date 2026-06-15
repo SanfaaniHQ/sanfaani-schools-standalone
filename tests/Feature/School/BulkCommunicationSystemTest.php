@@ -28,6 +28,17 @@ class BulkCommunicationSystemTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'mail.default' => 'log',
+            'mail.from.address' => 'noreply@example.test',
+            'mail.from.name' => 'Sanfaani Test',
+        ]);
+    }
+
     public function test_bulk_student_communication_is_deduplicated_chunked_and_resumable(): void
     {
         Mail::fake();

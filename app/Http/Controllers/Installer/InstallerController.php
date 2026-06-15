@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
@@ -117,9 +118,15 @@ class InstallerController extends Controller
 
     public function storeAdmin(Request $request): RedirectResponse
     {
+        $emailRules = ['required', 'email', 'max:255'];
+
+        if ($this->usersTableReady()) {
+            $emailRules[] = Rule::unique('users', 'email');
+        }
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
+            'email' => $emailRules,
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
@@ -181,7 +188,8 @@ class InstallerController extends Controller
             'mailer' => $data['mailer'] ?? 'log',
             'host' => $data['host'] ?? null,
             'port' => $data['port'] ?? null,
-            'username' => filled($data['username'] ?? null) ? 'configured' : null,
+            'username' => $data['username'] ?? null,
+            'password' => $data['password'] ?? null,
             'password_provided' => filled($data['password'] ?? null),
             'encryption' => $data['encryption'] ?? null,
             'from_address' => $data['from_address'] ?? null,
@@ -305,5 +313,14 @@ class InstallerController extends Controller
     private function lockLabel(): string
     {
         return 'storage/app/'.ltrim((string) config('installer.lock_file', 'installed.lock'), '/\\');
+    }
+
+    private function usersTableReady(): bool
+    {
+        try {
+            return Schema::hasTable('users');
+        } catch (Throwable) {
+            return false;
+        }
     }
 }

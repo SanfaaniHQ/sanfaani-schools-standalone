@@ -32,7 +32,7 @@
                 @endif
             </div>
             <span class="inline-flex w-fit rounded-full {{ $cycle ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }} px-3 py-1 text-xs font-semibold">
-                {{ $cycle ? 'Ready to share' : 'Requires setup' }}
+                {{ $cycle ? 'Ready to share' : 'Needs attention' }}
             </span>
         </div>
 

@@ -277,7 +277,7 @@
 
             <x-ui.panel tone="info">
                 <p class="text-sm leading-6 text-text-secondary">
-                    Reports are view-only and school-scoped. Selected finance CSV export is available from Import / Export; online payment gateway automation, offline fee capture, parent/student finance portals, and double-entry accounting are not implemented here.
+                    Reports are view-only and school-scoped. Selected finance CSV export is available from Import / Export; payment gateway automation, offline fee capture, parent/student finance portals, and double-entry accounting are handled outside this report page.
                 </p>
             </x-ui.panel>
         </div>

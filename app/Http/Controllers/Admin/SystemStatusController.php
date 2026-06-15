@@ -21,7 +21,7 @@ class SystemStatusController extends Controller
         return view('admin.system.status', [
             'statusItems' => [
                 'App version' => config('version.version', '1.0.0'),
-                'Deployment mode' => $deployment->mode(),
+                'Portal mode' => $deployment->mode(),
                 'Commercial model' => $behavior->commercialModelLabel(),
                 'License mode' => $deployment->licenseMode(),
                 'Brand mode' => $deployment->brandMode(),
@@ -77,8 +77,14 @@ class SystemStatusController extends Controller
                 [
                     'title' => 'Local Branding',
                     'route_group' => 'local_branding',
-                    'href' => route('admin.deployment.placeholder', 'local-branding'),
-                    'body' => 'Visible only in local owner deployment behavior.',
+                    'href' => route('admin.local-branding.edit'),
+                    'body' => 'Manage the school logo, colours, display name, login identity, and report/email branding.',
+                ],
+                [
+                    'title' => 'Email Delivery',
+                    'route_group' => 'local_mail_settings',
+                    'href' => route('admin.local-mail-settings.edit'),
+                    'body' => 'Connect and test the school SMTP account for portal mail.',
                 ],
                 [
                     'title' => 'Managed Support Tools',

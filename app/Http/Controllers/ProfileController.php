@@ -8,6 +8,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -27,13 +29,34 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        if ($request->boolean('remove_avatar')) {
+            $this->deleteAvatar($user->avatar_path);
+            $user->avatar_path = null;
+        }
+
+        if ($request->hasFile('avatar')) {
+            $this->deleteAvatar($user->avatar_path);
+            $extension = strtolower((string) $request->file('avatar')->getClientOriginalExtension());
+            $user->avatar_path = $request->file('avatar')->storeAs(
+                'avatars/'.$user->id,
+                'avatar-'.Str::uuid().'.'.$extension,
+                'public'
+            );
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -64,5 +87,14 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    private function deleteAvatar(?string $path): void
+    {
+        $path = str_replace('\\', '/', ltrim((string) $path, '/'));
+
+        if ($path !== '' && Str::startsWith($path, 'avatars/') && ! Str::contains($path, ['..', '.env'])) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

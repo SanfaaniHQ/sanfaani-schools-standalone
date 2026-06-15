@@ -576,12 +576,12 @@ class StandaloneDashboardSummaryService
                     : 'The attendance-only browser pilot is available only when capture and sync are enabled.',
             ],
                 ['label' => 'LMS and CBT activity links', 'status' => 'Available', 'detail' => 'Online class/subject materials, private resources, publish workflow, and links to existing CBT items are available. CBT remains the assessment engine; offline LMS and submissions remain deferred.'],
-                ['label' => 'Live classes', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider setup is available. Provider API automation remains deferred. Offline live class is not implemented.'],
+                ['label' => 'Live classes', 'status' => 'Available', 'detail' => 'Manual meeting links, class/subject schedules, LMS context links, status workflow, and recording links are available. Internet is required. Provider setup is available; API automation and offline class delivery remain disabled.'],
                 ['label' => 'Live class provider setup', 'status' => 'Available', 'detail' => 'Manual provider support, provider registry details, provider labels, and future provider boundaries are available without storing credentials or calling external APIs.'],
                 ['label' => 'Communication notification hardening', 'status' => 'Available', 'detail' => 'School-scoped communication center, templates, operational notification logs, safe live-class reminders, and provider-ready deferred SMS/WhatsApp/email channels are available. External provider APIs remain deferred.'],
                 ['label' => 'Branding and white-label consolidation', 'status' => 'Available', 'detail' => 'Resolved school display name, logo, colors, auth/dashboard/module branding, report/invoice/admissions branding hooks, safe uploads, audit logging, and powered-by boundaries are available. Full website, DNS, SSL, and theme builder work remain deferred.'],
-                ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, generated meeting rooms, webhooks, and recording sync are not implemented.'],
-            ['label' => 'Full browser offline/PWA', 'status' => 'Not implemented', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
+                ['label' => 'Live class provider automation', 'status' => 'Planned', 'detail' => 'Google Meet, Zoom, Microsoft Teams, OAuth, provider credentials, generated meeting rooms, webhooks, and recording sync are planned but disabled in this build.'],
+            ['label' => 'Full browser offline/PWA', 'status' => 'Online portal', 'detail' => 'Local-first server operation is available; the attendance pilot does not make the full portal work offline.'],
         ];
     }
 
@@ -593,7 +593,7 @@ class StandaloneDashboardSummaryService
 
         return 'Local-first means the school server and hosted Laravel database remain the source of truth. '
             .$attendance
-            .' Full portal offline mode is not implemented, and the server cannot see browser-local pending attendance until it syncs.';
+            .' Other portal modules require an active connection, and the server cannot see browser-local pending attendance until it syncs.';
     }
 
     private function route(string $name): ?string

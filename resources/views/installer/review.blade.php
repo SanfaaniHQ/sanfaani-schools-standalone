@@ -36,7 +36,7 @@
         </div>
 
         <div class="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            Finalizing creates the school, creates the owner login, writes the installation lock, and prevents reinstall from the browser. It does not run database changes, activate the license, send emails, or start backups.
+            Finalizing creates the school, creates the school admin login, saves email delivery settings where available, checks public storage, clears application caches, writes the installation lock, and prevents reinstall from the browser. It does not send emails, activate a license, or start backups.
         </div>
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">

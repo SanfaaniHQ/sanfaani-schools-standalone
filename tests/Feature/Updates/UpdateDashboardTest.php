@@ -29,7 +29,7 @@ class UpdateDashboardTest extends TestCase
             ->get(route('admin.updates.index'))
             ->assertOk()
             ->assertSee('Platform Updates')
-            ->assertSee('Application of updates is planned and not implemented');
+            ->assertSee('This screen reviews packages and prepares safe update notes');
     }
 
     public function test_update_manager_dashboard_is_blocked_when_update_manager_is_disabled(): void

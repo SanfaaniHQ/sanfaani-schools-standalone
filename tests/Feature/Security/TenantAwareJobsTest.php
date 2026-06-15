@@ -35,6 +35,12 @@ class TenantAwareJobsTest extends TestCase
         foreach (['school_admin', 'super_admin'] as $role) {
             Role::findOrCreate($role);
         }
+
+        config([
+            'mail.default' => 'log',
+            'mail.from.address' => 'noreply@example.test',
+            'mail.from.name' => 'Sanfaani Test',
+        ]);
     }
 
     public function test_bulk_communication_job_processes_only_the_batch_school_context(): void

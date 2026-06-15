@@ -12,9 +12,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['school_id', 'staff_code', 'name', 'email', 'password', 'must_change_password', 'preferred_locale'])]
+#[Fillable(['school_id', 'staff_code', 'name', 'email', 'password', 'must_change_password', 'preferred_locale', 'avatar_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -174,6 +176,33 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token): void
     {
         PasswordResetEmailRequested::dispatch($this, $token);
+    }
+
+    public function avatarUrl(): ?string
+    {
+        $path = str_replace('\\', '/', ltrim((string) $this->avatar_path, '/'));
+
+        if ($path === '' || Str::contains($path, ['..', '.env', 'storage/app/private'])) {
+            return null;
+        }
+
+        if (! Str::startsWith($path, 'avatars/')) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
+    public function initials(): string
+    {
+        $words = preg_split('/\s+/', trim((string) $this->name)) ?: [];
+        $initials = collect($words)
+            ->filter()
+            ->take(2)
+            ->map(fn (string $word): string => Str::substr($word, 0, 1))
+            ->implode('');
+
+        return mb_strtoupper($initials ?: 'U');
     }
 
     /**

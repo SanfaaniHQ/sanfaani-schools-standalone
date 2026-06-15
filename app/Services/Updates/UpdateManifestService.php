@@ -177,7 +177,7 @@ class UpdateManifestService
             $currentMode = $this->normalizeString(config('sanfaani.deployment.mode', 'saas'));
 
             if (! $deploymentModes->contains($currentMode)) {
-                $errors[] = 'Manifest deployment mode does not match this installation.';
+                $errors[] = 'Manifest portal mode does not match this installation.';
             }
         }
 

@@ -273,8 +273,8 @@ class OfflineAttendanceSyncTest extends TestCase
             ->assertSee('Server receipts')
             ->assertSee($class->name)
             ->assertSee(substr($uuid, 0, 15))
-            ->assertSee('Browser-local pending records are invisible to Laravel until the browser attempts sync')
-            ->assertSee('full portal offline mode is not implemented')
+            ->assertSee('Browser-local pending records appear here only after the browser submits them for sync')
+            ->assertSee('Other modules require an active connection')
             ->assertDontSee('sync-secret')
             ->assertDontSee('RuntimeException: payload-secret-marker')
             ->assertDontSee('C:\secret\Sync.php:42')
@@ -518,7 +518,7 @@ class OfflineAttendanceSyncTest extends TestCase
             ->assertSee('Attendance-only offline capture')
             ->assertSee('Pending offline records')
             ->assertSee('Browser storage is temporary')
-            ->assertSee('Full portal offline mode is not implemented')
+            ->assertSee('Only this class attendance form can be stored temporarily in this browser')
             ->assertSee('data-attendance-offline-root', false);
     }
 

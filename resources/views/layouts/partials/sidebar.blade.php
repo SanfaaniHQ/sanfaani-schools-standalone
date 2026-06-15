@@ -58,8 +58,9 @@
             'Local Installation' => [
                 $item('Local Dashboard', 'admin.dashboard', 'admin.dashboard', 'home', null, 'local_dashboard'),
                 $item('Local School Settings', 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings', null, 'local_school_settings'),
-                $item('Local Branding', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'local_branding', ['section' => 'local-branding']),
-                $item('Local SMTP Settings', 'admin.deployment.placeholder', 'admin.deployment.*', 'mail', null, 'local_mail_settings', ['section' => 'local-mail']),
+                $item('Local Branding', 'admin.local-branding.edit', 'admin.local-branding.*', 'layout-grid', null, 'local_branding'),
+                $item('Local SMTP Settings', 'admin.local-mail-settings.edit', 'admin.local-mail-settings.*', 'mail', null, 'local_mail_settings'),
+                $item('School Admins', 'admin.local-admins.index', 'admin.local-admins.*', 'shield', null, 'local_dashboard'),
                 $item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'standalone_license'),
                 $item('Guided Updates', 'admin.updates.index', 'admin.updates.*', 'archive', null, 'standalone_updates'),
                 $item('Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'standalone_backups'),

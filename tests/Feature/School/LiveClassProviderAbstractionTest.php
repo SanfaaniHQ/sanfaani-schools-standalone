@@ -215,9 +215,7 @@ class LiveClassProviderAbstractionTest extends TestCase
 
         $this->get(route('school.live-classes.index'))
             ->assertOk()
-            ->assertSee('Google Meet API automation is not implemented')
-            ->assertSee('Zoom API automation is not implemented')
-            ->assertSee('Microsoft Teams API automation is not implemented')
+            ->assertSee('Google Meet, Zoom, and Microsoft Teams API automation remain disabled')
             ->assertSee('provider credentials')
             ->assertSee('generated meeting rooms')
             ->assertDontSee('Generate meeting room')
@@ -241,8 +239,7 @@ class LiveClassProviderAbstractionTest extends TestCase
             ->assertSee('provider setup details')
             ->assertSee('Provider setup is available')
             ->assertSee('Live class provider setup')
-            ->assertSee('Provider API automation remains deferred')
-            ->assertSee('Offline live class is not implemented');
+            ->assertSee('API automation and offline class delivery remain disabled');
     }
 
     public function test_no_provider_credentials_are_stored_or_required_for_manual_provider(): void

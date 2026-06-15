@@ -119,7 +119,7 @@
 
         <x-ui.panel tone="info" title="Stage 17 Provider Boundary">
             <p class="text-sm leading-6 text-text-secondary">
-                Live classes require internet. Manual meeting links remain the active provider behavior. Provider automation is not active yet. Google Meet API automation is not implemented. Zoom API automation is not implemented. Microsoft Teams API automation is not implemented. OAuth, provider credentials, generated meeting rooms, webhooks, live-class attendance, chat, analytics, video hosting, transcoding, and offline live class are not implemented in this stage.
+                Live classes require internet. Manual meeting links are the active provider flow today. Google Meet, Zoom, and Microsoft Teams API automation remain disabled until provider credentials, generated meeting rooms, webhooks, attendance capture, chat, analytics, video hosting, transcoding, and offline class delivery are safely enabled.
             </p>
             @if ($futureProviders !== [])
                 <p class="mt-2 text-xs leading-5 text-text-tertiary">

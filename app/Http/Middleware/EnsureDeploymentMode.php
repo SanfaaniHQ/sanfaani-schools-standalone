@@ -26,6 +26,6 @@ class EnsureDeploymentMode
             return $next($request);
         }
 
-        abort(404, 'This page is not available for the current deployment mode.');
+        abort(404, 'This page is not available for the current portal mode.');
     }
 }

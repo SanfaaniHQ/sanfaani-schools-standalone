@@ -165,7 +165,7 @@ class StandaloneSyncService
 
         $items = $this->pendingOutboxItems();
 
-        $this->log('push', 'skipped', 'Real cloud transport is not implemented in this stage; no local data was deleted or changed.', [
+        $this->log('push', 'skipped', 'Cloud transport is not active for this installation; no local data was deleted or changed.', [
             'pending_count' => $items->count(),
             'endpoint_configured' => true,
         ]);
@@ -174,7 +174,7 @@ class StandaloneSyncService
             'success' => true,
             'dry_run' => false,
             'code' => 'transport_not_implemented',
-            'message' => 'Real cloud transport is not implemented in this stage; no local data was deleted or changed.',
+            'message' => 'Cloud transport is not active for this installation; no local data was deleted or changed.',
             'pending_count' => $items->count(),
         ];
     }

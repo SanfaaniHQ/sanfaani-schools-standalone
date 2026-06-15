@@ -1,27 +1,28 @@
 <?php
 
-namespace App\Http\Controllers\School;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MailSetting;
 use App\Models\School;
 use App\Services\AuditLogService;
-use App\Services\CurrentSchoolService;
 use App\Services\MailSettingService;
 use App\Support\MailSecurity;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 use Throwable;
 
-class MailSettingController extends Controller
+class LocalMailSettingController extends Controller
 {
-    public function edit(Request $request, MailSettingService $mailSettings, CurrentSchoolService $currentSchool)
+    public function edit(MailSettingService $mailSettings): View
     {
-        $school = $this->schoolAdminSchool($request, $currentSchool);
+        $school = $this->localSchool();
 
-        return view('school.mail-settings.edit', [
+        return view('admin.local-mail-settings.edit', [
             'school' => $school,
             'setting' => $mailSettings->current($school->id),
             'platformSetting' => $mailSettings->current(),
@@ -37,17 +38,16 @@ class MailSettingController extends Controller
     public function update(
         Request $request,
         MailSettingService $mailSettings,
-        CurrentSchoolService $currentSchool,
         AuditLogService $auditLog
-    ) {
-        $school = $this->schoolAdminSchool($request, $currentSchool);
+    ): RedirectResponse {
+        $school = $this->localSchool();
 
         if (! $mailSettings->schoolScopeIsReady()) {
-            return back()->with('error', 'School mail settings are not ready yet. Run migrations first.');
+            return back()->with('error', 'Email delivery settings are not ready yet. Complete database setup and run the latest migrations first.');
         }
 
         if (! $mailSettings->schoolCustomSmtpAllowed() && $request->boolean('is_enabled')) {
-            return back()->with('error', 'Custom school SMTP is currently disabled by the platform administrator.');
+            return back()->with('error', 'School SMTP override is currently disabled by the platform mail policy.');
         }
 
         $setting = $mailSettings->current($school->id);
@@ -56,30 +56,27 @@ class MailSettingController extends Controller
         $oldValues = $mailSettings->auditSnapshot($setting);
 
         $setting = $mailSettings->updateForSchool($school, $data);
-        $newValues = $mailSettings->auditSnapshot($setting);
 
-        $auditLog->log('school_mail_settings_updated', $setting, $school, oldValues: $oldValues, newValues: $newValues, metadata: [
+        $auditLog->log('local_school_mail_settings_updated', $setting, $school, oldValues: $oldValues, newValues: $mailSettings->auditSnapshot($setting), metadata: [
             'mailer' => $setting->mailer,
             'is_enabled' => $setting->is_enabled,
             'password_changed' => $passwordChanged,
         ], request: $request);
 
-        return back()->with('success', 'School mail settings saved successfully.');
+        return back()->with('success', 'Email delivery settings saved.');
     }
 
     public function test(
         Request $request,
         MailSettingService $mailSettings,
-        CurrentSchoolService $currentSchool,
         AuditLogService $auditLog
-    ) {
-        $school = $this->schoolAdminSchool($request, $currentSchool);
-
+    ): RedirectResponse {
+        $school = $this->localSchool();
         $setting = $mailSettings->current($school->id);
         $request->merge($this->settingsPayload($request, $setting));
 
         if (! $mailSettings->schoolCustomSmtpAllowed() && $request->boolean('is_enabled')) {
-            return back()->with('error', 'Custom school SMTP is currently disabled by the platform administrator.');
+            return back()->with('error', 'School SMTP override is currently disabled by the platform mail policy.');
         }
 
         $data = $request->validate(array_merge($this->validationRules($request, $setting), [
@@ -92,48 +89,36 @@ class MailSettingController extends Controller
         try {
             $delivery = $mailSettings->sendSchoolTestUsingData($school, $settingsData, $data['test_email'], $setting);
         } catch (Throwable $exception) {
-            Log::warning('School mail settings test failed.', [
+            Log::warning('Local school mail settings test failed.', [
                 'school_id' => $school->id,
                 'message' => $exception->getMessage(),
             ]);
 
-            $this->recordTestAudit($auditLog, 'school_mail_settings_test_failed', $candidate, $school, [
+            $this->recordTestAudit($auditLog, 'local_school_mail_settings_test_failed', $candidate, $school, [
                 'mailer' => $candidate->mailer,
                 'is_enabled' => $candidate->is_enabled,
-                'validated_before_save' => true,
-                'error' => $this->safeMailError($exception),
+                'error' => MailSecurity::sanitizeError($exception),
             ], $request);
 
             return back()
                 ->withInput($request->except('password'))
-                ->with('error', 'Mail test failed. Settings were not saved.');
+                ->with('error', 'Email test failed: '.MailSecurity::sanitizeError($exception));
         }
 
-        $this->recordTestAudit($auditLog, 'school_mail_settings_test_sent', $candidate, $school, [
+        $this->recordTestAudit($auditLog, 'local_school_mail_settings_test_sent', $candidate, $school, [
             'mailer' => $candidate->mailer,
             'is_enabled' => $candidate->is_enabled,
-            'validated_before_save' => true,
             'fallback_used' => $delivery['fallback_used'],
-            'primary_error' => $this->safeMailError($delivery['primary_error'] ?? null),
+            'primary_error' => MailSecurity::sanitizeError($delivery['primary_error'] ?? null),
         ], $request);
 
         $message = $delivery['fallback_used']
-            ? 'School SMTP failed; platform fallback sent the test email.'
-            : 'SMTP test email sent successfully. Settings are not saved until you click Save Settings.';
+            ? 'School SMTP failed; configured platform fallback sent the test email.'
+            : 'Test email sent. Save settings to keep these SMTP details.';
 
         return back()
             ->withInput($request->except('password'))
             ->with('success', $message);
-    }
-
-    private function schoolAdminSchool(Request $request, CurrentSchoolService $currentSchool): School
-    {
-        abort_unless($currentSchool->roleContext($request->user()) === 'school_admin', 403);
-
-        $school = $currentSchool->get();
-        abort_if(! $school, 403);
-
-        return $school;
     }
 
     private function validationRules(Request $request, MailSetting $setting): array
@@ -183,7 +168,7 @@ class MailSettingController extends Controller
         try {
             $auditLog->log($action, $setting->exists ? $setting : null, $school, metadata: $metadata, request: $request);
         } catch (Throwable $exception) {
-            Log::warning('School mail settings test audit failed.', [
+            Log::warning('Local mail settings audit failed.', [
                 'school_id' => $school->id,
                 'action' => $action,
                 'message' => $exception->getMessage(),
@@ -191,14 +176,15 @@ class MailSettingController extends Controller
         }
     }
 
-    private function safeMailError(Throwable|string|null $error): ?string
+    private function localSchool(): School
     {
-        if (! filled($error)) {
-            return null;
-        }
+        $school = School::query()
+            ->where('status', 'active')
+            ->orderBy('id')
+            ->first();
 
-        $message = $error instanceof Throwable ? $error->getMessage() : (string) $error;
+        abort_unless($school, 404, 'Create the school profile before managing email delivery.');
 
-        return MailSecurity::sanitizeError($message);
+        return $school;
     }
 }

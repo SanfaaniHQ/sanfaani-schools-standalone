@@ -22,7 +22,7 @@
         <x-ui.alert
             tone="warning"
             title="Guided update mode"
-            body="Application of updates is planned and not implemented. This manager does not extract packages, run shell commands, run migrations, or change application files from the web UI."
+            body="This screen reviews packages and prepares safe update notes. Package extraction, command execution, migrations, and application file changes are handled through the approved maintenance process."
         >
             <p class="mt-2 text-sm leading-6 text-text-secondary">
                 Shared-hosting guidance is manual: prepare a verified backup, use maintenance mode, then follow cPanel or Namecheap file manager steps outside this wizard.

@@ -34,8 +34,8 @@
             tone="warning"
             title="Attendance-only browser offline pilot"
             :body="$editionStatus['offline_attendance_sync_enabled']
-                ? 'Offline attendance capture and its authenticated sync endpoint are enabled. Full portal offline mode is not implemented, and browser-local pending records are invisible to the server until sync.'
-                : 'Offline attendance capture and sync are disabled by default. Full portal offline mode is not implemented, and browser-local pending records are invisible to the server until sync.'"
+                ? 'Offline attendance capture and its authenticated sync endpoint are enabled. Other portal modules continue online, and browser-local pending records appear on the server only after sync.'
+                : 'Offline attendance capture and sync are disabled by default. Other portal modules continue online, and browser-local pending records appear on the server only after sync.'"
         />
 
         @foreach ($editionStatus['warnings'] as $warning)
@@ -212,7 +212,7 @@
                         <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $editionStatus['product_label'] }}</td>
                     </tr>
                     <tr>
-                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Deployment mode</th>
+                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Portal mode</th>
                         <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $editionStatus['deployment_mode'] }}</td>
                     </tr>
                     <tr>
@@ -267,7 +267,7 @@
                     </tr>
                     <tr>
                         <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Full portal offline</th>
-                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">Not implemented</td>
+                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">Online portal</td>
                     </tr>
                 </tbody>
             </table>

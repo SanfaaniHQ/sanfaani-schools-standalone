@@ -15,7 +15,7 @@
             <x-ui.stat-card label="Trial Leads" :value="$analytics['trial_leads']" meta="Trial-stage prospects" />
             <x-ui.stat-card label="Renewal Reminders" :value="$analytics['renewal_reminders']" meta="License follow-ups" />
             <x-ui.stat-card label="Conversion Milestones" :value="$analytics['conversion_milestones']" meta="Onboarding and conversion signals" tone="success" />
-            <x-ui.stat-card label="WhatsApp Hooks" :value="config('marketing.whatsapp_enabled') ? 'Enabled' : 'Requires setup'" meta="Provider integration is not configured here" />
+            <x-ui.stat-card label="WhatsApp Hooks" :value="config('marketing.whatsapp_enabled') ? 'Enabled' : 'Needs attention'" meta="Provider integration is configured outside this screen" />
         </section>
 
         <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

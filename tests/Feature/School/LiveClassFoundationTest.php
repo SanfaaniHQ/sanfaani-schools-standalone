@@ -55,7 +55,7 @@ class LiveClassFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Live Classes')
             ->assertSee('Manual meeting links')
-            ->assertSee('offline live class');
+            ->assertSee('offline class delivery');
 
         $this->post(route('school.live-classes.store'), $this->validPayload($context, [
             'title' => 'Algebra Live Revision',
@@ -271,8 +271,7 @@ class LiveClassFoundationTest extends TestCase
             ->assertSee('Live classes')
             ->assertSee('Manual meeting links')
             ->assertSee('Provider setup is available')
-            ->assertSee('Provider API automation remains deferred')
-            ->assertSee('Offline live class is not implemented');
+            ->assertSee('API automation and offline class delivery remain disabled');
     }
 
     public function test_student_and_parent_live_class_visibility_remains_deferred(): void

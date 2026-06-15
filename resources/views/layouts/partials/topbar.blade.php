@@ -196,7 +196,11 @@
 
                 <div x-data="{ open: false }" class="relative">
                     <button type="button" @click="open = ! open" class="inline-flex h-10 max-w-[10rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-2 text-sm font-semibold text-text-primary transition hover:border-border-hover hover:bg-bg-tertiary" aria-label="{{ __('ui.profile') }}" :aria-expanded="open.toString()">
-                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-brand-primary text-xs text-white">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
+                        @if (auth()->user()->avatarUrl())
+                            <img src="{{ auth()->user()->avatarUrl() }}" alt="{{ auth()->user()->name }} avatar" class="h-7 w-7 shrink-0 rounded object-cover">
+                        @else
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-brand-primary text-xs text-white">{{ auth()->user()->initials() }}</span>
+                        @endif
                         <span class="hidden truncate xl:inline">{{ auth()->user()->name }}</span>
                     </button>
                     <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">

@@ -55,7 +55,7 @@ class InstallerRequirementsService
 
     public function appKeyStatus(): array
     {
-        return $this->check('Security key', filled(config('app.key')), true, filled(config('app.key')) ? 'Configured' : 'Missing', 'Use cPanel terminal, local packaging, or hosting tools to generate APP_KEY before going live.');
+        return $this->check('Security key', filled(config('app.key')), true, filled(config('app.key')) ? 'Configured' : 'Missing', 'Use your hosting setup tool to generate the application security key before going live.');
     }
 
     public function migrationReadiness(?int $pendingMigrations = null): array
@@ -64,7 +64,7 @@ class InstallerRequirementsService
             return $this->check('Database table status', true, false, 'Unknown', 'Pending database tables could not be counted safely; run migrations manually from hosting tools if needed.');
         }
 
-        return $this->check('Database table status', $pendingMigrations === 0, false, "{$pendingMigrations} pending", 'Run php artisan migrate from a terminal or hosting migration tool before finalizing.');
+        return $this->check('Database table status', $pendingMigrations === 0, false, "{$pendingMigrations} pending", 'Prepare the database tables from your hosting migration tool before finalizing.');
     }
 
     public function summary(): array

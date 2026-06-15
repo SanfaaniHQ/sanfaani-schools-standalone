@@ -82,7 +82,7 @@
                                 <p class="text-sm font-semibold text-amber-900">Attendance-only offline capture</p>
                                 <p class="mt-1 text-sm leading-6 text-amber-800">
                                     Network: <span data-offline-network-status>Checking...</span>.
-                                    Full portal offline mode is not implemented. Only this class attendance form can be stored temporarily in this browser.
+                                    Only this class attendance form can be stored temporarily in this browser; other portal modules continue online.
                                 </p>
                                 <p class="mt-2 text-sm font-medium text-amber-900">
                                     Browser storage is temporary. Do not clear browser data before pending attendance has synced.

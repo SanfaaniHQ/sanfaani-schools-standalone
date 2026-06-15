@@ -54,8 +54,8 @@ class AttendanceFoundationTest extends TestCase
             ->assertOk()
             ->assertSee('Attendance')
             ->assertSee('Online attendance')
-            ->assertSee('Attendance-only browser offline capture appears on class registers only when the pilot is enabled')
-            ->assertSee('Full portal offline mode is not implemented');
+            ->assertSee('Attendance-only browser offline capture appears on class registers when enabled')
+            ->assertSee('Other portal modules continue to require an active connection');
     }
 
     public function test_teacher_can_mark_attendance_for_assigned_class(): void
@@ -598,7 +598,7 @@ class AttendanceFoundationTest extends TestCase
             ->assertSee('Attendance')
             ->assertSee('Offline attendance capture')
             ->assertSee('attendance-only browser offline capture pilot is disabled by default')
-            ->assertSee('Full portal offline mode is not implemented')
+            ->assertSee('Other portal modules require an active connection')
             ->assertDontSee('Offline attendance capture: Available');
 
         $officer = $this->createUserForSchool($school, 'result_officer');

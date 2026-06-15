@@ -41,7 +41,7 @@
 
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 @include('admin.license.partials.status-card', ['label' => 'Validation status', 'value' => str($result->status)->replace('_', ' ')->title(), 'meta' => $result->message])
-                @include('admin.license.partials.status-card', ['label' => 'Deployment mode', 'value' => str($deploymentMode)->replace('_', ' ')->title(), 'meta' => 'License mode: '.str($licenseMode)->replace('_', ' ')->title()])
+                @include('admin.license.partials.status-card', ['label' => 'Portal mode', 'value' => str($deploymentMode)->replace('_', ' ')->title(), 'meta' => 'License mode: '.str($licenseMode)->replace('_', ' ')->title()])
                 @include('admin.license.partials.status-card', ['label' => 'Client', 'value' => $school?->name ?? $license?->issued_to_name ?? 'Platform/global', 'meta' => $license?->issued_to_email])
                 @include('admin.license.partials.status-card', ['label' => 'Stored key', 'value' => $license?->maskedKey() ?? 'No license activated', 'meta' => 'Full keys stay hidden for security.'])
             </div>

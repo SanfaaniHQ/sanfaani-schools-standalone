@@ -204,7 +204,7 @@ class StandaloneEditionService
         }
 
         if ($this->isStandalone() && $this->deploymentMode() === DeploymentModeService::MODE_SAAS) {
-            $warnings[] = 'Standalone edition is currently using SaaS deployment mode; use single_school for private school installations.';
+            $warnings[] = 'Standalone edition is currently using SaaS portal mode; use single_school for private school installations.';
         }
 
         if ($this->isStandalone() && $this->licenseMode() === DeploymentModeService::LICENSE_SUBSCRIPTION) {

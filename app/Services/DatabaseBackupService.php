@@ -18,7 +18,7 @@ class DatabaseBackupService
         $driver = DB::connection()->getDriverName();
 
         if (! in_array($driver, ['mysql', 'mariadb', 'sqlite'], true)) {
-            throw new RuntimeException("Database backups are not implemented for the [{$driver}] driver.");
+            throw new RuntimeException("Database backups are available for MySQL, MariaDB, and SQLite connections. The [{$driver}] driver is not supported by this backup tool.");
         }
 
         $path = $this->directory().DIRECTORY_SEPARATOR.'database-backup-'.now()->format('Ymd-His').'.sql';

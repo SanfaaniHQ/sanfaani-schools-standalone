@@ -110,7 +110,7 @@
 
             <x-ui.panel class="mt-6" tone="info">
                 <p class="text-sm text-text-secondary">
-                    Attendance-only browser offline capture appears on class registers only when the pilot is enabled. Full portal offline mode is not implemented.
+                    Attendance-only browser offline capture appears on class registers when enabled. Other portal modules continue to require an active connection.
                 </p>
             </x-ui.panel>
         </div>
