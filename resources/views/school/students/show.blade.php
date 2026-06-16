@@ -163,6 +163,30 @@
 
     <div class="py-8">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            @if (session('success'))
+                <div class="mb-6">
+                    <x-ui.alert tone="success" :body="session('success')" />
+                </div>
+            @endif
+
+            @if (session('warning'))
+                <div class="mb-6">
+                    <x-ui.alert tone="warning" :body="session('warning')" />
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="mb-6">
+                    <x-ui.alert tone="danger" :body="session('error')" />
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="mb-6">
+                    <x-ui.alert tone="danger" body="{{ $errors->first() }}" />
+                </div>
+            @endif
+
             <div class="no-print sticky top-16 z-10 -mx-4 mb-6 border-b border-border-subtle bg-bg-primary/95 px-4 py-3 shadow-sm backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
                 <div class="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <a href="{{ route('school.students.index') }}" class="{{ $secondaryActionClass }}">
@@ -903,29 +927,103 @@
             <div id="communication-center" class="mb-6 overflow-hidden rounded-2xl bg-white shadow-sm">
                 <div class="border-b border-gray-100 px-6 py-4">
                     <h3 class="text-base font-semibold text-gray-900">Communication</h3>
-                    <p class="mt-1 text-sm text-gray-500">Send permitted school-scoped email updates and review authorized communication history.</p>
+                    <p class="mt-1 text-sm text-gray-500">Send guardian updates and review authorized communication history for this student.</p>
                 </div>
 
                 @if ($canSendCommunication ?? false)
-                    <div class="grid gap-6 border-b border-gray-100 px-6 py-6 lg:grid-cols-2">
-                        <div>
-                            <p class="text-sm font-medium text-gray-700">Recipient</p>
-                            <p class="mt-1 text-sm text-gray-600">{{ $student->guardian_email ?: 'No guardian email available' }}</p>
-                        </div>
-                        <form method="POST" action="{{ route('school.communications.students.send', $student) }}" class="space-y-3">
-                            @csrf
-                            <select name="type" class="w-full rounded-xl border-gray-300 text-sm">
-                                <option value="result_notification">Result Notification</option>
-                                <option value="report_card">Report Card</option>
-                                <option value="scratch_card">Scratch Card Details</option>
-                                <option value="payment_reminder">Payment Reminder</option>
-                                <option value="attendance_warning">Attendance Warning</option>
-                                <option value="custom_message">Custom Message</option>
-                            </select>
-                            <input name="subject" placeholder="Email subject" class="w-full rounded-xl border-gray-300 text-sm">
-                            <textarea name="message" rows="4" placeholder="Write message..." class="w-full rounded-xl border-gray-300 text-sm"></textarea>
-                            <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white">Send Email</button>
-                        </form>
+                    <div class="grid gap-6 border-b border-gray-100 px-6 py-6 {{ ($canEmailReportCard ?? false) ? 'xl:grid-cols-[0.95fr_1.05fr]' : '' }}">
+                        @if ($canEmailReportCard ?? false)
+                        <section class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ __('ui.email_report_card_to_parent') }}</p>
+                                    <p class="mt-1 text-sm text-gray-600">{{ __('ui.email_report_card_to_parent_help') }}</p>
+                                </div>
+                                @if ($student->guardian_email)
+                                    <x-status-badge status="ready" />
+                                @else
+                                    <x-status-badge status="missing" />
+                                @endif
+                            </div>
+
+                            <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                                <div>
+                                    <dt class="text-gray-500">{{ __('ui.parent_guardian') }}</dt>
+                                    <dd class="mt-1 font-semibold text-gray-900">{{ $student->guardian_name ?: 'Not specified' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-gray-500">Email</dt>
+                                    <dd class="mt-1 font-semibold text-gray-900">{{ $student->guardian_email ?: __('ui.report_card_email_missing_guardian') }}</dd>
+                                </div>
+                            </dl>
+
+                            <form method="POST" action="{{ route('school.communications.students.report-card-email', $student) }}" class="mt-5 grid gap-3 sm:grid-cols-2" data-loading-text="{{ __('ui.sending_report_card_email') }}">
+                                @csrf
+                                <input type="hidden" name="result_type" value="term_result">
+
+                                <div>
+                                    <label for="report-card-session" class="block text-sm font-medium text-gray-700">Session</label>
+                                    <select id="report-card-session" name="academic_session_id" class="mt-1 w-full rounded-lg border-gray-300 text-sm" @disabled(! $student->guardian_email)>
+                                        @foreach ($academicSessions as $academicSession)
+                                            <option value="{{ $academicSession->id }}" @selected(old('academic_session_id', $selectedSession?->id) == $academicSession->id)>
+                                                {{ $academicSession->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="report-card-term" class="block text-sm font-medium text-gray-700">Term</label>
+                                    <select id="report-card-term" name="term_id" class="mt-1 w-full rounded-lg border-gray-300 text-sm" @disabled(! $student->guardian_email)>
+                                        @foreach ($terms as $term)
+                                            <option value="{{ $term->id }}" @selected(old('term_id', $selectedTerm?->id) == $term->id)>
+                                                {{ $term->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    @if ($student->guardian_email)
+                                        <button class="ui-button-primary w-full sm:w-auto" data-loading-text="{{ __('ui.sending_report_card_email') }}">
+                                            {{ __('ui.email_report_card_to_parent') }}
+                                        </button>
+                                    @else
+                                        <button class="ui-button-secondary w-full cursor-not-allowed sm:w-auto" disabled>
+                                            {{ __('ui.parent_email_missing') }}
+                                        </button>
+                                    @endif
+                                </div>
+                            </form>
+                        </section>
+                        @endif
+
+                        <section>
+                            <div class="mb-3">
+                                <p class="text-sm font-semibold text-gray-900">Custom Email</p>
+                                <p class="mt-1 text-sm text-gray-500">Send a one-off guardian message using the same communication log.</p>
+                            </div>
+                            <form method="POST" action="{{ route('school.communications.students.send', $student) }}" class="space-y-3" data-loading-text="Sending email...">
+                                @csrf
+                                <select name="type" class="w-full rounded-lg border-gray-300 text-sm">
+                                    <option value="result_notification">Result Notification</option>
+                                    <option value="report_card">Report Card</option>
+                                    <option value="scratch_card">Scratch Card Details</option>
+                                    <option value="payment_reminder">Payment Reminder</option>
+                                    <option value="attendance_warning">Attendance Warning</option>
+                                    <option value="custom_message">Custom Message</option>
+                                </select>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700" for="student-message-subject">Subject</label>
+                                    <input id="student-message-subject" name="subject" class="mt-1 w-full rounded-lg border-gray-300 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700" for="student-message-body">Message</label>
+                                    <textarea id="student-message-body" name="message" rows="4" class="mt-1 w-full rounded-lg border-gray-300 text-sm"></textarea>
+                                </div>
+                                <button class="ui-button-secondary" data-loading-text="Sending email...">Send Email</button>
+                            </form>
+                        </section>
                     </div>
                 @endif
 
@@ -949,7 +1047,7 @@
                                         <td class="px-6 py-4 text-sm text-gray-500">{{ $entry->created_at?->format('d M Y, h:i A') }}</td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No communication history for this student.</td></tr>
+                                    <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500">No communication history for this student yet.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>

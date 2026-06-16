@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicSession;
 use App\Models\AuditLog;
 use App\Models\ClassSubjectAssignment;
+use App\Models\CommunicationLog;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\Term;
@@ -96,7 +97,9 @@ class StudentController extends Controller
         $authorization = app(SchoolAuthorizationService::class);
         $canSendCommunication = $roleContext === 'school_admin'
             && $authorization->can($request->user(), $school, 'communication.send');
-        $canViewCommunicationLogs = false;
+        $canViewCommunicationLogs = $roleContext === 'school_admin'
+            && $authorization->can($request->user(), $school, 'communication.logs.view');
+        $canEmailReportCard = $canSendCommunication && ! $student->trashed();
 
         $this->authorizeStudent($student, $school);
 
@@ -183,7 +186,17 @@ class StudentController extends Controller
             ->get();
         $academicTimeline = app(StudentAcademicTimelineService::class)->build($school, $student);
 
-        $recentCommunications = collect();
+        $recentCommunications = $canViewCommunicationLogs
+            ? CommunicationLog::query()
+                ->where('school_id', $school->id)
+                ->where(function ($query) use ($student) {
+                    $query->where('metadata->student_id', $student->id)
+                        ->when(filled($student->guardian_email), fn ($query) => $query->orWhere('recipient', $student->guardian_email));
+                })
+                ->latest()
+                ->limit(8)
+                ->get()
+            : collect();
 
         // Calculate student age if date of birth exists
         $age = null;
@@ -239,6 +252,7 @@ class StudentController extends Controller
             'canManageCommunication' => $canSendCommunication || $canViewCommunicationLogs,
             'canSendCommunication' => $canSendCommunication,
             'canViewCommunicationLogs' => $canViewCommunicationLogs,
+            'canEmailReportCard' => $canEmailReportCard,
         ]);
     }
 

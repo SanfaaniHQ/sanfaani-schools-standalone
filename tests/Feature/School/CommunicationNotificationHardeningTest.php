@@ -54,9 +54,9 @@ class CommunicationNotificationHardeningTest extends TestCase
 
         $this->get(route('school.communications.index'))
             ->assertOk()
-            ->assertSee('Communication Center')
-            ->assertSee('Stage 18 Safety Boundary')
-            ->assertSee('SMS and WhatsApp are marked provider-ready only');
+            ->assertSee('Communication Command Center')
+            ->assertSee('Quick Actions')
+            ->assertSee('Delivery Status');
 
         $this->post(route('school.communications.templates.store'), [
             'template_key' => 'live_class.reminder',

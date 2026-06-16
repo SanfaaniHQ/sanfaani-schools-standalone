@@ -89,9 +89,10 @@ class StudentAcademicTimelineService
             ]);
 
         return $audits
-            ->merge($enrollments)
-            ->merge($promotions)
-            ->merge($scratchCards)
+            ->toBase()
+            ->merge($enrollments->toBase())
+            ->merge($promotions->toBase())
+            ->merge($scratchCards->toBase())
             ->sortByDesc(fn (array $event) => optional($event['occurred_at'])->timestamp ?? 0)
             ->take($limit)
             ->values();

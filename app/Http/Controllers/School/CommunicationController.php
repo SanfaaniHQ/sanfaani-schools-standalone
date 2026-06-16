@@ -3,22 +3,31 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicSession;
 use App\Models\BulkCommunicationBatch;
+use App\Models\CommunicationLog;
 use App\Models\School;
 use App\Models\SchoolNotificationLog;
 use App\Models\SchoolNotificationTemplate;
 use App\Models\Student;
+use App\Models\Term;
 use App\Models\User;
 use App\Services\BulkCommunicationService;
 use App\Services\Communications\NotificationRecipientResolver;
 use App\Services\Communications\SchoolNotificationService;
 use App\Services\CommunicationService;
 use App\Services\CurrentSchoolService;
+use App\Services\PublicResultAccessService;
+use App\Services\ReportCardSnapshotService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\TeacherAssignmentAccessService;
 use App\Support\Notifications\SchoolNotificationTemplateRegistry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CommunicationController extends Controller
 {
@@ -62,19 +71,44 @@ class CommunicationController extends Controller
             'status' => ['nullable', Rule::in(SchoolNotificationLog::STATUSES)],
             'channel' => ['nullable', Rule::in(SchoolNotificationLog::CHANNELS)],
             'event_type' => ['nullable', 'string', 'max:120'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'search' => ['nullable', 'string', 'max:150'],
         ]);
+
+        $logsQuery = SchoolNotificationLog::query()
+            ->forSchool($school)
+            ->with(['template', 'creator'])
+            ->status($filters['status'] ?? null)
+            ->channel($filters['channel'] ?? null)
+            ->event($filters['event_type'] ?? null)
+            ->when(filled($filters['date_from'] ?? null), fn ($query) => $query->whereDate('created_at', '>=', $filters['date_from']))
+            ->when(filled($filters['date_to'] ?? null), fn ($query) => $query->whereDate('created_at', '<=', $filters['date_to']))
+            ->when(filled($filters['search'] ?? null), function ($query) use ($filters) {
+                $search = trim((string) $filters['search']);
+
+                $query->where(function ($query) use ($search) {
+                    $query->where('recipient_name', 'like', "%{$search}%")
+                        ->orWhere('recipient_email', 'like', "%{$search}%")
+                        ->orWhere('subject', 'like', "%{$search}%")
+                        ->orWhere('message_summary', 'like', "%{$search}%")
+                        ->orWhere('event_type', 'like', "%{$search}%");
+                });
+            });
 
         return view('school.communications.logs.index', [
             'school' => $school,
             'filters' => $filters,
             'channels' => SchoolNotificationLog::CHANNELS,
             'statuses' => SchoolNotificationLog::STATUSES,
-            'logs' => SchoolNotificationLog::query()
+            'eventTypes' => SchoolNotificationLog::query()
                 ->forSchool($school)
-                ->with(['template', 'creator'])
-                ->status($filters['status'] ?? null)
-                ->channel($filters['channel'] ?? null)
-                ->event($filters['event_type'] ?? null)
+                ->whereNotNull('event_type')
+                ->select('event_type')
+                ->distinct()
+                ->orderBy('event_type')
+                ->pluck('event_type'),
+            'logs' => $logsQuery
                 ->latest()
                 ->paginate(20)
                 ->withQueryString(),
@@ -230,15 +264,31 @@ class CommunicationController extends Controller
         $user = auth()->user();
         $this->authorizeSchoolAdminRole(request());
         $roleContext = $currentSchool->roleContext($user);
+        $students = $this->bulkStudentsForUser($school, $user);
+        $classes = $this->bulkClassesForUser($school, $user);
+        $arms = $this->bulkArmsForUser($school, $user);
 
         return view('school.communications.bulk', [
             'school' => $school,
-            'classes' => $this->bulkClassesForUser($school, $user),
-            'arms' => $this->bulkArmsForUser($school, $user),
-            'students' => $this->bulkStudentsForUser($school, $user),
+            'classes' => $classes,
+            'arms' => $arms,
+            'students' => $students,
             'sessions' => $school->academicSessions()->latest()->get(),
             'terms' => $school->terms()->latest()->get(),
+            'templates' => SchoolNotificationTemplate::query()
+                ->forSchool($school)
+                ->active()
+                ->whereIn('channel', [SchoolNotificationTemplate::CHANNEL_EMAIL, SchoolNotificationTemplate::CHANNEL_LOG])
+                ->orderBy('title')
+                ->get(),
             'canMessageStaff' => $roleContext !== 'teacher',
+            'recipientSummary' => [
+                'visible_students' => $students->filter(fn (Student $student) => filled($student->guardian_email))->count(),
+                'classes' => $classes->count(),
+                'arms' => $arms->count(),
+                'teacher_contacts' => $roleContext === 'teacher' ? 0 : $this->staffContactCount($school, 'teacher'),
+                'result_officer_contacts' => $roleContext === 'teacher' ? 0 : $this->staffContactCount($school, 'result_officer'),
+            ],
             'recentBatches' => BulkCommunicationBatch::forSchool($school)
                 ->with('sender')
                 ->latest()
@@ -269,10 +319,16 @@ class CommunicationController extends Controller
             'student_ids.*' => [Rule::exists('students', 'id')->where('school_id', $school->id)],
             'channels' => ['nullable', 'array'],
             'channels.*' => [Rule::in(['email', 'sms', 'in_app'])],
+            'template_id' => ['nullable', Rule::exists('school_notification_templates', 'id')->where('school_id', $school->id)],
             'chunk_size' => ['nullable', 'integer', 'min:1', 'max:100'],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
             'type' => ['required', Rule::in($this->studentTypes())],
+        ], [
+            'audience.required' => 'Choose the audience before sending.',
+            'subject.required' => 'Add a subject so recipients understand the message.',
+            'message.required' => 'Write the message body before creating the batch.',
+            'student_ids.*.exists' => 'One or more selected students could not be found in this school.',
         ]);
 
         if ($roleContext === 'teacher') {
@@ -294,7 +350,161 @@ class CommunicationController extends Controller
 
         $batch = $bulkCommunications->createAndProcess($school, $user, $roleContext, $data);
 
+        if ((int) $batch->total_recipients === 0) {
+            return back()->with('warning', __('ui.bulk_communication_no_recipients'));
+        }
+
         return back()->with('success', $this->bulkBatchMessage($batch));
+    }
+
+    public function emailReportCard(
+        Request $request,
+        Student $student,
+        CurrentSchoolService $currentSchool,
+        ReportCardSnapshotService $snapshots,
+        PublicResultAccessService $resultAccess,
+        CommunicationService $communications
+    ) {
+        $school = $this->currentSchoolOrFail($currentSchool);
+        $this->authorizeSchoolCommunicationSendAccess($request, $school);
+        $this->authorizeStudent($student, $school);
+        $this->ensureRoleFeature($request, $school, 'communication.send');
+        abort_if($student->trashed(), 404);
+
+        $data = $request->validate([
+            'academic_session_id' => ['required', Rule::exists('academic_sessions', 'id')->where('school_id', $school->id)],
+            'term_id' => ['required', Rule::exists('terms', 'id')->where('school_id', $school->id)],
+            'result_type' => ['nullable', Rule::in(['term_result'])],
+        ], [
+            'academic_session_id.required' => 'Choose the session for the report card email.',
+            'term_id.required' => 'Choose the term for the report card email.',
+        ]);
+
+        if (! filled($student->guardian_email)) {
+            $this->logReportCardEmailNotification(
+                $school,
+                $student,
+                $request->user(),
+                SchoolNotificationLog::STATUS_FAILED,
+                __('ui.report_card_email_missing_guardian'),
+                ['reason' => 'guardian_email_missing']
+            );
+
+            return back()->with('error', __('ui.report_card_email_missing_guardian'));
+        }
+
+        $academicSession = AcademicSession::where('school_id', $school->id)->findOrFail($data['academic_session_id']);
+        $term = Term::where('school_id', $school->id)
+            ->where('academic_session_id', $academicSession->id)
+            ->findOrFail($data['term_id']);
+        $resultType = $data['result_type'] ?? 'term_result';
+
+        try {
+            $verification = $resultAccess->verificationFor($school, $student, $academicSession, $term, $resultType);
+            $snapshot = $snapshots->captureForStudentContext(
+                $school,
+                $student,
+                $academicSession,
+                $term,
+                $resultType,
+                generatedBy: $request->user(),
+                metadata: ['trigger' => 'student_360_parent_email']
+            );
+
+            $reportUrl = URL::temporarySignedRoute(
+                'public.report-cards.show',
+                now()->addDays(14),
+                ['snapshot' => $snapshot->snapshot_uuid]
+            );
+
+            $subject = __('ui.report_card_email_subject', [
+                'student' => $student->fullName(),
+                'term' => $term->name,
+            ]);
+            $body = __('ui.report_card_email_body', [
+                'guardian' => $student->guardian_name ?: __('ui.parent_guardian'),
+                'student' => $student->fullName(),
+                'school' => $school->name,
+                'session' => $academicSession->name,
+                'term' => $term->name,
+                'url' => $reportUrl,
+            ]);
+
+            $log = $communications->sendSchoolEmail(
+                $school,
+                $student->guardian_email,
+                $subject,
+                __('ui.report_card_email_headline'),
+                $body,
+                'report_card_parent_email',
+                [
+                    'student_id' => $student->id,
+                    'student_name' => $student->fullName(),
+                    'academic_session_id' => $academicSession->id,
+                    'term_id' => $term->id,
+                    'result_type' => $resultType,
+                    'report_card_snapshot_id' => $snapshot->id,
+                    'report_card_snapshot_uuid' => $snapshot->snapshot_uuid,
+                    'verification_code' => $verification->verification_code,
+                    'secure_link_expires_at' => now()->addDays(14)->toDateTimeString(),
+                ],
+                CommunicationService::CATEGORY_STUDENT_TRANSACTIONAL,
+                $request->user()
+            );
+
+            $status = $log->status === CommunicationLog::STATUS_SENT
+                ? SchoolNotificationLog::STATUS_SENT
+                : SchoolNotificationLog::STATUS_FAILED;
+
+            $this->logReportCardEmailNotification(
+                $school,
+                $student,
+                $request->user(),
+                $status,
+                $status === SchoolNotificationLog::STATUS_SENT
+                    ? __('ui.report_card_email_notification_summary', ['student' => $student->fullName(), 'term' => $term->name])
+                    : __('ui.report_card_email_failed'),
+                [
+                    'communication_log_id' => $log->id,
+                    'report_card_snapshot_id' => $snapshot->id,
+                    'report_card_snapshot_uuid' => $snapshot->snapshot_uuid,
+                    'academic_session_id' => $academicSession->id,
+                    'term_id' => $term->id,
+                    'result_type' => $resultType,
+                ],
+                $log->failure_reason
+            );
+
+            if ($log->status !== CommunicationLog::STATUS_SENT) {
+                return back()->with('error', __('ui.report_card_email_failed'));
+            }
+
+            return back()->with('success', __('ui.report_card_email_sent'));
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            Log::warning('Report card parent email failed.', [
+                'school_id' => $school->id,
+                'student_id' => $student->id,
+                'message' => $exception->getMessage(),
+            ]);
+
+            $this->logReportCardEmailNotification(
+                $school,
+                $student,
+                $request->user(),
+                SchoolNotificationLog::STATUS_FAILED,
+                __('ui.report_card_email_failed'),
+                [
+                    'academic_session_id' => $academicSession->id ?? null,
+                    'term_id' => $term->id ?? null,
+                    'result_type' => $resultType ?? 'term_result',
+                ],
+                'The report card email could not be prepared.'
+            );
+
+            return back()->with('error', __('ui.report_card_email_failed'));
+        }
     }
 
     public function processBulkBatch(
@@ -486,6 +696,45 @@ class CommunicationController extends Controller
         }
 
         return $query->limit(500)->get();
+    }
+
+    private function staffContactCount(School $school, string $role): int
+    {
+        return User::query()
+            ->whereNotNull('email')
+            ->whereHas('schoolRoles', fn ($query) => $query
+                ->where('school_id', $school->id)
+                ->where('role_name', $role)
+                ->where('status', 'active'))
+            ->count();
+    }
+
+    private function logReportCardEmailNotification(
+        School $school,
+        Student $student,
+        ?User $actor,
+        string $status,
+        string $summary,
+        array $metadata = [],
+        ?string $failureReason = null
+    ): void {
+        app(SchoolNotificationService::class)->logOperationalNotification($school, [
+            'event_type' => $status === SchoolNotificationLog::STATUS_SENT
+                ? 'report_card.email.sent'
+                : 'report_card.email.failed',
+            'channel' => SchoolNotificationLog::CHANNEL_EMAIL,
+            'recipient_type' => NotificationRecipientResolver::TYPE_STUDENT,
+            'recipient_id' => $student->id,
+            'subject' => __('ui.report_card_email_log_subject'),
+            'message_summary' => $summary,
+            'status' => $status,
+            'failure_reason' => $failureReason,
+            'related' => $student,
+            'metadata' => array_merge([
+                'student_id' => $student->id,
+                'guardian_email_present' => filled($student->guardian_email),
+            ], $metadata),
+        ], $actor);
     }
 
     private function authorizeBulkBatch(BulkCommunicationBatch $batch, School $school): void
