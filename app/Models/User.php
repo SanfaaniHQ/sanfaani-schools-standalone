@@ -7,6 +7,7 @@ use App\Events\PasswordResetEmailRequested;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['school_id', 'staff_code', 'name', 'email', 'password', 'must_change_password', 'preferred_locale', 'avatar_path'])]
+#[Fillable(['school_id', 'staff_code', 'name', 'email', 'password', 'must_change_password', 'disabled_at', 'archived_at', 'preferred_locale', 'avatar_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -178,6 +179,80 @@ class User extends Authenticatable
         PasswordResetEmailRequested::dispatch($this, $token);
     }
 
+    public function scopeActiveAccount(Builder $query): Builder
+    {
+        return $query
+            ->whereNull('disabled_at')
+            ->whereNull('archived_at');
+    }
+
+    public function scopeDisabledAccount(Builder $query): Builder
+    {
+        return $query
+            ->whereNull('archived_at')
+            ->whereNotNull('disabled_at');
+    }
+
+    public function scopeArchivedAccount(Builder $query): Builder
+    {
+        return $query->whereNotNull('archived_at');
+    }
+
+    public function isArchived(): bool
+    {
+        return filled($this->archived_at);
+    }
+
+    public function isDisabled(): bool
+    {
+        return filled($this->disabled_at);
+    }
+
+    public function isActiveAccount(): bool
+    {
+        return ! $this->isArchived() && ! $this->isDisabled();
+    }
+
+    public function accountStatus(): string
+    {
+        if ($this->isArchived()) {
+            return 'archived';
+        }
+
+        if ($this->isDisabled()) {
+            return 'disabled';
+        }
+
+        return 'active';
+    }
+
+    public function schoolAccessStatus(School|int|null $school = null, array $roles = []): string
+    {
+        if ($this->isArchived()) {
+            return 'archived';
+        }
+
+        if ($this->isDisabled()) {
+            return 'disabled';
+        }
+
+        if (! $school) {
+            return 'active';
+        }
+
+        $schoolId = $school instanceof School ? $school->id : $school;
+        $schoolRoles = $this->schoolRoles()
+            ->where('school_id', $schoolId)
+            ->when($roles !== [], fn ($query) => $query->whereIn('role_name', $roles))
+            ->get();
+
+        if ($schoolRoles->isNotEmpty() && $schoolRoles->every(fn (UserSchoolRole $role): bool => $role->status !== 'active')) {
+            return 'disabled';
+        }
+
+        return 'active';
+    }
+
     public function avatarUrl(): ?string
     {
         $path = str_replace('\\', '/', ltrim((string) $this->avatar_path, '/'));
@@ -216,6 +291,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
+            'disabled_at' => 'datetime',
+            'archived_at' => 'datetime',
         ];
     }
 }

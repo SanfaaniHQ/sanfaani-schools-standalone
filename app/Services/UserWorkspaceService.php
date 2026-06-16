@@ -13,6 +13,10 @@ class UserWorkspaceService
     {
         $contexts = collect();
 
+        if (! $user->isActiveAccount()) {
+            return $contexts;
+        }
+
         if ($user->hasRole('super_admin')) {
             $contexts->push([
                 'key' => 'global:super_admin',

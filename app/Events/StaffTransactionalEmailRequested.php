@@ -44,7 +44,7 @@ class StaffTransactionalEmailRequested
                 ."\nSchool: ".$school->name
                 ."\nRole: ".$roleLabel
                 ."\nLogin ID: ".$loginId
-                ."\nUse the password provided by your school admin, or request a password reset if you cannot sign in.",
+                ."\nUse the secure account setup link from the portal email, or request a password reset if you need a fresh link.",
             [
                 'staff_id' => $staff->id,
                 'role' => $role,

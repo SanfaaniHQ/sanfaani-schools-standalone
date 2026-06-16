@@ -11,57 +11,63 @@
         $supportPhone = $platformSettings->whatsapp_number ?? config('sanfaani.whatsapp_number');
         $isStandalonePortal = app(\App\Services\Standalone\StandaloneEditionService::class)->isStandaloneMode();
         $brandHomeRoute = $isStandalonePortal ? route('login') : route('landing.home');
+        $brandBackgroundUrl = data_get($resolvedBranding, 'login_background_url') ?: ($platformLoginBackgroundUrl ?? null);
     @endphp
 
     <div class="grid min-h-screen bg-bg-primary lg:grid-cols-[minmax(0,1fr)_minmax(28rem,0.8fr)]">
-        <section class="hidden overflow-hidden border-e border-border-subtle bg-bg-secondary lg:flex lg:flex-col lg:justify-between lg:p-10 xl:p-12" aria-label="Portal overview">
-            <a href="{{ $brandHomeRoute }}" class="inline-flex w-fit items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-bg-secondary">
+        <section class="relative hidden overflow-hidden border-e border-border-subtle bg-bg-secondary lg:flex lg:flex-col lg:justify-between lg:p-10 xl:p-12"
+                 @if ($brandBackgroundUrl) style="background-image: linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.82)), url('{{ $brandBackgroundUrl }}'); background-size: cover; background-position: center;" @endif
+                 aria-label="Portal overview">
+            @if ($brandBackgroundUrl)
+                <div class="absolute inset-0 bg-black/10" aria-hidden="true"></div>
+            @endif
+            <a href="{{ $brandHomeRoute }}" class="relative z-10 inline-flex w-fit items-center gap-3 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-bg-secondary">
                 @if ($brandLogoUrl)
                     <img src="{{ $brandLogoUrl }}" alt="{{ $brandName }} logo" class="h-11 w-11 rounded-lg border border-border-subtle bg-white object-contain p-1">
                 @else
                     <span class="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-primary text-sm font-semibold text-white">{{ $brandInitials }}</span>
                 @endif
-                <span class="text-base font-semibold text-text-primary">{{ $brandName }}</span>
+                <span class="text-base font-semibold {{ $brandBackgroundUrl ? 'text-white' : 'text-text-primary' }}">{{ $brandName }}</span>
             </a>
 
-            <div class="max-w-xl">
-                <p class="text-sm font-semibold uppercase tracking-normal text-brand-primary">{{ $platformSettings->company_name }}</p>
-                <h1 class="mt-4 text-4xl font-semibold leading-tight text-text-primary">
+            <div class="relative z-10 max-w-xl">
+                <p class="text-sm font-semibold uppercase tracking-normal {{ $brandBackgroundUrl ? 'text-emerald-100' : 'text-brand-primary' }}">{{ $platformSettings->company_name }}</p>
+                <h1 class="mt-4 text-4xl font-semibold leading-tight {{ $brandBackgroundUrl ? 'text-white' : 'text-text-primary' }}">
                     {{ data_get($resolvedBranding, 'login_heading') ?: __('ui.login_heading') }}
                 </h1>
-                <p class="mt-5 text-base leading-7 text-text-secondary">
+                <p class="mt-5 text-base leading-7 {{ $brandBackgroundUrl ? 'text-emerald-50' : 'text-text-secondary' }}">
                     {{ data_get($resolvedBranding, 'login_subheading') ?: __('ui.login_intro') }}
                 </p>
 
                 <div class="mt-8 grid gap-3 sm:grid-cols-3">
                     @foreach ([['label' => 'Access', 'value' => 'Private'], ['label' => 'Records', 'value' => 'Protected'], ['label' => 'Support', 'value' => 'Available']] as $metric)
-                        <div class="rounded-lg border border-border-subtle bg-bg-primary p-4">
-                            <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ $metric['label'] }}</p>
-                            <p class="mt-2 text-xl font-semibold text-text-primary">{{ $metric['value'] }}</p>
+                        <div class="rounded-lg border {{ $brandBackgroundUrl ? 'border-white/20 bg-white/10' : 'border-border-subtle bg-bg-primary' }} p-4">
+                            <p class="text-xs font-semibold uppercase tracking-normal {{ $brandBackgroundUrl ? 'text-emerald-100' : 'text-text-tertiary' }}">{{ $metric['label'] }}</p>
+                            <p class="mt-2 text-xl font-semibold {{ $brandBackgroundUrl ? 'text-white' : 'text-text-primary' }}">{{ $metric['value'] }}</p>
                         </div>
                     @endforeach
                 </div>
             </div>
 
-            <div class="rounded-lg border border-border-subtle bg-bg-primary p-4 shadow-sm" aria-hidden="true">
+            <div class="relative z-10 rounded-lg border {{ $brandBackgroundUrl ? 'border-white/20 bg-white/10 text-white' : 'border-border-subtle bg-bg-primary' }} p-4 shadow-sm" aria-hidden="true">
                 <div class="flex items-center justify-between border-b border-border-subtle pb-3">
                     <div>
-                        <p class="text-sm font-semibold text-text-primary">Portal access</p>
-                        <p class="text-xs text-text-tertiary">For authorized school users</p>
+                        <p class="text-sm font-semibold {{ $brandBackgroundUrl ? 'text-white' : 'text-text-primary' }}">Portal access</p>
+                        <p class="text-xs {{ $brandBackgroundUrl ? 'text-emerald-50' : 'text-text-tertiary' }}">For authorized school users</p>
                     </div>
                     <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-brand-primary">Secure</span>
                 </div>
                 <div class="mt-4 overflow-hidden rounded-md border border-border-subtle">
                     @foreach ([['Use your school email or staff code', 'Step 1'], ['Enter your password securely', 'Step 2'], ['Open your assigned workspace', 'Step 3']] as $row)
                         <div class="grid grid-cols-[1fr_4.5rem] gap-3 border-b border-border-subtle px-3 py-2 text-xs last:border-b-0">
-                            <span class="truncate font-semibold text-text-primary">{{ $row[0] }}</span>
-                            <span class="text-text-secondary">{{ $row[1] }}</span>
+                            <span class="truncate font-semibold {{ $brandBackgroundUrl ? 'text-white' : 'text-text-primary' }}">{{ $row[0] }}</span>
+                            <span class="{{ $brandBackgroundUrl ? 'text-emerald-50' : 'text-text-secondary' }}">{{ $row[1] }}</span>
                         </div>
                     @endforeach
                 </div>
             </div>
 
-            <p class="text-sm text-text-secondary">{{ $supportEmail }} | {{ $supportPhone }}</p>
+            <p class="relative z-10 text-sm {{ $brandBackgroundUrl ? 'text-emerald-50' : 'text-text-secondary' }}">{{ $supportEmail }} | {{ $supportPhone }}</p>
         </section>
 
         <main class="flex min-h-screen items-center justify-center px-4 py-8 sm:px-6 lg:px-10">

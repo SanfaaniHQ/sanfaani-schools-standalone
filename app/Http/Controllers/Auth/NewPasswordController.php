@@ -25,7 +25,7 @@ class NewPasswordController extends Controller
             'request' => $request,
             'action' => route('password.store'),
             'loginRoute' => route('login'),
-            'heading' => 'Create a new school account password',
+            'heading' => __('ui.reset_password_heading'),
         ]);
     }
 
@@ -35,7 +35,7 @@ class NewPasswordController extends Controller
             'request' => $request,
             'action' => route('admin.password.store'),
             'loginRoute' => route('admin.login'),
-            'heading' => 'Create a new Super Admin password',
+            'heading' => __('ui.admin_reset_password_heading'),
         ]);
     }
 
@@ -68,6 +68,7 @@ class NewPasswordController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'must_change_password' => false,
                 ])->save();
 
                 event(new PasswordReset($user));
@@ -110,6 +111,7 @@ class NewPasswordController extends Controller
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'must_change_password' => false,
                 ])->save();
 
                 event(new PasswordReset($user));
