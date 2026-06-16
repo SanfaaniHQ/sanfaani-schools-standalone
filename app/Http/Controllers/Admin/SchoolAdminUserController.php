@@ -7,28 +7,63 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
 use App\Services\AuditLogService;
+use App\Services\Users\UserAccountSetupNotificationService;
+use App\Services\Users\UserLifecycleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class SchoolAdminUserController extends Controller
 {
-    public function index(School $school)
+    private const ROLES = ['school_admin'];
+
+    public function index(Request $request, School $school)
     {
+        $status = $this->statusFilter($request);
+
         $admins = User::query()
-            ->where(function ($q) use ($school) {
-                $q->where('school_id', $school->id)
-                    ->orWhereHas('schoolRoles', fn ($q) => $q->where('school_id', $school->id)
-                        ->where('role_name', 'school_admin')
-                    );
+            ->where(function ($query) use ($school) {
+                $query->where('school_id', $school->id)
+                    ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                        ->where('school_id', $school->id)
+                        ->where('role_name', 'school_admin'));
             })
-            ->whereHas('roles', fn ($q) => $q->where('name', 'school_admin'))
-            ->with(['roles', 'schoolRoles' => fn ($q) => $q->where('school_id', $school->id)])
+            ->where(function ($query) use ($school) {
+                $query->whereHas('roles', fn ($roleQuery) => $roleQuery->where('name', 'school_admin'))
+                    ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                        ->where('school_id', $school->id)
+                        ->where('role_name', 'school_admin'));
+            })
+            ->with(['roles', 'schoolRoles' => fn ($query) => $query->where('school_id', $school->id)])
+            ->when($status === 'active', fn ($query) => $query
+                ->whereNull('users.disabled_at')
+                ->whereNull('users.archived_at')
+                ->whereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                    ->where('school_id', $school->id)
+                    ->where('role_name', 'school_admin')
+                    ->where('status', 'active')))
+            ->when($status === 'disabled', fn ($query) => $query
+                ->whereNull('users.archived_at')
+                ->where(function ($statusQuery) use ($school) {
+                    $statusQuery->whereNotNull('users.disabled_at')
+                        ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                            ->where('school_id', $school->id)
+                            ->where('role_name', 'school_admin')
+                            ->whereIn('status', ['inactive', 'disabled']));
+                }))
+            ->when($status === 'archived', fn ($query) => $query
+                ->where(function ($statusQuery) use ($school) {
+                    $statusQuery->whereNotNull('users.archived_at')
+                        ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                            ->where('school_id', $school->id)
+                            ->where('role_name', 'school_admin')
+                            ->where('status', 'archived'));
+                }))
             ->latest()
             ->get();
 
-        return view('admin.schools.admins.index', compact('school', 'admins'));
+        return view('admin.schools.admins.index', compact('school', 'admins', 'status'));
     }
 
     public function create(School $school)
@@ -36,13 +71,15 @@ class SchoolAdminUserController extends Controller
         return view('admin.schools.admins.create', compact('school'));
     }
 
-    public function store(Request $request, School $school, AuditLogService $auditLog)
-    {
+    public function store(
+        Request $request,
+        School $school,
+        AuditLogService $auditLog,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'send_reset_link' => ['nullable', 'boolean'],
         ]);
 
         $email = strtolower(trim($data['email']));
@@ -51,13 +88,12 @@ class SchoolAdminUserController extends Controller
         if ($existingUser && $existingUser->hasRole('super_admin')) {
             return back()
                 ->withInput()
-                ->withErrors(['email' => 'This email belongs to a Super Admin account and cannot be assigned as a School Admin.']);
+                ->withErrors(['email' => __('ui.super_admin_assignment_blocked')]);
         }
 
         if ($existingUser) {
             $user = $existingUser;
 
-            // Preserve school_id if user already belongs to a different school
             if (! $user->school_id || (int) $user->school_id === (int) $school->id) {
                 $user->update(['school_id' => $school->id]);
             }
@@ -65,45 +101,41 @@ class SchoolAdminUserController extends Controller
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $email,
-                'password' => Hash::make($data['password']),
+                'password' => Hash::make(Str::random(48)),
                 'school_id' => $school->id,
+                'must_change_password' => true,
             ]);
         }
 
-        // Assign Spatie role if not already assigned
         if (! $user->hasRole('school_admin')) {
             $user->assignRole('school_admin');
         }
 
-        // Upsert UserSchoolRole
-        if (class_exists(UserSchoolRole::class)) {
-            UserSchoolRole::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'school_id' => $school->id,
-                    'role_name' => 'school_admin',
-                ],
-                [
-                    'status' => 'active',
-                    'assigned_by' => auth()->id(),
-                ]
-            );
-        }
+        UserSchoolRole::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'school_id' => $school->id,
+                'role_name' => 'school_admin',
+            ],
+            [
+                'status' => 'active',
+                'assigned_by' => auth()->id(),
+            ]
+        );
 
-        // Send reset link if requested
-        if ($request->boolean('send_reset_link')) {
-            try {
-                Password::sendResetLink(['email' => $user->email]);
-            } catch (\Throwable $e) {
-                // Silent — link is best-effort
-            }
-        }
+        $setupResult = $setupNotifications->sendSetupLink(
+            $user->refresh(),
+            $school,
+            UserAccountSetupNotificationService::ACCOUNT_CREATED_SETUP_LINK,
+            'school_admin',
+            $request->user()
+        );
 
         $auditLog->log('school_admin_created', $user, $school, request: $request);
 
         return redirect()
             ->route('admin.schools.admins.index', $school)
-            ->with('success', 'School Admin account created successfully.');
+            ->with($this->setupFlash($setupResult, __('ui.school_admin_created_setup_sent')));
     }
 
     public function resetPassword(Request $request, School $school, User $admin, AuditLogService $auditLog)
@@ -126,89 +158,180 @@ class SchoolAdminUserController extends Controller
 
         return redirect()
             ->route('admin.schools.admins.index', $school)
-            ->with('success', 'Password reset successfully.');
+            ->with('success', __('ui.password_updated_success'));
     }
 
-    public function sendResetLink(Request $request, School $school, User $admin, AuditLogService $auditLog)
-    {
-        $this->authorizeAdmin($admin, $school);
-
-        try {
-            Password::sendResetLink(['email' => $admin->email]);
-            $message = 'Password reset link has been sent if mail is configured.';
-        } catch (\Throwable $e) {
-            $message = 'Reset link could not be sent. Check mail settings.';
-        }
-
-        $auditLog->log('school_admin_password_reset_link_sent', $admin, $school, request: $request);
-
-        return back()->with('success', $message);
+    public function sendResetLink(
+        Request $request,
+        School $school,
+        User $admin,
+        AuditLogService $auditLog,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        return $this->sendSetupLink($request, $school, $admin, $auditLog, $setupNotifications);
     }
 
-    public function disable(Request $request, School $school, User $admin, AuditLogService $auditLog)
-    {
+    public function sendSetupLink(
+        Request $request,
+        School $school,
+        User $admin,
+        AuditLogService $auditLog,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
         $this->authorizeAdmin($admin, $school);
 
-        // Set user_school_roles to inactive
-        if (class_exists(UserSchoolRole::class)) {
-            UserSchoolRole::where('user_id', $admin->id)
-                ->where('school_id', $school->id)
-                ->where('role_name', 'school_admin')
-                ->update(['status' => 'inactive']);
+        $setupResult = $setupNotifications->sendSetupLink(
+            $admin,
+            $school,
+            UserAccountSetupNotificationService::ACCOUNT_SETUP_LINK_RESENT,
+            'school_admin',
+            $request->user()
+        );
 
-            // Check if user has other active school contexts
-            $hasOtherActiveRoles = UserSchoolRole::where('user_id', $admin->id)
-                ->where('school_id', '!=', $school->id)
-                ->where('status', 'active')
-                ->exists();
+        $auditLog->log('school_admin_setup_link_sent', $admin, $school, request: $request);
 
-            // Only remove global Spatie role if no other active contexts exist
-            if (! $hasOtherActiveRoles) {
-                $admin->removeRole('school_admin');
-            }
+        return back()->with($this->setupFlash($setupResult, __('ui.setup_link_sent')));
+    }
+
+    public function disable(
+        Request $request,
+        School $school,
+        User $admin,
+        AuditLogService $auditLog,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $this->authorizeAdmin($admin, $school);
+
+        $lifecycle->disable($admin, $school, self::ROLES, $request->user(), $request);
+
+        if (! $lifecycle->hasOtherActiveSchoolRoles($admin, $school)) {
+            $admin->removeRole('school_admin');
         }
 
         $auditLog->log('school_admin_access_disabled', $admin, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($admin->refresh(), UserAccountSetupNotificationService::ACCOUNT_DISABLED, $school, 'school_admin', $request->user());
 
         return redirect()
-            ->route('admin.schools.admins.index', $school)
-            ->with('success', 'School Admin access disabled successfully.');
+            ->route('admin.schools.admins.index', [$school, 'status' => 'disabled'])
+            ->with('success', __('ui.account_disabled_success'));
     }
 
-    public function enable(Request $request, School $school, User $admin, AuditLogService $auditLog)
-    {
+    public function enable(
+        Request $request,
+        School $school,
+        User $admin,
+        AuditLogService $auditLog,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
         $this->authorizeAdmin($admin, $school);
 
-        // Assign Spatie role if not already assigned
         if (! $admin->hasRole('school_admin')) {
             $admin->assignRole('school_admin');
         }
 
-        // Set users.school_id if null or mismatched
         if (! $admin->school_id || (int) $admin->school_id !== (int) $school->id) {
             $admin->update(['school_id' => $school->id]);
         }
 
-        // Upsert UserSchoolRole to active
-        if (class_exists(UserSchoolRole::class)) {
-            UserSchoolRole::updateOrCreate(
-                [
-                    'user_id' => $admin->id,
-                    'school_id' => $school->id,
-                    'role_name' => 'school_admin',
-                ],
-                [
-                    'status' => 'active',
-                    'assigned_by' => auth()->id(),
-                ]
-            );
-        }
+        UserSchoolRole::updateOrCreate(
+            [
+                'user_id' => $admin->id,
+                'school_id' => $school->id,
+                'role_name' => 'school_admin',
+            ],
+            [
+                'status' => 'active',
+                'assigned_by' => auth()->id(),
+            ]
+        );
+
+        $lifecycle->enable($admin, $school, self::ROLES, $request->user(), $request);
 
         $auditLog->log('school_admin_access_enabled', $admin, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($admin->refresh(), UserAccountSetupNotificationService::ACCOUNT_ENABLED, $school, 'school_admin', $request->user());
+
+        return redirect()
+            ->route('admin.schools.admins.index', [$school, 'status' => 'disabled'])
+            ->with('success', __('ui.account_enabled_success'));
+    }
+
+    public function archive(
+        Request $request,
+        School $school,
+        User $admin,
+        AuditLogService $auditLog,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $this->authorizeAdmin($admin, $school);
+        $lifecycle->archive($admin, $school, self::ROLES, $request->user(), $request);
+
+        if (! $lifecycle->hasOtherActiveSchoolRoles($admin, $school)) {
+            $admin->removeRole('school_admin');
+        }
+
+        $auditLog->log('school_admin_archived', $admin, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($admin->refresh(), UserAccountSetupNotificationService::ACCOUNT_ARCHIVED, $school, 'school_admin', $request->user());
+
+        return redirect()
+            ->route('admin.schools.admins.index', [$school, 'status' => 'archived'])
+            ->with('success', __('ui.account_archived_success'));
+    }
+
+    public function restore(
+        Request $request,
+        School $school,
+        User $admin,
+        AuditLogService $auditLog,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $this->authorizeAdmin($admin, $school);
+
+        if (! $admin->hasRole('school_admin')) {
+            $admin->assignRole('school_admin');
+        }
+
+        $lifecycle->restore($admin, $school, self::ROLES, $request->user(), $request);
+
+        $auditLog->log('school_admin_restored', $admin, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($admin->refresh(), UserAccountSetupNotificationService::ACCOUNT_RESTORED, $school, 'school_admin', $request->user());
+
+        return redirect()
+            ->route('admin.schools.admins.index', [$school, 'status' => 'archived'])
+            ->with('success', __('ui.account_restored_success'));
+    }
+
+    public function destroy(
+        Request $request,
+        School $school,
+        User $admin,
+        AuditLogService $auditLog,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $this->authorizeAdmin($admin, $school);
+        $result = $lifecycle->deleteOrArchive($admin, $school, self::ROLES, $request->user(), $request);
+
+        if ($result['archived']) {
+            $admin->removeRole('school_admin');
+            $auditLog->log('school_admin_delete_archived_instead', $admin, $school, request: $request);
+            $setupNotifications->sendLifecycleNotice($admin->refresh(), UserAccountSetupNotificationService::ACCOUNT_ARCHIVED, $school, 'school_admin', $request->user());
+
+            return redirect()
+                ->route('admin.schools.admins.index', [$school, 'status' => 'archived'])
+                ->with('success', __('ui.account_delete_archived_instead'));
+        }
+
+        $auditLog->log('school_admin_deleted', null, $school, metadata: [
+            'target_id' => $admin->id,
+        ], request: $request);
 
         return redirect()
             ->route('admin.schools.admins.index', $school)
-            ->with('success', 'School Admin access enabled successfully.');
+            ->with('success', __('ui.account_deleted_success'));
     }
 
     private function authorizeAdmin(User $admin, School $school): void
@@ -223,7 +346,23 @@ class SchoolAdminUserController extends Controller
         }
 
         if (! $belongsToSchool) {
-            abort(403, 'This user does not belong to the specified school.');
+            abort(403, __('ui.user_not_in_school'));
         }
+    }
+
+    private function statusFilter(Request $request): string
+    {
+        $status = (string) $request->query('status', 'active');
+
+        return in_array($status, ['active', 'disabled', 'archived'], true) ? $status : 'active';
+    }
+
+    private function setupFlash(array $setupResult, string $successMessage): array
+    {
+        if ($setupResult['sent']) {
+            return ['success' => $successMessage];
+        }
+
+        return ['warning' => __('ui.account_created_setup_failed')];
     }
 }

@@ -68,8 +68,9 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">New Password</label>
                             <input type="password" name="password"
-                                   placeholder="Leave blank to keep current password"
+                                   aria-describedby="staff-password-help"
                                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            <p id="staff-password-help" class="mt-1 text-xs text-gray-500">{{ __('ui.staff_password_help') }}</p>
                             @error('password')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -88,7 +89,7 @@
                                value="1"
                                @checked(old('must_change_password', $staff->must_change_password))
                                class="mt-0.5 rounded border-gray-300 text-gray-900 shadow-sm focus:ring-gray-900">
-                        <span>Mark this account to change password later when password-change enforcement is added.</span>
+                        <span>{{ __('ui.staff_require_password_reset') }}</span>
                     </label>
 
                     <div class="flex items-center justify-end gap-3">

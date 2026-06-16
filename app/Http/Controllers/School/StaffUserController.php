@@ -10,31 +10,62 @@ use App\Models\UserSchoolRole;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
 use App\Services\StaffCodeGeneratorService;
+use App\Services\Users\UserAccountSetupNotificationService;
+use App\Services\Users\UserLifecycleService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class StaffUserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $school = $this->currentSchoolOrFail();
+        $status = $this->statusFilter($request);
 
         $staffUsers = User::query()
             ->where(function ($query) use ($school) {
                 $query->where('school_id', $school->id)
-                    ->orWhereHas('activeSchoolRoles', fn ($query) => $query->where('school_id', $school->id));
+                    ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery->where('school_id', $school->id));
             })
             ->where(function ($query) {
-                $query->whereHas('roles', fn ($query) => $query->whereIn('name', $this->manageableRoles()))
-                    ->orWhereHas('activeSchoolRoles', fn ($query) => $query->whereIn('role_name', $this->manageableRoles()));
+                $query->whereHas('roles', fn ($roleQuery) => $roleQuery->whereIn('name', $this->manageableRoles()))
+                    ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery->whereIn('role_name', $this->manageableRoles()));
             })
             ->with(['roles', 'schoolRoles' => fn ($query) => $query->where('school_id', $school->id)])
+            ->when($status === 'active', fn ($query) => $query
+                ->whereNull('users.disabled_at')
+                ->whereNull('users.archived_at')
+                ->whereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                    ->where('school_id', $school->id)
+                    ->whereIn('role_name', $this->manageableRoles())
+                    ->where('status', 'active')))
+            ->when($status === 'disabled', fn ($query) => $query
+                ->whereNull('users.archived_at')
+                ->where(function ($statusQuery) use ($school) {
+                    $statusQuery->whereNotNull('users.disabled_at')
+                        ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                            ->where('school_id', $school->id)
+                            ->whereIn('role_name', $this->manageableRoles())
+                            ->whereIn('status', ['inactive', 'disabled']));
+                }))
+            ->when($status === 'archived', fn ($query) => $query
+                ->where(function ($statusQuery) use ($school) {
+                    $statusQuery->whereNotNull('users.archived_at')
+                        ->orWhereHas('schoolRoles', fn ($roleQuery) => $roleQuery
+                            ->where('school_id', $school->id)
+                            ->whereIn('role_name', $this->manageableRoles())
+                            ->where('status', 'archived'));
+                }))
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('school.staff.index', [
             'school' => $school,
             'staffUsers' => $staffUsers,
+            'status' => $status,
         ]);
     }
 
@@ -55,8 +86,11 @@ class StaffUserController extends Controller
         ]);
     }
 
-    public function store(Request $request, StaffCodeGeneratorService $staffCodes)
-    {
+    public function store(
+        Request $request,
+        StaffCodeGeneratorService $staffCodes,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
         $school = $this->currentSchoolOrFail();
 
         if ($request->boolean('auto_generate_staff_code')) {
@@ -69,8 +103,6 @@ class StaffUserController extends Controller
             'role' => ['required', Rule::in($this->manageableRoles())],
             'staff_code' => ['nullable', 'string', 'max:100', Rule::unique('users', 'staff_code')],
             'auto_generate_staff_code' => ['nullable', 'boolean'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'must_change_password' => ['nullable', 'boolean'],
         ]);
 
         $staffCode = $data['staff_code'] ?: $staffCodes->generateForSchool($school, $data['role']);
@@ -85,8 +117,8 @@ class StaffUserController extends Controller
                 'name' => $data['name'],
                 'email' => $email,
                 'staff_code' => strtoupper(trim($staffCode)),
-                'password' => $data['password'],
-                'must_change_password' => (bool) ($data['must_change_password'] ?? false),
+                'password' => Hash::make(Str::random(48)),
+                'must_change_password' => true,
             ]);
         } else {
             $user->update([
@@ -107,11 +139,24 @@ class StaffUserController extends Controller
             'assigned_by' => auth()->id(),
         ]);
 
-        event(StaffTransactionalEmailRequested::accountCreated($user->refresh(), $school, $data['role'], $wasExistingUser));
+        $setupResult = ['sent' => true];
+
+        if (! $wasExistingUser) {
+            $setupResult = $setupNotifications->sendSetupLink(
+                $user->refresh(),
+                $school,
+                UserAccountSetupNotificationService::ACCOUNT_CREATED_SETUP_LINK,
+                $data['role'],
+                $request->user()
+            );
+        }
 
         return redirect()
             ->route('school.staff.index')
-            ->with('success', $wasExistingUser ? 'Existing user was granted access to this school.' : 'Staff account created successfully.');
+            ->with($this->setupFlash(
+                $setupResult,
+                $wasExistingUser ? __('ui.existing_user_school_access_granted') : __('ui.staff_created_setup_sent')
+            ));
     }
 
     public function edit(User $staff)
@@ -176,92 +221,188 @@ class StaffUserController extends Controller
 
         return redirect()
             ->route('school.staff.index')
-            ->with('success', 'Staff account updated successfully.');
+            ->with('success', __('ui.staff_updated_success'));
     }
 
-    public function disable(Request $request, User $staff)
-    {
+    public function sendSetupLink(
+        Request $request,
+        User $staff,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $school = $this->currentSchoolOrFail();
+        $this->authorizeStaff($staff, $school);
+        $role = $this->currentSchoolRole($staff, $school) ?? 'staff';
+
+        $setupResult = $setupNotifications->sendSetupLink(
+            $staff,
+            $school,
+            UserAccountSetupNotificationService::ACCOUNT_SETUP_LINK_RESENT,
+            $role,
+            $request->user()
+        );
+
+        return back()->with($this->setupFlash($setupResult, __('ui.setup_link_sent')));
+    }
+
+    public function disable(
+        Request $request,
+        User $staff,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
         $school = $this->currentSchoolOrFail();
         $this->authorizeStaff($staff, $school);
 
-        // Prevent disabling Super Admin or School Admin
         if ($staff->hasAnyRole(['super_admin', 'school_admin'])) {
-            abort(403, 'You cannot disable this user.');
+            abort(403, __('ui.account_action_not_allowed'));
         }
 
         $role = $this->currentSchoolRole($staff, $school) ?? 'staff';
+        $lifecycle->disable($staff, $school, $this->manageableRoles(), $request->user(), $request);
 
-        // Set user_school_roles to inactive for this school
-        UserSchoolRole::where('user_id', $staff->id)
-            ->where('school_id', $school->id)
-            ->whereIn('role_name', $this->manageableRoles())
-            ->update(['status' => 'inactive']);
-
-        // Check if user has other active school roles
-        $hasOtherActiveRoles = UserSchoolRole::where('user_id', $staff->id)
-            ->where('school_id', '!=', $school->id)
-            ->where('status', 'active')
-            ->exists();
-
-        // Remove global Spatie roles only if no other active contexts exist
-        if (! $hasOtherActiveRoles) {
-            foreach ($this->manageableRoles() as $role) {
-                if ($staff->hasRole($role)) {
-                    $staff->removeRole($role);
+        if (! $lifecycle->hasOtherActiveSchoolRoles($staff, $school)) {
+            foreach ($this->manageableRoles() as $manageableRole) {
+                if ($staff->hasRole($manageableRole)) {
+                    $staff->removeRole($manageableRole);
                 }
             }
         }
 
-        if (class_exists(AuditLogService::class)) {
-            app(AuditLogService::class)->log('staff_access_disabled', $staff, $school, request: $request);
-        }
-
-        event(StaffTransactionalEmailRequested::accountStatusChanged($staff, $school, $role, false));
+        app(AuditLogService::class)->log('staff_access_disabled', $staff, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($staff->refresh(), UserAccountSetupNotificationService::ACCOUNT_DISABLED, $school, $role, $request->user());
 
         return redirect()
-            ->route('school.staff.index')
-            ->with('success', 'Staff access disabled successfully.');
+            ->route('school.staff.index', ['status' => 'disabled'])
+            ->with('success', __('ui.account_disabled_success'));
     }
 
-    public function enable(Request $request, User $staff)
-    {
+    public function enable(
+        Request $request,
+        User $staff,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
         $school = $this->currentSchoolOrFail();
 
-        // Get the staff member's role for this school
         $schoolRole = UserSchoolRole::where('user_id', $staff->id)
             ->where('school_id', $school->id)
             ->whereIn('role_name', $this->manageableRoles())
+            ->latest()
             ->first();
 
         if (! $schoolRole) {
-            abort(403, 'This staff member does not have a role in this school.');
+            abort(403, __('ui.staff_role_missing'));
         }
 
-        // Assign Spatie role if not already assigned
         if (! $staff->hasRole($schoolRole->role_name)) {
             $staff->assignRole($schoolRole->role_name);
         }
 
-        // Set school_id if null or mismatched
         if (! $staff->school_id || (int) $staff->school_id !== (int) $school->id) {
             $staff->update(['school_id' => $school->id]);
         }
 
-        // Update user_school_roles to active
-        $schoolRole->update([
-            'status' => 'active',
-            'assigned_by' => auth()->id(),
-        ]);
+        $lifecycle->enable($staff, $school, [$schoolRole->role_name], $request->user(), $request);
 
-        if (class_exists(AuditLogService::class)) {
-            app(AuditLogService::class)->log('staff_access_enabled', $staff, $school, request: $request);
+        app(AuditLogService::class)->log('staff_access_enabled', $staff, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($staff->refresh(), UserAccountSetupNotificationService::ACCOUNT_ENABLED, $school, $schoolRole->role_name, $request->user());
+
+        return redirect()
+            ->route('school.staff.index', ['status' => 'disabled'])
+            ->with('success', __('ui.account_enabled_success'));
+    }
+
+    public function archive(
+        Request $request,
+        User $staff,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $school = $this->currentSchoolOrFail();
+        $this->authorizeStaff($staff, $school);
+
+        if ($staff->hasAnyRole(['super_admin', 'school_admin'])) {
+            abort(403, __('ui.account_action_not_allowed'));
         }
 
-        event(StaffTransactionalEmailRequested::accountStatusChanged($staff->refresh(), $school, $schoolRole->role_name, true));
+        $role = $this->currentSchoolRole($staff, $school) ?? 'staff';
+        $lifecycle->archive($staff, $school, $this->manageableRoles(), $request->user(), $request);
+
+        if (! $lifecycle->hasOtherActiveSchoolRoles($staff, $school)) {
+            foreach ($this->manageableRoles() as $manageableRole) {
+                if ($staff->hasRole($manageableRole)) {
+                    $staff->removeRole($manageableRole);
+                }
+            }
+        }
+
+        app(AuditLogService::class)->log('staff_archived', $staff, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($staff->refresh(), UserAccountSetupNotificationService::ACCOUNT_ARCHIVED, $school, $role, $request->user());
+
+        return redirect()
+            ->route('school.staff.index', ['status' => 'archived'])
+            ->with('success', __('ui.account_archived_success'));
+    }
+
+    public function restore(
+        Request $request,
+        User $staff,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $school = $this->currentSchoolOrFail();
+        $this->authorizeStaff($staff, $school);
+        $role = $this->currentSchoolRole($staff, $school) ?? 'teacher';
+
+        $staff->assignRole($role);
+        $lifecycle->restore($staff, $school, [$role], $request->user(), $request);
+
+        app(AuditLogService::class)->log('staff_restored', $staff, $school, request: $request);
+        $setupNotifications->sendLifecycleNotice($staff->refresh(), UserAccountSetupNotificationService::ACCOUNT_RESTORED, $school, $role, $request->user());
+
+        return redirect()
+            ->route('school.staff.index', ['status' => 'archived'])
+            ->with('success', __('ui.account_restored_success'));
+    }
+
+    public function destroy(
+        Request $request,
+        User $staff,
+        UserLifecycleService $lifecycle,
+        UserAccountSetupNotificationService $setupNotifications
+    ) {
+        $school = $this->currentSchoolOrFail();
+        $this->authorizeStaff($staff, $school);
+
+        if ($staff->hasAnyRole(['super_admin', 'school_admin'])) {
+            abort(403, __('ui.account_action_not_allowed'));
+        }
+
+        $role = $this->currentSchoolRole($staff, $school) ?? 'staff';
+        $result = $lifecycle->deleteOrArchive($staff, $school, $this->manageableRoles(), $request->user(), $request);
+
+        if ($result['archived']) {
+            foreach ($this->manageableRoles() as $manageableRole) {
+                if ($staff->hasRole($manageableRole)) {
+                    $staff->removeRole($manageableRole);
+                }
+            }
+
+            app(AuditLogService::class)->log('staff_delete_archived_instead', $staff, $school, request: $request);
+            $setupNotifications->sendLifecycleNotice($staff->refresh(), UserAccountSetupNotificationService::ACCOUNT_ARCHIVED, $school, $role, $request->user());
+
+            return redirect()
+                ->route('school.staff.index', ['status' => 'archived'])
+                ->with('success', __('ui.account_delete_archived_instead'));
+        }
+
+        app(AuditLogService::class)->log('staff_deleted', null, $school, metadata: [
+            'target_id' => $staff->id,
+        ], request: $request);
 
         return redirect()
             ->route('school.staff.index')
-            ->with('success', 'Staff access enabled successfully.');
+            ->with('success', __('ui.account_deleted_success'));
     }
 
     private function currentSchoolOrFail(): School
@@ -269,7 +410,7 @@ class StaffUserController extends Controller
         $school = app(CurrentSchoolService::class)->get();
 
         if (! $school) {
-            abort(403, 'Your account is not assigned to a school.');
+            abort(403, __('ui.account_not_assigned_to_school'));
         }
 
         return $school;
@@ -277,13 +418,13 @@ class StaffUserController extends Controller
 
     private function authorizeStaff(User $staff, School $school): void
     {
-        $hasSchoolRole = $staff->activeSchoolRoles()
+        $hasSchoolRole = $staff->schoolRoles()
             ->where('school_id', $school->id)
             ->whereIn('role_name', $this->manageableRoles())
             ->exists();
 
-        if (((int) $staff->school_id !== (int) $school->id && ! $hasSchoolRole) || ! $staff->hasAnyRole($this->manageableRoles())) {
-            abort(403, 'You cannot manage this staff account.');
+        if ((int) $staff->school_id !== (int) $school->id && ! $hasSchoolRole) {
+            abort(403, __('ui.staff_manage_blocked'));
         }
     }
 
@@ -309,5 +450,21 @@ class StaffUserController extends Controller
     private function manageableRoles(): array
     {
         return ['teacher', 'result_officer'];
+    }
+
+    private function statusFilter(Request $request): string
+    {
+        $status = (string) $request->query('status', 'active');
+
+        return in_array($status, ['active', 'disabled', 'archived'], true) ? $status : 'active';
+    }
+
+    private function setupFlash(array $setupResult, string $successMessage): array
+    {
+        if ($setupResult['sent']) {
+            return ['success' => $successMessage];
+        }
+
+        return ['warning' => __('ui.account_created_setup_failed')];
     }
 }

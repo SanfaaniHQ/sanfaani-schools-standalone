@@ -22,8 +22,8 @@ class PasswordResetLinkController extends Controller
         return view('auth.forgot-password', [
             'action' => route('password.email'),
             'backRoute' => route('login'),
-            'heading' => 'Reset your school account password',
-            'description' => 'Enter the email address for your school account and we will send a secure reset link if the account exists.',
+            'heading' => __('ui.forgot_password_heading'),
+            'description' => __('ui.forgot_password_description'),
         ]);
     }
 
@@ -32,8 +32,8 @@ class PasswordResetLinkController extends Controller
         return view('auth.forgot-password', [
             'action' => route('admin.password.email'),
             'backRoute' => route('admin.login'),
-            'heading' => 'Reset Super Admin password',
-            'description' => 'Enter the Super Admin email address. For security, this form only sends links to verified platform owner accounts.',
+            'heading' => __('ui.admin_forgot_password_heading'),
+            'description' => __('ui.admin_forgot_password_description'),
         ]);
     }
 
@@ -60,7 +60,7 @@ class PasswordResetLinkController extends Controller
             ]);
         }
 
-        return back()->with('status', 'If this email exists, a password reset link will be sent.');
+        return back()->with('status', __('ui.password_link_status'));
     }
 
     public function adminStore(Request $request): RedirectResponse
@@ -90,6 +90,6 @@ class PasswordResetLinkController extends Controller
             ]);
         }
 
-        return back()->with('status', 'If this Super Admin email exists, a password reset link will be sent.');
+        return back()->with('status', __('ui.admin_password_link_status'));
     }
 }

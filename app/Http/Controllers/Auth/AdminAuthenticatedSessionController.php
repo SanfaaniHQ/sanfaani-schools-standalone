@@ -29,8 +29,7 @@ class AdminAuthenticatedSessionController extends Controller
         UserWorkspaceService $workspaces,
         AuditLogService $auditLog,
         SystemNotificationService $notifications
-    ): RedirectResponse
-    {
+    ): RedirectResponse {
         $credentials = $request->validate([
             'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string'],
@@ -61,6 +60,28 @@ class AdminAuthenticatedSessionController extends Controller
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+
+        if (! $request->user()->isActiveAccount()) {
+            Log::warning('Inactive Super Admin login blocked.', [
+                'user_id' => $request->user()->id,
+                'status' => $request->user()->accountStatus(),
+                'ip' => $request->ip(),
+            ]);
+
+            $auditLog->log('super_admin_login_blocked_inactive', $request->user(), null, metadata: [
+                'status' => $request->user()->accountStatus(),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ], request: $request);
+
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            throw ValidationException::withMessages([
+                'email' => __('ui.account_not_active'),
             ]);
         }
 

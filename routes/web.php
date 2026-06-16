@@ -1,32 +1,32 @@
 <?php
 
-use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\Admissions\AdmissionController as AdminAdmissionController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BrandingController as AdminBrandingController;
 use App\Http\Controllers\Admin\CommunicationController as AdminCommunicationController;
 use App\Http\Controllers\Admin\DemoSessionController as AdminDemoSessionController;
 use App\Http\Controllers\Admin\DeploymentPlaceholderController;
 use App\Http\Controllers\Admin\LeadRequestController;
+use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\LocalBrandingController;
 use App\Http\Controllers\Admin\LocalMailSettingController;
 use App\Http\Controllers\Admin\LocalSchoolAdminController;
-use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\MailSettingController;
 use App\Http\Controllers\Admin\MarketingAutomationController;
 use App\Http\Controllers\Admin\MarketingCampaignController;
 use App\Http\Controllers\Admin\MarketingDashboardController;
 use App\Http\Controllers\Admin\MarketingEmailTemplateController;
-use App\Http\Controllers\Admin\SalesTaskController;
+use App\Http\Controllers\Admin\OnboardingProgressController as AdminOnboardingProgressController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\PaymentGatewaySettingController;
 use App\Http\Controllers\Admin\PerformanceController;
-use App\Http\Controllers\Admin\OnboardingProgressController as AdminOnboardingProgressController;
-use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\PlatformMailSystemController;
+use App\Http\Controllers\Admin\PlatformSettingController;
 use App\Http\Controllers\Admin\ResultAccessPolicyController;
 use App\Http\Controllers\Admin\ResultSystemController as AdminResultSystemController;
 use App\Http\Controllers\Admin\RolePermissionController;
+use App\Http\Controllers\Admin\SalesTaskController;
 use App\Http\Controllers\Admin\SchoolAdminUserController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SchoolFeatureOverrideController;
@@ -34,29 +34,28 @@ use App\Http\Controllers\Admin\SchoolPublicPageController as AdminSchoolPublicPa
 use App\Http\Controllers\Admin\SchoolSubscriptionController;
 use App\Http\Controllers\Admin\ScratchCardRequestController;
 use App\Http\Controllers\Admin\SecurityDiagnosticsController;
+use App\Http\Controllers\Admin\StandaloneStatusController;
 use App\Http\Controllers\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
-use App\Http\Controllers\Admin\StandaloneStatusController;
 use App\Http\Controllers\Admin\SupportThreadController as AdminSupportThreadController;
 use App\Http\Controllers\Admin\SystemMaintenanceController;
 use App\Http\Controllers\Admin\SystemStatusController;
 use App\Http\Controllers\Admin\UpdateController;
-use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\Admissions\PublicAdmissionController;
+use App\Http\Controllers\Auth\AdminAuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Demo\MarketplaceLiveDemoController;
 use App\Http\Controllers\Demo\DemoRequestController;
+use App\Http\Controllers\Demo\MarketplaceLiveDemoController;
 use App\Http\Controllers\MarketingTrackingController;
 use App\Http\Controllers\MarketingUnsubscribeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SearchController;
-use App\Http\Controllers\Public\LandingPageController;
 use App\Http\Controllers\Public\CbtAccessController as PublicCbtAccessController;
+use App\Http\Controllers\Public\LandingPageController;
 use App\Http\Controllers\Public\ResultCheckerController;
 use App\Http\Controllers\Public\ResultCheckerPaymentController;
 use App\Http\Controllers\Public\ResultVerificationController;
@@ -112,6 +111,7 @@ use App\Http\Controllers\School\TeacherAssignmentController;
 use App\Http\Controllers\School\TeacherResultEntryController;
 use App\Http\Controllers\School\TeacherResultReviewController;
 use App\Http\Controllers\School\TermController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingPageController::class, 'home'])
@@ -417,10 +417,18 @@ Route::middleware(['auth', 'role:super_admin', 'demo.safe'])
                     ->name('store');
                 Route::post('/{admin}/reset-password', [LocalSchoolAdminController::class, 'resetPassword'])
                     ->name('reset-password');
+                Route::post('/{admin}/send-setup-link', [LocalSchoolAdminController::class, 'sendSetupLink'])
+                    ->name('send-setup-link');
                 Route::post('/{admin}/disable', [LocalSchoolAdminController::class, 'disable'])
                     ->name('disable');
                 Route::post('/{admin}/enable', [LocalSchoolAdminController::class, 'enable'])
                     ->name('enable');
+                Route::post('/{admin}/archive', [LocalSchoolAdminController::class, 'archive'])
+                    ->name('archive');
+                Route::post('/{admin}/restore', [LocalSchoolAdminController::class, 'restore'])
+                    ->name('restore');
+                Route::delete('/{admin}', [LocalSchoolAdminController::class, 'destroy'])
+                    ->name('destroy');
             });
 
         Route::resource('schools', SchoolController::class)
@@ -477,12 +485,28 @@ Route::middleware(['auth', 'role:super_admin', 'demo.safe'])
             ->name('schools.admins.send-reset-link')
             ->middleware('deployment.behavior:platform_schools');
 
+        Route::post('/schools/{school}/admins/{admin}/send-setup-link', [SchoolAdminUserController::class, 'sendSetupLink'])
+            ->name('schools.admins.send-setup-link')
+            ->middleware('deployment.behavior:platform_schools');
+
         Route::post('/schools/{school}/admins/{admin}/disable', [SchoolAdminUserController::class, 'disable'])
             ->name('schools.admins.disable')
             ->middleware('deployment.behavior:platform_schools');
 
         Route::post('/schools/{school}/admins/{admin}/enable', [SchoolAdminUserController::class, 'enable'])
             ->name('schools.admins.enable')
+            ->middleware('deployment.behavior:platform_schools');
+
+        Route::post('/schools/{school}/admins/{admin}/archive', [SchoolAdminUserController::class, 'archive'])
+            ->name('schools.admins.archive')
+            ->middleware('deployment.behavior:platform_schools');
+
+        Route::post('/schools/{school}/admins/{admin}/restore', [SchoolAdminUserController::class, 'restore'])
+            ->name('schools.admins.restore')
+            ->middleware('deployment.behavior:platform_schools');
+
+        Route::delete('/schools/{school}/admins/{admin}', [SchoolAdminUserController::class, 'destroy'])
+            ->name('schools.admins.destroy')
             ->middleware('deployment.behavior:platform_schools');
 
         Route::resource('subscription-plans', SubscriptionPlanController::class)
@@ -1456,6 +1480,18 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
 
                 Route::post('/staff/{staff}/enable', [StaffUserController::class, 'enable'])
                     ->name('staff.enable');
+
+                Route::post('/staff/{staff}/send-setup-link', [StaffUserController::class, 'sendSetupLink'])
+                    ->name('staff.send-setup-link');
+
+                Route::post('/staff/{staff}/archive', [StaffUserController::class, 'archive'])
+                    ->name('staff.archive');
+
+                Route::post('/staff/{staff}/restore', [StaffUserController::class, 'restore'])
+                    ->name('staff.restore');
+
+                Route::delete('/staff/{staff}', [StaffUserController::class, 'destroy'])
+                    ->name('staff.destroy');
 
                 Route::get('/role-features', [RoleFeatureSettingController::class, 'edit'])
                     ->name('role-features.edit');

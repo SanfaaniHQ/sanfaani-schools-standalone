@@ -142,7 +142,7 @@ class LoginRequest extends FormRequest
         if (str_contains($login, '@')) {
             $emailUser = $this->userByCaseInsensitiveColumn('email', $normalized);
 
-            return $emailUser ? [$emailUser] : [];
+            return $this->activeCandidate($emailUser) ? [$emailUser] : [];
         }
 
         $candidates = [];
@@ -150,18 +150,37 @@ class LoginRequest extends FormRequest
         if ($this->staffCodeColumnIsReady()) {
             $staffCodeUser = $this->userByCaseInsensitiveColumn('staff_code', $normalized);
 
-            if ($staffCodeUser && ! $this->isSuperAdmin($staffCodeUser)) {
+            if ($this->activeCandidate($staffCodeUser) && ! $this->isSuperAdmin($staffCodeUser)) {
                 $candidates[] = $staffCodeUser;
             }
         }
 
         $emailUser = $this->userByCaseInsensitiveColumn('email', $normalized);
 
-        if ($emailUser && ! collect($candidates)->contains(fn (User $user) => $user->is($emailUser))) {
+        if ($this->activeCandidate($emailUser) && ! collect($candidates)->contains(fn (User $user) => $user->is($emailUser))) {
             $candidates[] = $emailUser;
         }
 
         return $candidates;
+    }
+
+    private function activeCandidate(?User $user): ?User
+    {
+        if (! $user) {
+            return null;
+        }
+
+        if (! $user->isActiveAccount()) {
+            Log::notice('Inactive account login blocked.', [
+                'user_id' => $user->id,
+                'status' => $user->accountStatus(),
+                'ip' => $this->ip(),
+            ]);
+
+            return null;
+        }
+
+        return $user;
     }
 
     private function userByCaseInsensitiveColumn(string $column, string $value): ?User
