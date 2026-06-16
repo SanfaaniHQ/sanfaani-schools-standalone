@@ -6,6 +6,7 @@ use App\Models\Admissions\AdmissionApplication;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,6 +18,7 @@ class Student extends Model
 
     protected $fillable = [
         'school_id',
+        'student_user_id',
         'school_class_id',
         'admission_number',
         'first_name',
@@ -126,6 +128,39 @@ class Student extends Model
     public function electiveSubjects(): HasMany
     {
         return $this->hasMany(StudentElectiveSubject::class);
+    }
+
+    public function studentUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'student_user_id');
+    }
+
+    public function parentUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'parent_student', 'student_id', 'parent_user_id')
+            ->withPivot([
+                'school_id',
+                'relationship',
+                'is_primary',
+                'can_view_results',
+                'can_view_attendance',
+                'can_view_finance',
+                'receives_notifications',
+            ])
+            ->withTimestamps();
+    }
+
+    public function statusLabel(): string
+    {
+        return str((string) ($this->status ?? 'unknown'))
+            ->replace('_', ' ')
+            ->title()
+            ->toString();
+    }
+
+    public function isGraduated(): bool
+    {
+        return in_array($this->status, ['graduated', 'alumni'], true);
     }
 
     public function fullName(): string
