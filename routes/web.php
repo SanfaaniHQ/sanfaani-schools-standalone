@@ -47,6 +47,8 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ParentDashboardController;
+use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\Demo\DemoRequestController;
 use App\Http\Controllers\Demo\MarketplaceLiveDemoController;
 use App\Http\Controllers\MarketingTrackingController;
@@ -102,6 +104,7 @@ use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
 use App\Http\Controllers\School\StudentElectiveSubjectController;
 use App\Http\Controllers\School\StudentPromotionController;
+use App\Http\Controllers\School\StudentPortalAccountController;
 use App\Http\Controllers\School\StudentResultWorkspaceController;
 use App\Http\Controllers\School\SubjectAssignmentController;
 use App\Http\Controllers\School\SubjectController;
@@ -342,6 +345,15 @@ Route::get('/unsubscribe/{token}', MarketingUnsubscribeController::class)
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
+    Route::get('/parent/dashboard', ParentDashboardController::class)
+        ->middleware('role:parent')
+        ->name('parent.dashboard');
+
+    Route::get('/student/dashboard', StudentDashboardController::class)
+        ->middleware('role:student')
+        ->name('student.dashboard');
+});
 
 Route::middleware(['auth', 'verified', 'demo.safe'])->group(function () {
     Route::get('/choose-workspace', [ChooseWorkspaceController::class, 'create'])
@@ -1506,6 +1518,23 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
 
                 Route::resource('students', StudentController::class)
                     ->except(['index', 'show', 'destroy']);
+                Route::post('/students/{student}/portal/parents/create', [StudentPortalAccountController::class, 'createParent'])
+                    ->name('students.portal.parents.create');
+
+                Route::post('/students/{student}/portal/parents/link', [StudentPortalAccountController::class, 'linkParent'])
+                    ->name('students.portal.parents.link');
+
+                Route::delete('/students/{student}/portal/parents/{parent}/unlink', [StudentPortalAccountController::class, 'unlinkParent'])
+                    ->name('students.portal.parents.unlink');
+
+                Route::post('/students/{student}/portal/student-account/create', [StudentPortalAccountController::class, 'createStudent'])
+                    ->name('students.portal.student-account.create');
+
+                Route::post('/students/{student}/portal/student-account/link', [StudentPortalAccountController::class, 'linkStudent'])
+                    ->name('students.portal.student-account.link');
+
+                Route::delete('/students/{student}/portal/student-account/unlink', [StudentPortalAccountController::class, 'unlinkStudent'])
+                    ->name('students.portal.student-account.unlink');
 
                 Route::get('/profile', [SchoolProfileController::class, 'edit'])
                     ->name('profile.edit');

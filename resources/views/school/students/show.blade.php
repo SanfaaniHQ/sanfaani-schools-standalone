@@ -131,9 +131,9 @@
                     </h2>
                     <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
                         <span class="font-medium">{{ $student->admission_number }}</span>
-                        <span>•</span>
+                        <span>â€¢</span>
                         <span>{{ $student->schoolClass ? $student->schoolClass->name . ' ' . $student->schoolClass->section : 'No class' }}</span>
-                        <span>•</span>
+                        <span>â€¢</span>
                         <x-status-badge :status="$student->status" />
                     </div>
                 </div>
@@ -143,7 +143,7 @@
             <div class="no-print flex flex-wrap items-center gap-2">
                 <a href="{{ route('school.students.index') }}"
                    class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    ← Back
+                    â† Back
                 </a>
 
                 @if ($canManageStudents)
@@ -1133,4 +1133,171 @@
             window.addEventListener('load', () => window.print());
         </script>
     @endif
+
+    @if (auth()->user()?->hasAnyRole(['school_admin', 'super_admin']))
+        @php
+            $portalParents = $student->parentUsers()->orderBy('name')->get();
+            $studentPortalUser = $student->studentUser;
+        @endphp
+
+        <div class="mt-6 rounded-2xl border bg-white p-6 shadow-sm">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Student portal access</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Link parent and student login accounts to this student profile. Use setup links instead of sending raw passwords.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                <div class="rounded-2xl border p-5">
+                    <h4 class="font-semibold text-gray-900">Student login account</h4>
+
+                    @if ($studentPortalUser)
+                        <div class="mt-4 rounded-xl bg-gray-50 p-4">
+                            <p class="font-medium text-gray-900">{{ $studentPortalUser->name }}</p>
+                            <p class="text-sm text-gray-500">{{ $studentPortalUser->email }}</p>
+                        </div>
+
+                        <form method="POST" action="{{ route('school.students.portal.student-account.unlink', $student) }}" class="mt-4">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="rounded-lg border px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">
+                                Unlink student account
+                            </button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('school.students.portal.student-account.create', $student) }}" class="mt-4 space-y-3">
+                            @csrf
+
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Student name</label>
+                                <input type="text" name="name" value="{{ old('name', $student->fullName()) }}" class="mt-1 w-full rounded-lg border-gray-300" required>
+                            </div>
+
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Student email</label>
+                                <input type="email" name="email" value="{{ old('email') }}" class="mt-1 w-full rounded-lg border-gray-300" required>
+                            </div>
+
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="send_setup_link" value="1" checked class="rounded border-gray-300">
+                                Send setup link
+                            </label>
+
+                            <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                                Create and link student account
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('school.students.portal.student-account.link', $student) }}" class="mt-6 space-y-3 border-t pt-4">
+                            @csrf
+
+                            <div>
+                                <label class="text-sm font-medium text-gray-700">Link existing student user by email</label>
+                                <input type="email" name="email" class="mt-1 w-full rounded-lg border-gray-300" required>
+                            </div>
+
+                            <button type="submit" class="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                                Link existing student account
+                            </button>
+                        </form>
+                    @endif
+                </div>
+
+                <div class="rounded-2xl border p-5">
+                    <h4 class="font-semibold text-gray-900">Parent / guardian accounts</h4>
+
+                    @if ($portalParents->isNotEmpty())
+                        <div class="mt-4 space-y-3">
+                            @foreach ($portalParents as $parentUser)
+                                <div class="flex items-start justify-between gap-4 rounded-xl bg-gray-50 p-4">
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ $parentUser->name }}</p>
+                                        <p class="text-sm text-gray-500">{{ $parentUser->email }}</p>
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            {{ str($parentUser->pivot->relationship ?: 'guardian')->replace('_', ' ')->title() }}
+                                            @if ($parentUser->pivot->is_primary)
+                                                 Primary
+                                            @endif
+                                        </p>
+                                    </div>
+
+                                    <form method="POST" action="{{ route('school.students.portal.parents.unlink', [$student, $parentUser]) }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-700">
+                                            Unlink
+                                        </button>
+                                    </form>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="mt-3 text-sm text-gray-500">No linked parent account yet.</p>
+                    @endif
+
+                    <form method="POST" action="{{ route('school.students.portal.parents.create', $student) }}" class="mt-6 space-y-3 border-t pt-4">
+                        @csrf
+
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Parent name</label>
+                            <input type="text" name="name" value="{{ old('parent_name', $student->guardian_name) }}" class="mt-1 w-full rounded-lg border-gray-300" required>
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Parent email</label>
+                            <input type="email" name="email" value="{{ old('parent_email', $student->guardian_email) }}" class="mt-1 w-full rounded-lg border-gray-300" required>
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Relationship</label>
+                            <input type="text" name="relationship" value="{{ old('relationship', 'guardian') }}" class="mt-1 w-full rounded-lg border-gray-300">
+                        </div>
+
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="is_primary" value="1" class="rounded border-gray-300">
+                                Primary guardian
+                            </label>
+
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" name="send_setup_link" value="1" checked class="rounded border-gray-300">
+                                Send setup link
+                            </label>
+                        </div>
+
+                        <button type="submit" class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                            Create and link parent account
+                        </button>
+                    </form>
+
+                    <form method="POST" action="{{ route('school.students.portal.parents.link', $student) }}" class="mt-6 space-y-3 border-t pt-4">
+                        @csrf
+
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Link existing parent user by email</label>
+                            <input type="email" name="email" class="mt-1 w-full rounded-lg border-gray-300" required>
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Relationship</label>
+                            <input type="text" name="relationship" value="guardian" class="mt-1 w-full rounded-lg border-gray-300">
+                        </div>
+
+                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" name="is_primary" value="1" class="rounded border-gray-300">
+                            Primary guardian
+                        </label>
+
+                        <button type="submit" class="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                            Link existing parent account
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
 </x-app-layout>
