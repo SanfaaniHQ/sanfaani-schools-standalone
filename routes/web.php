@@ -58,6 +58,7 @@ use App\Http\Controllers\Public\CbtAccessController as PublicCbtAccessController
 use App\Http\Controllers\Public\LandingPageController;
 use App\Http\Controllers\Public\ResultCheckerController;
 use App\Http\Controllers\Public\ResultCheckerPaymentController;
+use App\Http\Controllers\Public\ReportCardSnapshotController;
 use App\Http\Controllers\Public\ResultVerificationController;
 use App\Http\Controllers\Public\SchoolPublicPageController as PublicSchoolPublicPageController;
 use App\Http\Controllers\PublicResultController;
@@ -237,6 +238,10 @@ Route::get('/result-checker/payment/callback/{gateway?}', [ResultCheckerPaymentC
 
 Route::get('/verify-result/{verificationCode}', [ResultVerificationController::class, 'show'])
     ->name('public.results.verify');
+
+Route::get('/report-cards/{snapshot:snapshot_uuid}', [ReportCardSnapshotController::class, 'show'])
+    ->middleware(['signed', 'throttle:30,1'])
+    ->name('public.report-cards.show');
 
 Route::get('/schools/{slug}', [PublicSchoolPublicPageController::class, 'show'])
     ->name('public.schools.show');
@@ -1706,6 +1711,11 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                 Route::post('/students/{student}/communication/send', [SchoolCommunicationController::class, 'sendStudentMessage'])
                     ->middleware('feature.communication:communication.send')
                     ->name('communications.students.send');
+
+                Route::post('/students/{student}/report-card-email', [SchoolCommunicationController::class, 'emailReportCard'])
+                    ->middleware('feature.communication:communication.send')
+                    ->name('communications.students.report-card-email')
+                    ->withTrashed();
 
                 Route::get('/communications/bulk', [SchoolCommunicationController::class, 'bulkForm'])
                     ->middleware('feature.communication:communication.bulk')
