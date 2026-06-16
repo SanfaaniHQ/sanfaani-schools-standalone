@@ -54,6 +54,8 @@ use App\Http\Controllers\Demo\MarketplaceLiveDemoController;
 use App\Http\Controllers\MarketingTrackingController;
 use App\Http\Controllers\MarketingUnsubscribeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Portal\ResultAccessController as PortalResultAccessController;
+use App\Http\Controllers\School\ResultAccessRequestController;
 use App\Http\Controllers\Onboarding\OnboardingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\CbtAccessController as PublicCbtAccessController;
@@ -1806,3 +1808,32 @@ Route::middleware(['auth', 'demo.safe'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+
+// Stage D portal result access routes.
+Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
+    Route::middleware('role:parent|student')->group(function () {
+        Route::get('/portal/results', [PortalResultAccessController::class, 'index'])
+            ->name('portal.results.index');
+
+        Route::post('/portal/results/requests', [PortalResultAccessController::class, 'store'])
+            ->name('portal.results.requests.store');
+
+        Route::get('/portal/results/{resultAccessRequest}', [PortalResultAccessController::class, 'show'])
+            ->name('portal.results.show');
+    });
+
+    Route::middleware('role:school_admin|result_officer|super_admin')
+        ->prefix('school')
+        ->name('school.')
+        ->group(function () {
+            Route::get('/result-access-requests', [ResultAccessRequestController::class, 'index'])
+                ->name('result-access-requests.index');
+
+            Route::post('/result-access-requests/{resultAccessRequest}/approve', [ResultAccessRequestController::class, 'approve'])
+                ->name('result-access-requests.approve');
+
+            Route::post('/result-access-requests/{resultAccessRequest}/reject', [ResultAccessRequestController::class, 'reject'])
+                ->name('result-access-requests.reject');
+        });
+});
