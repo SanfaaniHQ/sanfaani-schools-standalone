@@ -12,6 +12,21 @@
 
     <div class="py-6">
         <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+            {{-- Stage D Result Access Link --}}
+            <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">Result Access</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Request approval, submit payment request, or unlock your published results with a scratch card.
+                        </p>
+                    </div>
+                    <a href="{{ route('portal.results.index') }}"
+                       class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                        Open Result Access
+                    </a>
+                </div>
+            </div>
             @if (! $student)
                 <div class="rounded-2xl border bg-white p-8 text-center shadow-sm">
                     <h3 class="text-lg font-semibold text-gray-900">No student profile linked yet</h3>
