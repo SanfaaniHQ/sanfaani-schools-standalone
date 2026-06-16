@@ -27,6 +27,35 @@
                     </a>
                 </div>
             </div>
+            {{-- Stage E Communication Links --}}
+            <div class="grid gap-4 md:grid-cols-2">
+                <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Messages</h3>
+                            <p class="mt-1 text-sm text-gray-500">Chat with the school about academics, attendance, and results.</p>
+                        </div>
+                        <a href="{{ route('portal.conversations.index') }}"
+                           class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                            Open Messages
+                        </a>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900">Teacher Reviews</h3>
+                            <p class="mt-1 text-sm text-gray-500">Submit feedback about your learning support.</p>
+                        </div>
+                        <a href="{{ route('portal.teacher-reviews.index') }}"
+                           class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                            Review Teacher
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             @if (! $student)
                 <div class="rounded-2xl border bg-white p-8 text-center shadow-sm">
                     <h3 class="text-lg font-semibold text-gray-900">No student profile linked yet</h3>

@@ -1837,3 +1837,43 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
                 ->name('result-access-requests.reject');
         });
 });
+
+
+// Stage E chat and teacher review routes.
+Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
+    Route::middleware('role:parent|student|teacher|school_admin|result_officer|accountant|super_admin')->group(function () {
+        Route::get('/portal/conversations', [\App\Http\Controllers\Portal\ConversationController::class, 'index'])
+            ->name('portal.conversations.index');
+
+        Route::post('/portal/conversations', [\App\Http\Controllers\Portal\ConversationController::class, 'store'])
+            ->name('portal.conversations.store');
+
+        Route::get('/portal/conversations/{conversationId}', [\App\Http\Controllers\Portal\ConversationController::class, 'show'])
+            ->name('portal.conversations.show');
+
+        Route::post('/portal/conversations/{conversationId}/messages', [\App\Http\Controllers\Portal\ConversationController::class, 'message'])
+            ->name('portal.conversations.messages.store');
+    });
+
+    Route::middleware('role:parent|student')->group(function () {
+        Route::get('/portal/teacher-reviews', [\App\Http\Controllers\Portal\TeacherReviewController::class, 'index'])
+            ->name('portal.teacher-reviews.index');
+
+        Route::post('/portal/teacher-reviews', [\App\Http\Controllers\Portal\TeacherReviewController::class, 'store'])
+            ->name('portal.teacher-reviews.store');
+    });
+
+    Route::middleware('role:school_admin|result_officer|super_admin')
+        ->prefix('school')
+        ->name('school.')
+        ->group(function () {
+            Route::get('/teacher-reviews', [\App\Http\Controllers\School\TeacherReviewModerationController::class, 'index'])
+                ->name('teacher-reviews.index');
+
+            Route::post('/teacher-reviews/{teacherReview}/approve', [\App\Http\Controllers\School\TeacherReviewModerationController::class, 'approve'])
+                ->name('teacher-reviews.approve');
+
+            Route::post('/teacher-reviews/{teacherReview}/reject', [\App\Http\Controllers\School\TeacherReviewModerationController::class, 'reject'])
+                ->name('teacher-reviews.reject');
+        });
+});
