@@ -9,6 +9,7 @@
     $schoolStatusLabel = $standalone->hidesSaasSurfaces() ? 'Access status' : 'Subscription status';
     $attentionItems = collect([
         ['label' => 'Pending scratch card payments', 'value' => $pendingScratchCardRequests, 'tone' => 'warning', 'href' => route('school.scratch-cards.index')],
+        ['label' => 'Result access requests', 'value' => $pendingResultAccessRequests ?? 0, 'tone' => 'info', 'href' => route('school.result-access-requests.index')],
         ['label' => 'Outstanding fee invoices', 'value' => $financeSummary['outstanding_invoices'] ?? 0, 'tone' => 'warning', 'href' => route('school.finance.invoices.index')],
         ['label' => 'Draft result records', 'value' => $draftResults, 'tone' => 'warning', 'href' => route('school.results.manual.index')],
         ['label' => 'Reviewed results waiting publish', 'value' => $reviewedResults, 'tone' => 'success', 'href' => route('school.results.publishing.index')],
@@ -31,6 +32,7 @@
         ['title' => 'Results', 'body' => 'Manual entry, upload, review, and publishing.', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
         ['title' => 'CBT', 'body' => 'Question banks, exams, marking, result publishing, and the assessment engine behind LMS links.', 'href' => route('school.cbt.dashboard'), 'feature' => 'cbt.manage'],
         ['title' => 'Scratch Cards', 'body' => 'Batches, card inventory, and result access.', 'href' => route('school.scratch-cards.index'), 'feature' => null],
+        ['title' => 'Result Access Requests', 'body' => 'Approve parent and student requests, confirm manual access, and unlock published results.', 'href' => route('school.result-access-requests.index'), 'feature' => 'result.access.manage'],
         ['title' => 'Communication Center', 'body' => 'Operational notification logs, templates, provider-ready channels, and safety boundaries.', 'href' => route('school.communications.index'), 'feature' => 'communication.logs.view'],
         ['title' => 'Bulk Communication', 'body' => 'Send school-scoped operational messages.', 'href' => route('school.communications.bulk'), 'feature' => 'communication.bulk'],
         ['title' => 'Branding / White Label', 'body' => 'School display name, logo, colors, portal wording, report footer, and powered-by boundary.', 'href' => route('school.branding.edit'), 'feature' => null],
