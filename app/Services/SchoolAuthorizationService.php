@@ -65,6 +65,8 @@ class SchoolAuthorizationService
             return false;
         }
 
+        $featureKey = $this->roleFeatures->canonicalFeatureKey($featureKey);
+
         $cacheKey = implode(':', [
             $user->getKey(),
             $school->getKey(),

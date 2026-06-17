@@ -86,3 +86,17 @@
         </x-ui.panel>
     </section>
 </div>
+
+<div class="rounded-2xl border border-border-subtle bg-bg-secondary p-5 shadow-sm">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0">
+            <p class="text-sm font-medium text-text-secondary">Result Access Requests</p>
+            <p class="mt-2 text-3xl font-bold text-text-primary">{{ number_format($pendingResultAccessRequests ?? 0) }}</p>
+            <p class="mt-1 text-sm text-text-secondary">Pending parent and student result access approvals.</p>
+        </div>
+
+        <a href="{{ route('school.result-access-requests.index') }}" class="inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 sm:w-auto">
+            Review Requests
+        </a>
+    </div>
+</div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PaymentTransaction;
 use App\Models\ResultAccessRequest;
 use App\Services\CurrentSchoolService;
+use App\Services\SchoolAuthorizationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,6 +22,8 @@ class ResultAccessRequestController extends Controller
         $school = $this->currentSchool->get();
 
         abort_if(! $school, 404);
+
+        $this->authorizeManagement($request, $school);
 
         $query = ResultAccessRequest::query()
             ->where('school_id', $school->id)
@@ -59,6 +62,8 @@ class ResultAccessRequestController extends Controller
         $school = $this->currentSchool->get();
 
         abort_if(! $school, 404);
+
+        $this->authorizeManagement($request, $school);
 
         $accessRequest = ResultAccessRequest::query()
             ->whereKey($resultAccessRequest)
@@ -102,6 +107,8 @@ class ResultAccessRequestController extends Controller
 
         abort_if(! $school, 404);
 
+        $this->authorizeManagement($request, $school);
+
         $accessRequest = ResultAccessRequest::query()
             ->whereKey($resultAccessRequest)
             ->firstOrFail();
@@ -123,5 +130,14 @@ class ResultAccessRequestController extends Controller
         ])->save();
 
         return back()->with('success', 'Result access request rejected.');
+    }
+
+    private function authorizeManagement(Request $request, $school): void
+    {
+        abort_unless(
+            app(SchoolAuthorizationService::class)->can($request->user(), $school, 'result.access.manage'),
+            403,
+            'This feature is not enabled for your current school role.'
+        );
     }
 }

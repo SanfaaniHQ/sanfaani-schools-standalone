@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
+use App\Models\ResultAccessRequest;
 use App\Services\CurrentSchoolService;
 use App\Services\Finance\SchoolFinanceService;
 use App\Services\OnboardingProgressService;
@@ -59,6 +60,11 @@ class SchoolAdminDashboardController extends Controller
                 fn () => $this->scratchCardMetrics($school),
                 $this->defaultScratchCardMetrics()
             );
+            $resultAccessRequestMetrics = $this->guardedMetrics(
+                'school_admin.result_access_request_metrics',
+                fn () => $this->resultAccessRequestMetrics($school),
+                $this->defaultResultAccessRequestMetrics()
+            );
 
             $data = array_merge($data, [
                 'totalSchoolUsers' => $school->users()->count(),
@@ -85,6 +91,7 @@ class SchoolAdminDashboardController extends Controller
                 'unusedScratchCards' => $scratchCardMetrics['unused'],
                 'usedScratchCards' => $scratchCardMetrics['used'],
                 'revokedScratchCards' => $scratchCardMetrics['revoked'],
+                'pendingResultAccessRequests' => $resultAccessRequestMetrics['pending'],
                 'schoolOnboardingSteps' => $schoolSteps,
                 'schoolOnboardingCompleted' => $schoolCompleted,
                 'schoolOnboardingProgress' => $onboarding->progress($schoolSteps, $schoolCompleted),
@@ -216,9 +223,25 @@ class SchoolAdminDashboardController extends Controller
             'reviewedResults' => $resultMetrics['reviewed'],
             'publishedResults' => $resultMetrics['published'],
             'returnedResults' => $resultMetrics['returned'],
+            'pendingResultAccessRequests' => $this->resultAccessRequestMetrics($school)['pending'],
             'recentUploads' => $recentUploads,
             'activeSession' => $school->academicSessions()->where('is_active', true)->first(),
             'activeTerm' => $school->terms()->where('is_active', true)->first(),
+        ];
+    }
+
+    private function resultAccessRequestMetrics($school): array
+    {
+        $pendingStatuses = [
+            ResultAccessRequest::STATUS_PENDING,
+            ResultAccessRequest::STATUS_PENDING_PAYMENT,
+        ];
+
+        return [
+            'pending' => ResultAccessRequest::query()
+                ->where('school_id', $school->id)
+                ->whereIn('status', $pendingStatuses)
+                ->count(),
         ];
     }
 
@@ -320,6 +343,13 @@ class SchoolAdminDashboardController extends Controller
         ];
     }
 
+    private function defaultResultAccessRequestMetrics(): array
+    {
+        return [
+            'pending' => 0,
+        ];
+    }
+
     private function defaultTeacherDashboardData(): array
     {
         return [
@@ -347,6 +377,7 @@ class SchoolAdminDashboardController extends Controller
             'reviewedResults' => 0,
             'publishedResults' => 0,
             'returnedResults' => 0,
+            'pendingResultAccessRequests' => 0,
             'recentUploads' => collect(),
             'activeSession' => null,
             'activeTerm' => null,

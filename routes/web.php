@@ -1245,12 +1245,15 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                 Route::middleware('role:school_admin')
                     ->group(function () {
                         Route::get('/students/upload', [StudentBulkUploadController::class, 'index'])
+                            ->middleware('feature.school:student.bulk_upload,students.manage')
                             ->name('students.upload.index');
 
                         Route::post('/students/upload', [StudentBulkUploadController::class, 'store'])
+                            ->middleware('feature.school:student.bulk_upload,students.manage')
                             ->name('students.upload.store');
 
                         Route::get('/students/upload/template', [StudentBulkUploadController::class, 'downloadTemplate'])
+                            ->middleware('feature.school:student.bulk_upload,students.manage')
                             ->name('students.upload.template');
 
                         Route::get('/mail-settings', [SchoolMailSettingController::class, 'edit'])
@@ -1408,146 +1411,193 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                     ->name('teacher-assignments.restore');
 
                 Route::get('/classes/upload', [ClassUploadController::class, 'index'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('classes.upload.index');
 
                 Route::post('/classes/upload', [ClassUploadController::class, 'store'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('classes.upload.store');
 
                 Route::get('/classes/upload/template', [ClassUploadController::class, 'downloadTemplate'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('classes.upload.template');
 
                 Route::resource('classes', SchoolClassController::class)
                     ->parameters(['classes' => 'class'])
-                    ->except(['show']);
+                    ->except(['show'])
+                    ->middleware('feature.school:school.profile.manage');
 
                 Route::post('/classes/{class}/restore', [SchoolClassController::class, 'restore'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('classes.restore');
 
                 Route::get('/subjects/upload', [SubjectUploadController::class, 'index'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subjects.upload.index');
 
                 Route::post('/subjects/upload', [SubjectUploadController::class, 'store'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subjects.upload.store');
 
                 Route::get('/subjects/upload/template', [SubjectUploadController::class, 'downloadTemplate'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subjects.upload.template');
 
                 Route::resource('subjects', SubjectController::class)
-                    ->except(['show']);
+                    ->except(['show'])
+                    ->middleware('feature.school:school.profile.manage');
 
                 Route::post('/subjects/{subject}/restore', [SubjectController::class, 'restore'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subjects.restore');
 
                 Route::get('/subject-assignments', [SubjectAssignmentController::class, 'index'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subject-assignments.index');
 
                 Route::post('/subject-assignments', [SubjectAssignmentController::class, 'store'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subject-assignments.store');
 
                 Route::get('/subject-assignments/create', [SubjectAssignmentController::class, 'create'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subject-assignments.create');
 
                 Route::get('/subject-assignments/{assignment}/edit', [SubjectAssignmentController::class, 'edit'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subject-assignments.edit');
 
                 Route::patch('/subject-assignments/{assignment}', [SubjectAssignmentController::class, 'update'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subject-assignments.update');
 
                 Route::post('/subject-assignments/{assignment}/archive', [SubjectAssignmentController::class, 'archive'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subject-assignments.archive');
 
                 Route::post('/subject-assignments/{assignment}/restore', [SubjectAssignmentController::class, 'restore'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('subject-assignments.restore');
 
                 Route::resource('sessions', AcademicSessionController::class)
                     ->parameters(['sessions' => 'academicSession'])
-                    ->except(['show', 'destroy']);
+                    ->except(['show', 'destroy'])
+                    ->middleware('feature.school:sessions.manage');
 
                 Route::post('/sessions/{academicSession}/activate', [AcademicSessionController::class, 'activate'])
+                    ->middleware('feature.school:sessions.manage')
                     ->name('sessions.activate');
 
                 Route::post('/sessions/{academicSession}/archive', [AcademicSessionController::class, 'archive'])
+                    ->middleware('feature.school:sessions.manage')
                     ->name('sessions.archive');
 
                 Route::post('/sessions/{academicSession}/restore', [AcademicSessionController::class, 'restore'])
+                    ->middleware('feature.school:sessions.manage')
                     ->name('sessions.restore');
 
                 Route::resource('terms', TermController::class)
-                    ->except(['show', 'destroy']);
+                    ->except(['show', 'destroy'])
+                    ->middleware('feature.school:terms.manage');
 
                 Route::post('/terms/{term}/activate', [TermController::class, 'activate'])
+                    ->middleware('feature.school:terms.manage')
                     ->name('terms.activate');
 
                 Route::post('/terms/{term}/archive', [TermController::class, 'archive'])
+                    ->middleware('feature.school:terms.manage')
                     ->name('terms.archive');
 
                 Route::post('/terms/{term}/restore', [TermController::class, 'restore'])
+                    ->middleware('feature.school:terms.manage')
                     ->name('terms.restore');
 
                 Route::get('/admission-number-settings', [AdmissionNumberSettingController::class, 'edit'])
+                    ->middleware('feature.school:admission_numbers.manage')
                     ->name('admission-number-settings.edit');
 
                 Route::put('/admission-number-settings', [AdmissionNumberSettingController::class, 'update'])
+                    ->middleware('feature.school:admission_numbers.manage')
                     ->name('admission-number-settings.update');
 
                 Route::resource('staff', StaffUserController::class)
                     ->parameters(['staff' => 'staff'])
-                    ->except(['show', 'destroy']);
+                    ->except(['show', 'destroy'])
+                    ->middleware('feature.school:school.users.manage');
 
                 Route::post('/staff/{staff}/disable', [StaffUserController::class, 'disable'])
+                    ->middleware('feature.school:school.users.manage')
                     ->name('staff.disable');
 
                 Route::post('/staff/{staff}/enable', [StaffUserController::class, 'enable'])
+                    ->middleware('feature.school:school.users.manage')
                     ->name('staff.enable');
 
                 Route::post('/staff/{staff}/send-setup-link', [StaffUserController::class, 'sendSetupLink'])
+                    ->middleware('feature.school:school.users.manage')
                     ->name('staff.send-setup-link');
 
                 Route::post('/staff/{staff}/archive', [StaffUserController::class, 'archive'])
+                    ->middleware('feature.school:school.users.manage')
                     ->name('staff.archive');
 
                 Route::post('/staff/{staff}/restore', [StaffUserController::class, 'restore'])
+                    ->middleware('feature.school:school.users.manage')
                     ->name('staff.restore');
 
                 Route::delete('/staff/{staff}', [StaffUserController::class, 'destroy'])
+                    ->middleware('feature.school:school.users.manage')
                     ->name('staff.destroy');
 
                 Route::get('/role-features', [RoleFeatureSettingController::class, 'edit'])
+                    ->middleware('feature.school:school.features.manage')
                     ->name('role-features.edit');
 
                 Route::patch('/role-features', [RoleFeatureSettingController::class, 'update'])
+                    ->middleware('feature.school:school.features.manage')
                     ->name('role-features.update');
 
                 Route::resource('students', StudentController::class)
-                    ->except(['index', 'show', 'destroy']);
+                    ->except(['index', 'show', 'destroy'])
+                    ->middleware('feature.school:students.manage');
                 Route::post('/students/{student}/portal/parents/create', [StudentPortalAccountController::class, 'createParent'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.portal.parents.create');
 
                 Route::post('/students/{student}/portal/parents/link', [StudentPortalAccountController::class, 'linkParent'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.portal.parents.link');
 
                 Route::delete('/students/{student}/portal/parents/{parent}/unlink', [StudentPortalAccountController::class, 'unlinkParent'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.portal.parents.unlink');
 
                 Route::post('/students/{student}/portal/student-account/create', [StudentPortalAccountController::class, 'createStudent'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.portal.student-account.create');
 
                 Route::post('/students/{student}/portal/student-account/link', [StudentPortalAccountController::class, 'linkStudent'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.portal.student-account.link');
 
                 Route::delete('/students/{student}/portal/student-account/unlink', [StudentPortalAccountController::class, 'unlinkStudent'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.portal.student-account.unlink');
 
                 Route::get('/profile', [SchoolProfileController::class, 'edit'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('profile.edit');
 
                 Route::patch('/profile', [SchoolProfileController::class, 'update'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('profile.update');
 
                 Route::get('/public-page', [SchoolSchoolPublicPageController::class, 'edit'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('public-page.edit');
 
                 Route::patch('/public-page', [SchoolSchoolPublicPageController::class, 'update'])
+                    ->middleware('feature.school:school.profile.manage')
                     ->name('public-page.update');
 
                 Route::prefix('branding')
@@ -1595,15 +1645,19 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                     ->name('report-card-settings.update');
 
                 Route::delete('/students/{student}', [StudentController::class, 'destroy'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.destroy');
 
                 Route::post('/students/{student}/restore', [StudentController::class, 'restore'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.restore');
 
                 Route::post('/students/{student}/elective-subjects', [StudentElectiveSubjectController::class, 'store'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.elective-subjects.store');
 
                 Route::delete('/students/{student}/elective-subjects/{electiveSubject}', [StudentElectiveSubjectController::class, 'destroy'])
+                    ->middleware('feature.school:students.manage')
                     ->name('students.elective-subjects.destroy');
 
                 Route::resource('grading-scales', GradingScaleController::class)
@@ -1812,7 +1866,7 @@ require __DIR__.'/auth.php';
 
 // Stage D portal result access routes.
 Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
-    Route::middleware('role:parent|student')->group(function () {
+    Route::middleware(['role:parent|student', 'feature.school:result.access.portal'])->group(function () {
         Route::get('/portal/results', [PortalResultAccessController::class, 'index'])
             ->name('portal.results.index');
 
@@ -1823,7 +1877,7 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
             ->name('portal.results.show');
     });
 
-    Route::middleware('role:school_admin|result_officer|super_admin')
+    Route::middleware(['role:school_admin|result_officer|super_admin', 'feature.school:result.access.manage'])
         ->prefix('school')
         ->name('school.')
         ->group(function () {
@@ -1832,6 +1886,9 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
 
             Route::post('/result-access-requests/{resultAccessRequest}/approve', [ResultAccessRequestController::class, 'approve'])
                 ->name('result-access-requests.approve');
+
+            Route::post('/result-access-requests/{resultAccessRequest}/manual-unlock', [ResultAccessRequestController::class, 'approve'])
+                ->name('result-access-requests.manual-unlock');
 
             Route::post('/result-access-requests/{resultAccessRequest}/reject', [ResultAccessRequestController::class, 'reject'])
                 ->name('result-access-requests.reject');
@@ -1891,15 +1948,19 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
         ->name('school.')
         ->group(function () {
             Route::get('/feature-control', [\App\Http\Controllers\School\FeatureControlController::class, 'index'])
+                ->middleware('feature.school:school.features.manage')
                 ->name('feature-control.index');
 
             Route::post('/feature-control', [\App\Http\Controllers\School\FeatureControlController::class, 'update'])
+                ->middleware('feature.school:school.features.manage')
                 ->name('feature-control.update');
 
             Route::get('/role-permissions', [\App\Http\Controllers\School\RolePermissionController::class, 'index'])
+                ->middleware('feature.school:school.roles.manage')
                 ->name('role-permissions.index');
 
             Route::post('/role-permissions', [\App\Http\Controllers\School\RolePermissionController::class, 'update'])
+                ->middleware('feature.school:school.roles.manage')
                 ->name('role-permissions.update');
         });
 });

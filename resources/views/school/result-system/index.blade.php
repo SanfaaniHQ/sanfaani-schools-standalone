@@ -16,6 +16,7 @@
             ['Report Card Settings', 'Configure display, signatures, and comments.', $roleContext === 'result_officer' ? route('school.report-card-settings.preview') : route('school.report-card-settings.edit')],
             ['Result Access Policy', 'View your current result access rules.', route('school.result-access-policy.show')],
             ['Public Result Checker', 'Open parent-facing result checker.', route('public.results.index')],
+            ['Result Access Requests', 'Approve parent and student result access requests without requiring a scratch card.', route('school.result-access-requests.index')],
             ['Scratch Cards', 'Request and download generated scratch cards.', $roleContext === 'result_officer' ? route('school.dashboard') : route('school.scratch-cards.index')],
         ];
         $future = ['Assessment/Test Results', 'CBT Results', 'PDF Results', 'QR Verification'];
