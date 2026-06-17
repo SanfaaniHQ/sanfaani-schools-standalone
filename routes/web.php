@@ -1877,3 +1877,29 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
                 ->name('teacher-reviews.reject');
         });
 });
+
+
+Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
+    Route::get('/role-context', [\App\Http\Controllers\RoleContextController::class, 'index'])
+        ->name('role-context.index');
+
+    Route::post('/role-context/switch', [\App\Http\Controllers\RoleContextController::class, 'switch'])
+        ->name('role-context.switch');
+
+    Route::middleware('role:school_admin|super_admin')
+        ->prefix('school')
+        ->name('school.')
+        ->group(function () {
+            Route::get('/feature-control', [\App\Http\Controllers\School\FeatureControlController::class, 'index'])
+                ->name('feature-control.index');
+
+            Route::post('/feature-control', [\App\Http\Controllers\School\FeatureControlController::class, 'update'])
+                ->name('feature-control.update');
+
+            Route::get('/role-permissions', [\App\Http\Controllers\School\RolePermissionController::class, 'index'])
+                ->name('role-permissions.index');
+
+            Route::post('/role-permissions', [\App\Http\Controllers\School\RolePermissionController::class, 'update'])
+                ->name('role-permissions.update');
+        });
+});

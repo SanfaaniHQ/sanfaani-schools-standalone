@@ -30,6 +30,22 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    @if (Auth::user()->activeSchoolRoles()->count() > 1 || Auth::user()->roles()->count() > 1 || Auth::user()->hasRole('super_admin'))
+                        <x-nav-link :href="route('role-context.index')" :active="request()->routeIs('role-context.*')">
+                            {{ __('ui.switch_role') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if (in_array($roleContext, ['school_admin', 'super_admin'], true) || Auth::user()->hasRole('super_admin'))
+                        <x-nav-link :href="route('school.feature-control.index')" :active="request()->routeIs('school.feature-control.*')">
+                            {{ __('ui.feature_control') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('school.role-permissions.index')" :active="request()->routeIs('school.role-permissions.*')">
+                            {{ __('ui.roles_permissions') }}
+                        </x-nav-link>
+                    @endif
+
                     @if ($roleContext === 'school_admin')
                         <x-nav-link :href="route('school.profile.edit')" :active="request()->routeIs('school.profile.*')">
                             School Profile
@@ -150,6 +166,22 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            @if (Auth::user()->activeSchoolRoles()->count() > 1 || Auth::user()->roles()->count() > 1 || Auth::user()->hasRole('super_admin'))
+                <x-responsive-nav-link :href="route('role-context.index')" :active="request()->routeIs('role-context.*')">
+                    {{ __('ui.switch_role') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if (in_array($roleContext, ['school_admin', 'super_admin'], true) || Auth::user()->hasRole('super_admin'))
+                <x-responsive-nav-link :href="route('school.feature-control.index')" :active="request()->routeIs('school.feature-control.*')">
+                    {{ __('ui.feature_control') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('school.role-permissions.index')" :active="request()->routeIs('school.role-permissions.*')">
+                    {{ __('ui.roles_permissions') }}
+                </x-responsive-nav-link>
+            @endif
 
             @if ($roleContext === 'school_admin')
                 <x-responsive-nav-link :href="route('school.profile.edit')" :active="request()->routeIs('school.profile.*')">

@@ -12,31 +12,30 @@
 
     <div class="py-6">
         <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-            {{-- Stage D Result Access Link --}}
             <div class="rounded-2xl border bg-white p-5 shadow-sm">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                    <div class="min-w-0">
                         <h3 class="text-base font-semibold text-gray-900">Result Access</h3>
                         <p class="mt-1 text-sm text-gray-500">
                             Request approval, submit payment request, or unlock published results with a scratch card.
                         </p>
                     </div>
                     <a href="{{ route('portal.results.index') }}"
-                       class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                       class="inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 sm:w-auto">
                         Open Result Access
                     </a>
                 </div>
             </div>
-            {{-- Stage E Communication Links --}}
+
             <div class="grid gap-4 md:grid-cols-2">
                 <div class="rounded-2xl border bg-white p-5 shadow-sm">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
+                        <div class="min-w-0">
                             <h3 class="text-base font-semibold text-gray-900">Messages</h3>
                             <p class="mt-1 text-sm text-gray-500">Chat with the school about academics, attendance, finance, and results.</p>
                         </div>
                         <a href="{{ route('portal.conversations.index') }}"
-                           class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                           class="inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 sm:w-auto">
                             Open Messages
                         </a>
                     </div>
@@ -44,12 +43,12 @@
 
                 <div class="rounded-2xl border bg-white p-5 shadow-sm">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
+                        <div class="min-w-0">
                             <h3 class="text-base font-semibold text-gray-900">Teacher Reviews</h3>
                             <p class="mt-1 text-sm text-gray-500">Submit feedback about teacher support and classroom experience.</p>
                         </div>
                         <a href="{{ route('portal.teacher-reviews.index') }}"
-                           class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
+                           class="inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 sm:w-auto">
                             Review Teacher
                         </a>
                     </div>
@@ -75,35 +74,6 @@
                 <div class="rounded-2xl border bg-white p-5 shadow-sm">
                     <p class="text-sm text-gray-500">Report cards</p>
                     <p class="mt-2 text-3xl font-bold text-gray-900">{{ $summary['total_report_cards'] }}</p>
-                </div>
-            </div>
-
-            {{-- Stage E Communication Links --}}
-            <div class="grid gap-4 md:grid-cols-2">
-                <div class="rounded-2xl border bg-white p-5 shadow-sm">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h3 class="text-base font-semibold text-gray-900">Messages</h3>
-                            <p class="mt-1 text-sm text-gray-500">Chat with the school about academics, attendance, finance, and results.</p>
-                        </div>
-                        <a href="{{ route('portal.conversations.index') }}"
-                           class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
-                            Open Messages
-                        </a>
-                    </div>
-                </div>
-
-                <div class="rounded-2xl border bg-white p-5 shadow-sm">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h3 class="text-base font-semibold text-gray-900">Teacher Reviews</h3>
-                            <p class="mt-1 text-sm text-gray-500">Submit feedback about teacher support and classroom experience.</p>
-                        </div>
-                        <a href="{{ route('portal.teacher-reviews.index') }}"
-                           class="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
-                            Review Teacher
-                        </a>
-                    </div>
                 </div>
             </div>
 
