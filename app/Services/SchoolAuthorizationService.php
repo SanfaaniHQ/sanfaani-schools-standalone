@@ -175,11 +175,7 @@ class SchoolAuthorizationService
 
         $role = $this->roleContext($user);
 
-        if ($role === 'school_admin') {
-            return true;
-        }
-
-        if (! $role || ! $this->roleFeatures->roleSupports($role, $featureKey)) {
+        if (! $role) {
             return false;
         }
 
