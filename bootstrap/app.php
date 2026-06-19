@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureDemoSafeAction;
 use App\Http\Middleware\EnsureDeploymentBehavior;
 use App\Http\Middleware\EnsureDeploymentMode;
 use App\Http\Middleware\EnsureFeatureEnabled;
+use App\Http\Middleware\EnsureInstallationAdminContext;
 use App\Http\Middleware\EnsureValidLicense;
 use App\Http\Middleware\EnsureSchoolFeatureEnabled;
 use App\Http\Middleware\EnsureValidSchoolContext;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'feature' => EnsureFeatureEnabled::class,
             'feature.communication' => EnsureCommunicationFeatureEnabled::class,
             'feature.school' => EnsureSchoolFeatureEnabled::class,
+            'installation.admin' => EnsureInstallationAdminContext::class,
             'demo.safe' => EnsureDemoSafeAction::class,
             'deployment.behavior' => EnsureDeploymentBehavior::class,
             'deployment.mode' => EnsureDeploymentMode::class,

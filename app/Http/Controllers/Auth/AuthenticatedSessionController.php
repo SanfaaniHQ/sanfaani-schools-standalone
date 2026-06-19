@@ -34,7 +34,12 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        if ($request->user()?->hasRole('super_admin')) {
+        $request->session()->regenerate();
+
+        $user = $request->user();
+        $schoolContexts = $workspaces->schoolContextsFor($user);
+
+        if ($user?->hasRole('super_admin') && $schoolContexts->isEmpty()) {
             Auth::guard('web')->logout();
 
             $request->session()->invalidate();
@@ -43,27 +48,27 @@ class AuthenticatedSessionController extends Controller
             return redirect()
                 ->route('admin.login')
                 ->withErrors([
-                    'email' => 'Super Admin accounts must use the system administrator login page.',
+                    'email' => 'Installation Admin accounts without a school workspace must use the Installation Admin login page.',
                 ])
                 ->withInput([
                     'email' => $request->input('login') ?: $request->input('email'),
                 ]);
         }
 
-        $request->session()->regenerate();
+        if ($user?->hasRole('super_admin')) {
+            if ($context = $workspaces->defaultSchoolContextFor($user)) {
+                $workspaces->select($user, $context);
+            }
 
-        $contexts = $workspaces->contextsFor($request->user());
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
 
-        if ($contexts->count() > 1) {
+        if ($schoolContexts->count() > 1) {
             return redirect()->route('workspace.create');
         }
 
-        if ($contexts->count() === 1) {
-            $workspaces->select($request->user(), $contexts->first());
-        }
-
-        if ($request->user()->hasRole('super_admin')) {
-            return redirect()->route('admin.dashboard');
+        if ($schoolContexts->count() === 1) {
+            $workspaces->select($user, $schoolContexts->first());
         }
 
         return redirect()->intended(route('dashboard', absolute: false));

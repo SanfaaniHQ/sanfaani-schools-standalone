@@ -170,7 +170,7 @@
                         <label class="block text-sm font-medium text-gray-700">Request Note</label>
                         <textarea name="request_note"
                                   rows="4"
-                                  placeholder="Any detail the Super Admin should review before approval"
+                                  placeholder="Any detail the Installation Admin should review before approval"
                                   class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">{{ old('request_note') }}</textarea>
                         @error('request_note')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

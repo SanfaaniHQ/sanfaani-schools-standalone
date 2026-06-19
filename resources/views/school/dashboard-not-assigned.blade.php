@@ -18,7 +18,7 @@
                 </h3>
 
                 <p class="mt-2 text-sm text-gray-600">
-                    Contact the Super Admin to assign your account to a school before using the school dashboard.
+                    Contact the Installation Admin to assign your account to a school before using the school dashboard.
                 </p>
             </div>
         </div>

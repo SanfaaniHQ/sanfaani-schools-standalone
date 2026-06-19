@@ -164,7 +164,7 @@
                                     <td colspan="4" class="px-6 py-12 text-center">
                                         <p class="text-sm font-medium text-gray-900">No cards generated yet.</p>
                                         <p class="mt-1 text-sm text-gray-500">
-                                            This request is waiting for Super Admin approval or generation.
+                                            This request is waiting for Installation Admin approval or generation.
                                         </p>
                                     </td>
                                 </tr>

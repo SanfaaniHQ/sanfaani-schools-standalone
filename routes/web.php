@@ -161,7 +161,6 @@ Route::post('/demo/live/login/{role}', [MarketplaceLiveDemoController::class, 'l
     ->name('demo.live.login');
 
 Route::get('/admin/login', [AdminAuthenticatedSessionController::class, 'create'])
-    ->middleware('guest')
     ->name('admin.login');
 
 Route::post('/admin/login', [AdminAuthenticatedSessionController::class, 'store'])
@@ -377,7 +376,7 @@ Route::middleware(['auth', 'verified', 'demo.safe'])->group(function () {
         });
 });
 
-Route::middleware(['auth', 'role:super_admin', 'demo.safe'])
+Route::middleware(['auth', 'installation.admin', 'role:super_admin', 'demo.safe'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {

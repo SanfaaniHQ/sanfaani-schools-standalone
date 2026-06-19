@@ -34,6 +34,7 @@ class RepairStandaloneAccessCommand extends Command
             'permissions_created' => 0,
             'role_permissions_added' => 0,
             'owner_assignments_repaired' => 0,
+            'installation_admin_access_repaired' => 0,
             'feature_settings_repaired' => 0,
             'warnings' => [],
         ];
@@ -68,6 +69,7 @@ class RepairStandaloneAccessCommand extends Command
         }
 
         $report['owner_assignments_repaired'] = $this->repairOwnerAssignments($dryRun);
+        $report['installation_admin_access_repaired'] = $this->confirmInstallationAdminAccess();
         $report['feature_settings_repaired'] = $this->repairDefaultFeatureSettings($roleFeatures, $dryRun);
 
         if (! $dryRun) {
@@ -215,6 +217,19 @@ class RepairStandaloneAccessCommand extends Command
         }
 
         return $count;
+    }
+
+    private function confirmInstallationAdminAccess(): int
+    {
+        if (! Schema::hasTable('users') || ! Schema::hasTable('roles')) {
+            return 0;
+        }
+
+        return User::query()
+            ->role('super_admin')
+            ->get()
+            ->filter(fn (User $user): bool => $user->isActiveAccount())
+            ->count();
     }
 
     private function finish(array $report): int

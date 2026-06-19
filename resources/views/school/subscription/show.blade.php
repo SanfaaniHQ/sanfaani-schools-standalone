@@ -18,7 +18,7 @@
                     </div>
                 @else
                     <h3 class="text-base font-semibold text-gray-900">No plan assigned yet.</h3>
-                    <p class="mt-2 text-sm text-gray-600">Your active school can continue using core production features unless Super Admin explicitly disables a feature.</p>
+                    <p class="mt-2 text-sm text-gray-600">Your active school can continue using core production features unless Installation Admin explicitly disables a feature.</p>
                 @endif
             </div>
 

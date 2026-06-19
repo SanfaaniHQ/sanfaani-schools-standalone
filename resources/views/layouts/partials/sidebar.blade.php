@@ -174,6 +174,7 @@
             ],
             __('ui.assessment') => [
                 $item(__('ui.results'), 'school.results.manual.index', 'school.results.manual.*', 'file-text', 'results.manual_entry'),
+                $item(__('ui.result_settings_pass_mark'), 'school.result-system.index', 'school.result-system.*', 'settings', 'results.manual_entry'),
                 $item(__('ui.result_upload'), 'school.results.upload.index', 'school.results.upload.*', 'archive', 'results.upload'),
                 $item(__('ui.result_review_queue'), 'school.result-reviews.index', 'school.result-reviews.*', 'clipboard-list', 'results.review'),
                 $item(__('ui.cbt_center'), 'school.cbt.dashboard', 'school.cbt.*', 'clipboard-list', 'cbt.manage'),
@@ -185,13 +186,17 @@
                 $item(__('ui.finance'), 'school.subscription.show', 'school.subscription.*', 'wallet', null, 'platform_subscriptions'),
                 $item('Communication Center', 'school.communications.index', 'school.communications.index', 'mail', 'communication.logs.view'),
                 $item(__('ui.bulk_communication'), 'school.communications.bulk', 'school.communications.bulk*', 'mail', 'communication.bulk'),
+                $item(__('ui.direct_messages'), 'portal.conversations.index', 'portal.conversations.*', 'mail'),
                 $item(__('ui.mail_settings'), 'school.mail-settings.edit', 'school.mail-settings.*', 'mail'),
                 $item('Branding', 'school.branding.edit', 'school.branding.*', 'layout-grid'),
                 $item(__('ui.settings'), 'school.profile.edit', 'school.profile.*', 'settings'),
                 $item(__('ui.user_management'), 'school.staff.index', 'school.staff.*', 'shield'),
                 $item(__('ui.audit_logs'), 'school.audit-logs.index', 'school.audit-logs.*', 'clipboard-list'),
                 $item(__('ui.analytics'), 'school.result-system.index', 'school.result-system.*', 'bar-chart', 'results.review'),
-                $item(__('ui.support'), 'school.support.index', 'school.support.*', 'activity', 'support.manage'),
+                $item(__('ui.teacher_reviews'), 'school.teacher-reviews.index', 'school.teacher-reviews.*', 'activity'),
+                $item(__('ui.feature_control'), 'school.feature-control.index', 'school.feature-control.*', 'settings', 'school.features.manage'),
+                $item(__('ui.roles_permissions'), 'school.role-permissions.index', 'school.role-permissions.*', 'shield', 'school.roles.manage'),
+                $item(__('ui.school_support_center'), 'school.support.index', 'school.support.*', 'activity', 'support.manage'),
             ],
         ];
     }

@@ -12,7 +12,14 @@ class StageHStandaloneCompletionTest extends TestCase
             'workspace_switcher_title',
             'workspace_switcher_intro',
             'available_workspaces',
+            'available_school_workspaces',
             'manage_role_contexts',
+            'installation_admin',
+            'local_admin_console',
+            'go_to_school_workspace',
+            'direct_messages',
+            'school_support_center',
+            'result_settings_pass_mark',
             'messages',
             'recipients',
             'teacher_reviews',
@@ -35,11 +42,15 @@ class StageHStandaloneCompletionTest extends TestCase
         $contents = file_get_contents(resource_path('views/layouts/partials/topbar.blade.php'));
 
         $this->assertStringContainsString('workspace-switcher-popup', $contents);
+        $this->assertStringContainsString("__('ui.switch_role')", $contents);
         $this->assertStringContainsString('role="dialog"', $contents);
         $this->assertStringContainsString('aria-modal="true"', $contents);
         $this->assertStringContainsString('fixed inset-0 z-[80]', $contents);
         $this->assertStringContainsString('x-on:click.self="open = false"', $contents);
+        $this->assertStringContainsString("__('ui.available_school_workspaces')", $contents);
+        $this->assertStringContainsString("__('ui.installation_admin')", $contents);
         $this->assertStringContainsString("__('ui.manage_role_contexts')", $contents);
+        $this->assertStringNotContainsString("contextsFor(auth()->user())", $contents);
         $this->assertStringNotContainsString('aria-modal="false"', $contents);
         $this->assertStringNotContainsString('@click.outside="open = false" role="dialog"', $contents);
     }
@@ -50,6 +61,7 @@ class StageHStandaloneCompletionTest extends TestCase
         $portalReviewView = file_get_contents(resource_path('views/portal/teacher-reviews/index.blade.php'));
         $schoolReviewView = file_get_contents(resource_path('views/school/teacher-reviews/index.blade.php'));
         $roleContextView = file_get_contents(resource_path('views/role-context/index.blade.php'));
+        $supportCreateView = file_get_contents(resource_path('views/school/support/create.blade.php'));
 
         $this->assertStringContainsString('<x-ui.form-section', $conversationView);
         $this->assertStringContainsString('<x-ui.table-card', $conversationView);
@@ -57,5 +69,6 @@ class StageHStandaloneCompletionTest extends TestCase
         $this->assertStringContainsString('<x-ui.table-card', $portalReviewView);
         $this->assertStringContainsString('<x-ui.table-card', $schoolReviewView);
         $this->assertStringContainsString('<x-ui.table-card', $roleContextView);
+        $this->assertStringContainsString('<x-ui.form-section', $supportCreateView);
     }
 }

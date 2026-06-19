@@ -89,7 +89,7 @@
 
                                                 <form method="POST"
                                                       action="{{ route('admin.schools.support-access.start', $school) }}"
-                                                      data-confirm="Start Super Admin support access for this school?"
+                                                      data-confirm="Start Installation Admin support access for this school?"
                                                       data-loading-text="Opening...">
                                                     @csrf
                                                     <div class="flex items-center gap-2">

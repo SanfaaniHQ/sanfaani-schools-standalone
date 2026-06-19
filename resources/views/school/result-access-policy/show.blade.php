@@ -19,7 +19,7 @@
                     <p class="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">Request changes through platform support if your school needs a different access model.</p>
                 @else
                     <h3 class="text-base font-semibold text-gray-900">Scratch card access is active by default.</h3>
-                    <p class="mt-2 text-sm text-gray-600">No custom policy is assigned yet. Public result checking will require scratch cards until Super Admin configures another policy.</p>
+                    <p class="mt-2 text-sm text-gray-600">No custom policy is assigned yet. Public result checking will require scratch cards until Installation Admin configures another policy.</p>
                 @endif
             </div>
 

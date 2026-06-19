@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\School;
 use App\Models\User;
+use App\Models\UserSchoolRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -110,6 +112,48 @@ class MultiFieldLoginTest extends TestCase
         $response->assertSessionHasErrors('email');
     }
 
+    public function test_multi_role_installation_admin_can_use_school_login_for_school_workspace(): void
+    {
+        $school = School::create([
+            'name' => 'Sanfaani Login Academy',
+            'slug' => 'sanfaani-login-academy',
+            'status' => 'active',
+            'subscription_status' => 'active',
+        ]);
+
+        $owner = User::create([
+            'name' => 'School Owner',
+            'email' => 'owner@example.com',
+            'password' => Hash::make('password123'),
+            'email_verified_at' => now(),
+            'school_id' => $school->id,
+        ]);
+
+        foreach (['super_admin', 'school_admin', 'teacher'] as $role) {
+            Role::findOrCreate($role);
+            $owner->assignRole($role);
+        }
+
+        foreach (['school_admin', 'teacher'] as $role) {
+            UserSchoolRole::create([
+                'user_id' => $owner->id,
+                'school_id' => $school->id,
+                'role_name' => $role,
+                'status' => 'active',
+            ]);
+        }
+
+        $response = $this->post('/login', [
+            'login' => 'OWNER@EXAMPLE.COM',
+            'password' => 'password123',
+        ]);
+
+        $this->assertAuthenticatedAs($owner);
+        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertSessionHas('active_school_id', $school->id);
+        $response->assertSessionHas('active_role_context', 'school_admin');
+    }
+
     public function test_super_admin_can_login_through_admin_login(): void
     {
         $superAdmin = User::create([
@@ -129,6 +173,7 @@ class MultiFieldLoginTest extends TestCase
 
         $this->assertAuthenticatedAs($superAdmin);
         $response->assertRedirect(route('admin.dashboard'));
+        $response->assertSessionHas('active_role_context', 'super_admin');
     }
 
     public function test_super_admin_cannot_login_with_staff_code(): void

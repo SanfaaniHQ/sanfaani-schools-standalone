@@ -13,7 +13,7 @@ class RoleContextController extends Controller
     public function index(Request $request, UserWorkspaceService $workspaces): View
     {
         return view('role-context.index', [
-            'contexts' => $workspaces->contextsFor($request->user())->all(),
+            'contexts' => $workspaces->schoolContextsFor($request->user())->all(),
             'activeSchoolId' => TenantContext::schoolId(),
             'activeRoleName' => TenantContext::roleName(),
         ]);
@@ -30,7 +30,7 @@ class RoleContextController extends Controller
         $schoolId = filled($data['school_id'] ?? null) ? (int) $data['school_id'] : null;
         $roleName = (string) $data['role_name'];
 
-        $context = $workspaces->contextsFor($user)
+        $context = $workspaces->schoolContextsFor($user)
             ->first(fn (array $context): bool => (string) ($context['role_name'] ?? '') === $roleName
                 && (filled($context['school_id'] ?? null) ? (int) $context['school_id'] : null) === $schoolId);
 
