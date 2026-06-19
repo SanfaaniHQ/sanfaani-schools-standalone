@@ -87,7 +87,14 @@ class InstallerFlowTest extends TestCase
         $this->assertFileExists(app(InstallerStateService::class)->lockPath());
         $this->assertDatabaseHas('schools', ['slug' => 'local-school']);
         $this->assertDatabaseHas('users', ['email' => 'owner@example.test']);
-        $this->assertTrue(User::where('email', 'owner@example.test')->first()->hasRole('super_admin'));
+        $owner = User::where('email', 'owner@example.test')->first();
+        $this->assertTrue($owner->hasRole('super_admin'));
+        $this->assertTrue($owner->hasRole('school_admin'));
+        $this->assertDatabaseHas('user_school_roles', [
+            'user_id' => $owner->id,
+            'role_name' => 'school_admin',
+            'status' => 'active',
+        ]);
     }
 
     public function test_finalization_prevents_reinstall(): void

@@ -15,7 +15,7 @@ class CurrentSchoolService
             return null;
         }
 
-        if ($user->hasRole('super_admin') && session()->has('support_school_id')) {
+        if ($this->inSupportMode($user)) {
             return School::where('status', 'active')->find(session('support_school_id'));
         }
 
@@ -34,7 +34,12 @@ class CurrentSchoolService
     {
         $user ??= auth()->user();
 
-        return (bool) ($user?->hasRole('super_admin') && session('is_support_session') && session()->has('support_school_id'));
+        return (bool) (
+            $user?->hasRole('super_admin')
+            && session('is_support_session')
+            && session()->has('support_school_id')
+            && session()->has('support_access_started_by')
+        );
     }
 
     /**

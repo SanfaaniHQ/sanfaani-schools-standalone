@@ -1,9 +1,10 @@
 <x-app-layout>
     @php
         $user = auth()->user();
-        $roleContext = app(\App\Services\CurrentSchoolService::class)->roleContext($user);
+        $currentSchoolService = app(\App\Services\CurrentSchoolService::class);
+        $roleContext = $currentSchoolService->roleContext($user);
         $featureAccess = app(\App\Services\SchoolRoleFeatureService::class);
-        $supportMode = $user?->hasRole('super_admin') && session('support_school_id');
+        $supportMode = session('is_support_session') && session()->has('support_access_started_by') && $currentSchoolService->inSupportMode($user);
         $canManageStudents = $roleContext === 'school_admin' || $supportMode;
         $canEnterManualResult = $canManageStudents || (
             $roleContext === 'result_officer'

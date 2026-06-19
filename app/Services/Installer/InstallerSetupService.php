@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
 use App\Services\MailSettingService;
+use App\Services\RolePermissionService;
 use App\Services\System\DeploymentModeService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,7 @@ class InstallerSetupService
     {
         Role::findOrCreate('super_admin');
         Role::findOrCreate('school_admin');
+        app(RolePermissionService::class)->ensurePermissions();
 
         $user->assignRole('super_admin');
         $user->assignRole('school_admin');

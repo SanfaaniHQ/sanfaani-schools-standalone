@@ -65,7 +65,7 @@
             <div class="min-w-0 lg:ps-64">
                 @include('layouts.partials.topbar')
 
-                @if (auth()->check() && auth()->user()->hasRole('super_admin') && session('is_support_session') && session('support_school_id'))
+                @if (auth()->check() && session('is_support_session') && session()->has('support_access_started_by') && $schoolServiceForShell?->inSupportMode(auth()->user()))
                     @php
                         $supportSchool = \App\Models\School::find(session('support_school_id'));
                         $supportRole = str(session('support_role_context', 'school_admin'))->replace('_', ' ')->title();

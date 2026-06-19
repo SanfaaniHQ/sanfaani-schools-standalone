@@ -45,6 +45,84 @@ class StageFRolesPermissionsFeatureControlTest extends TestCase
         $this->assertSame('teacher', session('tenant.role_name'));
     }
 
+    public function test_normal_multi_role_switch_does_not_start_support_access(): void
+    {
+        $school = $this->school();
+        $user = $this->portalUser($school, 'school_admin', 'stage.f.owner.switch@example.com');
+        $user->assignRole('super_admin');
+        $user->assignRole('teacher');
+
+        UserSchoolRole::query()->create([
+            'user_id' => $user->id,
+            'school_id' => $school->id,
+            'role_name' => 'teacher',
+            'status' => 'active',
+        ]);
+
+        $this->withoutMiddleware();
+
+        $this->actingAs($user)
+            ->withSession([
+                'is_support_session' => true,
+                'support_school_id' => $school->id,
+                'support_role_context' => 'school_admin',
+            ])
+            ->post(route('role-context.switch'), [
+                'school_id' => $school->id,
+                'role_name' => 'teacher',
+            ])
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertSame($school->id, session('active_school_id'));
+        $this->assertSame('teacher', session('active_role_context'));
+        $this->assertFalse(session()->has('is_support_session'));
+        $this->assertFalse(session()->has('support_school_id'));
+        $this->assertFalse(session()->has('support_role_context'));
+    }
+
+    public function test_role_context_switch_rejects_unassigned_school_support_context(): void
+    {
+        $school = $this->school();
+        $user = User::factory()->create(['email' => 'stage.f.super@example.com']);
+        Role::findOrCreate('super_admin', 'web');
+        $user->assignRole('super_admin');
+
+        $this->withoutMiddleware();
+
+        $this->actingAs($user)
+            ->post(route('role-context.switch'), [
+                'school_id' => $school->id,
+                'role_name' => 'school_admin',
+            ])
+            ->assertForbidden();
+
+        $this->assertFalse(session()->has('is_support_session'));
+        $this->assertFalse(session()->has('support_school_id'));
+    }
+
+    public function test_explicit_support_session_is_still_recognized(): void
+    {
+        $school = $this->school();
+        $user = User::factory()->create(['email' => 'stage.f.support@example.com']);
+        Role::findOrCreate('super_admin', 'web');
+        $user->assignRole('super_admin');
+
+        $this->actingAs($user);
+        session([
+            'is_support_session' => true,
+            'support_school_id' => $school->id,
+            'support_role_context' => 'school_admin',
+            'support_access_started_by' => $user->id,
+            'support_access_started_at' => now()->toDateTimeString(),
+        ]);
+
+        $service = app(CurrentSchoolService::class);
+
+        $this->assertTrue($service->inSupportMode($user));
+        $this->assertSame($school->id, $service->get($user)->id);
+        $this->assertSame('school_admin', $service->roleContext($user));
+    }
+
     public function test_school_admin_can_update_feature_controls_by_role(): void
     {
         $school = $this->school();

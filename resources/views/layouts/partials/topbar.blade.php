@@ -20,7 +20,7 @@
     $workspaceService = auth()->check() ? app(\App\Services\UserWorkspaceService::class) : null;
     $workspaceContexts = $workspaceService ? $workspaceService->contextsFor(auth()->user()) : collect();
     $activeWorkspaceKey = $workspaceService?->activeKey(auth()->user());
-    $activeWorkspace = $workspaceContexts->firstWhere('key', $activeWorkspaceKey) ?? $workspaceContexts->first();
+    $activeWorkspace = $workspaceContexts->firstWhere('key', $activeWorkspaceKey) ?? $workspaceService?->defaultContextFor(auth()->user()) ?? $workspaceContexts->first();
     $activeWorkspaceLabel = $activeWorkspace
         ? $activeWorkspace['label'].' - '.$activeWorkspace['school_name']
         : __('ui.workspace');
@@ -78,38 +78,60 @@
                                 <path d="M10 17h4"></path>
                             </svg>
                         </button>
-                        <div id="workspace-switcher-popup" x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" role="dialog" aria-modal="false" aria-labelledby="workspace-switcher-title" class="absolute end-0 z-50 mt-2 w-[min(26rem,calc(100vw-2rem))] overflow-hidden rounded-md border border-border-subtle bg-bg-secondary shadow-lg">
-                            <div class="border-b border-border-subtle px-4 py-3">
-                                <p id="workspace-switcher-title" class="text-sm font-semibold text-text-primary">{{ __('ui.workspace_switcher_title') }}</p>
-                                <p class="mt-1 text-xs leading-5 text-text-secondary">{{ __('ui.workspace_switcher_intro') }}</p>
-                                <div class="mt-3 rounded-md border border-border-subtle bg-bg-primary px-3 py-2">
-                                    <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.current_workspace') }}</p>
-                                    <p class="mt-1 truncate text-sm font-semibold text-text-primary">{{ $activeWorkspaceLabel ?: __('ui.choose_workspace') }}</p>
+                        <div
+                            id="workspace-switcher-popup"
+                            x-cloak
+                            x-show="open"
+                            x-transition.opacity.duration.150ms
+                            x-on:click.self="open = false"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="workspace-switcher-title"
+                            class="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/55 px-4 py-6 backdrop-blur-[1px] sm:items-center sm:py-10"
+                        >
+                            <section class="w-full max-w-lg overflow-hidden rounded-md border border-border-subtle bg-bg-secondary shadow-2xl">
+                                <div class="flex items-start justify-between gap-4 border-b border-border-subtle px-4 py-3">
+                                    <div class="min-w-0">
+                                        <p id="workspace-switcher-title" class="text-sm font-semibold text-text-primary">{{ __('ui.workspace_switcher_title') }}</p>
+                                        <p class="mt-1 text-xs leading-5 text-text-secondary">{{ __('ui.workspace_switcher_intro') }}</p>
+                                    </div>
+                                    <button type="button" @click="open = false" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-tertiary transition hover:bg-bg-tertiary hover:text-text-primary" aria-label="{{ __('ui.close_navigation') }}">
+                                        <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M18 6 6 18"></path>
+                                            <path d="m6 6 12 12"></path>
+                                        </svg>
+                                    </button>
                                 </div>
-                            </div>
-                            <div class="max-h-[60vh] overflow-y-auto p-2">
-                                <p class="px-2 pb-1 text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.available_workspaces') }}</p>
-                                @foreach ($workspaceContexts as $context)
-                                    <form method="POST" action="{{ route('workspace.store') }}">
-                                        @csrf
-                                        <input type="hidden" name="workspace" value="{{ $context['key'] }}">
-                                        <button type="submit" class="flex w-full items-start justify-between gap-3 rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary" @if ($context['key'] === $activeWorkspaceKey) aria-current="true" @endif>
-                                            <span class="min-w-0">
-                                                <span class="block font-semibold text-text-primary">{{ $context['label'] }}</span>
-                                                <span class="mt-0.5 block truncate text-xs text-text-tertiary">{{ $context['school_name'] }}</span>
-                                            </span>
-                                            @if ($context['key'] === $activeWorkspaceKey)
-                                                <span class="shrink-0 rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-semibold text-brand-primary">{{ __('ui.active') }}</span>
-                                            @endif
-                                        </button>
-                                    </form>
-                                @endforeach
-                            </div>
-                            <div class="border-t border-border-subtle px-4 py-3">
-                                <a href="{{ route('role-context.index') }}" class="inline-flex min-h-8 items-center rounded-md px-2 text-xs font-semibold text-brand-primary transition hover:bg-bg-tertiary hover:text-brand-hover">
-                                    {{ __('ui.manage_role_contexts') }}
-                                </a>
-                            </div>
+                                <div class="border-b border-border-subtle px-4 py-3">
+                                    <div class="rounded-md border border-border-subtle bg-bg-primary px-3 py-2">
+                                        <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.current_workspace') }}</p>
+                                        <p class="mt-1 truncate text-sm font-semibold text-text-primary">{{ $activeWorkspaceLabel ?: __('ui.choose_workspace') }}</p>
+                                    </div>
+                                </div>
+                                <div class="max-h-[60vh] overflow-y-auto p-2">
+                                    <p class="px-2 pb-1 text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.available_workspaces') }}</p>
+                                    @foreach ($workspaceContexts as $context)
+                                        <form method="POST" action="{{ route('workspace.store') }}">
+                                            @csrf
+                                            <input type="hidden" name="workspace" value="{{ $context['key'] }}">
+                                            <button type="submit" class="flex w-full items-start justify-between gap-3 rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary" @if ($context['key'] === $activeWorkspaceKey) aria-current="true" @endif>
+                                                <span class="min-w-0">
+                                                    <span class="block font-semibold text-text-primary">{{ $context['label'] }}</span>
+                                                    <span class="mt-0.5 block truncate text-xs text-text-tertiary">{{ $context['school_name'] }}</span>
+                                                </span>
+                                                @if ($context['key'] === $activeWorkspaceKey)
+                                                    <span class="shrink-0 rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-semibold text-brand-primary">{{ __('ui.active') }}</span>
+                                                @endif
+                                            </button>
+                                        </form>
+                                    @endforeach
+                                </div>
+                                <div class="border-t border-border-subtle px-4 py-3">
+                                    <a href="{{ route('role-context.index') }}" class="inline-flex min-h-8 items-center rounded-md px-2 text-xs font-semibold text-brand-primary transition hover:bg-bg-tertiary hover:text-brand-hover">
+                                        {{ __('ui.manage_role_contexts') }}
+                                    </a>
+                                </div>
+                            </section>
                         </div>
                     </div>
                 @endif

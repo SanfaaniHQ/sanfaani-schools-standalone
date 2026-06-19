@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\SchoolFeatureOverride;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\UserWorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -74,6 +75,25 @@ class RoleAwareNavigationTest extends TestCase
 
             $this->get('/school/communications/history')->assertNotFound();
         }
+    }
+
+    public function test_standalone_owner_defaults_to_school_admin_workspace(): void
+    {
+        $school = $this->createSchool();
+        $owner = $this->createUserForSchool($school, 'school_admin');
+        Role::findOrCreate('super_admin');
+        $owner->assignRole('super_admin');
+
+        $workspaces = app(UserWorkspaceService::class);
+        $contexts = $workspaces->contextsFor($owner);
+        $default = $workspaces->defaultContextFor($owner);
+
+        $this->assertSame('school_admin', $contexts->first()['role_name']);
+        $this->assertSame($school->id, $contexts->first()['school_id']);
+        $this->assertSame('school_admin', $default['role_name']);
+        $this->assertSame($school->id, $default['school_id']);
+        $this->assertSame('Installation Admin', $contexts->firstWhere('key', 'global:super_admin')['label']);
+        $this->assertSame('Standalone diagnostics', $contexts->firstWhere('key', 'global:super_admin')['school_name']);
     }
 
     public function test_school_admin_needs_explicit_school_grant_to_view_communication_logs(): void

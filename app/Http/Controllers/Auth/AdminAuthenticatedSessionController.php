@@ -119,7 +119,10 @@ class AdminAuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
-        $workspaces->selectByKey($request->user(), 'global:super_admin');
+        $context = $workspaces->selectFirst($request->user());
+        $fallbackRoute = ($context['role_name'] ?? null) === 'super_admin' && blank($context['school_id'] ?? null)
+            ? route('admin.dashboard')
+            : route('dashboard');
 
         Log::info('Super Admin login succeeded.', [
             'user_id' => $request->user()->id,
@@ -130,6 +133,6 @@ class AdminAuthenticatedSessionController extends Controller
             'user_agent' => $request->userAgent(),
         ], request: $request);
 
-        return redirect()->intended(route('admin.dashboard'));
+        return redirect()->intended($fallbackRoute);
     }
 }
