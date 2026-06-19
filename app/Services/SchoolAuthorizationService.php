@@ -46,6 +46,13 @@ class SchoolAuthorizationService
         'communication.bulk' => 'communication_tools',
         'communication.logs.view' => 'communication_tools',
         'communication.templates.manage' => 'communication_tools',
+        'portal.conversations' => 'communication_tools',
+        'teacher.reviews' => 'teacher_reviews',
+        'support.access' => 'support_tools',
+        'support.direct_escalation' => 'support_tools',
+        'support.assign' => 'support_tools',
+        'support.escalate' => 'support_tools',
+        'support.routing.manage' => 'support_tools',
     ];
 
     /** @var array<string, bool> */

@@ -65,6 +65,31 @@ class SchoolAuthorizationServiceTest extends TestCase
         $this->assertTrue(app(SchoolAuthorizationService::class)->can($user, $school, 'results.publish'));
     }
 
+    public function test_h2_h10_route_feature_aliases_resolve_for_default_school_roles(): void
+    {
+        $school = $this->createSchool();
+        $admin = $this->createUserForSchool($school, 'school_admin');
+        $teacher = $this->createUserForSchool($school, 'teacher');
+        $parent = $this->createUserForSchool($school, 'parent');
+
+        $authorization = app(SchoolAuthorizationService::class);
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+        $this->assertTrue($authorization->can($admin, $school, 'school.scratch-cards.generate'));
+        $this->assertTrue($authorization->can($admin, $school, 'school.result-system.index'));
+        $this->assertTrue($authorization->can($admin, $school, 'school.feature-control.index'));
+        $this->assertTrue($authorization->can($admin, $school, 'school.teacher-reviews.index'));
+
+        $this->actAsSchoolRole($teacher, $school, 'teacher');
+        $this->assertTrue($authorization->can($teacher, $school, 'school.live-classes.create'));
+        $this->assertTrue($authorization->can($teacher, $school, 'portal.conversations.index'));
+
+        $this->actAsSchoolRole($parent, $school, 'parent');
+        $this->assertTrue($authorization->can($parent, $school, 'portal.live-classes.join'));
+        $this->assertTrue($authorization->can($parent, $school, 'portal.teacher-reviews.store'));
+        $this->assertTrue($authorization->can($parent, $school, 'portal.conversations.messages.store'));
+    }
+
     public function test_teacher_student_visibility_is_assignment_and_school_scoped(): void
     {
         $school = $this->createSchool();

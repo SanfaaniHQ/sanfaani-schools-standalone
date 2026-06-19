@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\School;
 use App\Services\AuditService;
+use App\Services\CurrentSchoolService;
 use App\Services\SchoolMailConfigService;
 use App\Services\TenantContext;
 use Closure;
@@ -23,7 +24,7 @@ class EnsureValidSchoolContext
             abort(403);
         }
 
-        if ($user->hasRole('super_admin') && session('is_support_session') && session('support_school_id')) {
+        if (app(CurrentSchoolService::class)->inSupportMode($user)) {
             $school = School::where('status', 'active')->find(session('support_school_id'));
 
             if (! $school) {
@@ -40,6 +41,10 @@ class EnsureValidSchoolContext
             $this->logSupportAccess($request, $school->id);
 
             return $response;
+        }
+
+        if (session('is_support_session') || session()->has('support_school_id')) {
+            $this->clearSupportSession();
         }
 
         $schoolId = TenantContext::schoolId() ?: (filled($user->school_id) ? (int) $user->school_id : null);

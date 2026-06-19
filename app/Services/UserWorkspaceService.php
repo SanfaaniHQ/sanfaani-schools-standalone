@@ -4,11 +4,22 @@ namespace App\Services;
 
 use App\Models\School;
 use App\Models\User;
+use App\Services\Standalone\StandaloneEditionService;
 use Illuminate\Support\Collection;
 use Spatie\Permission\PermissionRegistrar;
 
 class UserWorkspaceService
 {
+    private const SUPPORT_SESSION_KEYS = [
+        'is_support_session',
+        'support_school_id',
+        'support_role_context',
+        'support_reason',
+        'support_access_started_by',
+        'support_access_started_at',
+        'support_access_last_confirmed_at',
+    ];
+
     public function contextsFor(User $user): Collection
     {
         $contexts = collect();
@@ -21,9 +32,9 @@ class UserWorkspaceService
             $contexts->push([
                 'key' => 'global:super_admin',
                 'school_id' => null,
-                'school_name' => 'Platform Administration',
+                'school_name' => $this->isStandaloneMode() ? 'Standalone diagnostics' : 'Platform Administration',
                 'role_name' => 'super_admin',
-                'label' => 'Super Admin',
+                'label' => $this->isStandaloneMode() ? 'Installation Admin' : 'Super Admin',
                 'is_global' => true,
             ]);
         }
@@ -71,13 +82,17 @@ class UserWorkspaceService
             }
         }
 
-        return $contexts
+        $contexts = $contexts
             ->unique('key')
             ->values();
+
+        return $this->sortContexts($contexts);
     }
 
     public function select(User $user, array $context): void
     {
+        $this->clearSupportSession();
+
         TenantContext::set(
             filled($context['school_id']) ? (int) $context['school_id'] : null,
             $context['role_name']
@@ -119,7 +134,7 @@ class UserWorkspaceService
 
     public function selectFirst(User $user): ?array
     {
-        $context = $this->contextsFor($user)->first();
+        $context = $this->defaultContextFor($user);
 
         if (! $context) {
             return null;
@@ -128,5 +143,75 @@ class UserWorkspaceService
         $this->select($user, $context);
 
         return $context;
+    }
+
+    public function defaultContextFor(User $user): ?array
+    {
+        $contexts = $this->contextsFor($user);
+
+        if ($contexts->isEmpty()) {
+            return null;
+        }
+
+        if ($this->isStandaloneMode()) {
+            return $contexts->first(fn (array $context): bool => filled($context['school_id'] ?? null)
+                && ($context['role_name'] ?? null) === 'school_admin')
+                ?? $contexts->first(fn (array $context): bool => filled($context['school_id'] ?? null))
+                ?? $contexts->first();
+        }
+
+        return $contexts->first();
+    }
+
+    private function sortContexts(Collection $contexts): Collection
+    {
+        return $contexts
+            ->sort(function (array $left, array $right): int {
+                $priority = $this->contextPriority($left) <=> $this->contextPriority($right);
+
+                if ($priority !== 0) {
+                    return $priority;
+                }
+
+                $school = strcmp((string) ($left['school_name'] ?? ''), (string) ($right['school_name'] ?? ''));
+
+                if ($school !== 0) {
+                    return $school;
+                }
+
+                return strcmp((string) ($left['label'] ?? ''), (string) ($right['label'] ?? ''));
+            })
+            ->values();
+    }
+
+    private function contextPriority(array $context): int
+    {
+        if (! $this->isStandaloneMode()) {
+            return ($context['role_name'] ?? null) === 'super_admin' && blank($context['school_id'] ?? null) ? 0 : 10;
+        }
+
+        if (filled($context['school_id'] ?? null) && ($context['role_name'] ?? null) === 'school_admin') {
+            return 0;
+        }
+
+        if (filled($context['school_id'] ?? null)) {
+            return 10;
+        }
+
+        if (($context['role_name'] ?? null) === 'super_admin') {
+            return 20;
+        }
+
+        return 30;
+    }
+
+    private function clearSupportSession(): void
+    {
+        session()->forget(self::SUPPORT_SESSION_KEYS);
+    }
+
+    private function isStandaloneMode(): bool
+    {
+        return app(StandaloneEditionService::class)->isStandalone();
     }
 }

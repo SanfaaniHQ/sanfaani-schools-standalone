@@ -36,7 +36,12 @@ class StageHStandaloneCompletionTest extends TestCase
 
         $this->assertStringContainsString('workspace-switcher-popup', $contents);
         $this->assertStringContainsString('role="dialog"', $contents);
+        $this->assertStringContainsString('aria-modal="true"', $contents);
+        $this->assertStringContainsString('fixed inset-0 z-[80]', $contents);
+        $this->assertStringContainsString('x-on:click.self="open = false"', $contents);
         $this->assertStringContainsString("__('ui.manage_role_contexts')", $contents);
+        $this->assertStringNotContainsString('aria-modal="false"', $contents);
+        $this->assertStringNotContainsString('@click.outside="open = false" role="dialog"', $contents);
     }
 
     public function test_stage_h_views_use_shared_ui_surfaces(): void
