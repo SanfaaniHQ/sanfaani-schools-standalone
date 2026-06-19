@@ -31,6 +31,8 @@ class SchoolAuthorizationService
         'lms.materials.manage' => 'lms',
         'lms.assignments.post' => 'lms',
         'live_classes.view' => 'live_classes',
+        'live_classes.create' => 'live_classes',
+        'live_classes.join' => 'live_classes',
         'live_classes.manage' => 'live_classes',
         'live_classes.recordings.manage' => 'live_classes',
         'cbt.manage' => 'cbt_exams',

@@ -74,6 +74,7 @@
                             <th class="px-3 py-2">Class / Subject</th>
                             <th class="px-3 py-2">Starts</th>
                             <th class="px-3 py-2">Teacher</th>
+                            <th class="px-3 py-2">Audience</th>
                             <th class="px-3 py-2">Status</th>
                             <th class="px-3 py-2 text-right">Action</th>
                         </tr>
@@ -94,6 +95,10 @@
                                     <span class="block text-xs text-text-tertiary">{{ $liveClass->timezone ?: config('app.timezone') }}</span>
                                 </td>
                                 <td class="px-3 py-3 text-text-secondary">{{ $liveClass->teacher?->name ?? 'Not assigned' }}</td>
+                                <td class="px-3 py-3 text-text-secondary">
+                                    {{ number_format((int) ($liveClass->active_participants_count ?? 0)) }}
+                                    <span class="block text-xs text-text-tertiary">participants</span>
+                                </td>
                                 <td class="px-3 py-3"><x-ui.badge :status="$liveClass->status" /></td>
                                 <td class="px-3 py-3 text-right">
                                     <a href="{{ route('school.live-classes.show', $liveClass) }}" class="ui-button-secondary">Open</a>
@@ -101,7 +106,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-3 py-8">
+                                <td colspan="7" class="px-3 py-8">
                                     <x-ui.empty-state
                                         title="No live classes yet"
                                         body="Schedule the first manual meeting link for an existing class, subject, session, or LMS context."

@@ -37,8 +37,8 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Route To</label>
                             <select name="route_to" class="mt-1 block w-full rounded-xl border-gray-300">
-                                <option value="school_admin" @selected(old('route_to', $role === 'school_admin' ? 'super_admin' : 'school_admin') === 'school_admin')>School Admin</option>
-                                <option value="super_admin" @selected(old('route_to', $role === 'school_admin' ? 'super_admin' : 'school_admin') === 'super_admin')>Super Admin</option>
+                                <option value="school_admin" @selected(old('route_to', 'school_admin') === 'school_admin')>School Admin</option>
+                                <option value="super_admin" @selected(old('route_to') === 'super_admin')>Super Admin</option>
                             </select>
                         </div>
                         <div>

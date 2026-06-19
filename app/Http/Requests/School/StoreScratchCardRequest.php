@@ -36,6 +36,8 @@ class StoreScratchCardRequest extends FormRequest
             ],
             'result_type' => ['required', Rule::in(['term_result'])],
             'quantity' => ['required', 'integer', 'min:1', 'max:2000'],
+            'generation_mode' => ['nullable', Rule::in(['direct', 'request'])],
+            'max_uses' => ['required_if:generation_mode,direct', 'nullable', 'integer', 'min:1', 'max:100'],
             'payment_method' => ['nullable', Rule::in(['bank_transfer', 'cash', 'manual'])],
             'payment_reference' => ['nullable', 'string', 'max:255'],
             'request_note' => ['nullable', 'string', 'max:1000'],

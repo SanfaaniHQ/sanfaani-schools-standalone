@@ -1132,11 +1132,11 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                             ->name('index');
 
                         Route::get('/create', [LiveClassController::class, 'create'])
-                            ->middleware('feature.school:live_classes.manage')
+                            ->middleware('feature.school:live_classes.create,live_classes.manage')
                             ->name('create');
 
                         Route::post('/', [LiveClassController::class, 'store'])
-                            ->middleware('feature.school:live_classes.manage')
+                            ->middleware('feature.school:live_classes.create,live_classes.manage')
                             ->name('store');
 
                         Route::get('/{liveClass}', [LiveClassController::class, 'show'])
@@ -1306,6 +1306,10 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                         Route::get('/result-system', [SchoolResultSystemController::class, 'index'])
                             ->middleware('feature.school:results.manual_entry,results.review,results.publish')
                             ->name('result-system.index');
+
+                        Route::patch('/result-system', [SchoolResultSystemController::class, 'update'])
+                            ->middleware('feature.school:results.manage,results.review')
+                            ->name('result-system.update');
 
                         Route::get('/result-access-policy', [SchoolResultAccessPolicyController::class, 'show'])
                             ->name('result-access-policy.show');
@@ -1679,6 +1683,9 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                         Route::get('/batches/{batch}', [ScratchCardController::class, 'show'])
                             ->name('show');
 
+                        Route::post('/batches/{batch}/generate', [ScratchCardController::class, 'generate'])
+                            ->name('generate');
+
                         Route::get('/batches/{batch}/download', [ScratchCardController::class, 'download'])
                             ->name('download');
                     });
@@ -1899,6 +1906,18 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
 // Stage E chat and teacher review routes.
 Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
     Route::middleware('role:parent|student|teacher|school_admin|result_officer|accountant|super_admin')->group(function () {
+        Route::get('/portal/live-classes', [\App\Http\Controllers\Portal\LiveClassController::class, 'index'])
+            ->middleware('feature.school:live_classes.view,live_classes.join')
+            ->name('portal.live-classes.index');
+
+        Route::get('/portal/live-classes/{liveClass}', [\App\Http\Controllers\Portal\LiveClassController::class, 'show'])
+            ->middleware('feature.school:live_classes.view,live_classes.join')
+            ->name('portal.live-classes.show');
+
+        Route::post('/portal/live-classes/{liveClass}/join', [\App\Http\Controllers\Portal\LiveClassController::class, 'join'])
+            ->middleware('feature.school:live_classes.join,live_classes.view')
+            ->name('portal.live-classes.join');
+
         Route::get('/portal/conversations', [\App\Http\Controllers\Portal\ConversationController::class, 'index'])
             ->name('portal.conversations.index');
 

@@ -21,10 +21,11 @@ class StageEChatTeacherReviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_parent_can_start_conversation_and_school_admin_can_reply(): void
+    public function test_parent_can_start_conversation_with_multiple_recipients_and_school_admin_can_reply(): void
     {
         [$school, $parent, $student] = $this->parentSetup();
         $admin = $this->portalUser($school, 'school_admin', 'stage.e.admin@example.com');
+        $officer = $this->portalUser($school, 'result_officer', 'stage.e.officer@example.com');
 
         $this->withoutMiddleware();
         $this->mockSchoolContext($school, 'parent');
@@ -33,7 +34,7 @@ class StageEChatTeacherReviewTest extends TestCase
             ->post(route('portal.conversations.store'), [
                 'subject' => 'Result question',
                 'conversation_type' => 'result',
-                'recipient_user_ids' => [$admin->id],
+                'recipient_user_ids' => [$admin->id, $officer->id],
                 'body' => 'Please I need help with my child result.',
             ])
             ->assertRedirect();
@@ -49,6 +50,11 @@ class StageEChatTeacherReviewTest extends TestCase
         $this->assertDatabaseHas('portal_conversation_participants', [
             'portal_conversation_id' => $conversation->id,
             'user_id' => $admin->id,
+            'school_id' => $school->id,
+        ]);
+        $this->assertDatabaseHas('portal_conversation_participants', [
+            'portal_conversation_id' => $conversation->id,
+            'user_id' => $officer->id,
             'school_id' => $school->id,
         ]);
 
@@ -118,6 +124,12 @@ class StageEChatTeacherReviewTest extends TestCase
                 'teacher_user_id' => $teacher->id,
                 'student_id' => $student->id,
                 'rating' => 5,
+                'category_ratings' => [
+                    'communication' => 5,
+                    'preparedness' => 4,
+                    'fairness' => 5,
+                    'student_support' => 4,
+                ],
                 'title' => 'Excellent support',
                 'comment' => 'The teacher has been very supportive.',
             ])
@@ -131,6 +143,15 @@ class StageEChatTeacherReviewTest extends TestCase
             'rating' => 5,
             'status' => TeacherReview::STATUS_PENDING,
         ]);
+
+        $review = TeacherReview::query()->firstOrFail();
+
+        $this->assertSame([
+            'communication' => 5,
+            'preparedness' => 4,
+            'fairness' => 5,
+            'student_support' => 4,
+        ], $review->categoryRatings());
     }
 
     public function test_school_admin_can_approve_teacher_review(): void

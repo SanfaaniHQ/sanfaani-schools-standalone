@@ -196,6 +196,11 @@ class PortalCommunicationService
             'status' => TeacherReview::STATUS_PENDING,
             'metadata' => [
                 'source' => 'stage_e_teacher_review',
+                'category_ratings' => collect($data['category_ratings'] ?? [])
+                    ->only(array_keys(TeacherReview::CATEGORY_RATINGS))
+                    ->filter(fn ($rating): bool => filled($rating))
+                    ->map(fn ($rating): int => (int) $rating)
+                    ->all(),
             ],
         ]);
 

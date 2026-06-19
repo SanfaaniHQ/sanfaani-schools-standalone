@@ -3,6 +3,7 @@
 namespace App\Services\LiveClasses;
 
 use App\Models\LiveClass;
+use App\Models\LiveClassParticipant;
 use App\Models\School;
 use App\Models\User;
 use App\Services\SchoolAuthorizationService;
@@ -19,6 +20,7 @@ class LiveClassAccessService
     {
         return $this->authorization->canAny($user, $school, [
             'live_classes.view',
+            'live_classes.join',
             'live_classes.manage',
         ]);
     }
@@ -39,6 +41,45 @@ class LiveClassAccessService
         ?int $academicSessionId = null,
         ?int $termId = null
     ): bool {
+        return $this->canWriteClassSubject(
+            $user,
+            $school,
+            $schoolClassId,
+            $subjectId,
+            $academicSessionId,
+            $termId,
+            ['live_classes.manage']
+        );
+    }
+
+    public function canCreateClassSubject(
+        User $user,
+        School $school,
+        int $schoolClassId,
+        ?int $subjectId = null,
+        ?int $academicSessionId = null,
+        ?int $termId = null
+    ): bool {
+        return $this->canWriteClassSubject(
+            $user,
+            $school,
+            $schoolClassId,
+            $subjectId,
+            $academicSessionId,
+            $termId,
+            ['live_classes.create', 'live_classes.manage']
+        );
+    }
+
+    private function canWriteClassSubject(
+        User $user,
+        School $school,
+        int $schoolClassId,
+        ?int $subjectId,
+        ?int $academicSessionId,
+        ?int $termId,
+        array $featureKeys
+    ): bool {
         if (! $this->userBelongsToSchool($user, $school)) {
             return false;
         }
@@ -47,8 +88,15 @@ class LiveClassAccessService
             return true;
         }
 
-        if ($this->authorization->roleContext($user) !== 'teacher'
-            || ! $this->authorization->can($user, $school, 'live_classes.manage')) {
+        $role = $this->authorization->roleContext($user);
+
+        if (in_array($role, ['school_admin', 'super_admin'], true)
+            && $this->authorization->canAny($user, $school, $featureKeys)) {
+            return true;
+        }
+
+        if ($role !== 'teacher'
+            || ! $this->authorization->canAny($user, $school, $featureKeys)) {
             return false;
         }
 
@@ -86,6 +134,13 @@ class LiveClassAccessService
             return true;
         }
 
+        if ($liveClass->participants()
+            ->where('user_id', $user->id)
+            ->whereIn('status', LiveClassParticipant::ACTIVE_STATUSES)
+            ->exists()) {
+            return true;
+        }
+
         return $this->canManageClassSubject(
             $user,
             $school,
@@ -111,22 +166,22 @@ class LiveClassAccessService
 
     public function studentPortalIsSafe(): bool
     {
-        return false;
+        return true;
     }
 
     public function studentPortalBoundaryNote(): string
     {
-        return 'Student live-class visibility is deferred until a safe student identity and class-membership path is available.';
+        return 'Student live-class visibility is limited to resolved participant records.';
     }
 
     public function parentPortalIsSafe(): bool
     {
-        return false;
+        return true;
     }
 
     public function parentPortalBoundaryNote(): string
     {
-        return 'Parent live-class visibility is deferred for this foundation stage.';
+        return 'Parent live-class visibility is limited to resolved participant records.';
     }
 
     private function userBelongsToSchool(User $user, School $school): bool

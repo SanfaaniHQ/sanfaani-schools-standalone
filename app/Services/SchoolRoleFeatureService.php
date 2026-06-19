@@ -233,7 +233,17 @@ class SchoolRoleFeatureService
 
         'communications.manage' => 'communication.logs.view',
         'live_class.view' => 'live_classes.view',
+        'live-class.view' => 'live_classes.view',
+        'live-classes.view' => 'live_classes.view',
+        'live_class.create' => 'live_classes.create',
+        'live-class.create' => 'live_classes.create',
+        'live-classes.create' => 'live_classes.create',
+        'live_class.join' => 'live_classes.join',
+        'live-class.join' => 'live_classes.join',
+        'live-classes.join' => 'live_classes.join',
         'live_class.manage' => 'live_classes.manage',
+        'live-class.manage' => 'live_classes.manage',
+        'live-classes.manage' => 'live_classes.manage',
     ];
 
     private const FEATURE_PREREQUISITES = [
@@ -323,7 +333,9 @@ class SchoolRoleFeatureService
             'lms.manage' => $this->feature('LMS management', 'Learning', 'Manage learning materials and classrooms.', ['school_admin', 'teacher']),
             'lms.materials.manage' => $this->feature('LMS materials', 'Learning', 'Create and update learning materials.', ['school_admin', 'teacher']),
             'lms.assignments.post' => $this->feature('LMS assignments', 'Learning', 'Post assignments to learners.', ['school_admin', 'teacher']),
-            'live_classes.view' => $this->feature('Live classes', 'Learning', 'View live class schedules and sessions.', ['school_admin', 'teacher', 'student']),
+            'live_classes.view' => $this->feature('Live classes', 'Learning', 'View live class schedules and sessions.', ['school_admin', 'teacher', 'result_officer', 'parent', 'student']),
+            'live_classes.create' => $this->feature('Schedule live classes', 'Learning', 'Create live classes for permitted class and subject scopes.', ['school_admin', 'teacher']),
+            'live_classes.join' => $this->feature('Join live classes', 'Learning', 'Join live classes through resolved participant invitations.', ['school_admin', 'teacher', 'result_officer', 'accountant', 'parent', 'student']),
             'live_classes.manage' => $this->feature('Live class management', 'Learning', 'Create and manage live classes.', ['school_admin', 'teacher']),
             'live_classes.recordings.manage' => $this->feature('Live class recordings', 'Learning', 'Manage live class recordings.', ['school_admin', 'teacher']),
             'cbt.view' => $this->feature('CBT access', 'CBT', 'View CBT activities and assessments.', ['school_admin', 'teacher', 'result_officer', 'student']),
@@ -715,8 +727,9 @@ class SchoolRoleFeatureService
             'finance.' => ['school_admin', 'accountant'],
             'lms.' => ['school_admin', 'teacher', 'student'],
             'cbt.' => ['school_admin', 'teacher', 'result_officer', 'student'],
-            'live_class.' => ['school_admin', 'teacher', 'student'],
-            'live_classes.' => ['school_admin', 'teacher', 'student'],
+            'live_class.' => ['school_admin', 'teacher', 'result_officer', 'parent', 'student'],
+            'live-classes.' => ['school_admin', 'teacher', 'result_officer', 'parent', 'student'],
+            'live_classes.' => ['school_admin', 'teacher', 'result_officer', 'parent', 'student'],
             'portal.' => self::SUPPORT_ROLES,
         ];
 

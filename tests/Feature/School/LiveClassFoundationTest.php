@@ -274,14 +274,14 @@ class LiveClassFoundationTest extends TestCase
             ->assertSee('API automation and offline class delivery remain disabled');
     }
 
-    public function test_student_and_parent_live_class_visibility_remains_deferred(): void
+    public function test_student_and_parent_live_class_visibility_is_participant_scoped(): void
     {
         $access = app(LiveClassAccessService::class);
 
-        $this->assertFalse($access->studentPortalIsSafe());
-        $this->assertFalse($access->parentPortalIsSafe());
-        $this->assertStringContainsString('deferred', $access->studentPortalBoundaryNote());
-        $this->assertStringContainsString('deferred', $access->parentPortalBoundaryNote());
+        $this->assertTrue($access->studentPortalIsSafe());
+        $this->assertTrue($access->parentPortalIsSafe());
+        $this->assertStringContainsString('participant', $access->studentPortalBoundaryNote());
+        $this->assertStringContainsString('participant', $access->parentPortalBoundaryNote());
     }
 
     private function liveClassContext(string $role): array

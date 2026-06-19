@@ -260,14 +260,14 @@ class LiveClassProviderAbstractionTest extends TestCase
         $this->assertArrayNotHasKey('provider_payload', $liveClass->metadata ?? []);
     }
 
-    public function test_student_and_parent_provider_access_boundaries_remain_deferred(): void
+    public function test_student_and_parent_provider_access_boundaries_are_participant_scoped(): void
     {
         $access = app(LiveClassAccessService::class);
 
-        $this->assertFalse($access->studentPortalIsSafe());
-        $this->assertFalse($access->parentPortalIsSafe());
-        $this->assertStringContainsString('deferred', $access->studentPortalBoundaryNote());
-        $this->assertStringContainsString('deferred', $access->parentPortalBoundaryNote());
+        $this->assertTrue($access->studentPortalIsSafe());
+        $this->assertTrue($access->parentPortalIsSafe());
+        $this->assertStringContainsString('participant', $access->studentPortalBoundaryNote());
+        $this->assertStringContainsString('participant', $access->parentPortalBoundaryNote());
     }
 
     public function test_registry_assert_selectable_rejects_unknown_provider_without_fallback_for_writes(): void

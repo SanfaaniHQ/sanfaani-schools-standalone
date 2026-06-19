@@ -64,40 +64,52 @@
 
             <div class="flex min-w-0 items-center gap-2">
                 @if ($workspaceContexts->count() > 1)
-                    <div x-data="{ open: false }" class="relative">
-                        <button type="button" @click="open = ! open" class="hidden h-10 max-w-[16rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary sm:inline-flex" aria-label="{{ __('ui.switch_workspace') }}" :aria-expanded="open.toString()">
+                    <div x-data="{ open: false }" @keydown.escape.window="open = false" class="relative">
+                        <button type="button" @click="open = ! open" class="hidden h-10 max-w-[16rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary sm:inline-flex" aria-label="{{ __('ui.switch_workspace') }}" aria-haspopup="dialog" aria-controls="workspace-switcher-popup" :aria-expanded="open.toString()">
                             <span class="min-w-0 truncate text-start">{{ $activeWorkspaceLabel }}</span>
                             <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="m6 9 6 6 6-6"></path>
                             </svg>
                         </button>
-                        <button type="button" @click="open = ! open" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary sm:hidden" aria-label="{{ __('ui.switch_workspace') }}" :aria-expanded="open.toString()">
+                        <button type="button" @click="open = ! open" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary sm:hidden" aria-label="{{ __('ui.switch_workspace') }}" aria-haspopup="dialog" aria-controls="workspace-switcher-popup" :aria-expanded="open.toString()">
                             <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M4 7h16"></path>
                                 <path d="M7 12h10"></path>
                                 <path d="M10 17h4"></path>
                             </svg>
                         </button>
-                        <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">
-                            <div class="border-b border-border-subtle px-3 py-2">
-                                <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.current_workspace') }}</p>
-                                <p class="mt-1 truncate text-sm font-semibold text-text-primary">{{ $activeWorkspaceLabel ?: __('ui.choose_workspace') }}</p>
+                        <div id="workspace-switcher-popup" x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" role="dialog" aria-modal="false" aria-labelledby="workspace-switcher-title" class="absolute end-0 z-50 mt-2 w-[min(26rem,calc(100vw-2rem))] overflow-hidden rounded-md border border-border-subtle bg-bg-secondary shadow-lg">
+                            <div class="border-b border-border-subtle px-4 py-3">
+                                <p id="workspace-switcher-title" class="text-sm font-semibold text-text-primary">{{ __('ui.workspace_switcher_title') }}</p>
+                                <p class="mt-1 text-xs leading-5 text-text-secondary">{{ __('ui.workspace_switcher_intro') }}</p>
+                                <div class="mt-3 rounded-md border border-border-subtle bg-bg-primary px-3 py-2">
+                                    <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.current_workspace') }}</p>
+                                    <p class="mt-1 truncate text-sm font-semibold text-text-primary">{{ $activeWorkspaceLabel ?: __('ui.choose_workspace') }}</p>
+                                </div>
                             </div>
-                            @foreach ($workspaceContexts as $context)
-                                <form method="POST" action="{{ route('workspace.store') }}">
-                                    @csrf
-                                    <input type="hidden" name="workspace" value="{{ $context['key'] }}">
-                                    <button type="submit" class="flex w-full items-start justify-between gap-3 rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary" @if ($context['key'] === $activeWorkspaceKey) aria-current="true" @endif>
-                                        <span class="min-w-0">
-                                            <span class="block font-semibold text-text-primary">{{ $context['label'] }}</span>
-                                            <span class="mt-0.5 block truncate text-xs text-text-tertiary">{{ $context['school_name'] }}</span>
-                                        </span>
-                                        @if ($context['key'] === $activeWorkspaceKey)
-                                            <span class="shrink-0 rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-semibold text-brand-primary">{{ __('ui.active') }}</span>
-                                        @endif
-                                    </button>
-                                </form>
-                            @endforeach
+                            <div class="max-h-[60vh] overflow-y-auto p-2">
+                                <p class="px-2 pb-1 text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.available_workspaces') }}</p>
+                                @foreach ($workspaceContexts as $context)
+                                    <form method="POST" action="{{ route('workspace.store') }}">
+                                        @csrf
+                                        <input type="hidden" name="workspace" value="{{ $context['key'] }}">
+                                        <button type="submit" class="flex w-full items-start justify-between gap-3 rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary" @if ($context['key'] === $activeWorkspaceKey) aria-current="true" @endif>
+                                            <span class="min-w-0">
+                                                <span class="block font-semibold text-text-primary">{{ $context['label'] }}</span>
+                                                <span class="mt-0.5 block truncate text-xs text-text-tertiary">{{ $context['school_name'] }}</span>
+                                            </span>
+                                            @if ($context['key'] === $activeWorkspaceKey)
+                                                <span class="shrink-0 rounded-full bg-brand-primary/10 px-2 py-0.5 text-xs font-semibold text-brand-primary">{{ __('ui.active') }}</span>
+                                            @endif
+                                        </button>
+                                    </form>
+                                @endforeach
+                            </div>
+                            <div class="border-t border-border-subtle px-4 py-3">
+                                <a href="{{ route('role-context.index') }}" class="inline-flex min-h-8 items-center rounded-md px-2 text-xs font-semibold text-brand-primary transition hover:bg-bg-tertiary hover:text-brand-hover">
+                                    {{ __('ui.manage_role_contexts') }}
+                                </a>
+                            </div>
                         </div>
                     </div>
                 @endif

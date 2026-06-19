@@ -4,6 +4,7 @@ namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
 use App\Models\LiveClass;
+use App\Models\LiveClassParticipant;
 use App\Models\LmsMaterial;
 use App\Models\School;
 use App\Models\User;
@@ -34,7 +35,7 @@ class LiveClassController extends Controller
             'activeProvider' => $providers->detailsFor(),
             'futureProviders' => $providers->futureProviderSummaries(),
             'canManage' => $access->canView($request->user(), $school)
-                && app(\App\Services\SchoolAuthorizationService::class)->can($request->user(), $school, 'live_classes.manage'),
+                && app(\App\Services\SchoolAuthorizationService::class)->canAny($request->user(), $school, ['live_classes.create', 'live_classes.manage']),
             'studentPortalSafe' => $access->studentPortalIsSafe(),
             'studentPortalBoundary' => $access->studentPortalBoundaryNote(),
             'parentPortalSafe' => $access->parentPortalIsSafe(),
@@ -46,7 +47,7 @@ class LiveClassController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         abort_unless($access->canView($request->user(), $school), 403);
-        abort_unless(app(\App\Services\SchoolAuthorizationService::class)->can($request->user(), $school, 'live_classes.manage'), 403);
+        abort_unless(app(\App\Services\SchoolAuthorizationService::class)->canAny($request->user(), $school, ['live_classes.create', 'live_classes.manage']), 403);
 
         return view('school.live-classes.form', array_merge([
             'school' => $school,
@@ -74,7 +75,7 @@ class LiveClassController extends Controller
     public function show(Request $request, LiveClass $liveClass, LiveClassAccessService $access, LiveClassProviderRegistry $providers)
     {
         $school = $this->currentSchoolOrFail();
-        $liveClass->load(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher', 'creator']);
+        $liveClass->load(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher', 'creator', 'participants.user']);
         abort_unless($access->canViewLiveClass($request->user(), $school, $liveClass), 403);
 
         return view('school.live-classes.show', [
@@ -92,7 +93,7 @@ class LiveClassController extends Controller
         $school = $this->currentSchoolOrFail();
         abort_unless($access->canManageLiveClass($request->user(), $school, $liveClass), 403);
 
-        $liveClass->load(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher']);
+        $liveClass->load(['schoolClass', 'subject', 'academicSession', 'term', 'lmsClassroom', 'lmsMaterial', 'teacher', 'participants.user']);
 
         return view('school.live-classes.form', array_merge([
             'school' => $school,
@@ -153,6 +154,9 @@ class LiveClassController extends Controller
             'timezone' => ['nullable', 'timezone'],
             'recording_url' => ['nullable', 'url', 'max:2048'],
             'reminder_minutes' => ['nullable', 'integer', 'min:0', 'max:10080'],
+            'audience_type' => ['nullable', 'string', Rule::in(LiveClassParticipant::AUDIENCE_TYPES)],
+            'selected_user_ids' => ['nullable', 'array', 'max:250'],
+            'selected_user_ids.*' => ['integer', Rule::exists('users', 'id')],
         ]);
     }
 
@@ -209,6 +213,8 @@ class LiveClassController extends Controller
             'lmsClassrooms' => $lmsClassrooms,
             'lmsMaterials' => $lmsMaterials,
             'teachers' => $teachers,
+            'audienceTypes' => app(LiveClassService::class)->audienceTypeOptions(),
+            'eligibleUsers' => app(LiveClassService::class)->eligibleAudienceUsers($school),
             'providerOptions' => $providers->selectableOptions(),
             'futureProviders' => $providers->futureProviderSummaries(),
             'activeProvider' => $providers->detailsFor(),

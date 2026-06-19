@@ -15,6 +15,7 @@ use App\Services\AuditService;
 use App\Services\CurrentSchoolService;
 use App\Services\NotificationPreferenceService;
 use App\Services\ScratchAnalyticsService;
+use App\Services\ScratchCardManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -76,12 +77,13 @@ class ScratchCardController extends Controller
         ]);
     }
 
-    public function store(StoreScratchCardRequest $request)
+    public function store(StoreScratchCardRequest $request, ScratchCardManager $manager)
     {
         $school = $this->currentSchoolOrFail();
         $data = $request->validated();
+        $directGeneration = ($data['generation_mode'] ?? 'request') === 'direct';
 
-        $batch = DB::transaction(function () use ($data, $school, $request) {
+        $batch = DB::transaction(function () use ($data, $school, $request, $directGeneration) {
             $batch = ScratchCardBatch::create([
                 'school_id' => $school->id,
                 'requested_by' => $request->user()?->id,
@@ -94,18 +96,22 @@ class ScratchCardController extends Controller
                 'quantity' => $data['quantity'],
                 'amount' => 0,
                 'currency' => 'NGN',
-                'payment_status' => filled($data['payment_method'] ?? null) ? 'manual_pending' : 'pending',
-                'payment_method' => $data['payment_method'] ?? null,
+                'payment_status' => $directGeneration ? 'paid' : (filled($data['payment_method'] ?? null) ? 'manual_pending' : 'pending'),
+                'payment_method' => $data['payment_method'] ?? ($directGeneration ? 'manual' : null),
                 'payment_reference' => $data['payment_reference'] ?? null,
-                'payment_confirmed_at' => null,
-                'payment_confirmed_by' => null,
-                'status' => 'pending_payment',
+                'payment_confirmed_at' => $directGeneration ? now() : null,
+                'payment_confirmed_by' => $directGeneration ? $request->user()?->id : null,
+                'approved_at' => $directGeneration ? now() : null,
+                'approved_by' => $directGeneration ? $request->user()?->id : null,
+                'approval_note' => $directGeneration ? 'Generated directly by school admin in standalone mode.' : null,
+                'status' => $directGeneration ? 'approved' : 'pending_payment',
                 'expires_at' => null,
                 'generated_by' => null,
                 'metadata' => [
                     'request_note' => $data['request_note'] ?? null,
                     'requested_by' => $request->user()?->id,
                     'requested_at' => now()->toDateTimeString(),
+                    'generation_mode' => $directGeneration ? 'direct' : 'request',
                 ],
             ]);
 
@@ -123,6 +129,20 @@ class ScratchCardController extends Controller
 
             return $batch;
         });
+
+        if ($directGeneration) {
+            $generatedBatch = $manager->generateForBatch($batch, (int) $data['max_uses'], $request->user()?->id);
+
+            app(AuditLogService::class)->log('scratch_card_batch_generated', $generatedBatch, $school, metadata: [
+                'quantity' => $generatedBatch->quantity,
+                'max_uses' => $data['max_uses'],
+                'source' => 'school_direct_generation',
+            ], request: $request);
+
+            return redirect()
+                ->route('school.scratch-cards.show', $generatedBatch)
+                ->with('success', 'Scratch cards generated successfully.');
+        }
 
         if (app(NotificationPreferenceService::class)->emailEnabled('scratch_card_request_submitted', $school, auth()->user(), 'school_admin')) {
             try {
@@ -142,6 +162,26 @@ class ScratchCardController extends Controller
         return redirect()
             ->route('school.scratch-cards.index')
             ->with('success', 'Scratch card request submitted successfully.');
+    }
+
+    public function generate(Request $request, ScratchCardBatch $batch, ScratchCardManager $manager)
+    {
+        $school = $this->currentSchoolOrFail();
+        $this->authorizeBatch($batch, $school);
+
+        $data = $request->validate([
+            'max_uses' => ['required', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $generatedBatch = $manager->generateForBatch($batch, (int) $data['max_uses'], $request->user()?->id);
+
+        app(AuditLogService::class)->log('scratch_card_batch_generated', $generatedBatch, $school, metadata: [
+            'quantity' => $generatedBatch->quantity,
+            'max_uses' => $data['max_uses'],
+            'source' => 'school_existing_batch_generation',
+        ], request: $request);
+
+        return back()->with('success', 'Scratch cards generated successfully.');
     }
 
     public function show(ScratchCardBatch $batch)

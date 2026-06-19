@@ -14,3 +14,7 @@ Schedule::useCache($scheduleCacheStore !== '' ? $scheduleCacheStore : 'file');
 
 Schedule::command('standalone:scheduler-heartbeat')
     ->everyMinute();
+
+Schedule::command('live-classes:send-reminders')
+    ->everyMinute()
+    ->withoutOverlapping();

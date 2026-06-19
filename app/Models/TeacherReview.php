@@ -14,6 +14,13 @@ class TeacherReview extends Model
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
 
+    public const CATEGORY_RATINGS = [
+        'communication' => 'Communication',
+        'preparedness' => 'Preparedness',
+        'fairness' => 'Fairness',
+        'student_support' => 'Student support',
+    ];
+
     protected $fillable = [
         'school_id',
         'teacher_user_id',
@@ -63,5 +70,13 @@ class TeacherReview extends Model
     public function statusLabel(): string
     {
         return ucfirst(str_replace('_', ' ', (string) $this->status));
+    }
+
+    public function categoryRatings(): array
+    {
+        return collect(data_get($this->metadata, 'category_ratings', []))
+            ->only(array_keys(self::CATEGORY_RATINGS))
+            ->map(fn ($rating): int => (int) $rating)
+            ->all();
     }
 }

@@ -107,6 +107,8 @@ class AppServiceProvider extends ServiceProvider
             'lms.materials.manage',
             'lms.assignments.post',
             'live_classes.view',
+            'live_classes.create',
+            'live_classes.join',
             'live_classes.manage',
             'live_classes.recordings.manage',
             'cbt.manage',

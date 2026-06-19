@@ -60,6 +60,8 @@ class TeacherReviewController extends Controller
             'teacher_user_id' => ['required', 'integer'],
             'student_id' => ['nullable', 'integer'],
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
+            'category_ratings' => ['nullable', 'array'],
+            'category_ratings.*' => ['nullable', 'integer', 'min:1', 'max:5'],
             'title' => ['nullable', 'string', 'max:160'],
             'comment' => ['nullable', 'string', 'max:2000'],
         ]);
