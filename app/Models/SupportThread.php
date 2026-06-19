@@ -157,6 +157,10 @@ class SupportThread extends Model
 
     public function routeLabel(): string
     {
+        if (($this->routed_to_role ?: self::ROUTE_SUPER_ADMIN) === self::ROUTE_SUPER_ADMIN) {
+            return 'Installation Admin';
+        }
+
         return ucwords(str_replace('_', ' ', $this->routed_to_role ?: self::ROUTE_SUPER_ADMIN));
     }
 }

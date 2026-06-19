@@ -96,6 +96,77 @@ class RoleAwareNavigationTest extends TestCase
         $this->assertSame('Standalone diagnostics', $contexts->firstWhere('key', 'global:super_admin')['school_name']);
     }
 
+    public function test_multi_role_owner_topbar_keeps_installation_admin_out_of_school_workspace_list(): void
+    {
+        $school = $this->createSchool();
+        $owner = $this->createUserForSchool($school, 'school_admin');
+        Role::findOrCreate('super_admin');
+        Role::findOrCreate('teacher');
+        $owner->assignRole('super_admin');
+        $owner->assignRole('teacher');
+
+        UserSchoolRole::create([
+            'user_id' => $owner->id,
+            'school_id' => $school->id,
+            'role_name' => 'teacher',
+            'status' => 'active',
+        ]);
+
+        $this->actAsSchoolRole($owner, $school, 'school_admin');
+
+        $this->get(route('school.dashboard'))
+            ->assertOk()
+            ->assertSee('Switch Role')
+            ->assertSee('workspace-switcher-popup')
+            ->assertSee('fixed inset-0 z-[80]', false)
+            ->assertSee('School Admin')
+            ->assertSee('Teacher')
+            ->assertSee('Installation Admin')
+            ->assertDontSee('Super Admin')
+            ->assertDontSee('Support mode:')
+            ->assertDontSee('Support access active');
+    }
+
+    public function test_school_admin_sidebar_preserves_core_standalone_items(): void
+    {
+        $school = $this->createSchool();
+        $admin = $this->createUserForSchool($school, 'school_admin');
+        $roleFeatures = app(\App\Services\SchoolRoleFeatureService::class);
+
+        foreach ([
+            'reports.view',
+            'students.view',
+            'teacher.assignment.manage',
+            'live_classes.view',
+            'finance.view',
+            'results.manual_entry',
+            'cbt.manage',
+            'communication.logs.view',
+            'support.manage',
+        ] as $feature) {
+            $roleFeatures->setFeature($school->id, 'school_admin', $feature, true);
+        }
+
+        $this->actAsSchoolRole($admin, $school, 'school_admin');
+
+        $this->get(route('school.dashboard'))
+            ->assertOk()
+            ->assertSee('Dashboard')
+            ->assertSee('Reports Center')
+            ->assertSee('Students')
+            ->assertSee('Teachers')
+            ->assertSee('Live Classes')
+            ->assertSee('Fees &amp; Finance', false)
+            ->assertSee('Results')
+            ->assertSee('CBT Center')
+            ->assertSee('Scratch Cards')
+            ->assertSee('Communication Center')
+            ->assertSee('Branding')
+            ->assertSee('User Management')
+            ->assertSee('Audit Logs')
+            ->assertSee('School Support Center');
+    }
+
     public function test_school_admin_needs_explicit_school_grant_to_view_communication_logs(): void
     {
         $school = $this->createSchool();

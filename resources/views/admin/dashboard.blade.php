@@ -3,11 +3,26 @@
         @php
             $headerBehavior = app(\App\Services\System\DeploymentBehaviorService::class);
             $headerIsLocal = $headerBehavior->allowsRouteGroup('local_dashboard', user: auth()->user());
+            $workspaceService = app(\App\Services\UserWorkspaceService::class);
+            $schoolWorkspaceContext = $workspaceService->defaultSchoolContextFor(auth()->user());
         @endphp
         <x-ui.page-header
-            :title="$headerIsLocal ? 'Installation Dashboard' : 'Platform Dashboard'"
-            :description="$headerIsLocal ? 'Private single-school operations for '.$platformSettings->platform_name : 'Production control for '.$platformSettings->platform_name"
-        />
+            :title="$headerIsLocal ? __('ui.installation_admin') : 'Platform Dashboard'"
+            :eyebrow="$headerIsLocal ? __('ui.local_admin_console') : null"
+            :description="$headerIsLocal ? 'Local Admin Console for license, backups, diagnostics, branding, SMTP, and school administrator setup.' : 'Production control for '.$platformSettings->platform_name"
+        >
+            <x-slot name="actions">
+                @if ($schoolWorkspaceContext && ($schoolWorkspaceContext['role_name'] ?? null) === 'school_admin')
+                    <form method="POST" action="{{ route('workspace.store') }}">
+                        @csrf
+                        <input type="hidden" name="workspace" value="{{ $schoolWorkspaceContext['key'] }}">
+                        <button type="submit" class="ui-button-secondary min-h-10">
+                            {{ __('ui.go_to_school_workspace') }}
+                        </button>
+                    </form>
+                @endif
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     @php
@@ -70,10 +85,10 @@
             <x-ui.panel>
                 <p class="text-xs font-semibold uppercase tracking-normal text-brand-primary">{{ $behavior->label() }}</p>
                 <h3 class="mt-2 text-2xl font-semibold text-text-primary">
-                    {{ $behavior->commercialModelLabel() }}
+                    {{ $isLocalDashboard ? __('ui.local_admin_console') : $behavior->commercialModelLabel() }}
                 </h3>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                    {{ $behavior->description() }}
+                    {{ $isLocalDashboard ? 'Review this standalone installation, confirm the license, keep backups visible, and manage local school settings without entering support mode.' : $behavior->description() }}
                 </p>
             </x-ui.panel>
 
@@ -115,7 +130,7 @@
                 <p class="text-sm font-medium text-text-secondary">Role distribution</p>
                 <dl class="mt-4 space-y-3 text-sm">
                     <div class="flex justify-between gap-3">
-                        <dt class="text-text-secondary">Super Admins</dt>
+                        <dt class="text-text-secondary">Installation Admins</dt>
                         <dd class="font-mono font-semibold text-text-primary">{{ $totalSuperAdmins }}</dd>
                     </div>
                     <div class="flex justify-between gap-3">

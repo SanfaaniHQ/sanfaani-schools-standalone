@@ -10,6 +10,15 @@ use Spatie\Permission\PermissionRegistrar;
 
 class UserWorkspaceService
 {
+    private const SCHOOL_WORKSPACE_ROLES = [
+        'school_admin',
+        'teacher',
+        'parent',
+        'student',
+        'result_officer',
+        'accountant',
+    ];
+
     private const SUPPORT_SESSION_KEYS = [
         'is_support_session',
         'support_school_id',
@@ -89,6 +98,43 @@ class UserWorkspaceService
         return $this->sortContexts($contexts);
     }
 
+    public function schoolContextsFor(User $user): Collection
+    {
+        return $this->contextsFor($user)
+            ->filter(fn (array $context): bool => filled($context['school_id'] ?? null)
+                && in_array((string) ($context['role_name'] ?? ''), self::SCHOOL_WORKSPACE_ROLES, true))
+            ->values();
+    }
+
+    public function defaultSchoolContextFor(User $user): ?array
+    {
+        $contexts = $this->schoolContextsFor($user);
+
+        if ($contexts->isEmpty()) {
+            return null;
+        }
+
+        return $contexts->first(fn (array $context): bool => ($context['role_name'] ?? null) === 'school_admin')
+            ?? $contexts->first();
+    }
+
+    public function installationAdminContextFor(User $user): ?array
+    {
+        if (! $user->isActiveAccount() || ! $user->hasRole('super_admin')) {
+            return null;
+        }
+
+        return $this->contextsFor($user)->firstWhere('key', 'global:super_admin')
+            ?? [
+                'key' => 'global:super_admin',
+                'school_id' => null,
+                'school_name' => $this->isStandaloneMode() ? 'Standalone diagnostics' : 'Platform Administration',
+                'role_name' => 'super_admin',
+                'label' => $this->isStandaloneMode() ? 'Installation Admin' : 'Super Admin',
+                'is_global' => true,
+            ];
+    }
+
     public function select(User $user, array $context): void
     {
         $this->clearSupportSession();
@@ -130,6 +176,32 @@ class UserWorkspaceService
         $this->select($user, $context);
 
         return true;
+    }
+
+    public function selectSchoolByKey(User $user, string $key): bool
+    {
+        $context = $this->schoolContextsFor($user)->firstWhere('key', $key);
+
+        if (! $context) {
+            return false;
+        }
+
+        $this->select($user, $context);
+
+        return true;
+    }
+
+    public function selectInstallationAdmin(User $user): ?array
+    {
+        $context = $this->installationAdminContextFor($user);
+
+        if (! $context) {
+            return null;
+        }
+
+        $this->select($user, $context);
+
+        return $context;
     }
 
     public function selectFirst(User $user): ?array

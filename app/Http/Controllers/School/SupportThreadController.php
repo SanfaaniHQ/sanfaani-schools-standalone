@@ -179,7 +179,7 @@ class SupportThreadController extends Controller
 
         $support->escalate($thread, $request->user(), $role, $data['reason'] ?? null, $request);
 
-        return back()->with('success', 'Thread escalated to Super Admin.');
+        return back()->with('success', 'Thread escalated to Installation Admin.');
     }
 
     public function close(Request $request, SupportThread $thread, SupportRoutingService $support)

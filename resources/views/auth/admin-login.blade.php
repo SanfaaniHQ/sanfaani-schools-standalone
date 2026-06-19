@@ -13,7 +13,7 @@
 
     <main class="min-h-[100svh] overflow-hidden bg-bg-primary text-text-primary">
         <div class="grid min-h-[100svh] lg:grid-cols-[minmax(0,1fr)_minmax(28rem,0.82fr)]">
-            <section class="relative flex min-h-[22rem] flex-col justify-between overflow-hidden bg-black px-5 py-7 text-white sm:px-8 sm:py-9 lg:min-h-[100svh] lg:px-12 lg:py-10" aria-label="Sanfaani Schools platform overview">
+            <section class="relative flex min-h-[22rem] flex-col justify-between overflow-hidden bg-black px-5 py-7 text-white sm:px-8 sm:py-9 lg:min-h-[100svh] lg:px-12 lg:py-10" aria-label="Sanfaani Schools installation overview">
                 <div aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(115deg,rgba(4,120,87,0.78),rgba(0,0,0,0.76)_42%,rgba(0,0,0,0.94)),linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[length:auto,44px_44px,44px_44px]"></div>
                 <div aria-hidden="true" class="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent lg:inset-x-auto lg:inset-y-0 lg:end-0 lg:h-auto lg:w-px lg:bg-gradient-to-b"></div>
 
@@ -28,17 +28,17 @@
                     </a>
 
                     <span class="hidden rounded-md border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-emerald-50 backdrop-blur sm:inline-flex">
-                        Secure Admin
+                        Local Admin Console
                     </span>
                 </div>
 
                 <div class="relative z-10 mt-12 max-w-2xl lg:mt-0">
                     <p class="text-sm font-semibold uppercase tracking-normal text-emerald-200">{{ $companyName }}</p>
                     <h1 class="mt-4 max-w-xl text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
-                        {{ data_get($resolvedBranding, 'login_heading') ?: 'Modern School Management Platform' }}
+                        {{ data_get($resolvedBranding, 'login_heading') ?: 'Local Installation Admin' }}
                     </h1>
                     <p class="mt-5 max-w-xl text-base leading-7 text-emerald-50/90">
-                        {{ data_get($resolvedBranding, 'login_subheading') ?: 'Manage results, students, communication, and school operations efficiently from a stable multi-school workspace.' }}
+                        {{ data_get($resolvedBranding, 'login_subheading') ?: 'Manage license, backups, diagnostics, branding, mail, and local school settings from one secure console.' }}
                     </p>
 
                     <div class="mt-8 grid max-w-xl gap-3 sm:grid-cols-3" aria-label="Platform trust indicators">
@@ -51,7 +51,7 @@
                             <p class="mt-2 text-lg font-semibold text-white">Audited</p>
                         </div>
                         <div class="rounded-lg border border-white/10 bg-white/10 p-4 shadow-sm backdrop-blur">
-                            <p class="text-xs font-semibold uppercase tracking-normal text-emerald-100/80">Platform</p>
+                            <p class="text-xs font-semibold uppercase tracking-normal text-emerald-100/80">Console</p>
                             <p class="mt-2 text-lg font-semibold text-white">Ready</p>
                         </div>
                     </div>
@@ -80,7 +80,7 @@
                     @if ($supportEmail)
                         Support: {{ $supportEmail }}
                     @else
-                        Enterprise operations workspace
+                        Local installation workspace
                     @endif
                 </p>
             </section>
@@ -99,9 +99,9 @@
                     <div class="rounded-lg border border-border-subtle bg-bg-secondary p-6 shadow-xl sm:p-8">
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-sm font-semibold uppercase tracking-normal text-brand-primary">Platform Administration</p>
-                                <h2 id="admin-login-title" class="mt-2 text-2xl font-semibold text-text-primary">Sign in to Admin</h2>
-                                <p class="mt-2 text-sm leading-6 text-text-secondary">Secure access for authorized platform administrators.</p>
+                                <p class="text-sm font-semibold uppercase tracking-normal text-brand-primary">Installation Admin</p>
+                                <h2 id="admin-login-title" class="mt-2 text-2xl font-semibold text-text-primary">Sign in to Local Admin Console</h2>
+                                <p class="mt-2 text-sm leading-6 text-text-secondary">Secure access for authorized local installation administrators.</p>
                             </div>
                             <button type="button" data-theme-toggle class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border-subtle bg-bg-primary text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary" aria-label="Toggle dark mode">
                                 <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -176,7 +176,7 @@
                             </div>
 
                             <button type="submit" data-loading-text="Signing in..." class="ui-button-primary min-h-11 w-full rounded-md shadow-sm shadow-emerald-900/10">
-                                Log in to Admin
+                                Log in to Installation Admin
                             </button>
                         </form>
 

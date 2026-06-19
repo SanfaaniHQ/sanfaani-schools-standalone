@@ -18,9 +18,14 @@
         ? auth()->user()->unreadNotifications()->count()
         : 0;
     $workspaceService = auth()->check() ? app(\App\Services\UserWorkspaceService::class) : null;
-    $workspaceContexts = $workspaceService ? $workspaceService->contextsFor(auth()->user()) : collect();
+    $workspaceContexts = $workspaceService ? $workspaceService->schoolContextsFor(auth()->user()) : collect();
+    $installationAdminContext = auth()->check() && auth()->user()->hasRole('super_admin')
+        ? $workspaceService?->installationAdminContextFor(auth()->user())
+        : null;
     $activeWorkspaceKey = $workspaceService?->activeKey(auth()->user());
-    $activeWorkspace = $workspaceContexts->firstWhere('key', $activeWorkspaceKey) ?? $workspaceService?->defaultContextFor(auth()->user()) ?? $workspaceContexts->first();
+    $activeWorkspace = $activeRoleContext === 'super_admin'
+        ? $installationAdminContext
+        : ($workspaceContexts->firstWhere('key', $activeWorkspaceKey) ?? $workspaceService?->defaultSchoolContextFor(auth()->user()) ?? $workspaceContexts->first());
     $activeWorkspaceLabel = $activeWorkspace
         ? $activeWorkspace['label'].' - '.$activeWorkspace['school_name']
         : __('ui.workspace');
@@ -65,17 +70,24 @@
             <div class="flex min-w-0 items-center gap-2">
                 @if ($workspaceContexts->count() > 1)
                     <div x-data="{ open: false }" @keydown.escape.window="open = false" class="relative">
-                        <button type="button" @click="open = ! open" class="hidden h-10 max-w-[16rem] items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary sm:inline-flex" aria-label="{{ __('ui.switch_workspace') }}" aria-haspopup="dialog" aria-controls="workspace-switcher-popup" :aria-expanded="open.toString()">
-                            <span class="min-w-0 truncate text-start">{{ $activeWorkspaceLabel }}</span>
-                            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="m6 9 6 6 6-6"></path>
-                            </svg>
-                        </button>
-                        <button type="button" @click="open = ! open" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary sm:hidden" aria-label="{{ __('ui.switch_workspace') }}" aria-haspopup="dialog" aria-controls="workspace-switcher-popup" :aria-expanded="open.toString()">
+                        <div class="hidden items-center gap-2 sm:flex">
+                            <span class="max-w-[13rem] truncate text-xs font-medium text-text-tertiary">{{ $activeWorkspaceLabel }}</span>
+                            <button type="button" @click="open = true" class="inline-flex h-10 items-center gap-2 rounded-md border border-brand-primary/30 bg-brand-primary px-3 text-xs font-semibold text-white shadow-sm shadow-emerald-900/10 transition hover:bg-brand-hover" aria-label="{{ __('ui.switch_role') }}" aria-haspopup="dialog" aria-controls="workspace-switcher-popup" :aria-expanded="open.toString()">
+                                <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M7 7h10"></path>
+                                    <path d="M7 17h10"></path>
+                                    <path d="M10 4 7 7l3 3"></path>
+                                    <path d="m14 14 3 3-3 3"></path>
+                                </svg>
+                                <span>{{ __('ui.switch_role') }}</span>
+                            </button>
+                        </div>
+                        <button type="button" @click="open = true" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-brand-primary/30 bg-brand-primary text-white shadow-sm shadow-emerald-900/10 transition hover:bg-brand-hover sm:hidden" aria-label="{{ __('ui.switch_role') }}" aria-haspopup="dialog" aria-controls="workspace-switcher-popup" :aria-expanded="open.toString()">
                             <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M4 7h16"></path>
-                                <path d="M7 12h10"></path>
-                                <path d="M10 17h4"></path>
+                                <path d="M7 7h10"></path>
+                                <path d="M7 17h10"></path>
+                                <path d="M10 4 7 7l3 3"></path>
+                                <path d="m14 14 3 3-3 3"></path>
                             </svg>
                         </button>
                         <div
@@ -109,7 +121,7 @@
                                     </div>
                                 </div>
                                 <div class="max-h-[60vh] overflow-y-auto p-2">
-                                    <p class="px-2 pb-1 text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.available_workspaces') }}</p>
+                                    <p class="px-2 pb-1 text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.available_school_workspaces') }}</p>
                                     @foreach ($workspaceContexts as $context)
                                         <form method="POST" action="{{ route('workspace.store') }}">
                                             @csrf
@@ -126,14 +138,25 @@
                                         </form>
                                     @endforeach
                                 </div>
-                                <div class="border-t border-border-subtle px-4 py-3">
+                                <div class="flex flex-col gap-2 border-t border-border-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                                     <a href="{{ route('role-context.index') }}" class="inline-flex min-h-8 items-center rounded-md px-2 text-xs font-semibold text-brand-primary transition hover:bg-bg-tertiary hover:text-brand-hover">
                                         {{ __('ui.manage_role_contexts') }}
                                     </a>
+                                    @if ($installationAdminContext)
+                                        <a href="{{ route('admin.dashboard') }}" class="inline-flex min-h-8 items-center justify-center rounded-md border border-border-subtle px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary">
+                                            {{ __('ui.installation_admin') }}
+                                        </a>
+                                    @endif
                                 </div>
                             </section>
                         </div>
                     </div>
+                @endif
+
+                @if ($installationAdminContext)
+                    <a href="{{ route('admin.dashboard') }}" class="hidden h-10 items-center rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary md:inline-flex">
+                        {{ __('ui.installation_admin') }}
+                    </a>
                 @endif
 
                 <div x-data="{ open: false }" class="relative">

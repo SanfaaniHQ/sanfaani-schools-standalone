@@ -15,10 +15,17 @@ use Illuminate\View\View;
 
 class AdminAuthenticatedSessionController extends Controller
 {
-    public function create(): View|RedirectResponse
+    public function create(UserWorkspaceService $workspaces): View|RedirectResponse
     {
         if (auth()->check() && auth()->user()->hasRole('super_admin')) {
+            $workspaces->selectInstallationAdmin(auth()->user());
+
             return redirect()->route('admin.dashboard');
+        }
+
+        if (auth()->check()) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Installation Admin access is limited to authorized local administrators.');
         }
 
         return view('auth.admin-login');
@@ -119,10 +126,7 @@ class AdminAuthenticatedSessionController extends Controller
         }
 
         $request->session()->regenerate();
-        $context = $workspaces->selectFirst($request->user());
-        $fallbackRoute = ($context['role_name'] ?? null) === 'super_admin' && blank($context['school_id'] ?? null)
-            ? route('admin.dashboard')
-            : route('dashboard');
+        $workspaces->selectInstallationAdmin($request->user());
 
         Log::info('Super Admin login succeeded.', [
             'user_id' => $request->user()->id,
@@ -133,6 +137,6 @@ class AdminAuthenticatedSessionController extends Controller
             'user_agent' => $request->userAgent(),
         ], request: $request);
 
-        return redirect()->intended($fallbackRoute);
+        return redirect()->intended(route('admin.dashboard'));
     }
 }

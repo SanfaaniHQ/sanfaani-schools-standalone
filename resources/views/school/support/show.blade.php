@@ -113,7 +113,7 @@
                         @csrf
                         <label class="block text-sm font-medium text-gray-700">Escalation Reason</label>
                         <textarea name="reason" rows="4" class="mt-1 block w-full rounded-xl border-gray-300">{{ old('reason') }}</textarea>
-                        <button class="mt-4 w-full rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white">Escalate to Super Admin</button>
+                        <button class="mt-4 w-full rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white">Escalate to Installation Admin</button>
                     </form>
                 @endif
 

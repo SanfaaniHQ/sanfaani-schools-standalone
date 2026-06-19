@@ -11,7 +11,13 @@ class ChooseWorkspaceController extends Controller
 {
     public function create(UserWorkspaceService $workspaces): View|RedirectResponse
     {
-        $contexts = $workspaces->contextsFor(auth()->user());
+        $contexts = $workspaces->schoolContextsFor(auth()->user());
+
+        if ($contexts->isEmpty() && auth()->user()?->hasRole('super_admin')) {
+            $workspaces->selectInstallationAdmin(auth()->user());
+
+            return redirect()->route('admin.dashboard');
+        }
 
         if ($contexts->count() === 1) {
             $workspaces->select(auth()->user(), $contexts->first());
@@ -30,21 +36,17 @@ class ChooseWorkspaceController extends Controller
             'workspace' => ['required', 'string', 'max:150'],
         ]);
 
-        if (! $workspaces->selectByKey($request->user(), $data['workspace'])) {
+        if (! $workspaces->selectSchoolByKey($request->user(), $data['workspace'])) {
             return back()->with('error', 'The selected workspace is not available for this account.');
         }
 
-        $context = $workspaces->contextsFor($request->user())->firstWhere('key', $data['workspace']);
+        $context = $workspaces->schoolContextsFor($request->user())->firstWhere('key', $data['workspace']);
 
         return $this->redirectFor($context);
     }
 
     private function redirectFor(?array $context): RedirectResponse
     {
-        if (($context['role_name'] ?? null) === 'super_admin') {
-            return redirect()->route('admin.dashboard');
-        }
-
         return redirect()->route('school.dashboard');
     }
 }
