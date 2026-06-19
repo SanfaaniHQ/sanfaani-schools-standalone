@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
             $table->foreignId('school_class_id')->constrained('school_classes')->cascadeOnDelete();
             $table->foreignId('academic_session_id')->constrained('academic_sessions')->cascadeOnDelete();
-            $table->string('status')->default('active');
+            $table->string('status', 50)->default('active');
             $table->timestamp('enrolled_at')->nullable();
             $table->unsignedBigInteger('promoted_from_enrollment_id')->nullable();
             $table->json('metadata')->nullable();

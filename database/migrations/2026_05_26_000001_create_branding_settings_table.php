@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('branding_settings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('scope')->default('platform');
+            $table->string('scope', 50)->default('platform');
             $table->string('brand_name')->nullable();
             $table->string('logo_path')->nullable();
             $table->string('favicon_path')->nullable();

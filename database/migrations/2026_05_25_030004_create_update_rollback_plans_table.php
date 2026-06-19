@@ -20,7 +20,7 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['status', 'from_version', 'to_version']);
+            $table->index(['status', 'from_version', 'to_version'], 'update_rollback_status_versions_idx');
         });
     }
 

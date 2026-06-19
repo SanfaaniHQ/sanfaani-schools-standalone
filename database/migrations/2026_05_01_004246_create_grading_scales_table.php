@@ -23,16 +23,16 @@ return new class extends Migration
             $table->decimal('min_score', 5, 2);
             $table->decimal('max_score', 5, 2);
 
-            $table->string('grade');
+            $table->string('grade', 20);
             $table->string('remark');
 
             $table->boolean('is_pass')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
-            $table->string('status')->default('active');
+            $table->string('status', 50)->default('active');
 
             $table->timestamps();
 
-            $table->index(['school_id', 'status']);
+            $table->index(['school_id', 'status'], 'grading_scales_school_status_idx');
         });
     }
 

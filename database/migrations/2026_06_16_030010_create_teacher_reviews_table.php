@@ -17,17 +17,17 @@ return new class extends Migration
             $table->unsignedTinyInteger('rating');
             $table->string('title')->nullable();
             $table->text('comment')->nullable();
-            $table->string('status')->default('pending');
+            $table->string('status', 50)->default('pending');
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('reviewed_at')->nullable();
             $table->text('moderation_note')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['school_id', 'status']);
-            $table->index(['school_id', 'teacher_user_id']);
-            $table->index(['reviewer_user_id', 'status']);
-            $table->index(['student_id', 'status']);
+            $table->index(['school_id', 'status'], 'teacher_reviews_school_status_idx');
+            $table->index(['school_id', 'teacher_user_id'], 'teacher_reviews_school_teacher_idx');
+            $table->index(['reviewer_user_id', 'status'], 'teacher_reviews_reviewer_status_idx');
+            $table->index(['student_id', 'status'], 'teacher_reviews_student_status_idx');
         });
     }
 

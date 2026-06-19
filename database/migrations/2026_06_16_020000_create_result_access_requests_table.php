@@ -15,9 +15,9 @@ return new class extends Migration
             $table->foreignId('requester_user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('academic_session_id')->constrained()->cascadeOnDelete();
             $table->foreignId('term_id')->constrained()->cascadeOnDelete();
-            $table->string('result_type')->default('term_result');
-            $table->string('access_method')->default('manual_approval');
-            $table->string('status')->default('pending');
+            $table->string('result_type', 50)->default('term_result');
+            $table->string('access_method', 50)->default('manual_approval');
+            $table->string('status', 50)->default('pending');
             $table->foreignId('payment_transaction_id')->nullable()->constrained('payment_transactions')->nullOnDelete();
             $table->foreignId('scratch_card_id')->nullable()->constrained('scratch_cards')->nullOnDelete();
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
@@ -30,11 +30,11 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['school_id', 'status']);
-            $table->index(['school_id', 'student_id']);
-            $table->index(['requester_user_id', 'status']);
-            $table->index(['academic_session_id', 'term_id', 'result_type']);
-            $table->index(['access_method', 'status']);
+            $table->index(['school_id', 'status'], 'rar_school_status_idx');
+            $table->index(['school_id', 'student_id'], 'rar_school_student_idx');
+            $table->index(['requester_user_id', 'status'], 'rar_requester_status_idx');
+            $table->index(['academic_session_id', 'term_id', 'result_type'], 'rar_session_term_type_idx');
+            $table->index(['access_method', 'status'], 'rar_method_status_idx');
         });
     }
 

@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('onboarding_checklists', function (Blueprint $table) {
             $table->id();
-            $table->string('key')->unique();
+            $table->string('key', 100)->unique('onboarding_checklists_key_unique');
             $table->string('name');
             $table->text('description')->nullable();
-            $table->string('role_name')->nullable();
+            $table->string('role_name', 80)->nullable();
             $table->json('deployment_modes')->nullable();
             $table->json('license_modes')->nullable();
             $table->boolean('is_active')->default(true);
@@ -21,8 +21,8 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['role_name', 'is_active']);
-            $table->index(['sort_order', 'id']);
+            $table->index(['role_name', 'is_active'], 'onboarding_checklists_role_active_idx');
+            $table->index(['sort_order', 'id'], 'onboarding_checklists_sort_idx');
         });
     }
 

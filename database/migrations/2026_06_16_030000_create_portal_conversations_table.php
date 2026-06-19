@@ -13,15 +13,15 @@ return new class extends Migration
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->string('subject');
-            $table->string('conversation_type')->default('general');
-            $table->string('status')->default('open');
+            $table->string('conversation_type', 50)->default('general');
+            $table->string('status', 50)->default('open');
             $table->timestamp('last_message_at')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['school_id', 'status']);
-            $table->index(['school_id', 'conversation_type']);
-            $table->index(['created_by', 'status']);
+            $table->index(['school_id', 'status'], 'portal_conversations_school_status_idx');
+            $table->index(['school_id', 'conversation_type'], 'portal_conversations_school_type_idx');
+            $table->index(['created_by', 'status'], 'portal_conversations_creator_status_idx');
         });
 
         Schema::create('portal_conversation_participants', function (Blueprint $table) {
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['portal_conversation_id', 'user_id'], 'portal_conversation_user_unique');
-            $table->index(['school_id', 'user_id']);
+            $table->index(['school_id', 'user_id'], 'portal_participants_school_user_idx');
         });
 
         Schema::create('portal_messages', function (Blueprint $table) {
@@ -44,12 +44,12 @@ return new class extends Migration
             $table->foreignId('school_id')->constrained()->cascadeOnDelete();
             $table->foreignId('sender_user_id')->constrained('users')->cascadeOnDelete();
             $table->text('body');
-            $table->string('status')->default('sent');
+            $table->string('status', 50)->default('sent');
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['school_id', 'portal_conversation_id']);
-            $table->index(['sender_user_id', 'created_at']);
+            $table->index(['school_id', 'portal_conversation_id'], 'portal_messages_school_convo_idx');
+            $table->index(['sender_user_id', 'created_at'], 'portal_messages_sender_created_idx');
         });
     }
 

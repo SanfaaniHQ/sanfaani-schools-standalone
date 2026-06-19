@@ -24,7 +24,7 @@ return new class extends Migration
                 ->constrained('students')
                 ->nullOnDelete();
 
-            $table->string('payable_type')->nullable();
+            $table->string('payable_type', 191)->nullable();
             $table->unsignedBigInteger('payable_id')->nullable();
 
             $table->decimal('amount', 12, 2)->default(0);
@@ -33,8 +33,8 @@ return new class extends Migration
             $table->string('payment_method', 50)->nullable();
             $table->string('payment_gateway', 50)->nullable();
 
-            $table->string('gateway_reference')->nullable();
-            $table->string('payment_reference')->nullable();
+            $table->string('gateway_reference', 191)->nullable();
+            $table->string('payment_reference', 191)->nullable();
 
             $table->string('status', 50)->default('pending');
 
@@ -56,22 +56,22 @@ return new class extends Migration
 
             $table->index(
                 ['payable_type', 'payable_id'],
-                'payment_transactions_payable_index'
+                'pay_tx_payable_idx'
             );
 
             $table->index(
                 ['school_id', 'status'],
-                'payment_transactions_school_status_index'
+                'pay_tx_school_status_idx'
             );
 
             $table->index(
                 ['payment_gateway', 'gateway_reference'],
-                'payment_transactions_gateway_reference_index'
+                'pay_tx_gateway_ref_idx'
             );
 
             $table->index(
                 ['payment_method', 'status'],
-                'payment_transactions_method_status_index'
+                'pay_tx_method_status_idx'
             );
         });
     }

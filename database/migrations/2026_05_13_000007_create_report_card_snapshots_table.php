@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('source_status', 50)->default('published');
             $table->string('status', 50)->default('active');
             $table->string('student_name');
-            $table->string('admission_number');
+            $table->string('admission_number', 100);
             $table->unsignedInteger('result_count')->default(0);
             $table->decimal('total_score', 8, 2)->default(0);
             $table->decimal('average_score', 5, 2)->default(0);
@@ -38,7 +38,7 @@ return new class extends Migration
             $table->json('comments_snapshot')->nullable();
             $table->json('access_snapshot')->nullable();
             $table->char('snapshot_hash', 64)->unique();
-            $table->string('verification_code')->nullable();
+            $table->string('verification_code', 120)->nullable();
             $table->string('pdf_disk')->nullable();
             $table->string('pdf_path')->nullable();
             $table->char('pdf_hash', 64)->nullable();

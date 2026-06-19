@@ -42,7 +42,7 @@ return new class extends Migration
             $table->string('serial_number', 100)->unique();
 
             $table->text('pin_code');
-            $table->string('pin_hash')->nullable()->index();
+            $table->string('pin_hash', 128)->nullable()->index('scratch_cards_pin_hash_idx');
 
             $table->unsignedInteger('max_uses')->default(1);
             $table->unsignedInteger('used_count')->default(0);

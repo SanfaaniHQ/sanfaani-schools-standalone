@@ -24,8 +24,8 @@ return new class extends Migration
             $table->unsignedBigInteger('size')->default(0);
             $table->timestamps();
 
-            $table->index(['school_id', 'created_at']);
-            $table->index(['uploaded_by', 'created_at']);
+            $table->index(['school_id', 'created_at'], 'sma_school_created_idx');
+            $table->index(['uploaded_by', 'created_at'], 'sma_uploaded_created_idx');
         });
     }
 

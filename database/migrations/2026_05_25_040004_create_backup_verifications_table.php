@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('backup_verifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('backup_id')->constrained()->cascadeOnDelete();
-            $table->string('status')->index();
+            $table->string('status', 50)->index('backup_verifications_status_idx');
             $table->timestamp('checked_at')->nullable()->index();
             $table->boolean('checksum_valid')->nullable();
             $table->boolean('archive_readable')->nullable();

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('demo_requests', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('email');
+            $table->string('email', 191);
             $table->string('phone')->nullable();
             $table->string('school_name')->nullable();
             $table->string('role_interest')->nullable();
@@ -21,8 +21,8 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['email', 'status']);
-            $table->index(['status', 'created_at']);
+            $table->index(['email', 'status'], 'demo_requests_email_status_idx');
+            $table->index(['status', 'created_at'], 'demo_requests_status_created_idx');
         });
     }
 

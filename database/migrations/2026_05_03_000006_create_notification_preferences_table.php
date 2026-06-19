@@ -12,15 +12,15 @@ return new class extends Migration
             $table->id();
             $table->foreignId('school_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('role')->nullable();
+            $table->string('role', 80)->nullable();
             $table->string('channel', 30);
-            $table->string('event_key');
+            $table->string('event_key', 120);
             $table->boolean('is_enabled')->default(true);
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['school_id', 'channel', 'event_key']);
-            $table->index(['user_id', 'channel', 'event_key']);
+            $table->index(['school_id', 'channel', 'event_key'], 'notif_prefs_school_event_idx');
+            $table->index(['user_id', 'channel', 'event_key'], 'notif_prefs_user_event_idx');
         });
     }
 

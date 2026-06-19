@@ -14,7 +14,7 @@ return new class extends Migration
             }
 
             if (! Schema::hasColumn('subscription_plans', 'slug')) {
-                $table->string('slug')->nullable()->unique()->after('name');
+                $table->string('slug', 191)->nullable()->unique('subscription_plans_slug_unique')->after('name');
             }
 
             if (! Schema::hasColumn('subscription_plans', 'description')) {

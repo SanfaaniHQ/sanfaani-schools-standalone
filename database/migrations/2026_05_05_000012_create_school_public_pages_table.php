@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('school_public_pages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('school_id')->constrained('schools')->cascadeOnDelete();
-            $table->string('slug')->unique();
+            $table->string('slug', 191)->unique('spp_slug_unique');
             $table->boolean('is_active')->default(false);
             $table->boolean('result_checker_enabled')->default(true);
             $table->boolean('scratch_card_purchase_enabled')->default(false);

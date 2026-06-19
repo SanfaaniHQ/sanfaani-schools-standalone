@@ -92,7 +92,7 @@ return new class extends Migration
             $table->foreignId('academic_session_id')->nullable()->constrained('academic_sessions')->nullOnDelete();
             $table->foreignId('term_id')->nullable()->constrained('terms')->nullOnDelete();
             $table->string('title');
-            $table->string('slug');
+            $table->string('slug', 191);
             $table->text('description')->nullable();
             $table->longText('instructions')->nullable();
             $table->string('exam_type', 60)->default('objective');
@@ -151,9 +151,9 @@ return new class extends Migration
             $table->foreignId('cbt_exam_id')->constrained('cbt_exams')->cascadeOnDelete();
             $table->foreignId('student_id')->nullable()->constrained('students')->nullOnDelete();
             $table->string('name')->nullable();
-            $table->string('email')->nullable();
+            $table->string('email', 191)->nullable();
             $table->string('phone')->nullable();
-            $table->string('admission_number')->nullable();
+            $table->string('admission_number', 100)->nullable();
             $table->string('candidate_code', 80)->unique();
             $table->string('invitation_token', 100)->nullable()->unique();
             $table->string('source', 40)->default('student');

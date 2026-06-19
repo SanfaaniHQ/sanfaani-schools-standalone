@@ -18,14 +18,14 @@ return new class extends Migration
                 ->constrained('schools')
                 ->cascadeOnDelete();
 
-            $table->string('name');
-            $table->string('code')->nullable();
-            $table->string('status')->default('active');
+            $table->string('name', 150);
+            $table->string('code', 50)->nullable();
+            $table->string('status', 50)->default('active');
 
             $table->timestamps();
 
-            $table->unique(['school_id', 'name']);
-            $table->unique(['school_id', 'code']);
+            $table->unique(['school_id', 'name'], 'subjects_school_name_unique');
+            $table->unique(['school_id', 'code'], 'subjects_school_code_unique');
         });
     }
 

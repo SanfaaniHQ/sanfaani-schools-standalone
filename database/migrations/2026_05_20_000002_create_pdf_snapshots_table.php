@@ -13,9 +13,9 @@ return new class extends Migration
             $table->uuid('snapshot_uuid')->unique();
             $table->foreignId('school_id')->nullable()->constrained('schools')->restrictOnDelete();
             $table->string('snapshot_type', 80);
-            $table->string('subject_type')->nullable();
+            $table->string('subject_type', 191)->nullable();
             $table->unsignedBigInteger('subject_id')->nullable();
-            $table->string('owner_type')->nullable();
+            $table->string('owner_type', 191)->nullable();
             $table->unsignedBigInteger('owner_id')->nullable();
             $table->string('title');
             $table->string('reference_code', 100)->nullable();

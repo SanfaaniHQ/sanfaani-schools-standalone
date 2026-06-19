@@ -18,15 +18,15 @@ return new class extends Migration
                 ->constrained('schools')
                 ->cascadeOnDelete();
 
-            $table->string('name');
+            $table->string('name', 100);
             $table->date('starts_at')->nullable();
             $table->date('ends_at')->nullable();
             $table->boolean('is_active')->default(false);
-            $table->string('status')->default('active');
+            $table->string('status', 50)->default('active');
 
             $table->timestamps();
 
-            $table->unique(['school_id', 'name']);
+            $table->unique(['school_id', 'name'], 'acad_sessions_school_name_unique');
         });
     }
 

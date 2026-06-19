@@ -45,7 +45,7 @@ return new class extends Migration
             $table->timestamp('sent_at')->nullable();
             $table->timestamp('failed_at')->nullable();
             $table->text('failure_reason')->nullable();
-            $table->string('related_model_type')->nullable();
+            $table->string('related_model_type', 191)->nullable();
             $table->unsignedBigInteger('related_model_id')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->json('metadata')->nullable();

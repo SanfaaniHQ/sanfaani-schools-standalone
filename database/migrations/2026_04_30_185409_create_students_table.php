@@ -23,12 +23,12 @@ return new class extends Migration
                 ->constrained('school_classes')
                 ->nullOnDelete();
 
-            $table->string('admission_number');
+            $table->string('admission_number', 100);
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name');
 
-            $table->string('gender')->nullable();
+            $table->string('gender', 20)->nullable();
             $table->date('date_of_birth')->nullable();
 
             $table->string('guardian_name')->nullable();
@@ -36,11 +36,11 @@ return new class extends Migration
             $table->string('guardian_email')->nullable();
 
             $table->text('address')->nullable();
-            $table->string('status')->default('active');
+            $table->string('status', 50)->default('active');
 
             $table->timestamps();
 
-            $table->unique(['school_id', 'admission_number']);
+            $table->unique(['school_id', 'admission_number'], 'students_school_admission_unique');
         });
     }
 

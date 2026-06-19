@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('backup_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('school_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('event')->index();
-            $table->string('severity')->index();
+            $table->string('event', 100)->index('backup_logs_event_idx');
+            $table->string('severity', 30)->index('backup_logs_severity_idx');
             $table->text('message');
             $table->json('context')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

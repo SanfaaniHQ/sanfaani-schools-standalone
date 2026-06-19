@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('academic_session_id')->constrained('academic_sessions')->cascadeOnDelete();
             $table->foreignId('term_id')->constrained('terms')->cascadeOnDelete();
             $table->string('result_type', 50)->default('term_result');
-            $table->string('verification_code')->unique();
+            $table->string('verification_code', 120)->unique('result_verifications_code_unique');
             $table->string('status', 50)->default('active');
             $table->timestamp('issued_at')->nullable();
             $table->timestamp('revoked_at')->nullable();

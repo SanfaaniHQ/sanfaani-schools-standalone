@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('school_id')->nullable()->constrained('schools')->nullOnDelete();
             $table->string('action', 150);
-            $table->string('auditable_type')->nullable();
+            $table->string('auditable_type', 191)->nullable();
             $table->unsignedBigInteger('auditable_id')->nullable();
             $table->json('old_values')->nullable();
             $table->json('new_values')->nullable();
@@ -26,9 +26,9 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['school_id', 'action']);
-            $table->index(['auditable_type', 'auditable_id']);
-            $table->index(['user_id', 'created_at']);
+            $table->index(['school_id', 'action'], 'audit_logs_school_action_idx');
+            $table->index(['auditable_type', 'auditable_id'], 'audit_logs_auditable_idx');
+            $table->index(['user_id', 'created_at'], 'audit_logs_user_created_idx');
         });
     }
 

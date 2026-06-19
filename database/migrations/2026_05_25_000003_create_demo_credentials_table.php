@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('role_name', 80);
             $table->string('label')->nullable();
-            $table->string('email');
+            $table->string('email', 191);
             $table->text('temporary_password_encrypted')->nullable();
             $table->timestamp('password_viewed_at')->nullable();
             $table->timestamp('expires_at')->nullable();
@@ -22,10 +22,10 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->unique(['demo_session_id', 'role_name']);
-            $table->index(['email', 'status']);
-            $table->index(['user_id', 'status']);
-            $table->index(['status', 'expires_at']);
+            $table->unique(['demo_session_id', 'role_name'], 'demo_credentials_session_role_unique');
+            $table->index(['email', 'status'], 'demo_credentials_email_status_idx');
+            $table->index(['user_id', 'status'], 'demo_credentials_user_status_idx');
+            $table->index(['status', 'expires_at'], 'demo_credentials_status_expiry_idx');
         });
     }
 

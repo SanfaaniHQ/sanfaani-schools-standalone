@@ -11,12 +11,12 @@ return new class extends Migration
         Schema::create('backup_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('backup_id')->constrained()->cascadeOnDelete();
-            $table->string('item_type')->index();
+            $table->string('item_type', 80)->index('backup_items_type_idx');
             $table->string('source_label');
             $table->string('path')->nullable();
             $table->unsignedBigInteger('size_bytes')->nullable();
             $table->string('checksum')->nullable();
-            $table->string('status')->index();
+            $table->string('status', 50)->index('backup_items_status_idx');
             $table->json('metadata')->nullable();
             $table->timestamps();
         });

@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('backup_restore_plans', function (Blueprint $table) {
             $table->id();
             $table->foreignId('backup_id')->constrained()->cascadeOnDelete();
-            $table->string('status')->index();
-            $table->string('restore_scope');
+            $table->string('status', 50)->index('backup_restore_plans_status_idx');
+            $table->string('restore_scope', 80);
             $table->json('steps')->nullable();
             $table->json('warnings')->nullable();
             $table->timestamp('verified_at')->nullable();

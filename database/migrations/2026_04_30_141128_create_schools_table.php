@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('name');
-            $table->string('slug')->unique();
+            $table->string('slug', 191)->unique();
 
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
@@ -23,8 +23,8 @@ return new class extends Migration
 
             $table->string('logo')->nullable();
 
-            $table->string('status')->default('active');
-            $table->string('subscription_status')->default('active');
+            $table->string('status', 50)->default('active');
+            $table->string('subscription_status', 50)->default('active');
 
             $table->timestamps();
         });
