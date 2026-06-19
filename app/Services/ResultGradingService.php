@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\School;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class ResultGradingService
 {
@@ -17,7 +19,10 @@ class ResultGradingService
 
     public function calculate(School $school, float $score): array
     {
-        return $this->calculateFromScales($this->activeScales($school), $score);
+        $grading = $this->calculateFromScales($this->activeScales($school), $score);
+        $grading['is_pass'] = $score >= $this->passMark($school);
+
+        return $grading;
     }
 
     public function calculateFromScales(iterable $gradingScales, float $score): array
@@ -37,5 +42,18 @@ class ResultGradingService
             'remark' => null,
             'is_pass' => null,
         ];
+    }
+
+    public function passMark(School $school): float
+    {
+        try {
+            if (! Schema::hasTable('school_result_settings')) {
+                return 40.0;
+            }
+
+            return (float) ($school->resultSetting()->value('pass_mark') ?? 40);
+        } catch (Throwable) {
+            return 40.0;
+        }
     }
 }

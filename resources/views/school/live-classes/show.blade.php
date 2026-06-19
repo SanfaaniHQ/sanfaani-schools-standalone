@@ -115,6 +115,29 @@
             </x-ui.panel>
 
             @if ($canManage)
+                <x-ui.panel title="Resolved Audience" description="Participants receive in-app invitations and scheduled reminders.">
+                    <div class="max-h-80 space-y-2 overflow-y-auto pr-1">
+                        @forelse ($liveClass->participants->whereIn('status', \App\Models\LiveClassParticipant::ACTIVE_STATUSES) as $participant)
+                            <div class="flex items-center justify-between gap-3 rounded-md border border-border-subtle bg-bg-primary p-3 text-sm">
+                                <div class="min-w-0">
+                                    <p class="truncate font-semibold text-text-primary">{{ $participant->user?->name ?? 'Unknown user' }}</p>
+                                    <p class="mt-1 text-xs text-text-tertiary">{{ str($participant->role_context ?: $participant->audience_type)->replace('_', ' ')->title() }}</p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <x-ui.badge :status="$participant->status" />
+                                    <p class="mt-1 text-xs text-text-tertiary">
+                                        {{ $participant->reminder_sent_at ? 'Reminder sent' : ($participant->reminder_due_at ? 'Reminder pending' : 'No reminder') }}
+                                    </p>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="rounded-md border border-border-subtle bg-bg-primary p-3 text-sm text-text-secondary">No participants have been resolved for this live class yet.</p>
+                        @endforelse
+                    </div>
+                </x-ui.panel>
+            @endif
+
+            @if ($canManage)
                 <x-ui.panel title="Status Workflow" description="Provider automation is deferred; these controls only update the local workflow state.">
                     <div class="flex flex-wrap gap-2">
                         @if ($liveClass->status === \App\Models\LiveClass::STATUS_SCHEDULED)

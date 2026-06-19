@@ -156,7 +156,7 @@ class SupportRoutingEscalationTest extends TestCase
             ->assertSee('support-proof.pdf');
     }
 
-    public function test_school_admin_created_support_request_preserves_platform_support_workflow(): void
+    public function test_school_admin_created_support_request_defaults_to_internal_school_support(): void
     {
         $school = $this->school();
         $schoolAdmin = $this->schoolUser($school, 'school_admin', 'school.admin@example.test');
@@ -173,16 +173,14 @@ class SupportRoutingEscalationTest extends TestCase
 
         $thread = SupportThread::firstOrFail();
 
-        $this->assertSame(SupportThread::ROUTE_SUPER_ADMIN, $thread->routed_to_role);
-        $this->assertSame(SupportThread::STATUS_ESCALATED, $thread->status);
-        $this->assertSame(1, $thread->escalation_level);
-        $this->assertSame(1, SupportEscalationHistory::where('support_thread_id', $thread->id)->count());
+        $this->assertSame(SupportThread::ROUTE_SCHOOL_ADMIN, $thread->routed_to_role);
+        $this->assertSame(SupportThread::STATUS_OPEN, $thread->status);
+        $this->assertSame(0, $thread->escalation_level);
+        $this->assertSame(0, SupportEscalationHistory::where('support_thread_id', $thread->id)->count());
 
         $this->actingAs($superAdmin);
         $this->get(route('admin.support-threads.show', $thread))
-            ->assertOk()
-            ->assertSee('Billing question')
-            ->assertSee('Escalation History');
+            ->assertForbidden();
     }
 
     public function test_legacy_platform_threads_without_routing_metadata_remain_visible_to_super_admin(): void

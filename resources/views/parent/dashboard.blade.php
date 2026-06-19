@@ -55,6 +55,31 @@
                 </div>
             </div>
 
+            <div class="rounded-2xl border bg-white p-5 shadow-sm">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0">
+                        <h3 class="text-base font-semibold text-gray-900">Live Classes</h3>
+                        <p class="mt-1 text-sm text-gray-500">Join upcoming sessions you have been invited to attend.</p>
+                    </div>
+                    <a href="{{ route('portal.live-classes.index') }}"
+                       class="inline-flex w-full items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 sm:w-auto">
+                        Open Live Classes
+                    </a>
+                </div>
+
+                @if ($upcomingLiveClasses->isNotEmpty())
+                    <div class="mt-4 grid gap-3 lg:grid-cols-3">
+                        @foreach ($upcomingLiveClasses as $liveClass)
+                            <a href="{{ route('portal.live-classes.show', $liveClass) }}" class="rounded-xl border p-4 hover:bg-gray-50">
+                                <span class="block font-semibold text-gray-900">{{ $liveClass->title }}</span>
+                                <span class="mt-1 block text-sm text-gray-500">{{ $liveClass->starts_at?->format('d M Y H:i') }}</span>
+                                <span class="mt-1 block text-xs text-gray-400">{{ $liveClass->schoolClass?->name }} {{ $liveClass->schoolClass?->section }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="rounded-2xl border bg-white p-5 shadow-sm">
                     <p class="text-sm text-gray-500">Children</p>

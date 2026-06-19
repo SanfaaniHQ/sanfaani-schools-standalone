@@ -1,5 +1,13 @@
 @php
     $isEdit = $method === 'PATCH';
+    $activeParticipants = $liveClass->relationLoaded('participants')
+        ? $liveClass->participants->whereIn('status', \App\Models\LiveClassParticipant::ACTIVE_STATUSES)
+        : collect();
+    $currentAudienceType = old('audience_type', $activeParticipants->first()?->audience_type ?? \App\Models\LiveClassParticipant::AUDIENCE_CLASS);
+    $selectedAudienceUserIds = collect(old('selected_user_ids', $activeParticipants->pluck('user_id')->all()))
+        ->filter()
+        ->map(fn ($id) => (int) $id)
+        ->all();
 @endphp
 
 <x-app-layout>
@@ -75,6 +83,34 @@
                             </select>
                             @error('term_id') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                         </div>
+                    </div>
+                </div>
+            </x-ui.panel>
+
+            <x-ui.panel title="Audience" description="Resolved users receive in-app invitations and reminder rows.">
+                <div class="space-y-4">
+                    <div>
+                        <label for="audience-type" class="block text-sm font-medium text-text-primary">Audience</label>
+                        <select id="audience-type" name="audience_type" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            @foreach ($audienceTypes as $key => $label)
+                                <option value="{{ $key }}" @selected($currentAudienceType === $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        @error('audience_type') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div>
+                        <label for="selected-user-ids" class="block text-sm font-medium text-text-primary">Selected Users</label>
+                        <select id="selected-user-ids" name="selected_user_ids[]" multiple size="8" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            @foreach ($eligibleUsers as $eligibleUser)
+                                <option value="{{ $eligibleUser->id }}" @selected(in_array((int) $eligibleUser->id, $selectedAudienceUserIds, true))>
+                                    {{ $eligibleUser->name }} @if($eligibleUser->email) / {{ $eligibleUser->email }} @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-text-tertiary">Only required when the audience is Selected users. Class and role audiences are resolved automatically.</p>
+                        @error('selected_user_ids') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
+                        @error('selected_user_ids.*') <p class="mt-1 text-xs text-rose-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
             </x-ui.panel>

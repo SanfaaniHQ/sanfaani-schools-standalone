@@ -6,13 +6,13 @@
                     Scratch Cards
                 </h2>
                 <p class="mt-1 text-sm text-gray-500">
-                    Request scratch cards and download generated batches for {{ $school->name }}.
+                    Generate scratch cards and download generated batches for {{ $school->name }}.
                 </p>
             </div>
 
             <a href="{{ route('school.scratch-cards.create') }}"
                class="inline-flex min-h-11 items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800">
-                Request Cards
+                Generate Cards
             </a>
         </div>
     </x-slot>
@@ -35,18 +35,18 @@
             <x-card class="mb-6">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h3 class="text-base font-semibold text-slate-950">Request Pipeline</h3>
-                        <p class="mt-1 text-sm text-slate-500">Submitted requests move through review, approval, and generation before download.</p>
+                        <h3 class="text-base font-semibold text-slate-950">Standalone Generation</h3>
+                        <p class="mt-1 text-sm text-slate-500">Generate cards immediately, or keep using the request pipeline when a school wants manual review.</p>
                     </div>
                     <span class="inline-flex w-fit rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">Database queued</span>
                 </div>
 
                 <div class="mt-6 grid gap-3 text-sm md:grid-cols-4">
                     @foreach ([
-                        ['Submitted', 'Request received'],
-                        ['Under Review', 'Payment/access checked'],
-                        ['Approved', 'Ready for generation'],
-                        ['Generated', 'CSV download enabled'],
+                        ['Configure', 'Choose class, term, and quantity'],
+                        ['Generate', 'Create pins locally'],
+                        ['Download', 'Export CSV for printing'],
+                        ['Track', 'Monitor use and expiry'],
                     ] as [$title, $description])
                         <div class="relative rounded-xl border border-slate-200 bg-slate-50 p-4">
                             <div class="flex items-center gap-3">
@@ -106,7 +106,7 @@
                         Scratch Card Batches
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Each request is reviewed before scratch cards are generated.
+                        Direct batches are generated immediately. Request batches remain visible until approved or generated.
                     </p>
                 </div>
 
@@ -193,7 +193,7 @@
                                         <x-empty-state title="No scratch card batches yet" description="Submit the first scratch card request and track it here until cards are generated.">
                                             <x-slot name="action">
                                                 <a href="{{ route('school.scratch-cards.create') }}" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                                                    Request Cards
+                                                    Generate Cards
                                                 </a>
                                             </x-slot>
                                         </x-empty-state>

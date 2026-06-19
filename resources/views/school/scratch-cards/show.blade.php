@@ -15,6 +15,12 @@
                    class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
                     Download CSV
                 </a>
+            @elseif (! $batch->cards()->exists() && $batch->status !== 'revoked')
+                <form method="POST" action="{{ route('school.scratch-cards.generate', $batch) }}" class="flex items-center gap-2">
+                    @csrf
+                    <input type="number" name="max_uses" min="1" max="100" value="1" aria-label="Max uses per card" class="w-24 rounded-xl border-gray-300 text-sm">
+                    <button class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">Generate</button>
+                </form>
             @endif
         </div>
     </x-slot>
@@ -30,6 +36,12 @@
             @if (session('error'))
                 <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
                     {{ session('error') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+                    {{ $errors->first() }}
                 </div>
             @endif
 
@@ -106,7 +118,7 @@
                         Generated Cards
                     </h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Cards are shown only after Super Admin approval and generation.
+                        Cards are shown after direct school generation or approved request generation.
                     </p>
                 </div>
 

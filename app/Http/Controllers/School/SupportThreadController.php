@@ -77,7 +77,7 @@ class SupportThreadController extends Controller
             'attachments.*' => ['file', 'max:5120'],
         ]);
         $data['attachments'] = $this->storeAttachments($request, $school);
-        $data['route_to'] ??= $role === 'school_admin' ? SupportThread::ROUTE_SUPER_ADMIN : SupportThread::ROUTE_SCHOOL_ADMIN;
+        $data['route_to'] ??= SupportThread::ROUTE_SCHOOL_ADMIN;
 
         $thread = $support->createThread($school, $request->user(), $role, $data, $request);
 

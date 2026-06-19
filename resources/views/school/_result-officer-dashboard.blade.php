@@ -85,6 +85,20 @@
             </div>
         </x-ui.panel>
     </section>
+
+    @if(($upcomingParticipantLiveClasses ?? collect())->isNotEmpty())
+        <x-ui.panel title="Live Classes" description="Participant invitations assigned to your account.">
+            <div class="grid gap-3 lg:grid-cols-3">
+                @foreach ($upcomingParticipantLiveClasses as $liveClass)
+                    <a href="{{ route('portal.live-classes.show', $liveClass) }}" class="rounded-md border border-border-subtle bg-bg-primary p-3 text-sm transition hover:border-border-hover hover:bg-bg-tertiary">
+                        <span class="block font-semibold text-text-primary">{{ $liveClass->title }}</span>
+                        <span class="mt-1 block text-text-secondary">{{ $liveClass->starts_at?->format('d M Y H:i') }}</span>
+                        <span class="mt-1 block text-xs text-text-tertiary">{{ $liveClass->schoolClass?->name }} {{ $liveClass->schoolClass?->section }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </x-ui.panel>
+    @endif
 </div>
 
 <div class="rounded-2xl border border-border-subtle bg-bg-secondary p-5 shadow-sm">

@@ -127,7 +127,7 @@ class SchoolAdminDashboardController extends Controller
         if ($roleContext === 'result_officer') {
             $data = array_merge($data, $this->guardedMetrics(
                 'result_officer.dashboard_data',
-                fn () => $this->getResultOfficerDashboardData($school),
+                fn () => $this->getResultOfficerDashboardData($school, $user),
                 $this->defaultResultOfficerDashboardData()
             ));
         }
@@ -202,10 +202,18 @@ class SchoolAdminDashboardController extends Controller
     /**
      * Get result officer-specific dashboard data.
      */
-    private function getResultOfficerDashboardData($school): array
+    private function getResultOfficerDashboardData($school, $user): array
     {
         $resultMetrics = $this->resultStatusMetrics($school);
         $totalStudents = $school->students()->count();
+        $liveClassAccess = app(\App\Services\LiveClasses\LiveClassAccessService::class);
+        $upcomingParticipantLiveClasses = $liveClassAccess->canView($user, $school)
+            ? app(\App\Services\LiveClasses\LiveClassService::class)
+                ->sessionsForUser($school, $user, ['status' => \App\Models\LiveClass::STATUS_SCHEDULED])
+                ->where('starts_at', '>=', now())
+                ->limit(3)
+                ->get()
+            : collect();
 
         // Get recent result upload activity (last 30 days)
         $recentUploads = $school->studentResults()
@@ -225,6 +233,7 @@ class SchoolAdminDashboardController extends Controller
             'returnedResults' => $resultMetrics['returned'],
             'pendingResultAccessRequests' => $this->resultAccessRequestMetrics($school)['pending'],
             'recentUploads' => $recentUploads,
+            'upcomingParticipantLiveClasses' => $upcomingParticipantLiveClasses,
             'activeSession' => $school->academicSessions()->where('is_active', true)->first(),
             'activeTerm' => $school->terms()->where('is_active', true)->first(),
         ];
@@ -379,6 +388,7 @@ class SchoolAdminDashboardController extends Controller
             'returnedResults' => 0,
             'pendingResultAccessRequests' => 0,
             'recentUploads' => collect(),
+            'upcomingParticipantLiveClasses' => collect(),
             'activeSession' => null,
             'activeTerm' => null,
         ];

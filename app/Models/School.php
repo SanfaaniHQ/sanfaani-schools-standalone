@@ -305,6 +305,11 @@ class School extends Model
         return $this->hasMany(GradingScale::class);
     }
 
+    public function resultSetting(): HasOne
+    {
+        return $this->hasOne(SchoolResultSetting::class);
+    }
+
     public function resultPublications(): HasMany
     {
         return $this->hasMany(ResultPublication::class);

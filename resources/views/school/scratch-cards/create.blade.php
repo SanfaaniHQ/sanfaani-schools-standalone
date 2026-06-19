@@ -5,7 +5,7 @@
                 Request Scratch Cards
             </h2>
             <p class="mt-1 text-sm text-gray-500">
-                Submit a scratch card request for {{ $school->name }}.
+                Generate scratch cards directly or submit a request for {{ $school->name }}.
             </p>
         </div>
     </x-slot>
@@ -93,6 +93,19 @@
 
                     <div class="grid gap-6 sm:grid-cols-2">
                         <div>
+                            <label class="block text-sm font-medium text-gray-700">Generation Mode</label>
+                            <select name="generation_mode"
+                                    class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                                <option value="direct" @selected(old('generation_mode', 'direct') === 'direct')>Generate now</option>
+                                <option value="request" @selected(old('generation_mode') === 'request')>Submit request</option>
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Generate now creates downloadable cards immediately for standalone school admins.</p>
+                            @error('generation_mode')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700">Quantity</label>
                             <div class="mt-1 flex rounded-xl border border-gray-300 bg-white shadow-sm focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900">
                                 <button type="button" data-quantity-step="-10" aria-label="Reduce quantity" class="min-h-11 w-12 rounded-l-xl text-lg font-semibold text-slate-600 hover:bg-slate-50">-</button>
@@ -106,6 +119,22 @@
                                 <button type="button" data-quantity-step="10" aria-label="Increase quantity" class="min-h-11 w-12 rounded-r-xl text-lg font-semibold text-slate-600 hover:bg-slate-50">+</button>
                             </div>
                             @error('quantity')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Max Uses Per Card</label>
+                            <input type="number"
+                                   name="max_uses"
+                                   min="1"
+                                   max="100"
+                                   value="{{ old('max_uses', 1) }}"
+                                   class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            <p class="mt-1 text-xs text-gray-500">Required only when generating immediately.</p>
+                            @error('max_uses')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -150,8 +179,8 @@
 
                     <div class="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:grid-cols-2">
                         <div>
-                            <p class="font-semibold text-slate-950">Review Process</p>
-                            <p class="mt-1">Requests are reviewed by the Super Admin. Cards are downloadable only after payment/access approval and generation.</p>
+                            <p class="font-semibold text-slate-950">Standalone Flow</p>
+                            <p class="mt-1">Generate now creates paid, approved, downloadable cards immediately. Submit request keeps the older review flow available.</p>
                         </div>
                         <div class="rounded-lg bg-white p-3 shadow-sm">
                             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Request Summary</p>
@@ -168,7 +197,7 @@
                         <button type="submit"
                                 data-loading-text="Submitting..."
                                 class="inline-flex min-h-11 items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-700">
-                            Submit Request
+                            Continue
                         </button>
                     </div>
                 </form>

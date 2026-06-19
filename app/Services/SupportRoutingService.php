@@ -342,7 +342,7 @@ class SupportRoutingService
                 || $this->authorization->can($actor, $school, 'support.direct_escalation');
         }
 
-        return $actorRole === 'school_admin' && ($data['route_to'] ?? SupportThread::ROUTE_SUPER_ADMIN) === SupportThread::ROUTE_SUPER_ADMIN;
+        return false;
     }
 
     private function statusAfterReply(SupportThread $thread, string $actorRole): string

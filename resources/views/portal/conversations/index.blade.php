@@ -1,104 +1,108 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="text-xl font-semibold text-gray-900">Messages</h2>
-            <p class="mt-1 text-sm text-gray-500">
-                Start and manage conversations with the school.
-            </p>
-        </div>
+        <x-ui.page-header
+            :title="__('ui.messages')"
+            :description="__('ui.messages_intro')"
+        />
     </x-slot>
+
+    @php
+        $conversationTypes = [
+            'general' => __('ui.category_general'),
+            'academic' => __('ui.category_academic'),
+            'finance' => __('ui.category_finance'),
+            'result' => __('ui.category_result'),
+            'attendance' => __('ui.category_attendance'),
+        ];
+    @endphp
 
     <div class="py-6">
         <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
             <div class="lg:col-span-1">
-                <div class="rounded-2xl border bg-white p-5 shadow-sm">
-                    <h3 class="text-base font-semibold text-gray-900">Start Conversation</h3>
-
+                <x-ui.form-section :title="__('ui.start_conversation')" :description="__('ui.start_conversation_intro')">
                     @if ($errors->any())
-                        <div class="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                            {{ $errors->first() }}
-                        </div>
+                        <x-ui.alert tone="danger">{{ $errors->first() }}</x-ui.alert>
                     @endif
 
-                    <form method="POST" action="{{ route('portal.conversations.store') }}" class="mt-4 space-y-4">
+                    <form method="POST" action="{{ route('portal.conversations.store') }}" class="space-y-4">
                         @csrf
 
-                        <label class="block text-sm">
-                            <span class="mb-1 block font-medium text-gray-700">Subject</span>
-                            <input type="text" name="subject" value="{{ old('subject') }}" class="w-full rounded-lg border-gray-300 text-sm" required>
-                        </label>
+                        <x-ui.input
+                            :label="__('ui.conversation_subject')"
+                            name="subject"
+                            :value="old('subject')"
+                            required
+                        />
 
-                        <label class="block text-sm">
-                            <span class="mb-1 block font-medium text-gray-700">Category</span>
-                            <select name="conversation_type" class="w-full rounded-lg border-gray-300 text-sm">
-                                <option value="general">General</option>
-                                <option value="academic">Academic</option>
-                                <option value="finance">Finance</option>
-                                <option value="result">Result</option>
-                                <option value="attendance">Attendance</option>
-                            </select>
-                        </label>
-
-                        <label class="block text-sm">
-                            <span class="mb-1 block font-medium text-gray-700">Recipient</span>
-                            <select name="recipient_user_ids[]" class="w-full rounded-lg border-gray-300 text-sm">
-                                <option value="">Auto assign to school team</option>
-                                @foreach ($recipients as $recipient)
-                                    <option value="{{ $recipient->id }}">{{ $recipient->name }}  {{ $recipient->email }}</option>
+                        <label class="block space-y-1.5 text-sm">
+                            <span class="block font-medium text-text-primary">{{ __('ui.conversation_category') }}</span>
+                            <select name="conversation_type" class="ui-input">
+                                @foreach ($conversationTypes as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('conversation_type', 'general') === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </label>
 
-                        <label class="block text-sm">
-                            <span class="mb-1 block font-medium text-gray-700">Message</span>
-                            <textarea name="body" rows="5" class="w-full rounded-lg border-gray-300 text-sm" required>{{ old('body') }}</textarea>
+                        <label class="block space-y-1.5 text-sm">
+                            <span class="block font-medium text-text-primary">{{ __('ui.recipients') }}</span>
+                            <select name="recipient_user_ids[]" multiple size="6" class="ui-input min-h-36">
+                                <option value="">{{ __('ui.auto_assign_school_team') }}</option>
+                                @foreach ($recipients as $recipient)
+                                    <option value="{{ $recipient->id }}" @selected(in_array((string) $recipient->id, array_map('strval', old('recipient_user_ids', [])), true))>
+                                        {{ $recipient->name }} - {{ $recipient->email }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <span class="block text-xs text-text-secondary">{{ __('ui.recipients_help') }}</span>
                         </label>
 
-                        <button type="submit" class="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800">
-                            Send Message
-                        </button>
+                        <label class="block space-y-1.5 text-sm">
+                            <span class="block font-medium text-text-primary">{{ __('ui.message') }}</span>
+                            <textarea name="body" rows="5" class="ui-input" required>{{ old('body') }}</textarea>
+                        </label>
+
+                        <x-ui.button type="submit" class="w-full">
+                            {{ __('ui.send_message') }}
+                        </x-ui.button>
                     </form>
-                </div>
+                </x-ui.form-section>
             </div>
 
             <div class="lg:col-span-2">
-                <div class="rounded-2xl border bg-white shadow-sm">
-                    <div class="border-b px-5 py-4">
-                        <h3 class="text-base font-semibold text-gray-900">Conversations</h3>
-                    </div>
-
+                <x-ui.table-card :title="__('ui.conversations')">
                     @if ($conversations->isEmpty())
-                        <div class="p-8 text-center text-sm text-gray-500">
-                            No conversation yet.
+                        <div class="p-5">
+                            <x-ui.empty-state
+                                :title="__('ui.no_conversations')"
+                                :body="__('ui.no_conversations_help')"
+                            />
                         </div>
                     @else
                         <div class="divide-y">
                             @foreach ($conversations as $conversation)
-                                <a href="{{ route('portal.conversations.show', ['conversationId' => $conversation->id]) }}" class="block p-5 hover:bg-gray-50">
+                                <a href="{{ route('portal.conversations.show', ['conversationId' => $conversation->id]) }}" class="block p-5 transition hover:bg-bg-tertiary">
                                     <div class="flex items-start justify-between gap-4">
-                                        <div>
-                                            <h4 class="font-semibold text-gray-900">{{ $conversation->subject }}</h4>
-                                            <p class="mt-1 text-sm text-gray-500">
-                                                {{ $conversation->typeLabel() }}  {{ $conversation->messages_count }} messages
+                                        <div class="min-w-0">
+                                            <h4 class="truncate font-semibold text-text-primary">{{ $conversation->subject }}</h4>
+                                            <p class="mt-1 text-sm text-text-secondary">
+                                                {{ $conversation->typeLabel() }} - {{ trans_choice('ui.messages_count', $conversation->messages_count, ['count' => $conversation->messages_count]) }}
                                             </p>
-                                            <p class="mt-1 text-xs text-gray-400">
-                                                Last activity: {{ $conversation->last_message_at?->diffForHumans() ?? 'No activity' }}
+                                            <p class="mt-1 text-xs text-text-tertiary">
+                                                {{ __('ui.last_activity') }}: {{ $conversation->last_message_at?->diffForHumans() ?? __('ui.no_activity') }}
                                             </p>
                                         </div>
 
-                                        <span class="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold uppercase text-gray-700">
-                                            {{ $conversation->statusLabel() }}
-                                        </span>
+                                        <x-ui.badge :status="$conversation->statusLabel()" />
                                     </div>
                                 </a>
                             @endforeach
                         </div>
 
-                        <div class="border-t px-5 py-3">
+                        <x-slot name="footer">
                             {{ $conversations->links() }}
-                        </div>
+                        </x-slot>
                     @endif
-                </div>
+                </x-ui.table-card>
             </div>
         </div>
     </div>
