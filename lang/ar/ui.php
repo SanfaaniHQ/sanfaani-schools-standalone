@@ -335,4 +335,12 @@ return [
     'rejection_note' => 'Rejection note',
     'reject' => 'Reject',
     'on_date' => 'on :date',
+    'system_operations' => 'System Operations',
+    'system_mail' => 'System Mail',
+    'updates' => 'Updates',
+    'diagnostics' => 'Diagnostics',
+    'security_health' => 'Security Health',
+    'local_branding' => 'Local Branding',
+    'local_installation' => 'Local Installation',
+    'system_status' => 'System Status',
 ];

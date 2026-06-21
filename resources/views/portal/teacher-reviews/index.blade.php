@@ -16,8 +16,7 @@
         ];
     @endphp
 
-    <div class="py-6">
-        <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
+    <div class="grid gap-6 lg:grid-cols-3">
             <div class="lg:col-span-1">
                 <x-ui.form-section :title="__('ui.submit_review')" :description="__('ui.submit_review_intro')">
                     @if (session('success'))
@@ -112,7 +111,7 @@
                         <div class="divide-y">
                             @foreach ($reviews as $review)
                                 <div class="p-5">
-                                    <div class="flex items-start justify-between gap-4">
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div class="min-w-0">
                                             <h4 class="font-semibold text-text-primary">{{ $review->teacher?->name ?? __('ui.teacher') }}</h4>
                                             <p class="mt-1 text-sm text-text-secondary">
@@ -150,6 +149,5 @@
                     @endif
                 </x-ui.table-card>
             </div>
-        </div>
     </div>
 </x-app-layout>

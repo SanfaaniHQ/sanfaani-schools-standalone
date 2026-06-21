@@ -62,7 +62,7 @@
         >
             @include('layouts.partials.sidebar')
 
-            <div class="min-w-0 lg:ps-64">
+            <div class="min-w-0 lg:ps-72">
                 @include('layouts.partials.topbar')
 
                 @if (auth()->check() && session('is_support_session') && session()->has('support_access_started_by') && $schoolServiceForShell?->inSupportMode(auth()->user()))
@@ -94,10 +94,10 @@
                     </div>
                 @endif
 
-                <main id="main-content" class="min-h-screen overflow-x-clip px-4 py-6 sm:px-6 lg:px-8">
+                <main id="main-content" class="min-h-screen overflow-x-clip px-4 py-5 sm:px-6 lg:px-8">
                     <div class="mx-auto w-full max-w-dashboard animate-fade-in">
                         @isset($header)
-                            <header class="mb-6 rounded-lg border border-border-subtle bg-bg-secondary px-5 py-5 shadow-sm">
+                            <header class="mb-6 border-b border-border-subtle pb-5">
                                 {{ $header }}
                             </header>
                         @endisset
@@ -158,16 +158,16 @@
 
                                 $commandItems = $roleContext === 'super_admin' && ! $schoolService->inSupportMode($user)
                                     ? [
-                                        ['label' => 'Platform Dashboard', 'context' => 'Global platform status', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'platform_dashboard'],
-                                        ['label' => 'Local Dashboard', 'context' => 'Local owner status', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'local_dashboard'],
+                                        ['label' => 'Installation Admin', 'context' => 'Local system status and school setup', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'platform_dashboard'],
+                                        ['label' => 'Local Admin Console', 'context' => 'License, backups, diagnostics, and school settings', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'local_dashboard'],
                                         ['label' => 'Schools', 'context' => 'Institution accounts and support access', 'href' => route('admin.schools.index'), 'visible' => true, 'group' => 'platform_schools'],
                                         ['label' => 'Scratch Requests', 'context' => 'Card batches awaiting action', 'href' => route('admin.scratch-card-requests.index'), 'visible' => true, 'group' => 'platform_scratch_cards'],
                                         ['label' => 'Communication Center', 'context' => 'Broadcasts, delivery history, and retries', 'href' => route('admin.communications.index'), 'visible' => true, 'group' => 'platform_communications'],
-                                        ['label' => 'Platform Mail System', 'context' => 'SMTP health and fallback policy', 'href' => route('admin.platform-mail-system.index'), 'visible' => true, 'group' => 'platform_mail'],
+                                        ['label' => 'System Mail', 'context' => 'SMTP health and fallback policy', 'href' => route('admin.platform-mail-system.index'), 'visible' => true, 'group' => 'platform_mail'],
                                         ['label' => 'Local Branding', 'context' => 'School logo, colors, and portal identity', 'href' => Route::has('admin.local-branding.edit') ? route('admin.local-branding.edit') : route('admin.dashboard'), 'visible' => true, 'group' => 'local_branding'],
                                         ['label' => 'Local SMTP Settings', 'context' => 'School email delivery and SMTP test', 'href' => Route::has('admin.local-mail-settings.edit') ? route('admin.local-mail-settings.edit') : route('admin.dashboard'), 'visible' => true, 'group' => 'local_mail_settings'],
                                         ['label' => 'School Admins', 'context' => 'Create and manage local school admins', 'href' => Route::has('admin.local-admins.index') ? route('admin.local-admins.index') : route('admin.dashboard'), 'visible' => true, 'group' => 'local_dashboard'],
-                                        ['label' => 'Platform Security', 'context' => 'Email, token, logging, and production safety diagnostics', 'href' => route('admin.security.index'), 'visible' => true, 'group' => 'platform_security_diagnostics'],
+                                        ['label' => 'Security Health', 'context' => 'Email, token, logging, and production safety diagnostics', 'href' => route('admin.security.index'), 'visible' => true, 'group' => 'platform_security_diagnostics'],
                                         ['label' => 'Audit Logs', 'context' => 'Security and compliance trail', 'href' => route('admin.audit-logs.index'), 'visible' => true, 'group' => 'platform_audit'],
                                     ]
                                     : [

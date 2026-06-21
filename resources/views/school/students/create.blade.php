@@ -1,18 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="text-xl font-semibold leading-tight text-gray-900">
-                Add Student
-            </h2>
-            <p class="mt-1 text-sm text-gray-500">
-                Create a student record for {{ $school->name }}.
-            </p>
-        </div>
+        <x-ui.page-header title="Add Student" :description="'Create a student record for '.$school->name.'.'" />
     </x-slot>
 
-    <div class="py-8">
-        <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <div class="rounded-2xl bg-white p-6 shadow-sm">
+    <div class="mx-auto max-w-4xl">
+            <x-ui.form-card title="Student identity" description="Keep biodata, guardian contact, and class placement accurate for reports and attendance.">
 
                 <form method="POST" action="{{ route('school.students.store') }}" data-loading-text="Saving..." class="space-y-6">
                     @csrf
@@ -161,20 +153,17 @@
                         @enderror
                     </div>
 
-                    <div class="flex items-center justify-end gap-3">
-                        <a href="{{ route('school.students.index') }}"
-                           class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <div class="ui-action-row">
+                        <a href="{{ route('school.students.index') }}" class="ui-button-secondary">
                             Cancel
                         </a>
 
-                        <button type="submit"
-                                class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                        <button type="submit" class="ui-button-primary">
                             Save Student
                         </button>
                     </div>
                 </form>
 
-            </div>
-        </div>
+            </x-ui.form-card>
     </div>
 </x-app-layout>

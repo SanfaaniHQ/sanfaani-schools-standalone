@@ -1,44 +1,29 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-gray-900">
-                    Scratch Cards
-                </h2>
-                <p class="mt-1 text-sm text-gray-500">
-                    Generate scratch cards and download generated batches for {{ $school->name }}.
-                </p>
-            </div>
-
-            <a href="{{ route('school.scratch-cards.create') }}"
-               class="inline-flex min-h-11 items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-800">
-                Generate Cards
-            </a>
-        </div>
+        <x-ui.page-header title="Scratch Cards" :description="'Generate scratch cards and download generated batches for '.$school->name.'.'">
+            <x-slot name="actions">
+                <a href="{{ route('school.scratch-cards.create') }}" class="ui-button-primary">Generate Cards</a>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="space-y-6">
 
             @if (session('success'))
-                <div class="mb-6 rounded-xl bg-green-50 p-4 text-sm text-green-700">
-                    {{ session('success') }}
-                </div>
+                <x-ui.alert tone="success" :body="session('success')" />
             @endif
 
             @if (session('error'))
-                <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
-                    {{ session('error') }}
-                </div>
+                <x-ui.alert tone="danger" :body="session('error')" />
             @endif
 
-            <x-card class="mb-6">
+            <x-card>
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h3 class="text-base font-semibold text-slate-950">Standalone Generation</h3>
                         <p class="mt-1 text-sm text-slate-500">Generate cards immediately, or keep using the request pipeline when a school wants manual review.</p>
                     </div>
-                    <span class="inline-flex w-fit rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">Database queued</span>
+                    <x-ui.badge tone="info">Database queued</x-ui.badge>
                 </div>
 
                 <div class="mt-6 grid gap-3 text-sm md:grid-cols-4">
@@ -48,12 +33,12 @@
                         ['Download', 'Export CSV for printing'],
                         ['Track', 'Monitor use and expiry'],
                     ] as [$title, $description])
-                        <div class="relative rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <div class="relative rounded-lg border border-border-subtle bg-bg-primary p-4">
                             <div class="flex items-center gap-3">
-                                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-700 shadow-sm">{{ $loop->iteration }}</span>
+                                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-bg-secondary text-xs font-bold text-text-primary shadow-sm">{{ $loop->iteration }}</span>
                                 <div>
-                                    <p class="font-semibold text-slate-950">{{ $title }}</p>
-                                    <p class="mt-1 text-xs text-slate-500">{{ $description }}</p>
+                                    <p class="font-semibold text-text-primary">{{ $title }}</p>
+                                    <p class="mt-1 text-xs text-text-secondary">{{ $description }}</p>
                                 </div>
                             </div>
                         </div>
@@ -61,69 +46,44 @@
                 </div>
             </x-card>
 
-            <div class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <x-card>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Available Cards</p>
-                    <p class="mt-2 text-2xl font-bold text-slate-950">{{ number_format($scratchSummary['cards_unused'] ?? 0) }}</p>
-                    <p class="mt-1 text-sm text-slate-500">{{ number_format($scratchSummary['cards_total'] ?? 0) }} total cards</p>
-                </x-card>
-                <x-card>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Used Cards</p>
-                    <p class="mt-2 text-2xl font-bold text-slate-950">{{ number_format($scratchSummary['cards_used'] ?? 0) }}</p>
-                    <p class="mt-1 text-sm text-slate-500">{{ number_format($scratchSummary['usage_last_30_days'] ?? 0) }} checks in 30 days</p>
-                </x-card>
-                <x-card>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending Requests</p>
-                    <p class="mt-2 text-2xl font-bold text-slate-950">{{ number_format($scratchSummary['pending_requests'] ?? 0) }}</p>
-                    <p class="mt-1 text-sm text-slate-500">Awaiting review or payment</p>
-                </x-card>
-                <x-card>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Expiring Soon</p>
-                    <p class="mt-2 text-2xl font-bold text-slate-950">{{ number_format($scratchSummary['cards_expiring_soon'] ?? 0) }}</p>
-                    <p class="mt-1 text-sm text-slate-500">Within the next 14 days</p>
-                </x-card>
+            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <x-ui.stat-card label="Available Cards" :value="number_format($scratchSummary['cards_unused'] ?? 0)" :meta="number_format($scratchSummary['cards_total'] ?? 0).' total cards'" />
+                <x-ui.stat-card label="Used Cards" :value="number_format($scratchSummary['cards_used'] ?? 0)" :meta="number_format($scratchSummary['usage_last_30_days'] ?? 0).' checks in 30 days'" tone="success" />
+                <x-ui.stat-card label="Pending Requests" :value="number_format($scratchSummary['pending_requests'] ?? 0)" meta="Awaiting review or payment" tone="warning" />
+                <x-ui.stat-card label="Expiring Soon" :value="number_format($scratchSummary['cards_expiring_soon'] ?? 0)" meta="Within the next 14 days" tone="danger" />
             </div>
 
-            <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="ui-filter-bar">
                 <form method="GET" action="{{ route('school.scratch-cards.index') }}" class="grid gap-3 md:grid-cols-4">
-                    <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search batch or payment reference" class="rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 md:col-span-2">
-                    <select name="status" class="rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search batch or payment reference" class="ui-input md:col-span-2">
+                    <select name="status" class="ui-input">
                         <option value="">All statuses</option>
                         @foreach (['pending_payment', 'pending_approval', 'generated', 'revoked'] as $status)
                             <option value="{{ $status }}" @selected(($filters['status'] ?? '') === $status)>{{ str($status)->replace('_', ' ')->title() }}</option>
                         @endforeach
                     </select>
-                    <div class="flex gap-2">
-                        <button type="submit" class="inline-flex flex-1 items-center justify-center rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Filter</button>
-                        <a href="{{ route('school.scratch-cards.index') }}" class="inline-flex items-center justify-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Reset</a>
+                    <div class="flex items-end gap-2">
+                        <button type="submit" class="ui-button-primary">Filter</button>
+                        <a href="{{ route('school.scratch-cards.index') }}" class="ui-button-secondary">Reset</a>
                     </div>
                 </form>
             </div>
 
-            <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div class="border-b border-slate-200 px-6 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">
-                        Scratch Card Batches
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Direct batches are generated immediately. Request batches remain visible until approved or generated.
-                    </p>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200">
-                        <thead class="sticky top-0 bg-slate-50">
+            <x-ui.table-card title="Scratch Card Batches" description="Direct batches are generated immediately. Request batches remain visible until approved or generated.">
+                <div class="hidden overflow-x-auto sm:block">
+                    <table class="enterprise-table">
+                        <thead>
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Batch</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Context</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Cards</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Payment</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
+                                <th>Batch</th>
+                                <th>Context</th>
+                                <th>Cards</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th class="text-right">Action</th>
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y divide-slate-100 bg-white">
+                        <tbody>
                             @forelse ($batches as $batch)
                                 @php
                                     $statusClass = match ($batch->status) {
@@ -133,54 +93,54 @@
                                         default => 'bg-amber-50 text-amber-800 ring-amber-600/20',
                                     };
                                 @endphp
-                                <tr class="transition hover:bg-slate-50">
-                                    <td class="px-6 py-4">
-                                        <div class="font-medium text-gray-900">
+                                <tr>
+                                    <td>
+                                        <div class="font-medium text-text-primary">
                                             {{ $batch->title ?? 'Batch #' . $batch->id }}
                                         </div>
-                                        <div class="text-sm text-gray-500">
+                                        <div class="text-sm text-text-secondary">
                                             {{ $batch->batch_code ?? 'Pending batch code' }}
                                         </div>
-                                        <div class="text-xs text-gray-500">
+                                        <div class="text-xs text-text-tertiary">
                                             Requested: {{ $batch->created_at->format('d M Y, h:i A') }}
                                         </div>
                                     </td>
 
-                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                    <td class="text-sm text-text-secondary">
                                         Class: {{ $batch->schoolClass->name ?? 'All / General' }} {{ $batch->schoolClass->section ?? '' }}<br>
                                         Session: {{ $batch->academicSession->name ?? 'General' }}<br>
                                         Term: {{ $batch->term->name ?? 'General' }}<br>
                                         Type: {{ $batch->result_type ?? 'General' }}
                                     </td>
 
-                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                    <td class="text-sm text-text-secondary">
                                         Requested: {{ $batch->quantity }}<br>
                                         Generated: {{ $batch->cards_count }}<br>
                                         Used: {{ $batch->used_cards_count }}
                                     </td>
 
-                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                    <td class="text-sm text-text-secondary">
                                         {{ $batch->currency }} {{ number_format($batch->amount, 2) }}<br>
                                         {{ ucfirst(str_replace('_', ' ', $batch->payment_status)) }}<br>
                                         {{ $batch->payment_method ? ucfirst(str_replace('_', ' ', $batch->payment_method)) : 'No method' }}
                                     </td>
 
-                                    <td class="px-6 py-4">
+                                    <td>
                                         <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ $statusClass }}">
                                             {{ ucfirst(str_replace('_', ' ', $batch->status)) }}
                                         </span>
                                     </td>
 
-                                    <td class="px-6 py-4 text-right">
+                                    <td class="text-right">
                                         <div class="flex justify-end gap-3">
                                             <a href="{{ route('school.scratch-cards.show', $batch) }}"
-                                               class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                               class="text-sm font-semibold text-brand-primary hover:text-brand-hover">
                                                 View
                                             </a>
 
                                             @if ($batch->status === 'generated' && $batch->cards_count > 0)
                                                 <a href="{{ route('school.scratch-cards.download', $batch) }}"
-                                                   class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                   class="text-sm font-semibold text-text-primary hover:text-brand-primary">
                                                     CSV
                                                 </a>
                                             @endif
@@ -189,14 +149,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center">
-                                        <x-empty-state title="No scratch card batches yet" description="Submit the first scratch card request and track it here until cards are generated.">
-                                            <x-slot name="action">
-                                                <a href="{{ route('school.scratch-cards.create') }}" class="inline-flex min-h-11 items-center justify-center rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-                                                    Generate Cards
-                                                </a>
-                                            </x-slot>
-                                        </x-empty-state>
+                                    <td colspan="6" class="px-6 py-12">
+                                        <x-ui.empty-state title="No scratch card batches yet" body="Submit the first scratch card request and track it here until cards are generated." :action-href="route('school.scratch-cards.create')" action-label="Generate Cards" />
                                     </td>
                                 </tr>
                             @endforelse
@@ -204,11 +158,54 @@
                     </table>
                 </div>
 
-                <div class="border-t border-slate-200 px-6 py-4">
-                    {{ $batches->links() }}
-                </div>
-            </div>
+                <div class="space-y-3 p-3 sm:hidden">
+                    @forelse ($batches as $batch)
+                        <article class="enterprise-mobile-card">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <h3 class="font-semibold text-text-primary">{{ $batch->title ?? 'Batch #' . $batch->id }}</h3>
+                                    <p class="mt-1 text-sm text-text-secondary">{{ $batch->batch_code ?? 'Pending batch code' }}</p>
+                                    <p class="mt-1 text-xs text-text-tertiary">Requested: {{ $batch->created_at->format('d M Y, h:i A') }}</p>
+                                </div>
+                                <x-ui.badge :status="$batch->status" />
+                            </div>
 
-        </div>
+                            <dl class="mt-4 grid gap-3 text-sm">
+                                <div>
+                                    <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Context</dt>
+                                    <dd class="mt-1 text-text-primary">
+                                        Class: {{ $batch->schoolClass->name ?? 'All / General' }} {{ $batch->schoolClass->section ?? '' }}
+                                        <span class="block text-text-secondary">Session: {{ $batch->academicSession->name ?? 'General' }}</span>
+                                        <span class="block text-text-secondary">Term: {{ $batch->term->name ?? 'General' }}</span>
+                                    </dd>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Cards</dt>
+                                        <dd class="mt-1 text-text-primary">Requested: {{ $batch->quantity }}<br>Generated: {{ $batch->cards_count }}<br>Used: {{ $batch->used_cards_count }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Payment</dt>
+                                        <dd class="mt-1 text-text-primary">{{ $batch->currency }} {{ number_format($batch->amount, 2) }}<br>{{ ucfirst(str_replace('_', ' ', $batch->payment_status)) }}</dd>
+                                    </div>
+                                </div>
+                            </dl>
+
+                            <div class="mt-4 grid gap-2">
+                                <a href="{{ route('school.scratch-cards.show', $batch) }}" class="ui-button-secondary">View</a>
+                                @if ($batch->status === 'generated' && $batch->cards_count > 0)
+                                    <a href="{{ route('school.scratch-cards.download', $batch) }}" class="ui-button-secondary">CSV</a>
+                                @endif
+                            </div>
+                        </article>
+                    @empty
+                        <x-ui.empty-state title="No scratch card batches yet" body="Submit the first scratch card request and track it here until cards are generated." :action-href="route('school.scratch-cards.create')" action-label="Generate Cards" />
+                    @endforelse
+                </div>
+
+                <x-slot name="footer">
+                    {{ $batches->links() }}
+                </x-slot>
+            </x-ui.table-card>
     </div>
 </x-app-layout>

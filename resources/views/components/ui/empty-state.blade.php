@@ -5,9 +5,13 @@
     'actionLabel' => null,
 ])
 
-<div {{ $attributes->merge(['class' => 'rounded-md border border-dashed border-border-subtle bg-bg-primary p-6 text-center sm:p-8']) }}>
-    <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle bg-bg-secondary text-brand-primary" aria-hidden="true">
-        <span class="h-2 w-2 rounded-full bg-current"></span>
+<div {{ $attributes->merge(['class' => 'rounded-lg border border-dashed border-border-subtle bg-bg-primary p-6 text-center sm:p-8']) }}>
+    <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-lg border border-border-subtle bg-bg-secondary text-brand-primary" aria-hidden="true">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6h16"></path>
+            <path d="M4 12h10"></path>
+            <path d="M4 18h7"></path>
+        </svg>
     </div>
     <p class="mt-4 text-base font-semibold text-text-primary">{{ $title }}</p>
     @if ($body)

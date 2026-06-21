@@ -13,7 +13,7 @@
 
         @if ($title)
             <div class="mt-1 flex min-w-0 flex-wrap items-center gap-2">
-                <h1 class="min-w-0 text-xl font-semibold leading-tight text-text-primary">{{ $title }}</h1>
+                <h1 class="min-w-0 text-2xl font-semibold leading-tight text-text-primary sm:text-3xl">{{ $title }}</h1>
                 @if ($badge)
                     <x-ui.badge tone="brand">{{ $badge }}</x-ui.badge>
                 @endif
@@ -32,7 +32,7 @@
     </div>
 
     @isset($actions)
-        <div class="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+        <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
             {{ $actions }}
         </div>
     @endisset

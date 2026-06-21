@@ -1,14 +1,15 @@
 @props(['href', 'active' => false, 'icon' => 'circle'])
 
 @php
-    $base = 'group flex min-h-11 items-center gap-3 rounded-md border-s-2 px-3 py-2.5 text-sm font-medium transition duration-200 ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary';
+    $base = 'group flex min-h-11 items-center gap-3 rounded-md border-s-2 px-3 py-2.5 text-sm font-medium transition duration-200 ease-default focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-secondary';
     $state = $active
-        ? 'border-brand-primary bg-bg-secondary text-text-primary'
-        : 'border-transparent text-text-secondary hover:bg-bg-secondary hover:text-text-primary';
+        ? 'border-brand-primary bg-brand-primary/10 text-text-primary shadow-sm'
+        : 'border-transparent text-text-secondary hover:bg-bg-tertiary hover:text-text-primary';
 @endphp
 
 <a href="{{ $href }}" {{ $attributes->merge(['class' => $base . ' ' . $state]) }} @if ($active) aria-current="page" @endif>
-    <svg aria-hidden="true" class="h-4 w-4 shrink-0 {{ $active ? 'text-brand-primary' : 'text-text-tertiary group-hover:text-text-primary' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md {{ $active ? 'bg-brand-primary text-white' : 'bg-bg-tertiary text-text-tertiary group-hover:text-text-primary' }}">
+    <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         @switch($icon)
             @case('activity')
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
@@ -97,6 +98,7 @@
                 <circle cx="12" cy="12" r="4"></circle>
         @endswitch
     </svg>
+    </span>
 
     <span class="truncate">{{ $slot }}</span>
 </a>

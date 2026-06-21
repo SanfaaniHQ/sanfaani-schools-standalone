@@ -7,9 +7,9 @@
             $schoolWorkspaceContext = $workspaceService->defaultSchoolContextFor(auth()->user());
         @endphp
         <x-ui.page-header
-            :title="$headerIsLocal ? __('ui.installation_admin') : 'Platform Dashboard'"
+            :title="$headerIsLocal ? __('ui.installation_admin') : __('ui.installation_admin')"
             :eyebrow="$headerIsLocal ? __('ui.local_admin_console') : null"
-            :description="$headerIsLocal ? 'Local Admin Console for license, backups, diagnostics, branding, SMTP, and school administrator setup.' : 'Production control for '.$platformSettings->platform_name"
+            :description="$headerIsLocal ? 'Local Admin Console for license, backups, diagnostics, branding, SMTP, and school administrator setup.' : 'Local system control for '.$platformSettings->platform_name"
         >
             <x-slot name="actions">
                 @if ($schoolWorkspaceContext && ($schoolWorkspaceContext['role_name'] ?? null) === 'school_admin')
@@ -44,15 +44,17 @@
             ['title' => 'School Subscriptions', 'body' => 'Assign plans and track subscription health.', 'href' => route('admin.school-subscriptions.index'), 'group' => 'platform_subscriptions'],
             ['title' => 'Scratch Card Requests', 'body' => 'Approve batches, confirm payments, and generate cards.', 'href' => route('admin.scratch-card-requests.index'), 'group' => 'platform_scratch_cards'],
             ['title' => 'Plans', 'body' => 'Manage plan limits and feature availability.', 'href' => route('admin.subscription-plans.index'), 'group' => 'platform_subscriptions'],
+            ['title' => 'System Status', 'body' => 'Review local installation status, environment readiness, and operational health.', 'href' => route('admin.system.status'), 'group' => 'system_status'],
             ['title' => 'Leads', 'body' => 'Review demo and contact requests, then create a school workspace when the client is ready.', 'href' => route('admin.lead-requests.index'), 'group' => 'platform_onboarding'],
             ['title' => 'Marketing Pipeline', 'body' => 'Track lead scores, activities, conversion milestones, and sales follow-up.', 'href' => route('admin.marketing.index'), 'group' => 'platform_marketing'],
             ['title' => 'Sales Tasks', 'body' => 'Review follow-up tasks for demos, trials, renewals, and managed opportunities.', 'href' => route('admin.sales.tasks.index'), 'group' => 'platform_marketing'],
             ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
-            ['title' => 'Platform Updates', 'body' => 'Review platform update packages, preflight checks, and rollback plans.', 'href' => route('admin.updates.index'), 'group' => 'platform_updates'],
-            ['title' => 'Platform Backups', 'body' => 'Review backup metadata, verification status, retention, and restore guidance.', 'href' => route('admin.backups.index'), 'group' => 'platform_backups'],
-            ['title' => 'Platform Performance', 'body' => 'Review hosting, cache, queue, log, asset, and query readiness diagnostics.', 'href' => route('admin.performance.index'), 'group' => 'platform_performance'],
-            ['title' => 'Platform Security', 'body' => 'Review production error exposure, outbound email, logging, and token safety diagnostics.', 'href' => route('admin.security.index'), 'group' => 'platform_security_diagnostics'],
-            ['title' => 'Platform Branding', 'body' => 'Manage platform name, logo, colors, footer text, and white-label readiness.', 'href' => route('admin.branding.edit'), 'group' => 'platform_branding'],
+            ['title' => 'Support', 'body' => 'Review local support threads, escalations, and installation help requests.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
+            ['title' => 'Updates', 'body' => 'Review update packages, preflight checks, and rollback plans.', 'href' => route('admin.updates.index'), 'group' => 'platform_updates'],
+            ['title' => 'Backups', 'body' => 'Review backup metadata, verification status, retention, and restore guidance.', 'href' => route('admin.backups.index'), 'group' => 'platform_backups'],
+            ['title' => 'Diagnostics', 'body' => 'Review hosting, cache, queue, log, asset, and query readiness diagnostics.', 'href' => route('admin.performance.index'), 'group' => 'platform_performance'],
+            ['title' => 'Security Health', 'body' => 'Review production error exposure, outbound email, logging, and token safety diagnostics.', 'href' => route('admin.security.index'), 'group' => 'platform_security_diagnostics'],
+            ['title' => 'Local Branding', 'body' => 'Manage installation name, logo, colors, footer text, and white-label readiness.', 'href' => route('admin.branding.edit'), 'group' => 'platform_branding'],
             ['title' => 'Local School Settings', 'body' => 'School identity and owner settings for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
             ['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license'],
             ['title' => 'Local-First Offline Status', 'body' => 'Review standalone edition, installer, license, local database, and sync readiness.', 'href' => route('admin.standalone.status'), 'group' => 'standalone_status'],
@@ -69,7 +71,7 @@
             ['title' => 'Managed Performance', 'body' => 'Review client hosting limits, queues, logs, assets, and database readiness recommendations.', 'href' => route('admin.performance.index'), 'group' => 'managed_performance'],
             ['title' => 'Managed Security', 'body' => 'Review client email safety, logging redaction, token expiry, and production error posture.', 'href' => route('admin.security.index'), 'group' => 'managed_security'],
             ['title' => 'Managed Branding', 'body' => 'Coordinate managed client identity, logo, favicon, colors, and white-label controls.', 'href' => route('admin.branding.edit'), 'group' => 'managed_branding'],
-            ['title' => 'Audit Logs', 'body' => 'Read platform and school action history.', 'href' => route('admin.audit-logs.index'), 'group' => 'platform_audit'],
+            ['title' => 'Audit Logs', 'body' => 'Read installation and school action history.', 'href' => route('admin.audit-logs.index'), 'group' => 'platform_audit'],
             ['title' => 'System Maintenance', 'body' => 'Clear caches, optimize Laravel, and manage backups.', 'href' => route('admin.system-maintenance.index'), 'group' => 'system_maintenance'],
         ])->filter(fn ($module) => $behavior->allowsRouteGroup($module['group'], user: $user));
     @endphp
@@ -102,7 +104,7 @@
                         </a>
                     @empty
                         <x-ui.empty-state
-                            :title="$isLocalDashboard ? 'No urgent installation tasks' : 'No urgent platform tasks'"
+                            :title="$isLocalDashboard ? 'No urgent installation tasks' : 'No urgent system tasks'"
                             :body="$isLocalDashboard ? 'License, backup, update, system health, and school setup items will appear here when they need attention.' : 'New demo requests, contact requests, payments, and school setup items will appear here when they need attention.'"
                             class="p-4 sm:p-5"
                         />

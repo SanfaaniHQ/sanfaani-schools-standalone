@@ -47,6 +47,17 @@
         ['title' => 'Promotions', 'body' => 'Move students across sessions without losing history.', 'href' => route('school.student-promotions.index'), 'feature' => 'student.promote'],
         ['title' => 'User Management', 'body' => 'Staff accounts, roles, and feature access.', 'href' => route('school.staff.index'), 'feature' => null],
     ];
+
+    $primaryActions = [
+        ['title' => 'Students', 'body' => 'Profiles and Student 360', 'href' => route('school.students.index'), 'feature' => 'students.view'],
+        ['title' => 'Staff', 'body' => 'Teachers and users', 'href' => route('school.staff.index'), 'feature' => null],
+        ['title' => 'Results', 'body' => 'Entry and publishing', 'href' => route('school.result-system.index'), 'feature' => 'results.manual_entry'],
+        ['title' => 'Live Classes', 'body' => 'Schedule sessions', 'href' => route('school.live-classes.index'), 'feature' => 'live_classes.view'],
+        ['title' => 'Scratch Cards', 'body' => 'Generate and track', 'href' => route('school.scratch-cards.index'), 'feature' => null],
+        ['title' => 'Messages', 'body' => 'Direct conversations', 'href' => route('portal.conversations.index'), 'feature' => null],
+        ['title' => 'Support', 'body' => 'School support center', 'href' => route('school.support.index'), 'feature' => 'support.manage'],
+        ['title' => 'Role Permissions', 'body' => 'Access controls', 'href' => route('school.role-permissions.index'), 'feature' => 'school.roles.manage'],
+    ];
 @endphp
 
 <div class="space-y-6">
@@ -102,6 +113,23 @@
                 @endforelse
             </div>
         </x-ui.panel>
+    </section>
+
+    <section>
+        <div class="mb-3 flex flex-col gap-1">
+            <h3 class="text-lg font-semibold text-text-primary">Daily shortcuts</h3>
+            <p class="text-sm text-text-secondary">Frequent school operations first, optimized for one-handed mobile use.</p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            @foreach ($primaryActions as $action)
+                @if (! $action['feature'] || app(\App\Services\SchoolAuthorizationService::class)->can(auth()->user(), $school, $action['feature']))
+                    <a href="{{ $action['href'] }}" class="group rounded-lg border border-border-subtle bg-bg-secondary p-4 shadow-sm transition hover:border-border-hover hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-primary">
+                        <span class="block text-base font-semibold text-text-primary">{{ $action['title'] }}</span>
+                        <span class="mt-1 block text-sm text-text-secondary">{{ $action['body'] }}</span>
+                    </a>
+                @endif
+            @endforeach
+        </div>
     </section>
 
     @if (! $standaloneSummary && (! $activeSession || ! $activeTerm || $totalClasses === 0 || $totalSubjects === 0 || $totalStudents === 0))

@@ -3,7 +3,7 @@
     'description' => null,
 ])
 
-<section {{ $attributes->merge(['class' => 'rounded-md border border-border-subtle bg-bg-secondary p-5 shadow-sm sm:p-6']) }}>
+<section {{ $attributes->merge(['class' => 'rounded-lg border border-border-subtle bg-bg-secondary p-5 shadow-sm sm:p-6']) }}>
     @if ($title || $description || isset($actions))
         <div class="mb-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0">
@@ -15,7 +15,7 @@
                 @endif
             </div>
             @isset($actions)
-                <div class="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+                <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
                     {{ $actions }}
                 </div>
             @endisset

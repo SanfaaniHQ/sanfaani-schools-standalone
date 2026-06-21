@@ -12,13 +12,11 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-text-primary">{{ $isEdit ? 'Edit Live Class' : 'Schedule Live Class' }}</h2>
-                <p class="mt-1 text-sm text-text-secondary">Manual provider links remain active. Provider automation is not active yet.</p>
-            </div>
-            <a href="{{ $isEdit ? route('school.live-classes.show', $liveClass) : route('school.live-classes.index') }}" class="ui-button-secondary">Cancel</a>
-        </div>
+        <x-ui.page-header :title="$isEdit ? 'Edit Live Class' : 'Schedule Live Class'" description="Manual provider links remain active. Provider automation is not active yet.">
+            <x-slot name="actions">
+                <a href="{{ $isEdit ? route('school.live-classes.show', $liveClass) : route('school.live-classes.index') }}" class="ui-button-secondary">Cancel</a>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="grid gap-6 lg:grid-cols-[1fr_24rem]">
@@ -204,7 +202,8 @@
                 </div>
             </x-ui.panel>
 
-            <div class="flex justify-end">
+            <div class="ui-action-row">
+                <a href="{{ $isEdit ? route('school.live-classes.show', $liveClass) : route('school.live-classes.index') }}" class="ui-button-secondary">Cancel</a>
                 <button class="ui-button-primary">{{ $isEdit ? 'Save Live Class' : 'Schedule Live Class' }}</button>
             </div>
         </form>

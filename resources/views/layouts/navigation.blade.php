@@ -87,7 +87,7 @@
                     @if (Auth::user()->hasRole('super_admin'))
                         @if ($canGroup('platform_settings') || $canGroup('local_school_settings'))
                             <x-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
-                                {{ $canGroup('local_school_settings') ? 'Local School Settings' : 'Platform Settings' }}
+                                {{ $canGroup('local_school_settings') ? 'Local School Settings' : __('ui.system_settings') }}
                             </x-nav-link>
                         @endif
                         @if ($canGroup('platform_result_system'))
@@ -220,7 +220,7 @@
             @if (Auth::user()->hasRole('super_admin'))
                 @if ($canGroup('platform_settings') || $canGroup('local_school_settings'))
                     <x-responsive-nav-link :href="route('admin.platform-settings.edit')" :active="request()->routeIs('admin.platform-settings.*')">
-                        {{ $canGroup('local_school_settings') ? 'Local School Settings' : 'Platform Settings' }}
+                        {{ $canGroup('local_school_settings') ? 'Local School Settings' : __('ui.system_settings') }}
                     </x-responsive-nav-link>
                 @endif
                 @if ($canGroup('platform_result_system'))
