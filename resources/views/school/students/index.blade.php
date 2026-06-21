@@ -4,51 +4,37 @@
     @endphp
 
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-xl font-semibold leading-tight text-gray-900">
-                    Students
-                </h2>
-                <p class="mt-1 text-sm text-gray-500">
-                    Manage student records for {{ $school->name }}.
-                </p>
-            </div>
-
+        <x-ui.page-header title="Students" :description="'Manage student records, classes, guardians, and archive status for '.$school->name.'.'">
             @if ($canManageStudents)
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('school.students.upload.index') }}"
-                       class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <x-slot name="actions">
+                    <a href="{{ route('school.students.upload.index') }}" class="ui-button-secondary">
                         Bulk Upload
                     </a>
 
-                    <a href="{{ route('school.students.create') }}"
-                       class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                    <a href="{{ route('school.students.create') }}" class="ui-button-primary">
                         Add Student
                     </a>
-                </div>
+                </x-slot>
             @endif
-        </div>
+        </x-ui.page-header>
     </x-slot>
 
-    <div class="py-8">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="space-y-6">
 
             @if (session('success'))
-                <div class="mb-6 rounded-xl bg-green-50 p-4 text-sm text-green-700">
-                    {{ session('success') }}
-                </div>
+                <x-ui.alert tone="success" :body="session('success')" />
             @endif
 
-            <div class="mb-6 rounded-2xl bg-white p-4 shadow-sm">
-                <form method="GET" action="{{ route('school.students.index') }}" class="grid gap-3 lg:grid-cols-5">
+            <div class="ui-filter-bar">
+                <form method="GET" action="{{ route('school.students.index') }}" class="grid gap-3 lg:grid-cols-6">
                     <input type="text"
                            name="search"
                            value="{{ $search }}"
                            placeholder="Search by name, admission number, or guardian phone"
-                           class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900 lg:col-span-2">
+                           class="ui-input lg:col-span-2">
 
                     <select name="academic_session_id"
-                            class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            class="ui-input">
                         <option value="">Current class view</option>
                         @foreach ($academicSessions as $academicSession)
                             <option value="{{ $academicSession->id }}" @selected((int) $selectedAcademicSessionId === (int) $academicSession->id)>
@@ -58,7 +44,7 @@
                     </select>
 
                     <select name="school_class_id"
-                            class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                            class="ui-input">
                         <option value="">All classes</option>
                         @foreach ($classes as $class)
                             <option value="{{ $class->id }}" @selected((int) $selectedClassId === (int) $class->id)>
@@ -68,66 +54,55 @@
                     </select>
 
                     @if ($canManageStudents)
-                        <label class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700">
-                            <input type="checkbox" name="include_archived" value="1" @checked($includeArchived) class="rounded border-gray-300 text-gray-900">
-                            Archived
+                        <label class="flex min-h-11 items-center gap-2 whitespace-nowrap rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-sm font-medium text-text-secondary">
+                            <input type="checkbox" name="include_archived" value="1" @checked($includeArchived) class="rounded border-border-subtle text-brand-primary">
+                            <span>Archived</span>
                         </label>
                     @endif
 
-                    <button type="submit"
-                            class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+                    <button type="submit" class="ui-button-primary">
                         Search
                     </button>
 
                     @if ($search || $selectedAcademicSessionId || $selectedClassId)
-                        <a href="{{ route('school.students.index') }}"
-                           class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <a href="{{ route('school.students.index') }}" class="ui-button-secondary">
                             Clear
                         </a>
                     @endif
                 </form>
             </div>
 
-            <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
-                <div class="border-b border-gray-100 px-6 py-4">
-                    <h3 class="text-base font-semibold text-gray-900">
-                        Student List
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Total students: {{ $students->total() }}
-                    </p>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-gray-50">
+            <x-ui.table-card title="Student List" :description="'Total students: '.$students->total()">
+                <div class="hidden overflow-x-auto sm:block">
+                    <table class="enterprise-table">
+                        <thead>
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Student</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Admission No.</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Class</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Guardian</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">Action</th>
+                                <th>Student</th>
+                                <th>Admission No.</th>
+                                <th>Class</th>
+                                <th>Guardian</th>
+                                <th>Status</th>
+                                <th class="text-right">Action</th>
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y divide-gray-100 bg-white">
+                        <tbody>
                             @forelse ($students as $student)
                                 <tr>
-                                    <td class="px-6 py-4">
-                                        <div class="font-medium text-gray-900">
+                                    <td>
+                                        <div class="font-medium text-text-primary">
                                             {{ $student->fullName() }}
                                         </div>
-                                        <div class="text-sm text-gray-500">
+                                        <div class="text-sm text-text-secondary">
                                             {{ ucfirst($student->gender ?? 'Not specified') }}
                                         </div>
                                     </td>
 
-                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                    <td class="text-sm text-text-secondary">
                                         {{ $student->admission_number }}
                                     </td>
 
-                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                    <td class="text-sm text-text-secondary">
                                         @php($currentClass = $student->currentEnrollment?->schoolClass ?? $student->schoolClass)
                                         @if ($currentClass)
                                             {{ $currentClass->name }}
@@ -135,30 +110,30 @@
                                                 {{ $currentClass->section }}
                                             @endif
                                             @if ($student->currentEnrollment?->academicSession)
-                                                <div class="mt-1 text-xs text-gray-500">{{ $student->currentEnrollment->academicSession->name }}</div>
+                                                <div class="mt-1 text-xs text-text-tertiary">{{ $student->currentEnrollment->academicSession->name }}</div>
                                             @endif
                                         @else
                                             No class
                                         @endif
                                     </td>
 
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900">
+                                    <td>
+                                        <div class="text-sm text-text-primary">
                                             {{ $student->guardian_name ?? 'No guardian name' }}
                                         </div>
-                                        <div class="text-sm text-gray-500">
+                                        <div class="text-sm text-text-secondary">
                                             {{ $student->guardian_phone ?? 'No phone' }}
                                         </div>
                                     </td>
 
-                                    <td class="px-6 py-4">
+                                    <td>
                                         <x-status-badge :status="$student->trashed() ? 'archived' : $student->status" />
                                     </td>
 
-                                    <td class="px-6 py-4 text-right">
+                                    <td class="text-right">
                                         <div class="flex justify-end gap-3">
                                             <a href="{{ route('school.students.show', $student) }}"
-                                               class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                               class="text-sm font-semibold text-brand-primary hover:text-brand-hover">
                                                 View
                                             </a>
 
@@ -169,13 +144,13 @@
                                                           data-confirm="Restore this student?"
                                                           data-loading-text="Restoring...">
                                                         @csrf
-                                                        <button type="submit" class="text-sm font-medium text-green-700 hover:text-green-500">
+                                                        <button type="submit" class="text-sm font-semibold text-emerald-700 hover:text-emerald-500">
                                                             Restore
                                                         </button>
                                                     </form>
                                                 @else
                                                     <a href="{{ route('school.students.edit', $student) }}"
-                                                       class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                                                       class="text-sm font-semibold text-text-primary hover:text-brand-primary">
                                                         Edit
                                                     </a>
 
@@ -185,7 +160,7 @@
                                                           data-loading-text="Archiving...">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" class="text-sm font-medium text-red-700 hover:text-red-500">
+                                                        <button type="submit" class="text-sm font-semibold text-rose-700 hover:text-rose-500">
                                                             Archive
                                                         </button>
                                                     </form>
@@ -196,11 +171,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center">
-                                        <p class="text-sm font-medium text-gray-900">No students yet.</p>
-                                        <p class="mt-1 text-sm text-gray-500">
-                                            Create the first student record for this school.
-                                        </p>
+                                    <td colspan="6" class="px-6 py-12">
+                                        <x-ui.empty-state title="No students yet" body="Create the first student record for this school." />
                                     </td>
                                 </tr>
                             @endforelse
@@ -208,11 +180,69 @@
                     </table>
                 </div>
 
-                <div class="border-t border-gray-100 px-6 py-4">
-                    {{ $students->links() }}
-                </div>
-            </div>
+                <div class="space-y-3 p-3 sm:hidden">
+                    @forelse ($students as $student)
+                        @php($currentClass = $student->currentEnrollment?->schoolClass ?? $student->schoolClass)
+                        <article class="enterprise-mobile-card">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <h3 class="font-semibold text-text-primary">{{ $student->fullName() }}</h3>
+                                    <p class="mt-1 text-sm text-text-secondary">{{ $student->admission_number }}</p>
+                                </div>
+                                <x-status-badge :status="$student->trashed() ? 'archived' : $student->status" />
+                            </div>
 
-        </div>
+                            <dl class="mt-4 grid gap-3 text-sm">
+                                <div>
+                                    <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Class</dt>
+                                    <dd class="mt-1 text-text-primary">
+                                        @if ($currentClass)
+                                            {{ $currentClass->name }} {{ $currentClass->section }}
+                                            @if ($student->currentEnrollment?->academicSession)
+                                                <span class="block text-xs text-text-tertiary">{{ $student->currentEnrollment->academicSession->name }}</span>
+                                            @endif
+                                        @else
+                                            No class
+                                        @endif
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Guardian</dt>
+                                    <dd class="mt-1 text-text-primary">
+                                        {{ $student->guardian_name ?? 'No guardian name' }}
+                                        <span class="block text-text-secondary">{{ $student->guardian_phone ?? 'No phone' }}</span>
+                                    </dd>
+                                </div>
+                            </dl>
+
+                            <div class="mt-4 grid gap-2">
+                                <a href="{{ route('school.students.show', $student) }}" class="ui-button-secondary">View</a>
+
+                                @if ($canManageStudents)
+                                    @if ($student->trashed())
+                                        <form method="POST" action="{{ route('school.students.restore', $student->id) }}" data-confirm="Restore this student?" data-loading-text="Restoring...">
+                                            @csrf
+                                            <button type="submit" class="ui-button-secondary">Restore</button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('school.students.edit', $student) }}" class="ui-button-secondary">Edit</a>
+                                        <form method="POST" action="{{ route('school.students.destroy', $student) }}" data-confirm="Archive this student? Results will be preserved." data-loading-text="Archiving...">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="ui-button-danger">Archive</button>
+                                        </form>
+                                    @endif
+                                @endif
+                            </div>
+                        </article>
+                    @empty
+                        <x-ui.empty-state title="No students yet" body="Create the first student record for this school." />
+                    @endforelse
+                </div>
+
+                <x-slot name="footer">
+                    {{ $students->links() }}
+                </x-slot>
+            </x-ui.table-card>
     </div>
 </x-app-layout>

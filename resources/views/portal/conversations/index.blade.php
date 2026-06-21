@@ -16,8 +16,7 @@
         ];
     @endphp
 
-    <div class="py-6">
-        <div class="mx-auto grid max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
+    <div class="grid gap-6 lg:grid-cols-3">
             <div class="lg:col-span-1">
                 <x-ui.form-section :title="__('ui.start_conversation')" :description="__('ui.start_conversation_intro')">
                     @if ($errors->any())
@@ -81,7 +80,7 @@
                         <div class="divide-y">
                             @foreach ($conversations as $conversation)
                                 <a href="{{ route('portal.conversations.show', ['conversationId' => $conversation->id]) }}" class="block p-5 transition hover:bg-bg-tertiary">
-                                    <div class="flex items-start justify-between gap-4">
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                         <div class="min-w-0">
                                             <h4 class="truncate font-semibold text-text-primary">{{ $conversation->subject }}</h4>
                                             <p class="mt-1 text-sm text-text-secondary">
@@ -104,6 +103,5 @@
                     @endif
                 </x-ui.table-card>
             </div>
-        </div>
     </div>
 </x-app-layout>

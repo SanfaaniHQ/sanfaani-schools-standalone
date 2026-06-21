@@ -6,7 +6,7 @@
     $activeRoleContext = auth()->check() ? app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user()) : null;
     $topbarBehavior = app(\App\Services\System\DeploymentBehaviorService::class);
     $workspaceLabel = $activeRoleContext === 'super_admin'
-        ? ($topbarBehavior->allowsRouteGroup('local_dashboard', user: auth()->user()) ? 'Installation Workspace' : __('ui.platform_workspace'))
+        ? __('ui.installation_admin')
         : __('ui.school_workspace');
     $routeName = request()->route()?->getName();
     $breadcrumbLabel = $routeName ? str($routeName)->replace(['.', '-'], ' ')->title()->toString() : __('ui.workspace');
@@ -31,7 +31,7 @@
         : __('ui.workspace');
 @endphp
 
-<header class="sticky top-0 z-20 border-b border-border-subtle bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/85">
+<header class="sticky top-0 z-20 border-b border-border-subtle bg-bg-secondary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-secondary/88">
     <div class="flex min-h-16 flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6 lg:px-8">
         <div class="flex min-w-0 items-center gap-3">
             <button type="button" @click="sidebarOpen = true" class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary lg:hidden" aria-label="{{ __('ui.open_navigation') }}">
@@ -99,9 +99,9 @@
                             role="dialog"
                             aria-modal="true"
                             aria-labelledby="workspace-switcher-title"
-                            class="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/55 px-4 py-6 backdrop-blur-[1px] sm:items-center sm:py-10"
+                            class="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-4 backdrop-blur-sm sm:items-center sm:py-10"
                         >
-                            <section class="w-full max-w-lg overflow-hidden rounded-md border border-border-subtle bg-bg-secondary shadow-2xl">
+                            <section class="w-full max-w-lg overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary shadow-2xl">
                                 <div class="flex items-start justify-between gap-4 border-b border-border-subtle px-4 py-3">
                                     <div class="min-w-0">
                                         <p id="workspace-switcher-title" class="text-sm font-semibold text-text-primary">{{ __('ui.workspace_switcher_title') }}</p>
@@ -139,11 +139,11 @@
                                     @endforeach
                                 </div>
                                 <div class="flex flex-col gap-2 border-t border-border-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <a href="{{ route('role-context.index') }}" class="inline-flex min-h-8 items-center rounded-md px-2 text-xs font-semibold text-brand-primary transition hover:bg-bg-tertiary hover:text-brand-hover">
+                                    <a href="{{ route('role-context.index') }}" class="inline-flex min-h-10 items-center justify-center rounded-md px-3 text-xs font-semibold text-brand-primary transition hover:bg-bg-tertiary hover:text-brand-hover">
                                         {{ __('ui.manage_role_contexts') }}
                                     </a>
                                     @if ($installationAdminContext)
-                                        <a href="{{ route('admin.dashboard') }}" class="inline-flex min-h-8 items-center justify-center rounded-md border border-border-subtle px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary">
+                                        <a href="{{ route('admin.dashboard') }}" class="inline-flex min-h-10 items-center justify-center rounded-md border border-border-subtle px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary">
                                             {{ __('ui.installation_admin') }}
                                         </a>
                                     @endif
@@ -156,6 +156,11 @@
                 @if ($installationAdminContext)
                     <a href="{{ route('admin.dashboard') }}" class="hidden h-10 items-center rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary md:inline-flex">
                         {{ __('ui.installation_admin') }}
+                    </a>
+                    <a href="{{ route('admin.dashboard') }}" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary md:hidden" aria-label="{{ __('ui.installation_admin') }}">
+                        <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+                        </svg>
                     </a>
                 @endif
 

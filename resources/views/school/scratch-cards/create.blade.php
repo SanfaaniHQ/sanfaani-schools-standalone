@@ -1,18 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="text-xl font-semibold leading-tight text-gray-900">
-                Request Scratch Cards
-            </h2>
-            <p class="mt-1 text-sm text-gray-500">
-                Generate scratch cards directly or submit a request for {{ $school->name }}.
-            </p>
-        </div>
+        <x-ui.page-header title="Request Scratch Cards" :description="'Generate scratch cards directly or submit a request for '.$school->name.'.'" />
     </x-slot>
 
-    <div class="py-8">
-        <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            <x-card class="p-6 sm:p-8">
+    <div class="mx-auto max-w-4xl">
+            <x-ui.form-card title="Scratch-card batch details" description="Choose the academic context, generation mode, quantity, and payment note for this batch.">
                 <form method="POST" action="{{ route('school.scratch-cards.store') }}" data-loading-text="Submitting..." class="space-y-6">
                     @csrf
 
@@ -177,32 +169,28 @@
                         @enderror
                     </div>
 
-                    <div class="grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 sm:grid-cols-2">
+                    <div class="grid gap-4 rounded-lg border border-border-subtle bg-bg-primary p-4 text-sm text-text-secondary sm:grid-cols-2">
                         <div>
-                            <p class="font-semibold text-slate-950">Standalone Flow</p>
+                            <p class="font-semibold text-text-primary">Standalone Flow</p>
                             <p class="mt-1">Generate now creates paid, approved, downloadable cards immediately. Submit request keeps the older review flow available.</p>
                         </div>
-                        <div class="rounded-lg bg-white p-3 shadow-sm">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Request Summary</p>
-                            <p class="mt-1 text-2xl font-bold text-slate-950"><span data-quantity-summary>{{ old('quantity', 50) }}</span> cards</p>
+                        <div class="rounded-lg border border-border-subtle bg-bg-secondary p-3 shadow-sm">
+                            <p class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Request Summary</p>
+                            <p class="mt-1 text-2xl font-bold text-text-primary"><span data-quantity-summary>{{ old('quantity', 50) }}</span> cards</p>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3">
-                        <a href="{{ route('school.scratch-cards.index') }}"
-                           class="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <div class="ui-action-row">
+                        <a href="{{ route('school.scratch-cards.index') }}" class="ui-button-secondary">
                             Cancel
                         </a>
 
-                        <button type="submit"
-                                data-loading-text="Submitting..."
-                                class="inline-flex min-h-11 items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-gray-700">
+                        <button type="submit" data-loading-text="Submitting..." class="ui-button-primary">
                             Continue
                         </button>
                     </div>
                 </form>
-            </x-card>
-        </div>
+            </x-ui.form-card>
     </div>
 
     <script>

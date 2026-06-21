@@ -13,7 +13,7 @@
 
     <main class="min-h-[100svh] overflow-hidden bg-bg-primary text-text-primary">
         <div class="grid min-h-[100svh] lg:grid-cols-[minmax(0,1fr)_minmax(28rem,0.82fr)]">
-            <section class="relative flex min-h-[22rem] flex-col justify-between overflow-hidden bg-black px-5 py-7 text-white sm:px-8 sm:py-9 lg:min-h-[100svh] lg:px-12 lg:py-10" aria-label="Sanfaani Schools installation overview">
+            <section class="relative hidden min-h-[100svh] flex-col justify-between overflow-hidden bg-black px-12 py-10 text-white lg:flex" aria-label="Sanfaani Schools installation overview">
                 <div aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(115deg,rgba(4,120,87,0.78),rgba(0,0,0,0.76)_42%,rgba(0,0,0,0.94)),linear-gradient(rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[length:auto,44px_44px,44px_44px]"></div>
                 <div aria-hidden="true" class="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-emerald-300/40 to-transparent lg:inset-x-auto lg:inset-y-0 lg:end-0 lg:h-auto lg:w-px lg:bg-gradient-to-b"></div>
 
@@ -41,7 +41,7 @@
                         {{ data_get($resolvedBranding, 'login_subheading') ?: 'Manage license, backups, diagnostics, branding, mail, and local school settings from one secure console.' }}
                     </p>
 
-                    <div class="mt-8 grid max-w-xl gap-3 sm:grid-cols-3" aria-label="Platform trust indicators">
+                    <div class="mt-8 grid max-w-xl gap-3 sm:grid-cols-3" aria-label="Installation trust indicators">
                         <div class="rounded-lg border border-white/10 bg-white/10 p-4 shadow-sm backdrop-blur">
                             <p class="text-xs font-semibold uppercase tracking-normal text-emerald-100/80">Access</p>
                             <p class="mt-2 text-lg font-semibold text-white">Role Scoped</p>
@@ -85,7 +85,7 @@
                 </p>
             </section>
 
-            <section class="flex min-h-[calc(100svh-22rem)] items-center justify-center px-4 py-8 sm:px-6 lg:min-h-[100svh] lg:px-10" aria-labelledby="admin-login-title">
+            <section class="flex min-h-[100svh] items-center justify-center px-4 py-8 sm:px-6 lg:px-10" aria-labelledby="admin-login-title">
                 <div class="w-full max-w-md">
                     <div class="mb-6 flex items-center gap-3 lg:hidden">
                         @if ($brandLogoUrl)

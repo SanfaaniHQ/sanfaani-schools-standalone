@@ -6,12 +6,12 @@
 ])
 
 <a href="{{ $href }}"
-   {{ $attributes->merge(['class' => 'group block rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2']) }}>
+   {{ $attributes->merge(['class' => 'group block rounded-lg border border-border-subtle bg-bg-secondary p-5 shadow-sm transition hover:border-border-hover hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2 focus:ring-offset-bg-primary']) }}>
     <span class="flex min-h-full flex-col">
-        <span class="text-base font-semibold text-gray-950">{{ $title }}</span>
+        <span class="text-base font-semibold text-text-primary">{{ $title }}</span>
         @if ($description)
-            <span class="mt-2 text-sm leading-6 text-gray-600">{{ $description }}</span>
+            <span class="mt-2 text-sm leading-6 text-text-secondary">{{ $description }}</span>
         @endif
-        <span class="mt-4 text-xs font-semibold uppercase text-gray-500">{{ $meta }}</span>
+        <span class="mt-4 text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ $meta }}</span>
     </span>
 </a>

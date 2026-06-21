@@ -335,4 +335,12 @@ return [
     'save_feature_controls' => 'Enregistrer les controles',
     'save_role_permissions' => 'Enregistrer :role',
     'select_role_permissions' => 'Selectionnez les permissions attribuees a ce role.',
+    'system_operations' => 'Operations systeme',
+    'system_mail' => 'Courrier systeme',
+    'updates' => 'Mises a jour',
+    'diagnostics' => 'Diagnostics',
+    'security_health' => 'Sante securite',
+    'local_branding' => 'Identite locale',
+    'local_installation' => 'Installation locale',
+    'system_status' => 'Etat systeme',
 ];

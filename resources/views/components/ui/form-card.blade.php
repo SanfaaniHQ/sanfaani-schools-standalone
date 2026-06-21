@@ -3,9 +3,9 @@
     'description' => null,
 ])
 
-<section {{ $attributes->merge(['class' => 'overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary shadow-sm']) }}>
+<section {{ $attributes->merge(['class' => 'rounded-lg border border-border-subtle bg-bg-secondary p-5 shadow-sm sm:p-6']) }}>
     @if ($title || $description || isset($actions))
-        <div class="flex min-w-0 flex-col gap-3 border-b border-border-subtle px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="mb-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div class="min-w-0">
                 @if ($title)
                     <h3 class="text-base font-semibold text-text-primary">{{ $title }}</h3>
@@ -15,19 +15,19 @@
                 @endif
             </div>
             @isset($actions)
-                <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:justify-end">
                     {{ $actions }}
                 </div>
             @endisset
         </div>
     @endif
 
-    <div class="max-w-full overflow-x-auto" data-table-scroll>
+    <div class="space-y-5">
         {{ $slot }}
     </div>
 
     @isset($footer)
-        <div class="border-t border-border-subtle px-5 py-4">
+        <div class="mt-5 border-t border-border-subtle pt-4 text-sm text-text-secondary">
             {{ $footer }}
         </div>
     @endisset

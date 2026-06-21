@@ -33,7 +33,7 @@ class DashboardUiTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Platform Dashboard')
+            ->assertSee('Installation Admin')
             ->assertSee('ui-card');
     }
 

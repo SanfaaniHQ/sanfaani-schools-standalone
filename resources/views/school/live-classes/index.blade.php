@@ -6,22 +6,13 @@
             $liveClassLogo = data_get($liveClassBranding, 'logo_url');
             $liveClassInitials = data_get($liveClassBranding, 'initials', $school->initials());
         @endphp
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div class="flex min-w-0 gap-3">
-                @if ($liveClassLogo)
-                    <img src="{{ $liveClassLogo }}" alt="{{ $liveClassBrandName }} logo" class="h-12 w-12 shrink-0 rounded-md border border-border-subtle bg-white object-contain p-1">
-                @else
-                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-brand-primary text-sm font-semibold text-white">{{ $liveClassInitials }}</span>
-                @endif
-                <div class="min-w-0">
-                <h2 class="text-xl font-semibold leading-tight text-text-primary">Live Classes</h2>
-                <p class="mt-1 text-sm text-text-secondary">Provider-ready manual internet-based class sessions for {{ $liveClassBrandName }}.</p>
-                </div>
-            </div>
+        <x-ui.page-header title="Live Classes" :description="'Provider-ready manual internet-based class sessions for '.$liveClassBrandName.'.'">
             @if ($canManage)
-                <a href="{{ route('school.live-classes.create') }}" class="ui-button-primary">Schedule Live Class</a>
+                <x-slot name="actions">
+                    <a href="{{ route('school.live-classes.create') }}" class="ui-button-primary">Schedule Live Class</a>
+                </x-slot>
             @endif
-        </div>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="space-y-6">
@@ -45,7 +36,7 @@
             <form method="GET" action="{{ route('school.live-classes.index') }}" class="mb-5 grid gap-3 md:grid-cols-4">
                 <div>
                     <label for="status" class="block text-sm font-medium text-text-primary">Status</label>
-                    <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                    <select id="status" name="status" class="ui-input mt-1">
                         <option value="">All statuses</option>
                         @foreach ($statuses as $status)
                             <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ str($status)->title() }}</option>
@@ -54,11 +45,11 @@
                 </div>
                 <div>
                     <label for="date-from" class="block text-sm font-medium text-text-primary">From</label>
-                    <input id="date-from" name="date_from" type="date" value="{{ $filters['date_from'] ?? '' }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                    <input id="date-from" name="date_from" type="date" value="{{ $filters['date_from'] ?? '' }}" class="ui-input mt-1">
                 </div>
                 <div>
                     <label for="date-to" class="block text-sm font-medium text-text-primary">To</label>
-                    <input id="date-to" name="date_to" type="date" value="{{ $filters['date_to'] ?? '' }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-gray-900 focus:ring-gray-900">
+                    <input id="date-to" name="date_to" type="date" value="{{ $filters['date_to'] ?? '' }}" class="ui-input mt-1">
                 </div>
                 <div class="flex items-end gap-2">
                     <button class="ui-button-secondary">Filter</button>
@@ -66,41 +57,41 @@
                 </div>
             </form>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-border-subtle text-sm">
+            <div class="hidden overflow-x-auto sm:block">
+                <table class="enterprise-table">
                     <thead>
-                        <tr class="text-left text-xs uppercase tracking-normal text-text-tertiary">
-                            <th class="px-3 py-2">Title</th>
-                            <th class="px-3 py-2">Class / Subject</th>
-                            <th class="px-3 py-2">Starts</th>
-                            <th class="px-3 py-2">Teacher</th>
-                            <th class="px-3 py-2">Audience</th>
-                            <th class="px-3 py-2">Status</th>
-                            <th class="px-3 py-2 text-right">Action</th>
+                        <tr>
+                            <th>Title</th>
+                            <th>Class / Subject</th>
+                            <th>Starts</th>
+                            <th>Teacher</th>
+                            <th>Audience</th>
+                            <th>Status</th>
+                            <th class="text-right">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-border-subtle">
+                    <tbody>
                         @forelse ($liveClasses as $liveClass)
                             <tr>
-                                <td class="px-3 py-3">
+                                <td>
                                     <span class="block font-semibold text-text-primary">{{ $liveClass->title }}</span>
                                     <span class="mt-1 block text-xs text-text-tertiary">{{ $providerLabels[$liveClass->provider] ?? str($liveClass->provider)->title() }}</span>
                                 </td>
-                                <td class="px-3 py-3 text-text-secondary">
+                                <td class="text-text-secondary">
                                     {{ $liveClass->schoolClass?->name }} {{ $liveClass->schoolClass?->section }}
                                     <span class="block text-xs text-text-tertiary">{{ $liveClass->subject?->name ?? 'No subject selected' }}</span>
                                 </td>
-                                <td class="px-3 py-3 text-text-secondary">
+                                <td class="text-text-secondary">
                                     {{ $liveClass->starts_at?->format('d M Y H:i') }}
                                     <span class="block text-xs text-text-tertiary">{{ $liveClass->timezone ?: config('app.timezone') }}</span>
                                 </td>
-                                <td class="px-3 py-3 text-text-secondary">{{ $liveClass->teacher?->name ?? 'Not assigned' }}</td>
-                                <td class="px-3 py-3 text-text-secondary">
+                                <td class="text-text-secondary">{{ $liveClass->teacher?->name ?? 'Not assigned' }}</td>
+                                <td class="text-text-secondary">
                                     {{ number_format((int) ($liveClass->active_participants_count ?? 0)) }}
                                     <span class="block text-xs text-text-tertiary">participants</span>
                                 </td>
-                                <td class="px-3 py-3"><x-ui.badge :status="$liveClass->status" /></td>
-                                <td class="px-3 py-3 text-right">
+                                <td><x-ui.badge :status="$liveClass->status" /></td>
+                                <td class="text-right">
                                     <a href="{{ route('school.live-classes.show', $liveClass) }}" class="ui-button-secondary">Open</a>
                                 </td>
                             </tr>
@@ -118,6 +109,50 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+            <div class="space-y-3 sm:hidden">
+                @forelse ($liveClasses as $liveClass)
+                    <article class="enterprise-mobile-card">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="font-semibold text-text-primary">{{ $liveClass->title }}</h3>
+                                <p class="mt-1 text-xs text-text-tertiary">{{ $providerLabels[$liveClass->provider] ?? str($liveClass->provider)->title() }}</p>
+                            </div>
+                            <x-ui.badge :status="$liveClass->status" />
+                        </div>
+                        <dl class="mt-4 grid gap-3 text-sm">
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Class / Subject</dt>
+                                <dd class="mt-1 text-text-primary">
+                                    {{ $liveClass->schoolClass?->name }} {{ $liveClass->schoolClass?->section }}
+                                    <span class="block text-text-secondary">{{ $liveClass->subject?->name ?? 'No subject selected' }}</span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Starts</dt>
+                                <dd class="mt-1 text-text-primary">
+                                    {{ $liveClass->starts_at?->format('d M Y H:i') }}
+                                    <span class="block text-text-secondary">{{ $liveClass->timezone ?: config('app.timezone') }}</span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Teacher / Audience</dt>
+                                <dd class="mt-1 text-text-primary">
+                                    {{ $liveClass->teacher?->name ?? 'Not assigned' }}
+                                    <span class="block text-text-secondary">{{ number_format((int) ($liveClass->active_participants_count ?? 0)) }} participants</span>
+                                </dd>
+                            </div>
+                        </dl>
+                        <a href="{{ route('school.live-classes.show', $liveClass) }}" class="ui-button-secondary mt-4">Open</a>
+                    </article>
+                @empty
+                    <x-ui.empty-state
+                        title="No live classes yet"
+                        body="Schedule the first manual meeting link for an existing class, subject, session, or LMS context."
+                        :action-href="$canManage ? route('school.live-classes.create') : null"
+                        action-label="Schedule Live Class"
+                    />
+                @endforelse
             </div>
             <div class="mt-4">{{ $liveClasses->links() }}</div>
         </x-ui.panel>

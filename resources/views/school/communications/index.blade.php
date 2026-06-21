@@ -73,7 +73,7 @@
                 </div>
             </x-ui.panel>
 
-            <x-ui.panel :tone="$failedCount > 0 ? 'warning' : 'success'" title="Delivery Status" description="Email sends through the configured school or platform mail settings.">
+            <x-ui.panel :tone="$failedCount > 0 ? 'warning' : 'success'" title="Delivery Status" description="Email sends through the configured school or system mail settings.">
                 <div class="grid gap-4 md:grid-cols-3">
                     <div class="rounded-md border border-border-subtle bg-bg-primary p-4">
                         <p class="text-sm font-semibold text-text-primary">Failed</p>

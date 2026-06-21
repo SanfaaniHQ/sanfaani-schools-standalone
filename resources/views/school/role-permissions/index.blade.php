@@ -1,19 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="text-xl font-semibold text-gray-900">{{ __('ui.roles_permissions') }}</h2>
-            <p class="mt-1 text-sm text-gray-500">
-                {{ __('ui.role_permissions_intro') }}
-            </p>
-        </div>
+        <x-ui.page-header :title="__('ui.roles_permissions')" :description="__('ui.role_permissions_intro')" />
     </x-slot>
 
-    <div class="py-6">
-        <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+    <div class="space-y-6">
             @if (session('success'))
-                <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                    {{ session('success') }}
-                </div>
+                <x-ui.alert tone="success" :body="session('success')" />
             @endif
 
             <div class="grid gap-6 lg:grid-cols-2">
@@ -22,22 +14,22 @@
                         $rolePermissions = data_get($matrix, $roleName.'.permissions', []);
                     @endphp
 
-                    <form method="POST" action="{{ route('school.role-permissions.update') }}" class="rounded-lg border bg-white p-4 shadow-sm sm:p-5">
+                    <form method="POST" action="{{ route('school.role-permissions.update') }}" class="rounded-lg border border-border-subtle bg-bg-secondary p-4 shadow-sm sm:p-5">
                         @csrf
 
                         <input type="hidden" name="role_name" value="{{ $roleName }}">
 
                         <div class="min-w-0">
-                            <h3 class="text-lg font-semibold text-gray-900">{{ str($roleName)->replace('_', ' ')->title() }}</h3>
-                            <p class="mt-1 text-sm text-gray-500">
+                            <h3 class="text-lg font-semibold text-text-primary">{{ str($roleName)->replace('_', ' ')->title() }}</h3>
+                            <p class="mt-1 text-sm text-text-secondary">
                                 {{ __('ui.select_role_permissions') }}
                             </p>
                         </div>
 
                         <div class="mt-5 space-y-4">
                             @foreach ($permissionCatalog as $groupName => $permissions)
-                                <div class="rounded-lg border p-4">
-                                    <h4 class="text-sm font-semibold uppercase tracking-wide text-gray-500">{{ $groupName }}</h4>
+                                <div class="rounded-lg border border-border-subtle bg-bg-primary p-4">
+                                    <h4 class="text-sm font-semibold uppercase tracking-normal text-text-tertiary">{{ $groupName }}</h4>
 
                                     <div class="mt-3 space-y-2">
                                         @foreach ($permissions as $permissionName => $permission)
@@ -45,11 +37,11 @@
                                                 <input type="checkbox"
                                                        name="permissions[]"
                                                        value="{{ $permissionName }}"
-                                                       class="mt-1 shrink-0 rounded border-gray-300"
+                                                        class="mt-1 shrink-0 rounded border-border-subtle text-brand-primary"
                                                        @checked(in_array($permissionName, $rolePermissions, true))>
                                                 <span class="min-w-0">
-                                                    <span class="block font-medium text-gray-800">{{ $permission['label'] }}</span>
-                                                    <span class="block text-xs text-gray-500">{{ $permission['description'] }}</span>
+                                                    <span class="block font-medium text-text-primary">{{ $permission['label'] }}</span>
+                                                    <span class="block text-xs text-text-secondary">{{ $permission['description'] }}</span>
                                                 </span>
                                             </label>
                                         @endforeach
@@ -58,12 +50,11 @@
                             @endforeach
                         </div>
 
-                        <button type="submit" class="mt-5 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 sm:w-auto">
+                        <button type="submit" class="ui-button-primary mt-5 w-full sm:w-auto">
                             {{ __('ui.save_role_permissions', ['role' => str($roleName)->replace('_', ' ')->title()]) }}
                         </button>
                     </form>
                 @endforeach
             </div>
-        </div>
     </div>
 </x-app-layout>

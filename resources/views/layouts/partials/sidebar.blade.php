@@ -14,9 +14,7 @@
     $authz = app(\App\Services\SchoolAuthorizationService::class);
     $behavior = app(\App\Services\System\DeploymentBehaviorService::class);
     $isSuperAdmin = $roleContext === 'super_admin' && ! $schoolService->inSupportMode($user);
-    $superAdminWorkspaceLabel = $behavior->allowsRouteGroup('local_dashboard', $school, $user)
-        ? 'Installation Admin'
-        : __('ui.platform_operations');
+    $superAdminWorkspaceLabel = __('ui.installation_admin');
     $can = fn (?string $feature) => ! $feature || ($school && $authz->can($user, $school, $feature));
     $canGroup = fn (?string $routeGroup) => ! $routeGroup || $behavior->allowsRouteGroup($routeGroup, $school, $user);
     $item = function (string $label, string $route, string $active, string $icon, ?string $feature = null, ?string $routeGroup = null, array $parameters = []) use ($can, $canGroup) {
@@ -31,32 +29,32 @@
 
     if ($isSuperAdmin) {
         $navSections = [
-            __('ui.platform') => [
+            __('ui.installation_admin') => [
                 $item(__('ui.dashboard'), 'admin.dashboard', 'admin.dashboard', 'home', null, 'platform_dashboard'),
                 $item(__('ui.schools'), 'admin.schools.index', 'admin.schools.*', 'users', null, 'platform_schools'),
                 $item(__('ui.plans'), 'admin.subscription-plans.index', 'admin.subscription-plans.*', 'layout-grid', null, 'platform_subscriptions'),
                 $item(__('ui.subscriptions'), 'admin.school-subscriptions.index', 'admin.school-subscriptions.*', 'wallet', null, 'platform_subscriptions'),
                 $item(__('ui.global_analytics'), 'admin.result-system.index', 'admin.result-system.*', 'bar-chart', null, 'platform_result_system'),
             ],
-            __('ui.operations') => [
+            __('ui.system_operations') => [
                 $item(__('ui.scratch_card_requests'), 'admin.scratch-card-requests.index', 'admin.scratch-card-requests.*', 'credit-card', null, 'platform_scratch_cards'),
                 $item(__('ui.leads'), 'admin.lead-requests.index', 'admin.lead-requests.*', 'activity', null, 'platform_onboarding'),
                 $item('Demo Sessions', 'admin.demo.index', 'admin.demo.*', 'activity', null, 'demo_sessions'),
                 $item('Onboarding Progress', 'admin.onboarding.progress', 'admin.onboarding.*', 'activity', null, 'guided_onboarding'),
                 $item(__('ui.communication_center'), 'admin.communications.index', 'admin.communications.index', 'mail', null, 'platform_communications'),
                 $item(__('ui.communication_logs'), 'admin.communications.logs', 'admin.communications.logs', 'clipboard-list', null, 'platform_communications'),
-                $item(__('ui.platform_mail_system'), 'admin.platform-mail-system.index', 'admin.platform-mail-system.*', 'mail', null, 'platform_mail'),
+                $item(__('ui.system_mail'), 'admin.platform-mail-system.index', 'admin.platform-mail-system.*', 'mail', null, 'platform_mail'),
                 $item(__('ui.support_escalation'), 'admin.support-threads.index', 'admin.support-threads.*', 'activity', null, 'platform_support'),
-                $item('Platform Updates', 'admin.updates.index', 'admin.updates.*', 'archive', null, 'platform_updates'),
-                $item('Platform Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'platform_backups'),
-                $item('Platform Performance', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'platform_performance'),
-                $item('Platform Security', 'admin.security.index', 'admin.security.*', 'shield', null, 'platform_security_diagnostics'),
-                $item('Platform Branding', 'admin.branding.edit', 'admin.branding.*', 'layout-grid', null, 'platform_branding'),
+                $item(__('ui.updates'), 'admin.updates.index', 'admin.updates.*', 'archive', null, 'platform_updates'),
+                $item(__('ui.backups'), 'admin.backups.index', 'admin.backups.*', 'archive', null, 'platform_backups'),
+                $item(__('ui.diagnostics'), 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'platform_performance'),
+                $item(__('ui.security_health'), 'admin.security.index', 'admin.security.*', 'shield', null, 'platform_security_diagnostics'),
+                $item(__('ui.local_branding'), 'admin.branding.edit', 'admin.branding.*', 'layout-grid', null, 'platform_branding'),
                 $item(__('ui.backups'), 'admin.system-maintenance.index', 'admin.system-maintenance.*', 'archive', null, 'system_maintenance'),
-                $item(__('System Status'), 'admin.system.status', 'admin.system.*', 'settings', null, 'system_status'),
+                $item(__('ui.system_status'), 'admin.system.status', 'admin.system.*', 'settings', null, 'system_status'),
             ],
-            'Local Installation' => [
-                $item('Local Dashboard', 'admin.dashboard', 'admin.dashboard', 'home', null, 'local_dashboard'),
+            __('ui.local_installation') => [
+                $item(__('ui.local_admin_console'), 'admin.dashboard', 'admin.dashboard', 'home', null, 'local_dashboard'),
                 $item('Local School Settings', 'admin.platform-settings.edit', 'admin.platform-settings.*', 'settings', null, 'local_school_settings'),
                 $item('Local Branding', 'admin.local-branding.edit', 'admin.local-branding.*', 'layout-grid', null, 'local_branding'),
                 $item('Local SMTP Settings', 'admin.local-mail-settings.edit', 'admin.local-mail-settings.*', 'mail', null, 'local_mail_settings'),
@@ -209,12 +207,12 @@
 <div x-cloak x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] lg:hidden" aria-hidden="true"></div>
 
 <aside
-    class="fixed inset-y-0 start-0 z-50 flex h-dvh w-64 max-w-[85vw] ltr:-translate-x-full rtl:translate-x-full flex-col border-e border-border-subtle bg-bg-primary shadow-xl transition-transform duration-300 ease-default lg:!translate-x-0 lg:shadow-none"
+    class="fixed inset-y-0 start-0 z-50 flex h-dvh w-72 max-w-[88vw] ltr:-translate-x-full rtl:translate-x-full flex-col border-e border-border-subtle bg-bg-secondary shadow-xl transition-transform duration-300 ease-default lg:!translate-x-0 lg:shadow-none"
     :class="sidebarOpen ? '!translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'"
     :aria-hidden="(!sidebarOpen && window.innerWidth < 1024).toString()"
     aria-label="Sidebar navigation"
 >
-    <div class="flex h-16 items-center gap-3 border-b border-border-subtle px-4">
+    <div class="flex min-h-20 items-center gap-3 border-b border-border-subtle px-4">
         @if ($brandLogo)
             <img src="{{ $brandLogo }}" alt="{{ $brandName }} logo" class="h-10 w-10 rounded-md border border-border-subtle bg-bg-secondary object-contain p-1">
         @else
