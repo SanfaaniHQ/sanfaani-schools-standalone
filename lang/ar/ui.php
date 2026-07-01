@@ -56,6 +56,7 @@ return [
     'log_in' => 'تسجيل الدخول',
     'logout' => 'تسجيل الخروج',
     'installation_admin' => 'Installation Admin',
+    'installation_admin_intro' => 'أدر إعدادات التثبيت والتشخيصات بشكل منفصل عن أدوار المدرسة.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
     'mail_settings' => 'إعدادات البريد',
