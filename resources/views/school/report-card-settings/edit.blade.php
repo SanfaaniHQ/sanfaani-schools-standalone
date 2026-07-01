@@ -23,7 +23,7 @@
 
                     <section class="rounded-2xl bg-white p-6 shadow-sm">
                         <h3 class="text-base font-semibold text-gray-900">Branding</h3>
-                        <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                        <div class="responsive-form-grid mt-5 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Template</label>
                                 <select name="report_card_template_id" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
@@ -53,7 +53,7 @@
 
                     <section class="rounded-2xl bg-white p-6 shadow-sm">
                         <h3 class="text-base font-semibold text-gray-900">Header Layout</h3>
-                        <div class="mt-5 grid gap-6 sm:grid-cols-3">
+                        <div class="mt-5 grid gap-6 md:grid-cols-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Header Type</label>
                                 <select name="header_type" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900">
@@ -83,7 +83,7 @@
 
                     <section class="rounded-2xl bg-white p-6 shadow-sm">
                         <h3 class="text-base font-semibold text-gray-900">Student Information and Result Table</h3>
-                        <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div class="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                             @foreach ([
                                 'show_logo' => 'Show logo',
                                 'show_school_address' => 'Show address',
@@ -102,7 +102,7 @@
 
                     <section class="rounded-2xl bg-white p-6 shadow-sm">
                         <h3 class="text-base font-semibold text-gray-900">Signatures</h3>
-                        <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                        <div class="responsive-form-grid mt-5 gap-6">
                             <div class="space-y-4">
                                 <label class="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-sm font-medium text-gray-700">
                                     <input type="checkbox" name="show_class_teacher" value="1" @checked(old('show_class_teacher', $settings->show_class_teacher)) class="rounded border-gray-300 text-gray-900">
@@ -127,7 +127,7 @@
 
                     <section class="rounded-2xl bg-white p-6 shadow-sm">
                         <h3 class="text-base font-semibold text-gray-900">Automated Comments</h3>
-                        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                        <div class="responsive-form-grid mt-5 gap-3">
                             <label class="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-sm font-medium text-gray-700">
                                 <input type="checkbox" name="enable_auto_class_teacher_comment" value="1" @checked(old('enable_auto_class_teacher_comment', $settings->enable_auto_class_teacher_comment)) class="rounded border-gray-300 text-gray-900">
                                 Auto class teacher comment

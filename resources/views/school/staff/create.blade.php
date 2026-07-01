@@ -16,7 +16,7 @@
                 <form method="POST" action="{{ route('school.staff.store') }}" data-loading-text="{{ __('ui.creating_account') }}" class="space-y-6">
                     @csrf
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('ui.name') }}</label>
                             <input type="text" name="name" value="{{ old('name') }}"
@@ -37,7 +37,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('ui.role') }}</label>
                             <select name="role"

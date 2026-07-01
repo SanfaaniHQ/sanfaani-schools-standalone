@@ -204,9 +204,13 @@
         ->filter(fn ($items) => $items->isNotEmpty());
 @endphp
 
-<div x-cloak x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] lg:hidden" aria-hidden="true"></div>
+<div x-cloak x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false; $nextTick(() => $refs.navigationToggle?.focus())" class="fixed inset-0 z-40 bg-black/60 backdrop-blur-[1px] lg:hidden" aria-hidden="true"></div>
 
 <aside
+    id="primary-sidebar"
+    x-ref="sidebar"
+    data-mobile-drawer
+    tabindex="-1"
     class="fixed inset-y-0 start-0 z-50 flex h-dvh w-72 max-w-[88vw] ltr:-translate-x-full rtl:translate-x-full flex-col border-e border-border-subtle bg-bg-secondary shadow-xl transition-transform duration-300 ease-default lg:!translate-x-0 lg:shadow-none"
     :class="sidebarOpen ? '!translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full'"
     :aria-hidden="(!sidebarOpen && window.innerWidth < 1024).toString()"
@@ -226,7 +230,7 @@
                 {{ $isSuperAdmin ? $superAdminWorkspaceLabel : str($roleContext ?: __('ui.workspace'))->replace('_', ' ')->title() }}
             </p>
         </div>
-        <button type="button" @click="sidebarOpen = false" class="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-tertiary hover:bg-bg-secondary hover:text-text-primary lg:hidden" aria-label="{{ __('ui.close_navigation') }}">
+        <button type="button" @click="sidebarOpen = false; $nextTick(() => $refs.navigationToggle?.focus())" class="inline-flex h-11 w-11 items-center justify-center rounded-md text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary lg:hidden" aria-label="{{ __('ui.close_navigation') }}">
             <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 6 6 18"></path>
                 <path d="m6 6 12 12"></path>
@@ -234,7 +238,7 @@
         </button>
     </div>
 
-    <nav class="flex-1 space-y-6 overflow-y-auto overscroll-contain px-3 py-5" aria-label="Main">
+    <nav class="flex-1 space-y-6 overflow-y-auto overscroll-contain px-3 py-5" aria-label="Main" @click="if ($event.target.closest('a')) sidebarOpen = false">
         @foreach ($navSections as $sectionLabel => $items)
             <section class="space-y-1" aria-labelledby="nav-{{ \Illuminate\Support\Str::slug($sectionLabel) }}">
                 <h2 id="nav-{{ \Illuminate\Support\Str::slug($sectionLabel) }}" class="px-3 text-xs font-semibold uppercase tracking-normal text-text-muted">{{ $sectionLabel }}</h2>

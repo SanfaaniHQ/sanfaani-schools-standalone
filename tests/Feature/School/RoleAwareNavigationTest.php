@@ -119,12 +119,66 @@ class RoleAwareNavigationTest extends TestCase
             ->assertSee('Switch Role')
             ->assertSee('workspace-switcher-popup')
             ->assertSee('fixed inset-0 z-[80]', false)
+            ->assertSee('data-role-switcher="segmented"', false)
+            ->assertSee('overflow-x-auto', false)
+            ->assertSee('flex-nowrap', false)
+            ->assertSee('data-role-name="school_admin"', false)
+            ->assertSee('data-role-name="teacher"', false)
+            ->assertSee('data-state="active"', false)
+            ->assertSee('aria-current="true"', false)
+            ->assertSee('action="'.route('workspace.store').'"', false)
             ->assertSee('School Admin')
             ->assertSee('Teacher')
             ->assertSee('Installation Admin')
+            ->assertDontSee('data-role-name="super_admin"', false)
             ->assertDontSee('Super Admin')
             ->assertDontSee('Support mode:')
             ->assertDontSee('Support access active');
+    }
+
+    public function test_role_context_page_renders_mobile_safe_segmented_school_role_buttons(): void
+    {
+        $school = $this->createSchool();
+        $owner = $this->createUserForSchool($school, 'school_admin');
+        $schoolRoles = ['teacher', 'parent', 'student', 'result_officer', 'accountant'];
+
+        foreach ($schoolRoles as $roleName) {
+            Role::findOrCreate($roleName);
+            $owner->assignRole($roleName);
+
+            UserSchoolRole::create([
+                'user_id' => $owner->id,
+                'school_id' => $school->id,
+                'role_name' => $roleName,
+                'status' => 'active',
+            ]);
+        }
+
+        Role::findOrCreate('super_admin');
+        $owner->assignRole('super_admin');
+
+        $this->actAsSchoolRole($owner, $school, 'school_admin');
+
+        $response = $this->get(route('role-context.index'))
+            ->assertOk()
+            ->assertSee('data-role-switcher="segmented"', false)
+            ->assertSee('role="group"', false)
+            ->assertSee('overflow-x-auto', false)
+            ->assertSee('flex-nowrap', false)
+            ->assertSee('role-segment-button-active', false)
+            ->assertSee('data-state="active"', false)
+            ->assertSee('aria-current="true"', false)
+            ->assertSee('disabled', false)
+            ->assertSee('action="'.route('role-context.switch').'"', false)
+            ->assertSee('data-installation-admin-action', false)
+            ->assertSee('href="'.route('admin.dashboard').'"', false)
+            ->assertDontSee('data-role-name="super_admin"', false)
+            ->assertDontSee('Support mode:')
+            ->assertDontSee('Support access active');
+
+        foreach (['school_admin', ...$schoolRoles] as $roleName) {
+            $response->assertSee('data-role-name="'.$roleName.'"', false);
+        }
     }
 
     public function test_school_admin_sidebar_preserves_core_standalone_items(): void

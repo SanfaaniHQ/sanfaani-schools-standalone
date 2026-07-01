@@ -32,7 +32,7 @@
     </div>
 
     @isset($actions)
-        <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+        <div class="responsive-action-row w-full shrink-0 sm:w-auto sm:flex-wrap">
             {{ $actions }}
         </div>
     @endisset

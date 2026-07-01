@@ -12,7 +12,7 @@
             Ask your hosting provider or email provider for the mail host, port, encryption, username, password, sender email, and sender name. You can continue with a safe log setting and configure live email after login if needed.
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="responsive-form-grid">
             <label class="block text-sm">
                 <span class="font-semibold text-text-primary">Email delivery</span>
                 <select name="mailer" class="mt-1 w-full rounded-md border-border-subtle">

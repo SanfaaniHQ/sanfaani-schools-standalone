@@ -22,7 +22,7 @@
                     @enderror
                 </div>
 
-                <div class="grid gap-5 sm:grid-cols-2">
+                <div class="responsive-form-grid gap-5">
                     <div>
                         <label for="category" class="block text-sm font-medium text-text-primary">Category</label>
                         <select id="category" name="category" class="ui-input mt-2 @error('category') border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 @enderror">
@@ -49,7 +49,7 @@
                 </div>
 
                 @if ($canDirectEscalate)
-                    <div class="grid gap-5 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-5">
                         <div>
                             <label for="route_to" class="block text-sm font-medium text-text-primary">Route to</label>
                             <select id="route_to" name="route_to" class="ui-input mt-2 @error('route_to') border-rose-500 focus:border-rose-500 focus:ring-rose-500/20 @enderror">

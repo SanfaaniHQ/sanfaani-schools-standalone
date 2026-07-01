@@ -7,7 +7,7 @@
             <p class="mt-2 text-sm text-text-secondary">This page checks whether the portal can reach the school database using the saved hosting credentials. It does not show database usernames, passwords, or host secrets.</p>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="responsive-form-grid gap-3">
             <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
                 <p class="text-xs uppercase tracking-normal text-text-muted">Connection</p>
                 <p class="mt-1 text-sm font-semibold text-text-primary">{{ $status['connection'] }}</p>

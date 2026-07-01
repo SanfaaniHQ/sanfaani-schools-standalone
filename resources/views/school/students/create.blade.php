@@ -9,7 +9,7 @@
                 <form method="POST" action="{{ route('school.students.store') }}" data-loading-text="Saving..." class="space-y-6">
                     @csrf
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Admission Number</label>
                             <input type="text" name="admission_number" value="{{ old('admission_number') }}"
@@ -47,7 +47,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-3">
+                    <div class="grid gap-6 md:grid-cols-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">First Name</label>
                             <input type="text" name="first_name" value="{{ old('first_name') }}"
@@ -76,7 +76,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-3">
+                    <div class="grid gap-6 md:grid-cols-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Gender</label>
                             <select name="gender"
@@ -115,7 +115,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-3">
+                    <div class="grid gap-6 md:grid-cols-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Guardian Name</label>
                             <input type="text" name="guardian_name" value="{{ old('guardian_name') }}"

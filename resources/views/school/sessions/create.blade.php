@@ -27,7 +27,7 @@
                         @enderror
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Start Date</label>
                             <input type="date" name="starts_at" value="{{ old('starts_at') }}"

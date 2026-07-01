@@ -48,7 +48,7 @@
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">Contact Details</h3>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Email</label>
                             <input type="email" name="email" value="{{ old('email', $school->email) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
@@ -72,7 +72,7 @@
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">Language and Logo</h3>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Default Language</label>
                             <select name="default_language" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
@@ -100,7 +100,7 @@
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">Branding and Result Checker</h3>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Sender Email</label>
                             <input type="email" name="sender_email" value="{{ old('sender_email', $school->sender_email ?: $school->email) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
@@ -114,7 +114,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Primary Color</label>
                             <input type="color" name="primary_color" value="{{ old('primary_color', $school->primary_color ?: '#047857') }}" class="mt-1 h-12 w-full rounded-xl border border-gray-300">
@@ -134,7 +134,7 @@
                         @error('school_motto')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <label class="flex items-center gap-3 rounded-xl border border-gray-200 p-4 text-sm font-medium text-gray-700">
                             <input type="checkbox" name="is_result_checker_enabled" value="1" @checked(old('is_result_checker_enabled', $school->is_result_checker_enabled)) class="rounded border-gray-300 text-emerald-700 shadow-sm focus:ring-emerald-700">
                             Enable public result checker
@@ -156,7 +156,7 @@
                         @error('custom_css')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
 
-                    <div class="mt-6 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-6 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Favicon</label>
                             <input type="file" name="favicon_upload" accept=".ico,.jpg,.jpeg,.png,.webp" class="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-800">
@@ -173,7 +173,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-6 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-6 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Login Background</label>
                             <input type="file" name="login_background_upload" accept=".jpg,.jpeg,.png,.webp" class="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-800">

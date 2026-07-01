@@ -17,7 +17,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Name</label>
                             <input type="text" name="name" value="{{ old('name', $staff->name) }}"
@@ -37,7 +37,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Role</label>
                             <select name="role"
@@ -64,7 +64,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">New Password</label>
                             <input type="password" name="password"

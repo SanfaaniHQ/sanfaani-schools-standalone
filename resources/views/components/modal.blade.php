@@ -50,8 +50,12 @@ $maxWidth = [
     x-show="show"
     class="fixed inset-0 z-50 overflow-y-auto px-4 py-4 sm:px-0 sm:py-6"
     style="display: {{ $show ? 'block' : 'none' }};"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ str($name)->replace('-', ' ')->title() }}"
 >
     <div
+        data-modal-backdrop
         x-show="show"
         class="fixed inset-0 transform transition-all"
         x-on:click="show = false"
@@ -66,6 +70,7 @@ $maxWidth = [
     </div>
 
     <div
+        data-modal-surface
         x-show="show"
         class="mx-auto mb-6 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-lg border border-border-subtle bg-bg-secondary text-text-primary shadow-xl transform transition-all sm:w-full {{ $maxWidth }}"
         x-transition:enter="ease-out duration-300"

@@ -55,7 +55,7 @@
         <div
             x-data="{ sidebarOpen: false, commandPaletteOpen: false, notificationsOpen: false }"
             x-on:sanfaani:open-command-palette.window="commandPaletteOpen = true; $nextTick(() => $refs.commandSearch?.focus())"
-            x-on:keydown.escape.window="sidebarOpen = false; commandPaletteOpen = false; notificationsOpen = false"
+            x-on:keydown.escape.window="if (sidebarOpen) { sidebarOpen = false; $nextTick(() => $refs.navigationToggle?.focus()) } commandPaletteOpen = false; notificationsOpen = false"
             x-on:resize.window="if (window.innerWidth >= 1024) sidebarOpen = false"
             x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen); document.body.classList.toggle('overflow-hidden', sidebarOpen)"
             class="min-h-screen overflow-x-clip bg-bg-primary"

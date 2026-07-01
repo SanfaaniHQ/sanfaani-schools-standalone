@@ -8,7 +8,7 @@
             <p class="mt-2 text-sm text-text-secondary">Create the first school admin login for this portal. Use a real email address and share the password through a secure handover process.</p>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="responsive-form-grid">
             <label class="block text-sm">
                 <span class="font-semibold text-text-primary">Name</span>
                 <input name="name" value="{{ old('name', $admin['name'] ?? '') }}" class="mt-1 w-full rounded-md border-border-subtle" required>

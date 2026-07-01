@@ -15,7 +15,7 @@
                 @endif
             </div>
             @isset($actions)
-                <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+                <div class="responsive-action-row shrink-0 sm:flex-wrap">
                     {{ $actions }}
                 </div>
             @endisset

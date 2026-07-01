@@ -54,7 +54,7 @@
                     </div>
                 @endforeach
 
-                <div class="sticky bottom-4 rounded-lg border border-border-subtle bg-bg-secondary/95 p-4 shadow-lg backdrop-blur">
+                <div class="mobile-sticky-actions bottom-0 rounded-lg sm:bottom-4">
                     <button type="submit" class="ui-button-primary w-full sm:w-auto">
                         {{ __('ui.save_feature_controls') }}
                     </button>

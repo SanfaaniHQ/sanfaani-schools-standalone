@@ -8,7 +8,7 @@
             <p class="mt-2 text-sm text-text-secondary">Enter the school details that staff, parents, applicants, and reports will see inside this portal.</p>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
+        <div class="responsive-form-grid">
             <label class="block text-sm sm:col-span-2">
                 <span class="font-semibold text-text-primary">School name</span>
                 <input name="name" value="{{ old('name', $school['name'] ?? '') }}" class="mt-1 w-full rounded-md border-border-subtle" required>

@@ -38,7 +38,7 @@
                         @enderror
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Email</label>
                             <input type="email" name="email" value="{{ old('email', $school->email) }}"
@@ -91,7 +91,7 @@
                         @enderror
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Default Language</label>
                             <select name="default_language"
@@ -115,7 +115,7 @@
                         </label>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Status</label>
                             <select name="status"

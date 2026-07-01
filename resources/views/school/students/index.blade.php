@@ -73,7 +73,7 @@
             </div>
 
             <x-ui.table-card title="Student List" :description="'Total students: '.$students->total()">
-                <div class="hidden overflow-x-auto sm:block">
+                <div class="safe-scroll-x hidden rounded-none border-0 shadow-none sm:block">
                     <table class="enterprise-table">
                         <thead>
                             <tr>
@@ -180,10 +180,10 @@
                     </table>
                 </div>
 
-                <div class="space-y-3 p-3 sm:hidden">
+                <div class="mobile-card-list p-3 sm:hidden">
                     @forelse ($students as $student)
                         @php($currentClass = $student->currentEnrollment?->schoolClass ?? $student->schoolClass)
-                        <article class="enterprise-mobile-card">
+                        <article class="enterprise-mobile-card mobile-table-card">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
                                     <h3 class="font-semibold text-text-primary">{{ $student->fullName() }}</h3>

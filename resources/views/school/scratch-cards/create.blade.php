@@ -20,7 +20,7 @@
                         @enderror
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Class</label>
                             <select name="school_class_id"
@@ -54,7 +54,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Term</label>
                             <select name="term_id"
@@ -83,7 +83,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Generation Mode</label>
                             <select name="generation_mode"
@@ -116,7 +116,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Max Uses Per Card</label>
                             <input type="number"
@@ -169,7 +169,7 @@
                         @enderror
                     </div>
 
-                    <div class="grid gap-4 rounded-lg border border-border-subtle bg-bg-primary p-4 text-sm text-text-secondary sm:grid-cols-2">
+                    <div class="responsive-form-grid rounded-lg border border-border-subtle bg-bg-primary p-4 text-sm text-text-secondary">
                         <div>
                             <p class="font-semibold text-text-primary">Standalone Flow</p>
                             <p class="mt-1">Generate now creates paid, approved, downloadable cards immediately. Submit request keeps the older review flow available.</p>
