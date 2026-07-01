@@ -18,7 +18,7 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Student</label>
                             <select name="student_id"
@@ -52,7 +52,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Academic Session</label>
                             <select name="academic_session_id"
@@ -86,7 +86,7 @@
                         </div>
                     </div>
 
-                    <div class="grid gap-6 sm:grid-cols-3">
+                    <div class="grid gap-6 md:grid-cols-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">CA Score</label>
                             <input type="number" step="0.01" min="0" max="40" name="ca_score" value="{{ old('ca_score', $studentResult->ca_score) }}"

@@ -42,7 +42,7 @@
                     <h3 class="text-base font-semibold text-gray-900">Class Teacher Assignments</h3>
                     <p class="mt-1 text-sm text-gray-500">Class teachers can prepare results for assigned classes, subject review still remains controlled.</p>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="safe-scroll-x rounded-none border-0 shadow-none" role="region" aria-label="Class teacher assignments" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                             <tr>
@@ -95,7 +95,7 @@
                     <h3 class="text-base font-semibold text-gray-900">Subject Teacher Assignments</h3>
                     <p class="mt-1 text-sm text-gray-500">Subject teachers can enter scores only for their assigned subject and optional class context.</p>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="safe-scroll-x rounded-none border-0 shadow-none" role="region" aria-label="Subject teacher assignments" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                             <tr>

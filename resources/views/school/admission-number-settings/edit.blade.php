@@ -27,7 +27,7 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="grid gap-6 sm:grid-cols-2">
+                        <div class="responsive-form-grid gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Prefix</label>
                                 <input type="text"
@@ -55,7 +55,7 @@
                             </div>
                         </div>
 
-                        <div class="grid gap-6 sm:grid-cols-3">
+                        <div class="grid gap-6 md:grid-cols-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Year Format</label>
                                 <input type="text"
@@ -98,7 +98,7 @@
                             </div>
                         </div>
 
-                        <div class="grid gap-6 sm:grid-cols-3">
+                        <div class="grid gap-6 md:grid-cols-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Suffix</label>
                                 <input type="text"

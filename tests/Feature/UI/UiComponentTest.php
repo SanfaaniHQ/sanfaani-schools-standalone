@@ -78,6 +78,7 @@ class UiComponentTest extends TestCase
 
         $this->assertStringContainsString('Records', $html);
         $this->assertStringContainsString('overflow-x-auto', $html);
+        $this->assertStringContainsString('safe-scroll-x', $html);
         $this->assertStringContainsString('Row', $html);
     }
 
@@ -88,6 +89,17 @@ class UiComponentTest extends TestCase
         $this->assertStringContainsString('Identity', $html);
         $this->assertStringContainsString('Brand fields', $html);
         $this->assertStringContainsString('name="brand_name"', $html);
+    }
+
+    public function test_modal_component_has_mobile_safe_dialog_semantics(): void
+    {
+        $html = Blade::render('<x-modal name="confirm-action"><div>Confirm action</div></x-modal>');
+
+        $this->assertStringContainsString('role="dialog"', $html);
+        $this->assertStringContainsString('aria-modal="true"', $html);
+        $this->assertStringContainsString('data-modal-backdrop', $html);
+        $this->assertStringContainsString('data-modal-surface', $html);
+        $this->assertStringContainsString('max-h-[calc(100dvh-2rem)]', $html);
     }
 
     public function test_settings_card_component_renders(): void
@@ -130,6 +142,25 @@ class UiComponentTest extends TestCase
 
         $this->assertStringContainsString('sm:', $source);
         $this->assertStringContainsString('overflow-x-auto', $source);
+        $this->assertStringContainsString('responsive-action-row', $source);
+        $this->assertStringContainsString('safe-scroll-x', $source);
         $this->assertStringContainsString('min-w-0', $source);
+    }
+
+    public function test_mobile_first_utility_patterns_are_defined(): void
+    {
+        $css = (string) file_get_contents(resource_path('css/app.css'));
+
+        foreach ([
+            '.mobile-card-list',
+            '.mobile-table-card',
+            '.responsive-action-row',
+            '.responsive-form-grid',
+            '.safe-scroll-x',
+            '.mobile-sticky-actions',
+            '.no-scrollbar',
+        ] as $className) {
+            $this->assertStringContainsString($className, $css);
+        }
     }
 }

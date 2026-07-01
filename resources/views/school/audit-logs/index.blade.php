@@ -47,7 +47,7 @@
             </form>
 
             <div class="overflow-hidden rounded-2xl bg-white shadow-sm">
-                <div class="overflow-x-auto">
+                <div class="safe-scroll-x rounded-none border-0 shadow-none" role="region" aria-label="School audit logs" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50 text-xs uppercase tracking-normal text-gray-500">
                             <tr>

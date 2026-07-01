@@ -82,7 +82,7 @@
             <section class="grid gap-4 lg:grid-cols-2">
                 <x-ui.panel>
                     <h3 class="text-base font-semibold text-text-primary">Invoice Status Breakdown</h3>
-                    <div class="mt-4 overflow-x-auto">
+                    <div class="safe-scroll-x mt-4" role="region" aria-label="Invoice status breakdown" tabindex="0">
                         <table class="min-w-full divide-y divide-gray-100 text-sm">
                             <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                                 <tr>
@@ -104,7 +104,7 @@
 
                 <x-ui.panel>
                     <h3 class="text-base font-semibold text-text-primary">Payment Method Summary</h3>
-                    <div class="mt-4 overflow-x-auto">
+                    <div class="safe-scroll-x mt-4" role="region" aria-label="Payment method summary" tabindex="0">
                         <table class="min-w-full divide-y divide-gray-100 text-sm">
                             <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                                 <tr>
@@ -163,7 +163,7 @@
 
             <x-ui.panel>
                 <h3 class="text-base font-semibold text-text-primary">Student Balances</h3>
-                <div class="mt-4 overflow-x-auto">
+                <div class="safe-scroll-x mt-4" role="region" aria-label="Student balances" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                             <tr>
@@ -200,7 +200,7 @@
 
             <x-ui.panel>
                 <h3 class="text-base font-semibold text-text-primary">Class / Session / Term Summaries</h3>
-                <div class="mt-4 overflow-x-auto">
+                <div class="safe-scroll-x mt-4" role="region" aria-label="Class session and term summaries" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                             <tr>

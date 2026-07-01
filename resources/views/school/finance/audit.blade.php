@@ -57,7 +57,7 @@
                     <h3 class="text-base font-semibold text-gray-900">Finance Audit Entries</h3>
                     <p class="mt-1 text-sm text-gray-500">Fee items, assignments, invoice generation, payment recording, and approved finance status actions.</p>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="safe-scroll-x rounded-none border-0 shadow-none" role="region" aria-label="Finance audit entries" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
                             <tr>

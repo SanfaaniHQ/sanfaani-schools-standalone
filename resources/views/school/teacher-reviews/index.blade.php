@@ -13,7 +13,7 @@
             @endif
 
             <form method="GET" class="rounded-md border border-border-subtle bg-bg-secondary p-4 shadow-sm">
-                <div class="grid gap-4 sm:grid-cols-3">
+                <div class="grid gap-4 md:grid-cols-3">
                     <label class="space-y-1.5 text-sm">
                         <span class="block font-medium text-text-primary">{{ __('ui.status') }}</span>
                         <select name="status" class="ui-input">

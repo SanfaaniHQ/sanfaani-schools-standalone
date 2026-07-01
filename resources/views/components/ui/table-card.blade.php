@@ -22,7 +22,7 @@
         </div>
     @endif
 
-    <div class="max-w-full overflow-x-auto" data-table-scroll>
+    <div class="safe-scroll-x overflow-x-auto rounded-none border-0 shadow-none" data-table-scroll>
         {{ $slot }}
     </div>
 

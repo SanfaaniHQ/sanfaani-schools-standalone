@@ -7,7 +7,7 @@
             </div>
 
             <a href="{{ route('school.staff.create') }}"
-               class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700">
+               class="ui-button-primary">
                 {{ __('ui.add_staff') }}
             </a>
         </div>
@@ -40,7 +40,7 @@
             </div>
 
             <div class="overflow-hidden rounded-lg bg-white shadow-sm">
-                <div class="overflow-x-auto">
+                <div class="safe-scroll-x hidden rounded-none border-0 shadow-none md:block" role="region" aria-label="Staff accounts" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100">
                         <thead class="bg-gray-50">
                             <tr>
@@ -135,6 +135,79 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+
+                <div class="mobile-card-list p-4 md:hidden">
+                    @forelse ($staffUsers as $staff)
+                        @php
+                            $schoolRole = $staff->schoolRoles->first(fn ($role) => in_array($role->role_name, ['teacher', 'result_officer'], true));
+                            $roleName = $schoolRole?->role_name ?? $staff->roles->pluck('name')->first(fn ($role) => in_array($role, ['teacher', 'result_officer'], true));
+                            $accountStatus = $staff->schoolAccessStatus($school, ['teacher', 'result_officer']);
+                        @endphp
+                        <article class="mobile-table-card">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <h3 class="font-semibold text-text-primary">{{ $staff->name }}</h3>
+                                    <p class="mt-1 break-all text-sm text-text-secondary">{{ $staff->email }}</p>
+                                </div>
+                                <x-ui.badge :status="$accountStatus" />
+                            </div>
+
+                            <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                    <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.identity') }}</dt>
+                                    <dd class="mt-1 text-text-primary">{{ $staff->staff_code ?? __('ui.no_staff_code') }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">{{ __('ui.role') }}</dt>
+                                    <dd class="mt-1 text-text-primary">{{ ucwords(str_replace('_', ' ', $roleName ?: 'staff')) }}</dd>
+                                </div>
+                            </dl>
+
+                            <div class="mt-4 grid gap-2">
+                                @if ($accountStatus !== 'archived')
+                                    <form action="{{ route('school.staff.send-setup-link', $staff) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="ui-button-secondary">{{ __('ui.send_setup_link') }}</button>
+                                    </form>
+                                @endif
+
+                                @if ($accountStatus === 'active')
+                                    <a href="{{ route('school.staff.edit', $staff) }}" class="ui-button-secondary">{{ __('ui.edit') }}</a>
+                                    <form action="{{ route('school.staff.disable', $staff) }}" method="POST" onsubmit="return confirm('{{ __('ui.confirm_disable_account') }}')">
+                                        @csrf
+                                        <button type="submit" class="ui-button-secondary">{{ __('ui.disable') }}</button>
+                                    </form>
+                                    <form action="{{ route('school.staff.archive', $staff) }}" method="POST" onsubmit="return confirm('{{ __('ui.confirm_archive_account') }}')">
+                                        @csrf
+                                        <button type="submit" class="ui-button-secondary">{{ __('ui.archive') }}</button>
+                                    </form>
+                                @elseif ($accountStatus === 'disabled')
+                                    <form action="{{ route('school.staff.enable', $staff) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="ui-button-primary">{{ __('ui.enable') }}</button>
+                                    </form>
+                                    <form action="{{ route('school.staff.archive', $staff) }}" method="POST" onsubmit="return confirm('{{ __('ui.confirm_archive_account') }}')">
+                                        @csrf
+                                        <button type="submit" class="ui-button-secondary">{{ __('ui.archive') }}</button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('school.staff.restore', $staff) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="ui-button-primary">{{ __('ui.restore') }}</button>
+                                    </form>
+                                @endif
+
+                                <form action="{{ route('school.staff.destroy', $staff) }}" method="POST" onsubmit="return confirm('{{ __('ui.confirm_delete_or_archive_account') }}')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="ui-button-danger">{{ __('ui.delete') }}</button>
+                                </form>
+                            </div>
+                        </article>
+                    @empty
+                        <x-ui.empty-state :title="__('ui.no_accounts_for_filter')" :body="__('ui.create_staff_to_issue_code')" />
+                    @endforelse
                 </div>
 
                 <div class="border-t border-gray-100 px-6 py-4">

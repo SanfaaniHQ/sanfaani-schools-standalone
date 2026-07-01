@@ -18,19 +18,19 @@
                 <div class="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">{{ session('error') }}</div>
             @endif
 
-            <form method="GET" class="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-sm">
-                <select name="status" class="rounded-lg border-gray-300 text-sm">
+            <form method="GET" class="ui-filter-bar grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+                <select name="status" class="ui-input">
                     <option value="">Pending review</option>
                     @foreach ($statuses as $value => $label)
                         <option value="{{ $value }}" @selected(($filters['status'] ?? '') === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
-                <button class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">Filter</button>
-                <a href="{{ route('school.result-reviews.index') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Clear filter</a>
+                <button class="ui-button-primary">Filter</button>
+                <a href="{{ route('school.result-reviews.index') }}" class="ui-button-secondary">Clear filter</a>
             </form>
 
-            <div class="rounded-xl bg-white shadow-sm">
-                <div class="overflow-x-auto">
+            <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+                <div class="safe-scroll-x hidden rounded-none border-0 shadow-none md:block" role="region" aria-label="Result review submissions" tabindex="0">
                     <table class="min-w-full divide-y divide-gray-100 text-sm">
                         <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                             <tr>
@@ -55,6 +55,33 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+
+                <div class="mobile-card-list p-4 md:hidden">
+                    @forelse ($submissions as $submission)
+                        <article class="mobile-table-card">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <h3 class="font-semibold text-text-primary">{{ $submission->teacher?->name ?: 'Teacher not assigned' }}</h3>
+                                    <p class="mt-1 text-sm text-text-secondary">{{ $submission->schoolClass?->name ?: 'No class' }}</p>
+                                </div>
+                                <x-status-badge :status="$submission->status" />
+                            </div>
+                            <dl class="mt-4 grid gap-3 text-sm">
+                                <div>
+                                    <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Subject</dt>
+                                    <dd class="mt-1 text-text-primary">{{ $submission->subject?->name ?: 'No subject' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs font-semibold uppercase tracking-normal text-text-tertiary">Session / Term</dt>
+                                    <dd class="mt-1 text-text-primary">{{ $submission->academicSession?->name ?: 'No session' }} / {{ $submission->term?->name ?: 'No term' }}</dd>
+                                </div>
+                            </dl>
+                            <a href="{{ route('school.result-reviews.show', $submission) }}" class="ui-button-primary mt-4 w-full">Review submission</a>
+                        </article>
+                    @empty
+                        <x-ui.empty-state title="No results awaiting review" body="No teacher results match the selected review status." />
+                    @endforelse
                 </div>
                 <div class="p-5">{{ $submissions->links() }}</div>
             </div>

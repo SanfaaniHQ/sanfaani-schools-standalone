@@ -35,7 +35,7 @@
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">{{ $isLocalSettings ? 'Installation Identity' : 'Brand Identity' }}</h3>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ $isLocalSettings ? 'Installation Name' : 'Platform Name' }}</label>
                             <input type="text" name="platform_name" value="{{ old('platform_name', $settings->platform_name) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
@@ -49,7 +49,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Product URL</label>
                             <input type="url" name="product_url" value="{{ old('product_url', $settings->product_url) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
@@ -67,7 +67,7 @@
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">Contact Details</h3>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Support Email</label>
                             <input type="email" name="support_email" value="{{ old('support_email', $settings->support_email) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
@@ -103,7 +103,7 @@
                 <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                     <h3 class="text-base font-semibold text-gray-900">Defaults</h3>
 
-                    <div class="mt-5 grid gap-6 sm:grid-cols-3">
+                    <div class="mt-5 grid gap-6 md:grid-cols-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Country</label>
                             <input type="text" name="default_country" value="{{ old('default_country', $settings->default_country) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-700 focus:ring-emerald-700">
@@ -139,7 +139,7 @@
                     <h3 class="text-base font-semibold text-gray-900">Public Page Governance</h3>
                     <p class="mt-1 text-sm text-gray-500">Control school-facing pages and branded result checker routes from one platform-level switchboard.</p>
 
-                    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div class="responsive-form-grid mt-5">
                         <label class="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
                             <input type="checkbox" name="public_pages_enabled" value="1" @checked(old('public_pages_enabled', data_get($settings->metadata, 'public_pages_enabled', true))) class="mt-1 rounded border-gray-300 text-emerald-700 focus:ring-emerald-700">
                             <span>

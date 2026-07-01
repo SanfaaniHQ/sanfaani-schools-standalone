@@ -38,16 +38,19 @@
     @stack('styles')
 </head>
 <body class="education-ops-shell bg-bg-primary font-sans text-text-primary">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-brand-primary focus:px-4 focus:py-3 focus:text-sm focus:font-medium focus:text-white">
+        {{ __('ui.skip_to_main_content') }}
+    </a>
     <div
         x-data="{ sidebarOpen: false, commandPaletteOpen: false, notificationsOpen: false }"
-        x-on:keydown.escape.window="sidebarOpen = false; commandPaletteOpen = false; notificationsOpen = false"
+        x-on:keydown.escape.window="if (sidebarOpen) { sidebarOpen = false; $nextTick(() => $refs.navigationToggle?.focus()) } commandPaletteOpen = false; notificationsOpen = false"
         x-on:resize.window="if (window.innerWidth >= 1024) sidebarOpen = false"
         x-effect="document.documentElement.classList.toggle('overflow-hidden', sidebarOpen); document.body.classList.toggle('overflow-hidden', sidebarOpen)"
         class="min-h-screen overflow-x-clip"
     >
         @include('layouts.partials.sidebar')
 
-        <div class="min-w-0 lg:ps-64">
+        <div class="min-w-0 lg:ps-72">
             @include('layouts.partials.topbar')
 
             <main id="main-content" class="min-h-screen overflow-x-clip px-4 py-6 sm:px-6 lg:px-8">

@@ -70,7 +70,7 @@
             </div>
 
             <x-ui.table-card title="Scratch Card Batches" description="Direct batches are generated immediately. Request batches remain visible until approved or generated.">
-                <div class="hidden overflow-x-auto sm:block">
+                <div class="safe-scroll-x hidden rounded-none border-0 shadow-none sm:block">
                     <table class="enterprise-table">
                         <thead>
                             <tr>
@@ -158,9 +158,9 @@
                     </table>
                 </div>
 
-                <div class="space-y-3 p-3 sm:hidden">
+                <div class="mobile-card-list p-3 sm:hidden">
                     @forelse ($batches as $batch)
-                        <article class="enterprise-mobile-card">
+                        <article class="enterprise-mobile-card mobile-table-card">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
                                     <h3 class="font-semibold text-text-primary">{{ $batch->title ?? 'Batch #' . $batch->id }}</h3>

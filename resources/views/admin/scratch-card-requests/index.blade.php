@@ -80,7 +80,7 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
+                <div class="safe-scroll-x rounded-none border-0 shadow-none" role="region" aria-label="Scratch card requests" tabindex="0">
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="sticky top-0 bg-slate-50">
                             <tr>

@@ -8,7 +8,7 @@
     </x-slot>
 
     <div class="mx-auto max-w-6xl space-y-6">
-            <form method="GET" class="ui-filter-bar grid gap-4 sm:grid-cols-3">
+            <form method="GET" class="ui-filter-bar grid gap-4 md:grid-cols-3">
                 <input name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search by subject" class="ui-input">
                 <select name="status" class="ui-input">
                     <option value="">All statuses</option>
