@@ -42,10 +42,6 @@
                     <p class="text-sm text-gray-500">Expires</p>
                     <p class="mt-2 text-lg font-semibold text-gray-950">{{ $demoSession->expires_at?->toFormattedDateString() ?? 'No expiry' }}</p>
                 </div>
-                <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-sm text-gray-500">License</p>
-                    <p class="mt-2 text-lg font-semibold text-gray-950">{{ $demoSession->license?->license_type ? str($demoSession->license->license_type)->replace('_', ' ')->title() : 'Not linked' }}</p>
-                </div>
             </div>
 
             @include('admin.demo.partials.credentials', [

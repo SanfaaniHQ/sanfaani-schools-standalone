@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-xl font-semibold leading-tight text-text-primary">Marketing Activities</h2>
-            <p class="mt-1 text-sm text-text-secondary">Conversion signals from demo, onboarding, license, and CRM events.</p>
+            <p class="mt-1 text-sm text-text-secondary">Conversion signals from demo, onboarding, and CRM events.</p>
         </div>
     </x-slot>
 

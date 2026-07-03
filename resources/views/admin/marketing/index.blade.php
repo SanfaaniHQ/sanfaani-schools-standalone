@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-xl font-semibold leading-tight text-text-primary">Marketing Pipeline</h2>
-            <p class="mt-1 text-sm text-text-secondary">Lead nurturing, sales tasks, renewal reminders, and conversion analytics.</p>
+            <p class="mt-1 text-sm text-text-secondary">Lead nurturing, sales tasks, and conversion analytics.</p>
         </div>
     </x-slot>
 
@@ -13,7 +13,6 @@
             <x-ui.stat-card label="Active Demo Sessions" :value="$analytics['active_demo_sessions']" meta="Evaluation spaces" />
             <x-ui.stat-card label="Pending Sales Tasks" :value="$analytics['pending_sales_tasks']" meta="Needs follow-up" tone="warning" />
             <x-ui.stat-card label="Trial Leads" :value="$analytics['trial_leads']" meta="Trial-stage prospects" />
-            <x-ui.stat-card label="Renewal Reminders" :value="$analytics['renewal_reminders']" meta="License follow-ups" />
             <x-ui.stat-card label="Conversion Milestones" :value="$analytics['conversion_milestones']" meta="Onboarding and conversion signals" tone="success" />
             <x-ui.stat-card label="WhatsApp Hooks" :value="config('marketing.whatsapp_enabled') ? 'Enabled' : 'Needs attention'" meta="Provider integration is configured outside this screen" />
         </section>
@@ -25,7 +24,7 @@
             </a>
             <a href="{{ route('admin.marketing.activities') }}" class="ui-card ui-card-hover block p-5">
                 <span class="font-semibold text-text-primary">Activities</span>
-                <span class="mt-1 block text-sm text-text-secondary">Review demo, onboarding, and license signals.</span>
+                <span class="mt-1 block text-sm text-text-secondary">Review demo, onboarding, and CRM signals.</span>
             </a>
             <a href="{{ route('admin.marketing.sequences') }}" class="ui-card ui-card-hover block p-5">
                 <span class="font-semibold text-text-primary">Sequences</span>

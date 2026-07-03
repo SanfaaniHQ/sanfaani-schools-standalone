@@ -67,7 +67,9 @@ class StandaloneSystemHealthService
                 'label' => 'Standalone readiness',
                 'checks' => [
                     $this->installerCheck(),
-                    $this->licenseCheck($school),
+                    ...((bool) config('sanfaani.license_validation_enabled', false)
+                        ? [$this->licenseCheck($school)]
+                        : []),
                     $this->backupCheck($school),
                     $this->updateReadinessCheck($school),
                     $this->syncCheck(),
@@ -570,13 +572,11 @@ class StandaloneSystemHealthService
         $probe = $this->redactor->redactArray([
             'DB_PASSWORD' => 'secret-password',
             'SANFAANI_STANDALONE_SYNC_TOKEN' => 'secret-token',
-            'SANFAANI_LICENSE_KEY' => 'secret-license',
             'path' => base_path('storage/app/private/backup.zip'),
         ]);
 
         $probePassed = ($probe['DB_PASSWORD'] ?? null) === '[redacted]'
             && ($probe['SANFAANI_STANDALONE_SYNC_TOKEN'] ?? null) === '[redacted]'
-            && ($probe['SANFAANI_LICENSE_KEY'] ?? null) === '[redacted]'
             && ! str_contains((string) ($probe['path'] ?? ''), base_path());
 
         return $this->check(
@@ -588,7 +588,6 @@ class StandaloneSystemHealthService
                 : 'Secret redaction should be enabled before exposing diagnostics to support.',
             [
                 'database_password' => 'Hidden',
-                'license_secret' => 'Hidden',
                 'sync_token' => 'Hidden',
                 'api_keys' => 'Hidden',
                 'private_backup_paths' => 'Hidden',
@@ -615,7 +614,9 @@ class StandaloneSystemHealthService
             $this->card('Scheduler', $checks->firstWhere('key', 'scheduler_heartbeat')),
             $this->card('Backups', $checks->firstWhere('key', 'backup_status')),
             $this->card('Updates', $checks->firstWhere('key', 'update_readiness')),
-            $this->card('License', $checks->firstWhere('key', 'license_status')),
+            ...((bool) config('sanfaani.license_validation_enabled', false)
+                ? [$this->card('License', $checks->firstWhere('key', 'license_status'))]
+                : []),
         ];
     }
 

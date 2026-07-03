@@ -100,6 +100,7 @@ return [
     'local_installation' => 'Local Installation',
     'available_school_workspaces' => 'Available school workspaces',
     'installation_admin' => 'Installation Admin',
+    'installation_admin_intro' => 'Sarrafa saitunan shigarwa da bincike dabam da rawar makaranta.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
     'name' => 'Name',

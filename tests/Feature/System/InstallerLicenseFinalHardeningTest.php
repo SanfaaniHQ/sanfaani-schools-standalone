@@ -36,7 +36,7 @@ class InstallerLicenseFinalHardeningTest extends TestCase
             'installer.enabled' => true,
             'features.features.standalone_installer.enabled' => true,
             'features.features.license_activation.enabled' => true,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => true,
         ]);
     }
@@ -194,17 +194,16 @@ class InstallerLicenseFinalHardeningTest extends TestCase
             ->assertSee('Not hard-blocked');
     }
 
-    public function test_standalone_dashboard_marks_installer_license_hardening_available(): void
+    public function test_standalone_dashboard_marks_installer_hardening_available(): void
     {
         $this->school();
 
         $this->actingAs($this->superAdmin())
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('Installer and license hardening')
+            ->assertSee('Installer hardening')
             ->assertSee('Support-safe installer diagnostics')
-            ->assertSee('Installer and license final hardening')
-            ->assertSee('billing or online activation automation');
+            ->assertSee('Installer final hardening');
     }
 
     private function completeInstallerForms(): void

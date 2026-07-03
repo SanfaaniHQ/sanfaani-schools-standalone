@@ -46,7 +46,7 @@ Production should run with `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=htt
 
 Before the final Namecheap push, run migrations, clear caches, build assets, list routes, confirm `.env` and private files are not staged, then use the final deployment checklist.
 
-For a standalone single-school portal, upload the prepared package, create the database, configure `.env`, run `php artisan key:generate --force`, run migrations, open `/install`, complete owner and school setup, then log in. After setup, `/` goes to login and `/install` is blocked by the installation lock. Admissions links are copied from `Admin -> Admissions`; seller license generation remains separate from customer license activation.
+For a standalone single-school portal, upload the prepared package, create the database, configure `.env`, run `php artisan key:generate --force`, run migrations, open `/install`, complete owner and school setup, then log in. No license key is required. After setup, `/` goes to login and `/install` is blocked by the installation lock. Admissions links are copied from `Admin -> Admissions`.
 
 See:
 

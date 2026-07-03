@@ -2,7 +2,7 @@
     <x-slot name="header">
         <x-ui.page-header
             title="System Status"
-            description="Read-only deployment, license, feature, and behavior configuration for this installation."
+            description="Read-only deployment, feature, and behavior configuration for this installation."
         />
     </x-slot>
 
@@ -23,7 +23,7 @@
             <x-ui.stat-card
                 label="Commercial model"
                 :value="$behaviorSummary['commercial_model_label']"
-                :meta="'License mode: '.$statusItems['License mode']"
+                :meta="'Portal mode: '.$statusItems['Portal mode']"
                 tone="brand"
             />
             <x-ui.stat-card

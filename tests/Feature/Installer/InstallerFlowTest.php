@@ -76,17 +76,21 @@ class InstallerFlowTest extends TestCase
             ->assertSessionHasErrors(['name']);
     }
 
-    public function test_installation_finalization_creates_installed_lock(): void
+    public function test_installation_finalization_requires_no_license_key(): void
     {
         $this->completeInstallerForms();
 
         $this->post(route('installer.complete'))
             ->assertOk()
-            ->assertSee('School portal is ready');
+            ->assertSee('School portal is ready')
+            ->assertDontSee('License key')
+            ->assertDontSee('Activate license');
 
         $this->assertFileExists(app(InstallerStateService::class)->lockPath());
         $this->assertDatabaseHas('schools', ['slug' => 'local-school']);
         $this->assertDatabaseHas('users', ['email' => 'owner@example.test']);
+        $this->assertDatabaseCount('licenses', 0);
+        $this->assertArrayNotHasKey('license_mode', app(InstallerStateService::class)->installationMetadata());
         $owner = User::where('email', 'owner@example.test')->first();
         $this->assertTrue($owner->hasRole('super_admin'));
         $this->assertTrue($owner->hasRole('school_admin'));
@@ -165,6 +169,8 @@ class InstallerFlowTest extends TestCase
             'installer.allow_managed' => false,
             'sanfaani.deployment.mode' => 'single_school',
             'sanfaani.deployment.license_mode' => 'annual',
+            'sanfaani.license_validation_enabled' => false,
+            'licensing.signing_key' => '',
             'sanfaani.deployment.installed' => false,
             'features.features.standalone_installer.enabled' => true,
         ]);

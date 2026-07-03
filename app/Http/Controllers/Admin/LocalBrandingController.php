@@ -45,7 +45,7 @@ class LocalBrandingController extends Controller
 
         if ((bool) ($data['white_label_enabled'] ?? false) && ! $this->branding->whiteLabelEnabled($school)) {
             throw ValidationException::withMessages([
-                'white_label_enabled' => 'White-label branding is available only when the license includes it.',
+                'white_label_enabled' => 'White-label branding is not available for the current feature configuration.',
             ]);
         }
 

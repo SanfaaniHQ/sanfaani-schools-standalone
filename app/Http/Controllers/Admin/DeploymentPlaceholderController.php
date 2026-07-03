@@ -30,11 +30,6 @@ class DeploymentPlaceholderController extends Controller
                 'route_group' => 'standalone_installer',
                 'body' => 'Use the guided setup flow to prepare the school portal and lock installation when setup is complete.',
             ],
-            'standalone-license' => [
-                'title' => 'License Status',
-                'route_group' => 'standalone_license',
-                'body' => 'Review the local license status, entitlement checks, renewal window, and safe activation details.',
-            ],
             'standalone-updates' => [
                 'title' => 'Standalone Updates',
                 'route_group' => 'standalone_updates',
@@ -68,7 +63,7 @@ class DeploymentPlaceholderController extends Controller
             'managed-white-label' => [
                 'title' => 'Managed White Label',
                 'route_group' => 'managed_white_label',
-                'body' => 'Managed white-label controls appear here when the license and support plan include them.',
+                'body' => 'Managed white-label controls appear here when the feature and support plan include them.',
             ],
         ];
     }

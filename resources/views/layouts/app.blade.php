@@ -159,7 +159,7 @@
                                 $commandItems = $roleContext === 'super_admin' && ! $schoolService->inSupportMode($user)
                                     ? [
                                         ['label' => 'Installation Admin', 'context' => 'Local system status and school setup', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'platform_dashboard'],
-                                        ['label' => 'Local Admin Console', 'context' => 'License, backups, diagnostics, and school settings', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'local_dashboard'],
+                                        ['label' => 'Local Admin Console', 'context' => 'Backups, diagnostics, and school settings', 'href' => route('admin.dashboard'), 'visible' => true, 'group' => 'local_dashboard'],
                                         ['label' => 'Schools', 'context' => 'Institution accounts and support access', 'href' => route('admin.schools.index'), 'visible' => true, 'group' => 'platform_schools'],
                                         ['label' => 'Scratch Requests', 'context' => 'Card batches awaiting action', 'href' => route('admin.scratch-card-requests.index'), 'visible' => true, 'group' => 'platform_scratch_cards'],
                                         ['label' => 'Communication Center', 'context' => 'Broadcasts, delivery history, and retries', 'href' => route('admin.communications.index'), 'visible' => true, 'group' => 'platform_communications'],

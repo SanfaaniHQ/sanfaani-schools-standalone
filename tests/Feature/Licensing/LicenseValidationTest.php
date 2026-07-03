@@ -26,7 +26,7 @@ class LicenseValidationTest extends TestCase
         config([
             'sanfaani.deployment.mode' => 'single_school',
             'sanfaani.deployment.license_mode' => 'annual',
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => true,
         ]);
     }

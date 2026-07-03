@@ -252,7 +252,7 @@ class UpdatePackageService
             'protected_paths_blocked' => $this->manifests->protectedPaths(),
             'steps' => [
                 ['label' => 'Confirm package provenance', 'status' => 'manual_review', 'body' => 'Use only a private Sanfaani package supplied through the agreed support channel.'],
-                ['label' => 'Run preflight', 'status' => 'required', 'body' => 'Review PHP, Laravel, extension, database, storage, license, installer, backup, and manifest checks.'],
+                ['label' => 'Run preflight', 'status' => 'required', 'body' => 'Review PHP, Laravel, extension, database, storage, installer, backup, and manifest checks.'],
                 ['label' => 'Verify backup', 'status' => (bool) ($manifest['requires_backup'] ?? false) ? 'required' : 'recommended', 'body' => 'Create and verify a backup before any manual file work starts.'],
                 ['label' => 'Review changed files', 'status' => 'manual_review', 'body' => 'Compare manifest file counts and release notes before copying files outside the wizard.'],
                 ['label' => 'Plan migration review', 'status' => 'manual_review', 'body' => 'Run migrations only from the approved deployment channel; the web wizard never runs them.'],

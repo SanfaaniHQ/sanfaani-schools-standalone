@@ -9,8 +9,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | The installer is intentionally narrow: it only prepares a single-school
-    | installation and writes an installation lock. It does not activate
-    | licenses, run updates, run backups, package marketplaces, or automate demos.
+    | installation and writes an installation lock. It does not run updates,
+    | run backups, package marketplaces, or automate demos.
     |
     */
 

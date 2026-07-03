@@ -51,7 +51,7 @@ class StandaloneSystemHealthTest extends TestCase
             'sanfaani.deployment.installed' => true,
             'demo.enabled' => false,
             'demo.marketplace.enabled' => false,
-            'licensing.validation_enabled' => false,
+            'sanfaani.license_validation_enabled' => false,
         ]);
     }
 
@@ -81,7 +81,6 @@ class StandaloneSystemHealthTest extends TestCase
             'scheduler_heartbeat',
             'mail_configuration',
             'installer_status',
-            'license_status',
             'backup_status',
             'update_readiness',
             'standalone_sync',
@@ -93,6 +92,7 @@ class StandaloneSystemHealthTest extends TestCase
 
         $this->assertSame('pass', $checks['database_connection']['status']);
         $this->assertSame('pass', $checks['safe_health_output']['status']);
+        $this->assertArrayNotHasKey('license_status', $checks);
     }
 
     public function test_scheduler_heartbeat_command_records_healthy_state(): void

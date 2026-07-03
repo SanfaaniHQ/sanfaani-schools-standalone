@@ -23,7 +23,6 @@ class SystemStatusController extends Controller
                 'App version' => config('version.version', '1.0.0'),
                 'Portal mode' => $deployment->mode(),
                 'Commercial model' => $behavior->commercialModelLabel(),
-                'License mode' => $deployment->licenseMode(),
                 'Brand mode' => $deployment->brandMode(),
                 'Updates enabled' => $deployment->updatesEnabled() ? 'Enabled' : 'Disabled',
                 'Demo enabled' => $deployment->demoEnabled() ? 'Enabled' : 'Disabled',
@@ -33,7 +32,6 @@ class SystemStatusController extends Controller
                 'Filesystem disk' => config('filesystems.default'),
             ],
             'capabilityItems' => [
-                'Requires license' => $deployment->requiresLicense(),
                 'Allows multi-school' => $deployment->allowsMultiSchool(),
                 'Allows installer' => $deployment->allowsInstaller(),
                 'Allows central billing' => $deployment->allowsCentralBilling(),
@@ -51,16 +49,10 @@ class SystemStatusController extends Controller
             ],
             'placeholderCards' => [
                 [
-                    'title' => 'Standalone License Status',
-                    'route_group' => 'standalone_license',
-                    'href' => route('admin.license.index'),
-                    'body' => 'View local license status, redacted key display, entitlement diagnostics, and safe audit events.',
-                ],
-                [
-                    'title' => 'Installer and License Diagnostics',
+                    'title' => 'Installer and System Diagnostics',
                     'route_group' => 'standalone_status',
                     'href' => route('admin.standalone.status'),
-                    'body' => 'Review installer, health, backup, update, and license readiness without exposing secrets.',
+                    'body' => 'Review installer, health, backup, and update readiness without exposing secrets.',
                 ],
                 [
                     'title' => 'Guided Updates',

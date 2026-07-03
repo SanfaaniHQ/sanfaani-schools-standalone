@@ -59,7 +59,9 @@
                 $item('Local Branding', 'admin.local-branding.edit', 'admin.local-branding.*', 'layout-grid', null, 'local_branding'),
                 $item('Local SMTP Settings', 'admin.local-mail-settings.edit', 'admin.local-mail-settings.*', 'mail', null, 'local_mail_settings'),
                 $item('School Admins', 'admin.local-admins.index', 'admin.local-admins.*', 'shield', null, 'local_dashboard'),
-                $item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'standalone_license'),
+                ...((bool) config('sanfaani.license_validation_enabled', false)
+                    ? [$item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'standalone_license')]
+                    : []),
                 $item('Guided Updates', 'admin.updates.index', 'admin.updates.*', 'archive', null, 'standalone_updates'),
                 $item('Backups', 'admin.backups.index', 'admin.backups.*', 'archive', null, 'standalone_backups'),
                 $item('Hosting Health', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'standalone_performance'),
@@ -74,7 +76,9 @@
                 $item('Managed Performance', 'admin.performance.index', 'admin.performance.*', 'bar-chart', null, 'managed_performance'),
                 $item('Managed Security', 'admin.security.index', 'admin.security.*', 'shield', null, 'managed_security'),
                 $item('Managed Branding', 'admin.branding.edit', 'admin.branding.*', 'layout-grid', null, 'managed_branding'),
-                $item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'license_activation'),
+                ...((bool) config('sanfaani.license_validation_enabled', false)
+                    ? [$item('License Status', 'admin.license.index', 'admin.license.*', 'shield', null, 'license_activation')]
+                    : []),
                 $item('White Label', 'admin.deployment.placeholder', 'admin.deployment.*', 'layout-grid', null, 'managed_white_label', ['section' => 'managed-white-label']),
             ],
             __('ui.email_marketing') => [

@@ -60,6 +60,7 @@ return [
     'log_in' => 'Log in',
     'logout' => 'Log Out',
     'installation_admin' => 'Installation Admin',
+    'installation_admin_intro' => 'Manage installation-wide settings and diagnostics separately from school roles.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
     'mail_settings' => 'Mail Settings',

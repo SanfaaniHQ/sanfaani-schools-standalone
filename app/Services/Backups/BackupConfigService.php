@@ -60,7 +60,6 @@ class BackupConfigService
             ],
             'deployment' => [
                 'mode' => $this->deployment->mode(),
-                'license_mode' => $this->deployment->licenseMode(),
                 'brand_mode' => $this->deployment->brandMode(),
             ],
             'runtime' => [

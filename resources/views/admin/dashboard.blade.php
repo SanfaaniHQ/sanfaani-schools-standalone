@@ -9,7 +9,7 @@
         <x-ui.page-header
             :title="$headerIsLocal ? __('ui.installation_admin') : __('ui.installation_admin')"
             :eyebrow="$headerIsLocal ? __('ui.local_admin_console') : null"
-            :description="$headerIsLocal ? 'Local Admin Console for license, backups, diagnostics, branding, SMTP, and school administrator setup.' : 'Local system control for '.$platformSettings->platform_name"
+            :description="$headerIsLocal ? 'Local Admin Console for backups, diagnostics, branding, SMTP, and school administrator setup.' : 'Local system control for '.$platformSettings->platform_name"
         >
             <x-slot name="actions">
                 @if ($schoolWorkspaceContext && ($schoolWorkspaceContext['role_name'] ?? null) === 'school_admin')
@@ -35,7 +35,6 @@
             ['label' => 'New demo requests', 'value' => $newDemoRequests, 'href' => route('admin.lead-requests.index', ['type' => 'demo']), 'widget' => 'demo_requests'],
             ['label' => 'New contact requests', 'value' => $newContactRequests, 'href' => route('admin.lead-requests.index', ['type' => 'contact']), 'widget' => 'lead_pipeline'],
             ['label' => 'Pending sales tasks', 'value' => $pendingSalesTasks, 'href' => route('admin.sales.tasks.index'), 'widget' => 'marketing_sales_tasks'],
-            ['label' => 'Renewal reminders', 'value' => $renewalReminderTasks, 'href' => route('admin.sales.tasks.index'), 'widget' => 'marketing_renewals'],
             ['label' => 'Suspended schools', 'value' => $suspendedSchools, 'href' => route('admin.schools.index', ['status' => 'suspended']), 'widget' => 'schools_total'],
         ])->filter(fn ($item) => (int) $item['value'] > 0 && $behavior->allowsDashboardWidget($item['widget'], user: $user));
 
@@ -47,7 +46,7 @@
             ['title' => 'System Status', 'body' => 'Review local installation status, environment readiness, and operational health.', 'href' => route('admin.system.status'), 'group' => 'system_status'],
             ['title' => 'Leads', 'body' => 'Review demo and contact requests, then create a school workspace when the client is ready.', 'href' => route('admin.lead-requests.index'), 'group' => 'platform_onboarding'],
             ['title' => 'Marketing Pipeline', 'body' => 'Track lead scores, activities, conversion milestones, and sales follow-up.', 'href' => route('admin.marketing.index'), 'group' => 'platform_marketing'],
-            ['title' => 'Sales Tasks', 'body' => 'Review follow-up tasks for demos, trials, renewals, and managed opportunities.', 'href' => route('admin.sales.tasks.index'), 'group' => 'platform_marketing'],
+            ['title' => 'Sales Tasks', 'body' => 'Review follow-up tasks for demos, trials, and managed opportunities.', 'href' => route('admin.sales.tasks.index'), 'group' => 'platform_marketing'],
             ['title' => 'Support Access', 'body' => 'Review support threads and school escalation history.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
             ['title' => 'Support', 'body' => 'Review local support threads, escalations, and installation help requests.', 'href' => route('admin.support-threads.index'), 'group' => 'platform_support'],
             ['title' => 'Updates', 'body' => 'Review update packages, preflight checks, and rollback plans.', 'href' => route('admin.updates.index'), 'group' => 'platform_updates'],
@@ -56,8 +55,10 @@
             ['title' => 'Security Health', 'body' => 'Review production error exposure, outbound email, logging, and token safety diagnostics.', 'href' => route('admin.security.index'), 'group' => 'platform_security_diagnostics'],
             ['title' => 'Local Branding', 'body' => 'Manage installation name, logo, colors, footer text, and white-label readiness.', 'href' => route('admin.branding.edit'), 'group' => 'platform_branding'],
             ['title' => 'Local School Settings', 'body' => 'School identity and owner settings for single-school deployments.', 'href' => route('admin.platform-settings.edit'), 'group' => 'local_school_settings'],
-            ['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license'],
-            ['title' => 'Local-First Offline Status', 'body' => 'Review standalone edition, installer, license, local database, and sync readiness.', 'href' => route('admin.standalone.status'), 'group' => 'standalone_status'],
+            ...((bool) config('sanfaani.license_validation_enabled', false)
+                ? [['title' => 'License Status', 'body' => 'Activate and validate the local deployment license.', 'href' => route('admin.license.index'), 'group' => 'standalone_license']]
+                : []),
+            ['title' => 'Local-First Offline Status', 'body' => 'Review standalone edition, installer, local database, and sync readiness.', 'href' => route('admin.standalone.status'), 'group' => 'standalone_status'],
             ['title' => 'Guided Updates', 'body' => 'Upload packages, run preflight checks, and plan manual shared-hosting updates.', 'href' => route('admin.updates.index'), 'group' => 'standalone_updates'],
             ['title' => 'Backups', 'body' => 'Create backup metadata, verify readiness, and review manual restore plans.', 'href' => route('admin.backups.index'), 'group' => 'standalone_backups'],
             ['title' => 'Hosting Health', 'body' => 'Review shared-hosting limits, queue fallback, cache readiness, logs, and asset size warnings.', 'href' => route('admin.performance.index'), 'group' => 'standalone_performance'],
@@ -90,7 +91,7 @@
                     {{ $isLocalDashboard ? __('ui.local_admin_console') : $behavior->commercialModelLabel() }}
                 </h3>
                 <p class="mt-2 max-w-3xl text-sm leading-6 text-text-secondary">
-                    {{ $isLocalDashboard ? 'Review this standalone installation, confirm the license, keep backups visible, and manage local school settings without entering support mode.' : $behavior->description() }}
+                    {{ $isLocalDashboard ? 'Review this standalone installation, keep backups visible, and manage local school settings without entering support mode.' : $behavior->description() }}
                 </p>
             </x-ui.panel>
 
@@ -105,7 +106,7 @@
                     @empty
                         <x-ui.empty-state
                             :title="$isLocalDashboard ? 'No urgent installation tasks' : 'No urgent system tasks'"
-                            :body="$isLocalDashboard ? 'License, backup, update, system health, and school setup items will appear here when they need attention.' : 'New demo requests, contact requests, payments, and school setup items will appear here when they need attention.'"
+                            :body="$isLocalDashboard ? 'Backup, update, system health, and school setup items will appear here when they need attention.' : 'New demo requests, contact requests, payments, and school setup items will appear here when they need attention.'"
                             class="p-4 sm:p-5"
                         />
                     @endforelse

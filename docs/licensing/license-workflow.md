@@ -1,5 +1,7 @@
 # License Workflow
 
+> **Historical/dormant workflow:** This workflow is not active while `SANFAANI_LICENSE_VALIDATION_ENABLED=false`, which is the source-code default. Current standalone installations skip activation and do not require a license or signing key. See [Temporary License Disablement](temporary-license-disablement.md).
+
 This workflow explains how Sanfaani Schools Standalone licensing works for marketplace-style cPanel installations.
 
 ## Simple Model

@@ -48,6 +48,11 @@ class DeploymentBehaviorService
     {
         $group = $this->normalize($group);
 
+        if (! (bool) config('sanfaani.license_validation_enabled', false)
+            && in_array($group, ['standalone_license', 'license_activation'], true)) {
+            return false;
+        }
+
         if (! $this->definitionExists('route_groups', $group)) {
             return false;
         }

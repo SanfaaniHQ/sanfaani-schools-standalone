@@ -80,6 +80,8 @@ class MarketingAutomationTest extends TestCase
 
     public function test_renewal_reminder_task_can_be_created_for_expiring_license(): void
     {
+        config(['sanfaani.license_validation_enabled' => true]);
+
         $school = $this->school();
         $license = License::create([
             'school_id' => $school->id,

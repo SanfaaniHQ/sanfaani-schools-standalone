@@ -100,6 +100,7 @@ return [
     'local_installation' => 'Local Installation',
     'available_school_workspaces' => 'Available school workspaces',
     'installation_admin' => 'Installation Admin',
+    'installation_admin_intro' => 'Ṣakoso eto fifi sori ẹrọ ati ayẹwo lọtọ si awọn ipa ile-iwe.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
     'name' => 'Name',

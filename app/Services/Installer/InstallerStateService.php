@@ -26,7 +26,6 @@ class InstallerStateService
             'installed_at' => now()->toIso8601String(),
             'app_version' => config('version.version', 'unknown'),
             'deployment_mode' => $this->deployment->mode(),
-            'license_mode' => $this->deployment->licenseMode(),
         ], $metadata);
 
         return File::put($this->lockPath(), json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) !== false;

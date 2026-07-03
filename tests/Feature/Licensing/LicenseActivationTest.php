@@ -27,7 +27,7 @@ class LicenseActivationTest extends TestCase
             'sanfaani.deployment.mode' => 'single_school',
             'sanfaani.deployment.license_mode' => 'annual',
             'sanfaani.deployment.installed' => true,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => true,
         ]);
     }

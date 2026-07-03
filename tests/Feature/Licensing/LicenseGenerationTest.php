@@ -32,7 +32,7 @@ class LicenseGenerationTest extends TestCase
             'sanfaani.deployment.license_mode' => 'annual',
             'sanfaani.deployment.installed' => true,
             'licensing.signing_key' => $this->signingKey,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => true,
         ]);
     }

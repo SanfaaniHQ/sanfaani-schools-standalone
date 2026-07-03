@@ -51,13 +51,13 @@
         <x-ui.alert
             tone="info"
             title="Safe output rules"
-            body="This page shows statuses, counts, relative paths, and configured/missing flags only. Database passwords, .env values, license secrets, sync tokens, API keys, and private backup paths are not displayed."
+            body="This page shows statuses, counts, relative paths, and configured/missing flags only. Database passwords, .env values, sync tokens, API keys, and private backup paths are not displayed."
         />
 
         <x-ui.alert
             tone="success"
-            title="Installer and license hardening available"
-            body="Installer readiness, local license status, module access, backup/update readiness, and support diagnostics are available without billing enforcement, online activation, remote deactivation, or destructive reinstall tools."
+            title="Installer hardening available"
+            body="Installer readiness, module access, backup/update readiness, and support diagnostics are available without destructive reinstall tools."
         />
 
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -72,11 +72,6 @@
                 :value="$yesNo($editionStatus['installer_enabled'])"
                 :meta="$editionStatus['installed'] ? 'Installed lock/config present' : 'Ready for fresh installation'"
                 :tone="$editionStatus['installer_enabled'] ? 'success' : 'warning'"
-            />
-            <x-ui.stat-card
-                label="License mode"
-                :value="$editionStatus['license_mode']"
-                :meta="'Recommended: '.$editionStatus['recommended_license_mode']"
             />
             <x-ui.stat-card
                 label="Sync"
@@ -132,7 +127,7 @@
 
         <x-ui.panel
             title="Health Check Totals"
-            description="Read-only summary generated from Laravel, database, storage, queue, scheduler, license, backup, update, installer, and sync checks."
+            description="Read-only summary generated from Laravel, database, storage, queue, scheduler, backup, update, installer, and sync checks."
         >
             <dl class="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-5">
                 <div>
@@ -222,10 +217,6 @@
                     <tr>
                         <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Installed status</th>
                         <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $editionStatus['installed'] ? 'Installed' : 'Not installed' }}</td>
-                    </tr>
-                    <tr>
-                        <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">License mode</th>
-                        <td class="px-5 py-4 text-sm font-semibold text-text-primary">{{ $editionStatus['license_mode'] }}</td>
                     </tr>
                     <tr>
                         <th scope="row" class="px-5 py-4 text-left text-sm font-medium text-text-secondary">Offline mode</th>

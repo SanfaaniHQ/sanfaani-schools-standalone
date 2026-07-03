@@ -10,7 +10,8 @@ class CreateRenewalReminderFromLicense
 {
     public function handle(LicenseExpiring $event): void
     {
-        if (! (bool) config('marketing.enabled', true)) {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)
+            || ! (bool) config('marketing.enabled', true)) {
             return;
         }
 

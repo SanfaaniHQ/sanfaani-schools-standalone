@@ -18,7 +18,8 @@ return [
     'license_key' => env('SANFAANI_LICENSE_KEY'),
     'signing_key' => env('SANFAANI_LICENSE_SIGNING_KEY'),
     'offline_grace_days' => (int) env('SANFAANI_LICENSE_OFFLINE_GRACE_DAYS', 7),
-    'validation_enabled' => (bool) env('SANFAANI_LICENSE_VALIDATION_ENABLED', true),
+    // Compatibility mirror. Runtime enforcement uses sanfaani.license_validation_enabled.
+    'validation_enabled' => (bool) env('SANFAANI_LICENSE_VALIDATION_ENABLED', false),
     'require_domain_match' => (bool) env('SANFAANI_LICENSE_REQUIRE_DOMAIN_MATCH', true),
     'expiry_warning_days' => 30,
     'remote_validation_enabled' => false,

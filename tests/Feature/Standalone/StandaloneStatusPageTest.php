@@ -98,7 +98,7 @@ class StandaloneStatusPageTest extends TestCase
             ->assertSee('Mail configuration')
             ->assertSee('Standalone readiness')
             ->assertSee('Installer status')
-            ->assertSee('License status')
+            ->assertDontSee('License status')
             ->assertSee('Backup status')
             ->assertSee('Update readiness')
             ->assertSee('Standalone sync/offline')

@@ -13,6 +13,10 @@ class EnsureValidLicense
 {
     public function handle(Request $request, Closure $next): Response
     {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)) {
+            return $next($request);
+        }
+
         $result = app(LicenseValidationService::class)->validate($this->schoolForValidation());
 
         if ($result->valid()) {

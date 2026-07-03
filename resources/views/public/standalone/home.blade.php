@@ -30,7 +30,7 @@
                             {{ $platformName }} is your school operations portal.
                         </h1>
                         <p class="mt-5 text-lg leading-8 text-gray-600">
-                            This standalone installation is for one school. The Laravel portal remains the source of truth for students, staff, classes, subjects, sessions, admissions, results, CBT, backups, updates, license status, and local system health.
+                            This standalone installation is for one school. The Laravel portal remains the source of truth for students, staff, classes, subjects, sessions, admissions, results, CBT, backups, updates, and local system health.
                         </p>
 
                         <div class="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -62,10 +62,6 @@
                                     <dd class="mt-1 font-semibold text-gray-950">{{ $standaloneStatus['deployment_mode'] ?? 'single_school' }}</dd>
                                 </div>
                                 <div class="rounded-lg bg-gray-50 p-4">
-                                    <dt class="text-gray-500">License</dt>
-                                    <dd class="mt-1 font-semibold text-gray-950">{{ $standaloneStatus['license_mode'] ?? 'annual' }}</dd>
-                                </div>
-                                <div class="rounded-lg bg-gray-50 p-4">
                                     <dt class="text-gray-500">Sync</dt>
                                     <dd class="mt-1 font-semibold text-gray-950">{{ ($standaloneStatus['sync_enabled'] ?? false) ? 'Configured' : 'Local first' }}</dd>
                                 </div>
@@ -73,7 +69,7 @@
                         </div>
 
                         <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-5 text-sm leading-6 text-emerald-950">
-                            This private school portal keeps public sales and evaluation pages out of the standalone domain. Use the portal, setup flow, license page, backups, updates, and school dashboards for day-to-day operations.
+                            This private school portal keeps public sales and evaluation pages out of the standalone domain. Use the portal, setup flow, backups, updates, and school dashboards for day-to-day operations.
                         </div>
                     </div>
                 </div>

@@ -34,11 +34,15 @@ class OnboardingVisibilityService
 
             $licenseMode = $this->deployment->licenseMode();
 
-            if ($licenseMode === DeploymentModeService::LICENSE_DEMO && ! (bool) config('onboarding.demo_enabled', true)) {
+            if ($this->licenses->requiresValidation()
+                && $licenseMode === DeploymentModeService::LICENSE_DEMO
+                && ! (bool) config('onboarding.demo_enabled', true)) {
                 return false;
             }
 
-            if ($licenseMode === DeploymentModeService::LICENSE_TRIAL && ! (bool) config('onboarding.trial_enabled', true)) {
+            if ($this->licenses->requiresValidation()
+                && $licenseMode === DeploymentModeService::LICENSE_TRIAL
+                && ! (bool) config('onboarding.trial_enabled', true)) {
                 return false;
             }
 
@@ -57,7 +61,8 @@ class OnboardingVisibilityService
         }
 
         return $this->matchesMode($checklist->deployment_modes, $this->deployment->mode())
-            && $this->matchesMode($checklist->license_modes, $this->deployment->licenseMode());
+            && (! $this->licenses->requiresValidation()
+                || $this->matchesMode($checklist->license_modes, $this->deployment->licenseMode()));
     }
 
     public function stepVisible(OnboardingStep $step, ?User $user = null, ?School $school = null): bool
@@ -70,7 +75,8 @@ class OnboardingVisibilityService
             return false;
         }
 
-        if (! $this->matchesMode($step->license_modes, $this->deployment->licenseMode())) {
+        if ($this->licenses->requiresValidation()
+            && ! $this->matchesMode($step->license_modes, $this->deployment->licenseMode())) {
             return false;
         }
 
