@@ -45,9 +45,6 @@ class SuperAdminDashboardController extends Controller
             'newContactRequests' => LeadRequest::where('type', 'contact')->where('status', 'new')->count(),
             'pendingSalesTasks' => SalesTask::where('status', SalesTask::STATUS_OPEN)->count(),
             'trialLeadCount' => LeadRequest::where('status', LeadRequest::STATUS_TRIAL_STARTED)->count(),
-            'renewalReminderTasks' => SalesTask::where('status', SalesTask::STATUS_OPEN)
-                ->where('metadata->source_event', 'license.expiring')
-                ->count(),
             'platformOnboardingSteps' => $platformSteps,
             'platformOnboardingCompleted' => $platformCompleted,
             'platformOnboardingProgress' => $onboarding->progress($platformSteps, $platformCompleted),

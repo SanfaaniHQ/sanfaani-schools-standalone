@@ -1,10 +1,12 @@
 # Installer And License Flow
 
+> **Current behavior:** The installer has no license step, and standalone installations require no key. License enforcement and activation UI are temporarily dormant. See [Temporary License Disablement](../licensing/temporary-license-disablement.md).
+
 Standalone installations should begin with the installer. The installer prepares a single-school installation and creates the owner/admin path without relying on public SaaS signup.
 
 Recommended flow:
 
-1. Copy `.env.example` and fill local database, mail, app URL, and license values.
+1. Copy `.env.example` and fill local database, mail, and app URL values.
 2. Confirm `SANFAANI_PRODUCT_EDITION=standalone`.
 3. Confirm `SANFAANI_DEPLOYMENT_MODE=single_school`.
 4. Confirm `SANFAANI_INSTALLER_ENABLED=true`.
@@ -12,8 +14,7 @@ Recommended flow:
 6. Run the installer.
 7. Create the first school admin.
 8. Create or confirm the local school profile.
-9. Activate the license.
-10. Use the school dashboard.
+9. Use the school dashboard.
 
 License mode defaults to `annual` for standalone. Lifetime or managed contract modes can be configured when the commercial agreement supports them.
 

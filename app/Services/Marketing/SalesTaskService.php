@@ -43,7 +43,8 @@ class SalesTaskService
 
     public function createRenewalReminder(License $license): ?SalesTask
     {
-        if (! (bool) config('marketing.sales_tasks_enabled', true)) {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)
+            || ! (bool) config('marketing.sales_tasks_enabled', true)) {
             return null;
         }
 

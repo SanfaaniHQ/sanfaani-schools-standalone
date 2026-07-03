@@ -28,7 +28,7 @@
                 <li>Create a fresh backup of the current production database and uploaded files before changing anything.</li>
                 <li>Confirm the target domain, database name, app version, PHP version, storage path, and maintenance window.</li>
                 <li>Verify that the selected backup belongs to the intended school installation.</li>
-                <li>Keep .env values, database passwords, SMTP passwords, license keys, and API tokens outside this UI.</li>
+                <li>Keep .env values, database passwords, SMTP passwords, and API tokens outside this UI.</li>
                 <li>Confirm who is responsible for each manual step before restore work starts.</li>
             </ul>
         </x-ui.panel>

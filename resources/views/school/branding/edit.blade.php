@@ -67,11 +67,11 @@
                     <input type="checkbox" name="white_label_enabled" value="1" class="mt-1 rounded border-border-subtle text-brand-primary" @checked(old('white_label_enabled', data_get($branding, 'white_label_enabled')) && $whiteLabelAvailable) @disabled(! $whiteLabelAvailable)>
                     <span>
                         <span class="block font-semibold text-text-primary">Enable entitled white-label mode</span>
-                        <span class="mt-1 block text-xs text-text-tertiary">When enabled by license and feature entitlement, school-facing surfaces may emphasize this school's identity while internal support/admin areas can retain Sanfaani identity.</span>
+                        <span class="mt-1 block text-xs text-text-tertiary">When enabled, school-facing surfaces may emphasize this school's identity while internal support/admin areas can retain Sanfaani identity.</span>
                     </span>
                 </label>
                 @unless ($whiteLabelAvailable)
-                    <p class="mt-2 text-xs text-text-tertiary">White-label controls stay locked until the white-label feature and license entitlement are both available. Powered-by Sanfaani wording remains commercially appropriate for standard deployments.</p>
+                    <p class="mt-2 text-xs text-text-tertiary">White-label controls stay locked until the white-label feature is available. Powered-by Sanfaani wording remains commercially appropriate for standard deployments.</p>
                 @endunless
             </x-ui.panel>
 

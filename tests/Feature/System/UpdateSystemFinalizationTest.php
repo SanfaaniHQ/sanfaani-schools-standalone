@@ -73,7 +73,7 @@ class UpdateSystemFinalizationTest extends TestCase
             ->get(route('admin.updates.index'))
             ->assertOk()
             ->assertSee('2.4.6')
-            ->assertSee('License access')
+            ->assertSee('Update access')
             ->assertDontSee($appKey)
             ->assertDontSee('stage22-app-key-secret')
             ->assertDontSee(base_path())
@@ -175,7 +175,7 @@ class UpdateSystemFinalizationTest extends TestCase
         $this->assertContains('current_version', $keys);
         $this->assertContains('compatibility', $keys);
         $this->assertContains('database_status', $keys);
-        $this->assertContains('license_status', $keys);
+        $this->assertNotContains('license_status', $keys);
         $this->assertContains('installer_status', $keys);
         $this->assertContains('storage_writable', $keys);
         $this->assertContains('update_package_directory', $keys);
@@ -250,7 +250,7 @@ class UpdateSystemFinalizationTest extends TestCase
             'standalone.product_edition' => 'standalone',
             'features.features.update_manager.enabled' => true,
             'updates.enabled' => true,
-            'licensing.validation_enabled' => false,
+            'sanfaani.license_validation_enabled' => false,
         ]);
 
         $this->actingAs($this->superAdmin())
@@ -272,7 +272,7 @@ class UpdateSystemFinalizationTest extends TestCase
             'updates.enabled' => true,
             'updates.backup_required' => true,
             'updates.require_license_entitlement' => true,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
         ]);
     }
 

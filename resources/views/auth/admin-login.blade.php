@@ -38,7 +38,7 @@
                         {{ data_get($resolvedBranding, 'login_heading') ?: 'Local Installation Admin' }}
                     </h1>
                     <p class="mt-5 max-w-xl text-base leading-7 text-emerald-50/90">
-                        {{ data_get($resolvedBranding, 'login_subheading') ?: 'Manage license, backups, diagnostics, branding, mail, and local school settings from one secure console.' }}
+                        {{ data_get($resolvedBranding, 'login_subheading') ?: 'Manage backups, diagnostics, branding, mail, and local school settings from one secure console.' }}
                     </p>
 
                     <div class="mt-8 grid max-w-xl gap-3 sm:grid-cols-3" aria-label="Installation trust indicators">

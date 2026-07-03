@@ -1,6 +1,18 @@
 <?php
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | License enforcement
+    |--------------------------------------------------------------------------
+    |
+    | Standalone installations currently run without license enforcement. The
+    | dormant licensing architecture can be restored by explicitly enabling
+    | this flag; no license key or signing key is required while it is false.
+    |
+    */
+    'license_validation_enabled' => (bool) env('SANFAANI_LICENSE_VALIDATION_ENABLED', false),
+
     'deployment' => [
         'mode' => env('SANFAANI_DEPLOYMENT_MODE', 'saas'),
         'license_mode' => env('SANFAANI_LICENSE_MODE', 'subscription'),

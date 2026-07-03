@@ -30,7 +30,7 @@ trait BackupTestSupport
             'updates.enabled' => true,
             'updates.backup_required' => true,
             'updates.require_license_entitlement' => true,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => false,
         ]);
     }
@@ -46,7 +46,7 @@ trait BackupTestSupport
             'backups.enabled' => true,
             'backups.require_license_entitlement' => true,
             'updates.enabled' => true,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => false,
         ]);
 

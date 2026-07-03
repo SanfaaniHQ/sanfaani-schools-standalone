@@ -24,7 +24,7 @@ class LicenseEntitlementTest extends TestCase
         config([
             'sanfaani.deployment.mode' => 'single_school',
             'sanfaani.deployment.license_mode' => 'white_label',
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => true,
         ]);
     }

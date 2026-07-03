@@ -44,16 +44,23 @@ class DemoEnvironmentService
 
             $licenseMode = $this->deployment->licenseMode();
 
-            if (! in_array($licenseMode, config('demo.license_modes', []), true)) {
+            if ($this->licenses->requiresValidation()
+                && ! in_array($licenseMode, config('demo.license_modes', []), true)) {
                 return false;
             }
 
-            if ($licenseMode === DeploymentModeService::LICENSE_SUBSCRIPTION && ! $this->deployment->isSaas()) {
+            if ($this->licenses->requiresValidation()
+                && $licenseMode === DeploymentModeService::LICENSE_SUBSCRIPTION
+                && ! $this->deployment->isSaas()) {
                 return false;
             }
 
             if (! $this->features->enabled('demo_system', $school, $user)) {
                 return false;
+            }
+
+            if (! $this->licenses->requiresValidation()) {
+                return true;
             }
 
             $license = $this->licenses->current($school);
@@ -159,6 +166,10 @@ class DemoEnvironmentService
 
     private function licenseFor(School $school): ?License
     {
+        if (! $this->licenses->requiresValidation()) {
+            return null;
+        }
+
         $license = $this->licenses->current($school);
 
         if ($license && in_array($this->deployment->licenseMode(), ['demo', 'trial'], true) && ! $this->licenses->isValid($school)) {

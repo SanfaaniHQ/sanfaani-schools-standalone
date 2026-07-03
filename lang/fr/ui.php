@@ -56,6 +56,7 @@ return [
     'log_in' => 'Connexion',
     'logout' => 'Deconnexion',
     'installation_admin' => 'Administration installation',
+    'installation_admin_intro' => 'Gerez les parametres et diagnostics de l installation separement des roles scolaires.',
     'local_admin_console' => 'Console admin locale',
     'go_to_school_workspace' => 'Ouvrir l espace ecole',
     'mail_settings' => 'Parametres e-mail',

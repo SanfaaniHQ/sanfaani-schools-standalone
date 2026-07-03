@@ -32,7 +32,7 @@
         <section class="grid gap-4 md:grid-cols-3">
             <x-ui.stat-card label="Current version" :value="$currentVersion->version" :meta="str($currentVersion->channel)->title().' channel'" />
             <x-ui.stat-card label="Configured channel" :value="str($channel)->title()" meta="Supported: stable, beta, security." />
-            <x-ui.stat-card label="License access" :value="str($decision['status'])->replace('_', ' ')->title()" :meta="$decision['message']" tone="info" />
+            <x-ui.stat-card label="Update access" :value="str($decision['status'])->replace('_', ' ')->title()" :meta="$decision['message']" tone="info" />
         </section>
 
         <x-ui.table-card

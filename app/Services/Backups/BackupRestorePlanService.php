@@ -70,7 +70,7 @@ class BackupRestorePlanService
             [
                 'label' => 'Contact Sanfaani support for production restore review',
                 'status' => 'required',
-                'body' => 'Confirm the target database, uploaded-file path, app version, license state, and maintenance window with support before production restore work starts.',
+                'body' => 'Confirm the target database, uploaded-file path, app version, and maintenance window with support before production restore work starts.',
             ],
             [
                 'label' => 'Restore files outside the browser',

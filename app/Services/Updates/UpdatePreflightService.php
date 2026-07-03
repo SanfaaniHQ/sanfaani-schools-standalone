@@ -43,7 +43,9 @@ class UpdatePreflightService
         $this->checkCompatibility($manifest, $result);
         $this->checkIntegrity($package, $manifest, $result);
         $this->checkEntitlement($actor, $result);
-        $this->checkLicenseStatus($result);
+        if ($this->licenses->requiresValidation()) {
+            $this->checkLicenseStatus($result);
+        }
         $this->checkPhp($manifest, $result);
         $this->checkLaravel($manifest, $result);
         $this->checkRequiredExtensions($manifest, $result);
@@ -197,12 +199,12 @@ class UpdatePreflightService
         $decision = $this->entitlements->check($actor);
 
         if (! $decision['allowed']) {
-            $result->add('entitlement', 'License and feature entitlement', 'fail', 'error', $decision['message'], true, $decision);
+            $result->add('entitlement', 'Update feature access', 'fail', 'error', $decision['message'], true, $decision);
 
             return;
         }
 
-        $result->add('entitlement', 'License and feature entitlement', 'pass', 'info', $decision['message'], false, $decision);
+        $result->add('entitlement', 'Update feature access', 'pass', 'info', $decision['message'], false, $decision);
     }
 
     private function checkLicenseStatus(UpdatePreflightResult $result): void

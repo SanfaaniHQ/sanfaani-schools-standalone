@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div>
             <h2 class="text-xl font-semibold leading-tight text-text-primary">Sales Tasks</h2>
-            <p class="mt-1 text-sm text-text-secondary">Follow-up reminders from demo, trial, onboarding, and renewal signals.</p>
+            <p class="mt-1 text-sm text-text-secondary">Follow-up reminders from demo, trial, and onboarding signals.</p>
         </div>
     </x-slot>
 

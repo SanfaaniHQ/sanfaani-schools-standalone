@@ -8,7 +8,6 @@ use App\Models\LmsCbtActivity;
 use App\Models\School;
 use App\Models\UpdatePackage;
 use App\Services\Backups\BackupService;
-use App\Services\Licensing\LicenseValidationService;
 use Illuminate\Support\Facades\Route;
 
 class StandaloneDashboardSummaryService
@@ -17,7 +16,6 @@ class StandaloneDashboardSummaryService
         private StandaloneEditionService $edition,
         private StandaloneSyncService $sync,
         private StandaloneSystemHealthService $health,
-        private LicenseValidationService $licenses,
         private BackupService $backups,
     ) {}
 
@@ -39,8 +37,6 @@ class StandaloneDashboardSummaryService
             ? $this->sync->offlineAttendanceSyncHealth($school)
             : $this->sync->offlineAttendanceSyncHealth();
         $healthSummary = $this->health->summary($school);
-        $licenseStatus = $this->licenses->status($school);
-        $licenseReady = $this->licenseReady($licenseStatus);
         $latestBackup = $this->latestBackup($school);
         $backupReadiness = $this->backups->preUpdateReadiness($school);
         $latestUpdate = UpdatePackage::query()->latest('id')->first();
@@ -52,10 +48,6 @@ class StandaloneDashboardSummaryService
 
         if ($healthSummary['overall']['status'] !== 'pass') {
             $warnings->push('Standalone system health: '.$healthSummary['overall']['message']);
-        }
-
-        if (! $licenseReady) {
-            $warnings->push('The standalone license needs attention.');
         }
 
         if (! $backupReadiness['ready']) {
@@ -73,7 +65,7 @@ class StandaloneDashboardSummaryService
         $workspaceHref = $this->route('workspace.create');
         $schoolChecklist = collect($schoolSummary['checklist'])
             ->map(function (array $item) use ($workspaceHref): array {
-                if (! in_array($item['key'], ['backup', 'license', 'system_health'], true)) {
+                if (! in_array($item['key'], ['backup', 'system_health'], true)) {
                     $item['href'] = $workspaceHref;
                 }
 
@@ -90,10 +82,10 @@ class StandaloneDashboardSummaryService
                 $editionStatus['installed'] ? null : $this->route('installer.welcome'),
             ),
             $this->checklistItem(
-                'installer_license_final_hardening',
-                'Installer and license hardening',
+                'installer_final_hardening',
+                'Installer hardening',
                 true,
-                'Support-safe installer diagnostics, local license redaction, module access, and audit logging are available.',
+                'Support-safe installer diagnostics, module access, and audit logging are available.',
                 $this->route('admin.standalone.status'),
             ),
             $this->checklistItem(
@@ -129,13 +121,6 @@ class StandaloneDashboardSummaryService
                     'meta' => $editionStatus['installer_enabled'] ? 'Guided installer enabled' : 'Installer disabled',
                     'tone' => $editionStatus['installed'] ? 'success' : 'warning',
                     'href' => $this->route('admin.standalone.status'),
-                ],
-                [
-                    'label' => 'License',
-                    'value' => $this->label($licenseStatus),
-                    'meta' => $this->licenseMeta($school),
-                    'tone' => $licenseReady ? 'success' : 'warning',
-                    'href' => $this->route('admin.license.index'),
                 ],
                 [
                     'label' => 'Backup readiness',
@@ -191,8 +176,6 @@ class StandaloneDashboardSummaryService
         $activeSession = $school->academicSessions()->where('is_active', true)->first();
         $activeTerm = $school->terms()->where('is_active', true)->first();
         $openAdmissionCycle = $school->admissionCycles()->acceptingApplications()->first();
-        $licenseStatus = $this->licenses->status($school);
-        $licenseReady = $this->licenseReady($licenseStatus);
         $backupReadiness = $this->backups->preUpdateReadiness($school);
         $healthSummary = $this->health->summary($school);
         $offlineAttendanceHealth = $this->sync->offlineAttendanceSyncHealth($school);
@@ -298,7 +281,6 @@ class StandaloneDashboardSummaryService
             $this->checklistItem('result_settings', 'Result and report settings', $resultSettingsReady, $resultSettingsReady ? 'Report or access settings are configured.' : 'Configure report cards or result access rules.', $this->route('school.report-card-settings.edit')),
             $this->checklistItem('cbt', 'CBT setup', $counts['cbt_question_banks'] > 0 || $counts['cbt_exams'] > 0, $counts['cbt_question_banks'].' bank(s), '.$counts['cbt_exams'].' exam(s).', $this->route('school.cbt.dashboard')),
             $this->checklistItem('backup', 'Recent verified backup', (bool) $backupReadiness['ready'], $backupReadiness['message'], $ownerContext ? $this->route('admin.backups.index') : null),
-            $this->checklistItem('license', 'Standalone license', $licenseReady, 'Status: '.$this->label($licenseStatus).'.', $ownerContext ? $this->route('admin.license.index') : null),
             $this->checklistItem('system_health', 'Standalone system health', $healthSummary['overall']['status'] === 'pass', $healthSummary['overall']['message'], $ownerContext ? $this->route('admin.standalone.status') : null),
         ];
 
@@ -312,13 +294,6 @@ class StandaloneDashboardSummaryService
             'progress' => $this->progress($checklist),
             'checklist' => $checklist,
             'health' => [
-                [
-                    'label' => 'License',
-                    'value' => $this->label($licenseStatus),
-                    'meta' => $this->licenseMeta($school),
-                    'tone' => $licenseReady ? 'success' : 'warning',
-                    'href' => null,
-                ],
                 [
                     'label' => 'Backup readiness',
                     'value' => $backupReadiness['ready'] ? 'Ready' : 'Action needed',
@@ -494,28 +469,6 @@ class StandaloneDashboardSummaryService
             ->first();
     }
 
-    private function licenseReady(string $status): bool
-    {
-        return in_array($status, ['valid', 'offline_grace', 'validation_disabled', 'subscription_platform'], true);
-    }
-
-    private function licenseMeta(?School $school): string
-    {
-        $license = $this->licenses->current($school);
-
-        if (! $license) {
-            return $this->licenses->requiresValidation()
-                ? 'No local license found'
-                : 'Validation disabled by configuration';
-        }
-
-        $days = $this->licenses->daysUntilExpiry($license);
-
-        return $days === null
-            ? $this->label($license->license_type).' license'
-            : max(0, $days).' day(s) until expiry';
-    }
-
     private function checklistItem(string $key, string $label, bool $complete, string $detail, ?string $href): array
     {
         return compact('key', 'label', 'complete', 'detail', 'href');
@@ -559,9 +512,9 @@ class StandaloneDashboardSummaryService
                 'detail' => 'Consolidated school-scoped report summaries, safe cross-module links, privacy boundaries, and existing CSV export links are available without adding a BI engine.',
             ],
             [
-                'label' => 'Installer and license final hardening',
+                'label' => 'Installer final hardening',
                 'status' => 'Available',
-                'detail' => 'Support-safe installer readiness checks, local license validation, redacted status display, module access, and sensitive-action audit logging are available without billing or online activation automation.',
+                'detail' => 'Support-safe installer readiness checks, module access, and sensitive-action audit logging are available.',
             ],
             [
                 'label' => 'Import/export tools',

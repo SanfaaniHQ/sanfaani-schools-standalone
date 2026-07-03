@@ -30,7 +30,6 @@ class StandaloneStatusCommand extends Command
         $this->line('Portal mode: '.$status['deployment_mode']);
         $this->line('Installer: '.($status['installer_enabled'] ? 'enabled' : 'disabled'));
         $this->line('Installed: '.($status['installed'] ? 'yes' : 'no'));
-        $this->line('License mode: '.$status['license_mode']);
         $this->line('Offline mode: '.$status['offline_mode']);
         $this->line('Sync: '.($status['sync_enabled'] ? 'enabled' : 'disabled'));
         $this->line('Sync endpoint: '.($status['sync_endpoint_configured'] ? 'configured' : 'missing'));

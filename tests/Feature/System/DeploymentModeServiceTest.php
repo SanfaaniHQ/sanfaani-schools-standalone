@@ -40,7 +40,7 @@ class DeploymentModeServiceTest extends TestCase
         $this->assertTrue($service->isSubscription());
         $this->assertTrue($service->updatesEnabled());
         $this->assertFalse($service->demoEnabled());
-        $this->assertTrue($service->requiresLicense());
+        $this->assertFalse($service->requiresLicense());
         $this->assertTrue($service->allowsMultiSchool());
         $this->assertFalse($service->allowsInstaller());
         $this->assertTrue($service->allowsCentralBilling());
@@ -94,6 +94,8 @@ class DeploymentModeServiceTest extends TestCase
 
     public function test_all_license_modes_are_supported(): void
     {
+        config(['sanfaani.license_validation_enabled' => true]);
+
         $expectations = [
             'subscription' => ['isSubscription' => true, 'isAnnual' => false, 'isLifetime' => false, 'isTrial' => false, 'isDemo' => false, 'requiresLicense' => true],
             'annual' => ['isSubscription' => false, 'isAnnual' => true, 'isLifetime' => false, 'isTrial' => false, 'isDemo' => false, 'requiresLicense' => true],
@@ -175,7 +177,7 @@ class DeploymentModeServiceTest extends TestCase
             ->assertOk()
             ->assertSee('System Status')
             ->assertSee('Portal mode')
-            ->assertSee('License mode')
+            ->assertDontSee('License mode')
             ->assertSee('Queue connection')
             ->assertSee('Filesystem disk');
     }

@@ -34,6 +34,11 @@ class SendMarketingEmailJob implements ShouldQueue
             return;
         }
 
+        if ($this->mailType === 'renewal_reminder'
+            && ! (bool) config('sanfaani.license_validation_enabled', false)) {
+            return;
+        }
+
         $lead = LeadRequest::find($this->leadRequestId);
 
         if (! $lead || blank($lead->email) || $unsubscribes->isUnsubscribed($lead->email)) {

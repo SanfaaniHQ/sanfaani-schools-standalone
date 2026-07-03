@@ -731,26 +731,27 @@ Route::middleware(['auth', 'installation.admin', 'role:super_admin', 'demo.safe'
                     ->name('favicon');
             });
 
-        Route::get('/license', [LicenseController::class, 'index'])
-            ->name('license.index')
-            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+        if ((bool) config('sanfaani.license_validation_enabled', false) || app()->environment('testing')) {
+            Route::get('/license', [LicenseController::class, 'index'])
+                ->name('license.index')
+                ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
 
-        Route::get('/license/activate', [LicenseController::class, 'activate'])
-            ->name('license.activate')
-            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+            Route::get('/license/activate', [LicenseController::class, 'activate'])
+                ->name('license.activate')
+                ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
 
-        Route::post('/license/activate', [LicenseController::class, 'store'])
-            ->name('license.store')
-            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+            Route::post('/license/activate', [LicenseController::class, 'store'])
+                ->name('license.store')
+                ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
 
-        Route::post('/license/validate', [LicenseController::class, 'validateNow'])
-            ->name('license.validate')
-            ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+            Route::post('/license/validate', [LicenseController::class, 'validateNow'])
+                ->name('license.validate')
+                ->middleware(['feature:license_activation', 'deployment.behavior:standalone_license|license_activation']);
+        }
 
         Route::get('/deployment/{section}', [DeploymentPlaceholderController::class, 'show'])
             ->whereIn('section', [
                 'standalone-installer',
-                'standalone-license',
                 'standalone-updates',
                 'local-branding',
                 'local-mail',
@@ -759,7 +760,7 @@ Route::middleware(['auth', 'installation.admin', 'role:super_admin', 'demo.safe'
                 'managed-updates',
                 'managed-white-label',
             ])
-            ->middleware('deployment.behavior:standalone_installer|standalone_license|standalone_updates|local_branding|local_mail_settings|managed_support|managed_backups|managed_updates|managed_white_label')
+            ->middleware('deployment.behavior:standalone_installer|standalone_updates|local_branding|local_mail_settings|managed_support|managed_backups|managed_updates|managed_white_label')
             ->name('deployment.placeholder');
 
         Route::post('/system-maintenance/clear-all-cache', [SystemMaintenanceController::class, 'clearAllCache'])

@@ -55,6 +55,10 @@ class BrandingResolver
             return false;
         }
 
+        if (! (bool) config('sanfaani.license_validation_enabled', false)) {
+            return true;
+        }
+
         foreach (['white_label_branding', 'website_customization'] as $feature) {
             if ($this->entitlements->explicitAccess($feature, $school) === true) {
                 return true;

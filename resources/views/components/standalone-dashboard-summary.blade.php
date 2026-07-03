@@ -51,7 +51,7 @@
     <div class="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">
         <x-ui.panel
             title="Operational setup checklist"
-            description="Read-only checks drawn from the existing school, license, backup, admissions, results, and CBT records."
+            description="Read-only checks drawn from the existing school, backup, admissions, results, and CBT records."
         >
             <div class="grid gap-3 md:grid-cols-2">
                 @foreach ($summary['checklist'] as $item)

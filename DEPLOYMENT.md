@@ -452,7 +452,23 @@ Check logs:
 tail -n 100 storage/logs/laravel.log
 ```
 
-## 13. Rollback Protocol
+## 13. Existing Standalone Installations: Licensing Temporarily Disabled
+
+No license key or signing key is required. The source default for `SANFAANI_LICENSE_VALIDATION_ENABLED` is `false`, and no database migration is needed. Existing license tables and records remain dormant and must not be deleted.
+
+After deploying to `/home/swifarpx/portal.sanfaani.net`, rebuild Laravel caches:
+
+```bash
+cd /home/swifarpx/portal.sanfaani.net
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+See `docs/licensing/temporary-license-disablement.md` for restoration guidance.
+
+## 14. Rollback Protocol
 
 If a critical failure appears within 30 minutes:
 
@@ -470,7 +486,7 @@ If a critical failure appears within 30 minutes:
 6. Repeat smoke tests.
 7. Open a GitHub incident issue with logs, timeline, and rollback notes.
 
-## 14. Maintenance Schedule
+## 15. Maintenance Schedule
 
 Weekly:
 
@@ -487,7 +503,7 @@ Monthly:
 - Test registration, payment, scratch-card, and result-checking end to end.
 - Refresh staging demo data.
 
-## 15. Acceptance Criteria
+## 16. Acceptance Criteria
 
 - All permission gates have tests.
 - 100 percent of primary routes have 200, 302, 403, or validation assertions.

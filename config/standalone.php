@@ -89,6 +89,7 @@ return [
         'SANFAANI_DATABASE_NAME_GUARD_ENABLED' => 'false',
         'SANFAANI_DATABASE_NAME_REQUIRED_FRAGMENT' => 'sanfaani_schools',
         'SANFAANI_LICENSE_MODE' => DeploymentModeService::LICENSE_ANNUAL,
+        'SANFAANI_LICENSE_VALIDATION_ENABLED' => 'false',
         'SANFAANI_STANDALONE_OFFLINE_MODE' => 'local_first',
         'SANFAANI_STANDALONE_SYNC_ENABLED' => 'false',
         'SANFAANI_STANDALONE_SYNC_ENDPOINT' => '',

@@ -36,12 +36,12 @@
         </div>
 
         <div class="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            Finalizing creates the school, creates the school admin login, saves email delivery settings where available, checks public storage, clears application caches, writes the installation lock, and prevents reinstall from the browser. It does not send emails, activate a license, or start backups.
+            Finalizing creates the school, creates the school admin login, saves email delivery settings where available, checks public storage, clears application caches, writes the installation lock, and prevents reinstall from the browser. It does not send emails or start backups.
         </div>
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
             <p class="text-sm font-semibold text-text-primary">Support-safe diagnostics</p>
-            <p class="mt-1 text-xs text-text-secondary">Share these statuses with Sanfaani support if needed. Security keys, database credentials, mail passwords, license keys, and private server paths are not shown.</p>
+            <p class="mt-1 text-xs text-text-secondary">Share these statuses with Sanfaani support if needed. Security keys, database credentials, mail passwords, and private server paths are not shown.</p>
             <dl class="mt-4 grid gap-3 sm:grid-cols-2">
                 @foreach ($diagnostics as $item)
                     <div class="rounded-md border border-border-subtle bg-bg-primary p-3">

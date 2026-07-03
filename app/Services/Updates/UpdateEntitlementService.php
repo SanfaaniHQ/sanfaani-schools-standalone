@@ -30,11 +30,13 @@ class UpdateEntitlementService
             return $this->deny('disabled', 'Guided updates are disabled by configuration.');
         }
 
-        if ($this->deployment->isDemo() || $this->isDemoUser($user)) {
+        if (($this->licenses->requiresValidation() && $this->deployment->isDemo()) || $this->isDemoUser($user)) {
             return $this->deny('demo_blocked', 'Demo environments cannot access the update manager.');
         }
 
-        if ($this->deployment->isTrial() && ! (bool) config('updates.trial_allowed', false)) {
+        if ($this->licenses->requiresValidation()
+            && $this->deployment->isTrial()
+            && ! (bool) config('updates.trial_allowed', false)) {
             return $this->deny('trial_blocked', 'Trial licenses are not allowed to access guided updates.');
         }
 

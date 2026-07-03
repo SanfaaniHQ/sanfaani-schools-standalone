@@ -18,6 +18,10 @@ class LicenseEntitlementService
 
     public function entitlements(?School $school = null): array
     {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)) {
+            return [];
+        }
+
         $license = $this->validLicense($school);
 
         return $license ? (array) ($license->entitlements ?: []) : [];
@@ -25,6 +29,10 @@ class LicenseEntitlementService
 
     public function features(?School $school = null): array
     {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)) {
+            return [];
+        }
+
         $license = $this->validLicense($school);
 
         return $license ? (array) ($license->features ?: []) : [];
@@ -32,6 +40,10 @@ class LicenseEntitlementService
 
     public function explicitAccess(string $feature, ?School $school = null): ?bool
     {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)) {
+            return null;
+        }
+
         $feature = $this->normalize($feature);
         $license = $this->validLicense($school);
 

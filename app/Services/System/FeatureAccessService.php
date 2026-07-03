@@ -72,6 +72,10 @@ class FeatureAccessService
             return false;
         }
 
+        if (! $this->licenseValidationEnabled()) {
+            return $this->normalize($feature) !== 'license_activation';
+        }
+
         $modes = $this->normalizedList($config['license_modes'] ?? []);
 
         return $modes === [] || in_array($this->deployment->licenseMode(), $modes, true);
@@ -99,6 +103,10 @@ class FeatureAccessService
 
         if ($explicitAccess !== null) {
             return $explicitAccess;
+        }
+
+        if (! $this->licenseValidationEnabled()) {
+            return true;
         }
 
         return $this->explicitLicenseAccess($feature, $school, $config) ?? true;
@@ -161,7 +169,9 @@ class FeatureAccessService
                 );
             }
 
-            $licenseAccess = $this->explicitLicenseAccess($feature, $school, $config);
+            $licenseAccess = $this->licenseValidationEnabled()
+                ? $this->explicitLicenseAccess($feature, $school, $config)
+                : null;
 
             if ($licenseAccess !== null) {
                 return $this->decision(
@@ -299,5 +309,10 @@ class FeatureAccessService
             'enabled' => $enabled,
             'reason' => $reason,
         ];
+    }
+
+    private function licenseValidationEnabled(): bool
+    {
+        return (bool) config('sanfaani.license_validation_enabled', false);
     }
 }

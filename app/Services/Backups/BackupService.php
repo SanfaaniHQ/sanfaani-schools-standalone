@@ -41,11 +41,13 @@ class BackupService
             return $this->deny('disabled', 'Backup manager is disabled by configuration.');
         }
 
-        if ($this->deployment->isDemo() || $this->isDemoUser($user)) {
+        if (($this->licenses->requiresValidation() && $this->deployment->isDemo()) || $this->isDemoUser($user)) {
             return $this->deny('demo_blocked', 'Demo environments cannot access the backup manager.');
         }
 
-        if ($this->deployment->isTrial() && ! (bool) config('backups.trial_allowed', false)) {
+        if ($this->licenses->requiresValidation()
+            && $this->deployment->isTrial()
+            && ! (bool) config('backups.trial_allowed', false)) {
             return $this->deny('trial_blocked', 'Trial licenses are not allowed to access backup manager.');
         }
 

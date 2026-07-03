@@ -62,7 +62,7 @@ class StandaloneDashboardFinalizationTest extends TestCase
             ->assertOk()
             ->assertSee('Standalone operating dashboard')
             ->assertSee('Installation')
-            ->assertSee('License')
+            ->assertDontSee('License Status')
             ->assertSee('Backup readiness')
             ->assertSee('Guided updates')
             ->assertSee('Local-first sync')

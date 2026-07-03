@@ -119,7 +119,8 @@ class DeploymentModeService
 
     public function requiresLicense(): bool
     {
-        return ! $this->isDemo();
+        return (bool) config('sanfaani.license_validation_enabled', false)
+            && ! $this->isDemo();
     }
 
     public function allowsMultiSchool(): bool

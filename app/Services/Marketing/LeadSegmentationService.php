@@ -16,7 +16,9 @@ class LeadSegmentationService
             'source' => $lead->source ?: 'unknown',
             'interest' => $this->interest($lead),
             'deployment_mode' => data_get($lead->metadata, 'deployment_mode', $this->deploymentMode->mode()),
-            'license_mode' => data_get($lead->metadata, 'license_mode', $this->deploymentMode->licenseMode()),
+            ...((bool) config('sanfaani.license_validation_enabled', false)
+                ? ['license_mode' => data_get($lead->metadata, 'license_mode', $this->deploymentMode->licenseMode())]
+                : []),
             'lead_status' => $lead->status,
             'demo_status' => $lead->type === 'demo' ? 'requested' : null,
             'trial_status' => $lead->status === LeadRequest::STATUS_TRIAL_STARTED ? 'started' : null,

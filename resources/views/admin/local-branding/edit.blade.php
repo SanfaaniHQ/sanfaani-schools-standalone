@@ -83,7 +83,7 @@
                 <label class="mt-4 flex items-start gap-2 text-sm text-text-secondary">
                     <input type="checkbox" name="white_label_enabled" value="1" class="mt-1 rounded border-border-subtle text-brand-primary" @checked(old('white_label_enabled', data_get($branding, 'white_label_enabled')) && $whiteLabelAvailable) @disabled(! $whiteLabelAvailable)>
                     <span>
-                        <span class="block font-semibold text-text-primary">Use full white-label identity when licensed</span>
+                        <span class="block font-semibold text-text-primary">Use full white-label identity</span>
                         <span class="mt-1 block text-xs text-text-tertiary">Standard installations still show appropriate Sanfaani ownership where required.</span>
                     </span>
                 </label>

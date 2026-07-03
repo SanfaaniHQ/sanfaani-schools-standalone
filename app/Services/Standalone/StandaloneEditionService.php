@@ -207,7 +207,9 @@ class StandaloneEditionService
             $warnings[] = 'Standalone edition is currently using SaaS portal mode; use single_school for private school installations.';
         }
 
-        if ($this->isStandalone() && $this->licenseMode() === DeploymentModeService::LICENSE_SUBSCRIPTION) {
+        if ((bool) config('sanfaani.license_validation_enabled', false)
+            && $this->isStandalone()
+            && $this->licenseMode() === DeploymentModeService::LICENSE_SUBSCRIPTION) {
             $warnings[] = 'Standalone edition is currently using subscription license mode; annual or lifetime is recommended.';
         }
 
@@ -216,7 +218,7 @@ class StandaloneEditionService
         }
 
         if ($this->isStandalone() && ((bool) config('demo.enabled', false) || (bool) config('sanfaani.deployment.demo_enabled', false))) {
-            $warnings[] = 'Public sales mode is enabled; standalone owners should use installer, license activation, and the local dashboard as the main flow.';
+            $warnings[] = 'Public sales mode is enabled; standalone owners should use the installer and local dashboard as the main flow.';
         }
 
         if ($this->isStandalone() && (bool) config('demo.marketplace.enabled', false)) {

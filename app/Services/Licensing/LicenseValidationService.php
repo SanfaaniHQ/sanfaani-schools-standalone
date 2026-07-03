@@ -49,7 +49,7 @@ class LicenseValidationService
 
     public function requiresValidation(): bool
     {
-        if (! (bool) config('licensing.validation_enabled', true)) {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)) {
             return false;
         }
 
@@ -89,6 +89,10 @@ class LicenseValidationService
 
     private function evaluate(?School $school, bool $log): LicenseValidationResult
     {
+        if (! (bool) config('sanfaani.license_validation_enabled', false)) {
+            return $this->result(true, 'validation_disabled', 'License validation is disabled by configuration.', null, $school, 'info', [], false);
+        }
+
         try {
             if ($this->deployment->isSaas() && $this->deployment->isSubscription()) {
                 return $this->validateSaasSubscription($school, $log);
@@ -100,7 +104,7 @@ class LicenseValidationService
         }
 
         if (! $this->requiresValidation()) {
-            return $this->result(true, 'validation_disabled', 'License validation is disabled by configuration.', null, $school, 'info', [], $log);
+            return $this->result(true, 'validation_disabled', 'License validation is disabled by configuration.', null, $school, 'info', [], false);
         }
 
         $license = $this->current($school);

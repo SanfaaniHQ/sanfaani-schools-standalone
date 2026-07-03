@@ -1,5 +1,7 @@
 # License Activation
 
+> **Temporarily dormant:** License enforcement and customer activation routes are disabled by default. Current standalone installations do not require a license key or signing key. The architecture documented below is retained for future restoration; see [Temporary License Disablement](temporary-license-disablement.md).
+
 The licensing foundation supports these license modes:
 
 - `subscription`

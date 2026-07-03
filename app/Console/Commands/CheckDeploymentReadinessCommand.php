@@ -175,7 +175,6 @@ class CheckDeploymentReadinessCommand extends Command
     private function checkCommercialFoundations(callable $add): void
     {
         $add('installer_config', config('installer.enabled') ? 'pass' : 'warning', config('installer.enabled') ? 'Installer is enabled by configuration.' : 'Installer is disabled; enable it for fresh single-school installs.');
-        $add('license_config', config('licensing.validation_enabled') ? 'pass' : 'warning', config('licensing.validation_enabled') ? 'License validation is enabled.' : 'License validation is disabled.');
         $add('updates_config', config('updates.enabled') ? 'pass' : 'warning', config('updates.enabled') ? 'Update manager foundation is enabled.' : 'Update manager foundation is disabled.');
         $add('backups_config', config('backups.enabled') ? 'pass' : 'warning', config('backups.enabled') ? 'Backup manager foundation is enabled.' : 'Backup manager foundation is disabled.');
     }

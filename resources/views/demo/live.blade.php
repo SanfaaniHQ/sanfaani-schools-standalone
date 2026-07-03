@@ -106,7 +106,7 @@
                             <a href="{{ route('landing.contact') }}" class="ui-button-secondary justify-center py-3">Contact Sanfaani</a>
                         </div>
                         <p class="mt-5 text-center text-sm leading-6 text-gray-600">
-                            Standalone buyers receive the package, license, and install support. SaaS buyers use the hosted service and do not receive source code.
+                            Standalone buyers receive the package and install support. SaaS buyers use the hosted service and do not receive source code.
                         </p>
                     </div>
                 </x-ui.container>

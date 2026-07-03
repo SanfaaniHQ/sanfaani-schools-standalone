@@ -75,7 +75,7 @@ class UpdateEntitlementTest extends TestCase
             ->assertRedirect(route('admin.license.index'));
     }
 
-    public function test_demo_mode_cannot_access_update_manager(): void
+    public function test_license_demo_mode_does_not_block_updates_when_validation_is_disabled(): void
     {
         config([
             'sanfaani.deployment.mode' => 'saas',
@@ -86,7 +86,7 @@ class UpdateEntitlementTest extends TestCase
 
         $this->actingAs($this->superAdmin())
             ->get(route('admin.updates.index'))
-            ->assertNotFound();
+            ->assertOk();
     }
 
     private function configureLicensedInstall(): School
@@ -98,7 +98,7 @@ class UpdateEntitlementTest extends TestCase
             'features.features.update_manager.enabled' => true,
             'updates.enabled' => true,
             'updates.require_license_entitlement' => true,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => true,
         ]);
 

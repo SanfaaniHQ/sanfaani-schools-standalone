@@ -123,7 +123,10 @@ class DemoSessionTest extends TestCase
 
     public function test_demo_license_expiry_is_respected_and_linked_when_present(): void
     {
-        config(['sanfaani.deployment.license_mode' => 'demo']);
+        config([
+            'sanfaani.deployment.license_mode' => 'demo',
+            'sanfaani.license_validation_enabled' => true,
+        ]);
 
         $license = License::create([
             'license_key_hash' => app(LicenseKeyHasher::class)->hash('DEMO-LICENSE'),

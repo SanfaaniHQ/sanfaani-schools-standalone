@@ -92,7 +92,7 @@ class BrandingResolutionTest extends TestCase
             'sanfaani.deployment.license_mode' => 'white_label',
             'branding.white_label_enabled' => true,
             'features.features.white_label_branding.enabled' => true,
-            'licensing.validation_enabled' => true,
+            'sanfaani.license_validation_enabled' => true,
             'licensing.require_domain_match' => false,
         ]);
 

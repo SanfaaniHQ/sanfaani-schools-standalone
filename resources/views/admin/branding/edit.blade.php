@@ -56,7 +56,7 @@
                     <span>Enable white-label branding for entitled deployments</span>
                 </label>
                 @unless ($whiteLabelAvailable)
-                    <p class="mt-2 text-xs text-text-tertiary">White-label controls stay locked until the feature and license entitlement are both available.</p>
+                    <p class="mt-2 text-xs text-text-tertiary">White-label controls stay locked until the feature is available.</p>
                 @endunless
             </x-ui.form-section>
 

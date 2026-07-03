@@ -21,13 +21,12 @@
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
             <p class="font-semibold text-text-primary">Setup record</p>
             <p class="mt-1">Portal mode: {{ $metadata['deployment_mode'] ?? 'unknown' }}</p>
-            <p>License mode: {{ $metadata['license_mode'] ?? 'unknown' }}</p>
             <p>Installed at: {{ $metadata['installed_at'] ?? 'unknown' }}</p>
         </div>
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4 text-sm text-text-secondary">
             <p class="font-semibold text-text-primary">Next safe checks</p>
-            <p class="mt-1">Keep database and email credentials safe. After login, confirm the school profile, current session and term, email delivery, backups, and license status before inviting staff or parents.</p>
+            <p class="mt-1">Keep database and email credentials safe. After login, confirm the school profile, current session and term, email delivery, and backups before inviting staff or parents.</p>
         </div>
 
         <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
