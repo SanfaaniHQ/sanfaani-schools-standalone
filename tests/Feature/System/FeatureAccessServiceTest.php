@@ -91,12 +91,12 @@ class FeatureAccessServiceTest extends TestCase
         $this->assertTrue(app(FeatureAccessService::class)->enabled('managed_backups'));
     }
 
-    public function test_demo_feature_respects_demo_license_mode(): void
+    public function test_license_mode_does_not_disable_updates_while_license_enforcement_is_disabled(): void
     {
         config(['sanfaani.deployment.license_mode' => 'demo']);
 
         $this->assertTrue(app(FeatureAccessService::class)->enabled('demo_system'));
-        $this->assertFalse(app(FeatureAccessService::class)->enabled('update_manager'));
+        $this->assertTrue(app(FeatureAccessService::class)->enabled('update_manager'));
     }
 
     public function test_trial_feature_respects_trial_license_mode(): void

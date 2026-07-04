@@ -42,10 +42,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Host</label>
                             <input name="host" value="{{ old('host', $setting->host) }}" class="mt-1 block w-full rounded-xl border-gray-300">
+                            @error('host')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Port</label>
                             <input name="port" type="number" value="{{ old('port', $setting->port) }}" class="mt-1 block w-full rounded-xl border-gray-300">
+                            @error('port')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
@@ -53,11 +55,13 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Username</label>
                             <input name="username" value="{{ old('username', $setting->username) }}" class="mt-1 block w-full rounded-xl border-gray-300">
+                            @error('username')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Password</label>
                             <input name="password" type="password" placeholder="{{ $masker->maskedPassword($setting) }}" autocomplete="new-password" class="mt-1 block w-full rounded-xl border-gray-300">
                             <p class="mt-1 text-xs text-gray-500">Leave blank to keep the current encrypted password.</p>
+                            @error('password')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
                     </div>
 
@@ -65,7 +69,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Encryption</label>
                             <select name="encryption" class="mt-1 block w-full rounded-xl border-gray-300">
-                                <option value="">None</option>
+                                <option value="none" @selected(in_array(old('encryption', $setting->encryption), [null, '', 'none'], true))>None</option>
                                 <option value="tls" @selected(old('encryption', $setting->encryption) === 'tls')>TLS</option>
                                 <option value="ssl" @selected(old('encryption', $setting->encryption) === 'ssl')>SSL</option>
                             </select>
@@ -81,6 +85,10 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Reply-To Email</label>
                             <input name="reply_to_email" value="{{ old('reply_to_email', $setting->reply_to_email) }}" class="mt-1 block w-full rounded-xl border-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Connection Timeout (seconds)</label>
+                            <input name="timeout" type="number" min="1" max="120" value="{{ old('timeout', data_get($setting->metadata, 'timeout', 10)) }}" class="mt-1 block w-full rounded-xl border-gray-300">
                         </div>
                     </div>
 

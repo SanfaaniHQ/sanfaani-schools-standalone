@@ -16,6 +16,7 @@ class SchoolCreatedNotification extends BaseSchoolNotification
         parent::__construct();
 
         $this->schoolId = $school->id;
+        $this->mailSchoolId = $school->id;
         $this->schoolName = $school->name;
     }
 

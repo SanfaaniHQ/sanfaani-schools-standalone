@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MailSetting extends Model
 {
+    protected $hidden = [
+        'password',
+    ];
+
     protected $fillable = [
         'school_id',
         'mailer',

@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Services\CommunicationService;
 use App\Services\PlatformSettingService;
+use App\Support\MailSecurity;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
@@ -107,14 +108,16 @@ class UserAccountSetupNotificationService
                 'error' => null,
             ];
         } catch (Throwable $exception) {
+            $diagnostic = MailSecurity::diagnostic($exception);
             Log::warning('Account setup email failed unexpectedly.', [
                 'user_id' => $user->id,
                 'school_id' => $school?->id,
                 'event_key' => $eventKey,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => $diagnostic['category'],
             ]);
 
-            return $this->failedResult($exception->getMessage());
+            return $this->failedResult($diagnostic['message']);
         }
     }
 
@@ -175,14 +178,16 @@ class UserAccountSetupNotificationService
                 'error' => $log->failure_reason,
             ];
         } catch (Throwable $exception) {
+            $diagnostic = MailSecurity::diagnostic($exception);
             Log::warning('Account lifecycle email failed unexpectedly.', [
                 'user_id' => $user->id,
                 'school_id' => $school?->id,
                 'event_key' => $eventKey,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => $diagnostic['category'],
             ]);
 
-            return $this->failedResult($exception->getMessage());
+            return $this->failedResult($diagnostic['message']);
         }
     }
 

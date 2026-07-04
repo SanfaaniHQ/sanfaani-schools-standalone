@@ -8,6 +8,7 @@ use App\Services\AuditLogService;
 use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
 use App\Services\SchoolNotificationRecipientResolver;
+use App\Support\MailSecurity;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -90,21 +91,23 @@ class SendSchoolNotification implements ShouldQueue
                 }
             }
         } catch (Throwable $exception) {
+            $diagnostic = MailSecurity::diagnostic($exception);
             Log::warning('School notification listener failed.', [
                 'event_key' => $event->eventKey,
                 'school_id' => $event->school->id,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => $diagnostic['category'],
             ]);
 
             try {
                 $this->auditLog->log('school_notification_email_failed', null, $event->school, metadata: [
                     'event_key' => $event->eventKey,
-                    'error' => $exception->getMessage(),
+                    'error_category' => $diagnostic['category'],
                 ]);
             } catch (Throwable $auditException) {
                 Log::warning('School notification failure audit failed.', [
                     'event_key' => $event->eventKey,
-                    'message' => $auditException->getMessage(),
+                    'exception' => $auditException::class,
                 ]);
             }
         }
@@ -142,7 +145,7 @@ class SendSchoolNotification implements ShouldQueue
                 'event_key' => $event->eventKey,
                 'school_id' => $event->school->id,
                 'recipient_user_id' => $recipient['user']?->id,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
         }
     }
@@ -169,7 +172,7 @@ class SendSchoolNotification implements ShouldQueue
             Log::warning('School notification skip audit failed.', [
                 'event_key' => $event->eventKey,
                 'reason' => $reason,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
         }
     }

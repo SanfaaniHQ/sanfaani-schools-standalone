@@ -10,6 +10,7 @@ use App\Services\Installer\InstallerSetupService;
 use App\Services\Installer\InstallerStateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
@@ -175,13 +176,13 @@ class InstallerController extends Controller
     {
         $data = $request->validate([
             'mailer' => ['nullable', 'in:smtp,log,array'],
-            'host' => ['nullable', 'string', 'max:255'],
-            'port' => ['nullable', 'integer', 'between:1,65535'],
+            'host' => ['required_if:mailer,smtp', 'nullable', 'string', 'max:255', 'not_regex:/[\s\/:\\\\\r\n]/'],
+            'port' => ['required_if:mailer,smtp', 'nullable', 'integer', 'between:1,65535'],
             'username' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'max:255'],
-            'encryption' => ['nullable', 'in:tls,ssl,none'],
-            'from_address' => ['nullable', 'email', 'max:255'],
-            'from_name' => ['nullable', 'string', 'max:255'],
+            'password' => ['nullable', 'required_with:username', 'string', 'max:2000'],
+            'encryption' => ['required_if:mailer,smtp', 'nullable', 'in:tls,ssl,none'],
+            'from_address' => ['required_if:mailer,smtp', 'nullable', 'email', 'max:255'],
+            'from_name' => ['nullable', 'string', 'max:160', 'not_regex:/[\r\n]/'],
         ]);
 
         Session::put('installer.smtp', [
@@ -189,7 +190,8 @@ class InstallerController extends Controller
             'host' => $data['host'] ?? null,
             'port' => $data['port'] ?? null,
             'username' => $data['username'] ?? null,
-            'password' => $data['password'] ?? null,
+            'password' => filled($data['password'] ?? null) ? Crypt::encryptString($data['password']) : null,
+            'password_encrypted' => filled($data['password'] ?? null),
             'password_provided' => filled($data['password'] ?? null),
             'encryption' => $data['encryption'] ?? null,
             'from_address' => $data['from_address'] ?? null,
@@ -243,7 +245,7 @@ class InstallerController extends Controller
             $result = $this->setup->finalizeInstallation(
                 Session::get('installer.admin'),
                 Session::get('installer.school'),
-                ['smtp_placeholder' => Session::get('installer.smtp', [])]
+                ['smtp_placeholder' => $this->installerSmtpForSetup()]
             );
         } catch (RuntimeException $exception) {
             $this->safeAudit('installer_completion_failed', [
@@ -272,6 +274,27 @@ class InstallerController extends Controller
             'lockLabel' => $this->lockLabel(),
             'diagnostics' => $this->requirements->diagnostics($this->database->status()),
         ]);
+    }
+
+    private function installerSmtpForSetup(): array
+    {
+        $smtp = (array) Session::get('installer.smtp', []);
+
+        if (! ($smtp['password_encrypted'] ?? false) || ! filled($smtp['password'] ?? null)) {
+            $smtp['password'] = null;
+
+            return $smtp;
+        }
+
+        try {
+            $smtp['password'] = Crypt::decryptString($smtp['password']);
+        } catch (Throwable) {
+            throw new RuntimeException('The installer SMTP password can no longer be decrypted. Re-enter it before completing setup.');
+        }
+
+        unset($smtp['password_encrypted']);
+
+        return $smtp;
     }
 
     private function view(string $view, array $data = []): View

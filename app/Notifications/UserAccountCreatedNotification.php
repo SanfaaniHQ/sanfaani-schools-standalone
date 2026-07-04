@@ -26,6 +26,7 @@ class UserAccountCreatedNotification extends BaseSchoolNotification
         $this->userName = $user->name;
         $this->loginId = $user->staff_code ?: (string) $user->email;
         $this->schoolId = $school?->id;
+        $this->mailSchoolId = $school?->id;
         $this->schoolName = $school?->name;
     }
 

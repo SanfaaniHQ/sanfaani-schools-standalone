@@ -2,24 +2,29 @@
 
 namespace App\Notifications\Admissions;
 
+use App\Contracts\SchoolAwareMailNotification;
 use App\Models\Admissions\AdmissionApplication;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-abstract class BaseAdmissionNotification extends Notification
+abstract class BaseAdmissionNotification extends Notification implements SchoolAwareMailNotification
 {
     use Queueable;
 
     public function __construct(
         public AdmissionApplication $application,
         public ?string $message = null
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
         return ['mail'];
+    }
+
+    public function schoolIdForMail(object $notifiable): ?int
+    {
+        return filled($this->application->school_id) ? (int) $this->application->school_id : null;
     }
 
     protected function mail(string $subject, string $headline): MailMessage

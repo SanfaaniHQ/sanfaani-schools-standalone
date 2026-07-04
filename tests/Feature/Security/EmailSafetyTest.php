@@ -87,7 +87,7 @@ class EmailSafetyTest extends TestCase
         $this->assertStringNotContainsString('.env', $html);
     }
 
-    public function test_license_status_ui_does_not_expose_raw_license_keys(): void
+    public function test_disabled_license_status_ui_does_not_expose_raw_license_keys(): void
     {
         config([
             'sanfaani.deployment.mode' => 'single_school',
@@ -118,9 +118,8 @@ class EmailSafetyTest extends TestCase
 
         $this->actingAs($this->superAdmin())
             ->get(route('admin.license.index'))
-            ->assertOk()
-            ->assertDontSee($rawKey)
-            ->assertSee('Stored key');
+            ->assertNotFound()
+            ->assertDontSee($rawKey);
     }
 
     private function lead(string $email): LeadRequest

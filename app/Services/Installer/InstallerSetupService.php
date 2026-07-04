@@ -108,7 +108,7 @@ class InstallerSetupService
             $this->configureSchoolMail($school, (array) data_get($metadata, 'smtp_placeholder', []));
             $this->runSafePostInstallTasks();
 
-            $this->state->markInstalled(array_merge($metadata, [
+            $this->state->markInstalled(array_merge($this->safeInstallationMetadata($metadata), [
                 'school_id' => $school->id,
                 'admin_user_id' => $admin->id,
             ]));
@@ -143,6 +143,21 @@ class InstallerSetupService
             'from_address' => $smtp['from_address'] ?? $school->email,
             'from_name' => $smtp['from_name'] ?? $school->name,
         ]);
+    }
+
+    private function safeInstallationMetadata(array $metadata): array
+    {
+        if (! array_key_exists('smtp_placeholder', $metadata)) {
+            return $metadata;
+        }
+
+        $smtp = (array) $metadata['smtp_placeholder'];
+        $smtp['password_provided'] = filled($smtp['password'] ?? null)
+            || (bool) ($smtp['password_provided'] ?? false);
+        unset($smtp['password'], $smtp['password_encrypted']);
+        $metadata['smtp_placeholder'] = $smtp;
+
+        return $metadata;
     }
 
     private function runSafePostInstallTasks(): void

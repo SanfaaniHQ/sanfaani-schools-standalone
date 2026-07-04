@@ -194,7 +194,8 @@ CACHE_STORE=file
 SESSION_DRIVER=file
 QUEUE_CONNECTION=sync
 
-MAIL_MAILER=smtp
+# Optional installation-level platform fallback only.
+MAIL_MAILER=log
 MAIL_HOST=
 MAIL_PORT=
 MAIL_USERNAME=
@@ -279,9 +280,11 @@ Use the actual PHP binary path shown by cPanel or hosting support.
 
 ## Mail SMTP
 
-Use cPanel email, Namecheap Private Email, or another trusted SMTP provider. Confirm host, port, encryption, username, sender address, and whether outbound SMTP ports are allowed.
+Configure the school's normal SMTP account from **Email Delivery** after signing in as an authorised administrator. No school SMTP value needs to be placed in `.env`. Use cPanel email, Gmail/Google Workspace, Namecheap Private Email, or another standards-compliant SMTP provider. Confirm host, port, encryption, full username, sender address, and whether outbound SMTP ports are allowed.
 
-Common settings:
+Common school UI settings are 587 + TLS or 465 + SSL. Use the exact outgoing server hostname shown by cPanel. Gmail and Google Workspace use `smtp.gmail.com` and generally require a Google App Password when two-step verification is enabled.
+
+The following `.env` examples apply only when an installation-level platform fallback is desired:
 
 ```dotenv
 MAIL_MAILER=smtp
@@ -297,7 +300,7 @@ MAIL_PORT=465
 MAIL_ENCRYPTION=ssl
 ```
 
-Keep SMTP credentials only in the server `.env` or approved cPanel secret storage.
+Keep platform fallback credentials only in the server `.env` or approved cPanel secret storage. School SMTP passwords are encrypted at rest by the application. Test **School SMTP** and **Platform Fallback** separately; `MAIL_MAILER=log` does not deliver external email.
 
 ## Backup Setup
 

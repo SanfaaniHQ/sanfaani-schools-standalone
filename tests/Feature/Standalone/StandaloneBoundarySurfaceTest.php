@@ -127,7 +127,7 @@ class StandaloneBoundarySurfaceTest extends TestCase
             ->assertSee('Installation Admin')
             ->assertSee('Local Admin Console')
             ->assertSee('Local School Settings')
-            ->assertSee('License Status')
+            ->assertDontSee('License Status')
             ->assertSee('Local-First Offline Status')
             ->assertDontSee('School Subscriptions')
             ->assertDontSee('Demo Sessions')

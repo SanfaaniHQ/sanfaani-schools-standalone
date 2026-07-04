@@ -63,7 +63,7 @@ FILESYSTEM_DISK=public
 MAIL_MAILER=smtp
 ```
 
-Use `MAIL_MAILER=log` only for temporary testing. SMTP credentials must stay in `.env` and must not be committed.
+These `.env` values are the optional platform fallback. Configure each school's SMTP through **Email Delivery**; school SMTP credentials are encrypted in the database and do not need to be added to `.env`. Use `MAIL_MAILER=log` only for non-delivery testing, and never treat log output as external delivery.
 
 Payment gateway public keys may be used where required by the frontend, but secret keys and webhook secrets must remain server-side only in `.env`.
 
@@ -93,7 +93,7 @@ Do not make the whole project world-writable.
 - Valid published result plus valid scratch card shows the result.
 - Scratch card usage increments only after the published result opens.
 - Demo and contact requests appear in Super Admin > Lead Requests even if email is not configured.
-- SMTP or log mail test succeeds.
+- **Test School SMTP** reports that the selected SMTP server accepted the message, then inbox/spam arrival is checked separately. A `log` fallback must be reported as non-delivery.
 - `APP_DEBUG=false` in production.
 - `.env` is not publicly accessible.
 - Backups are not under public web root.

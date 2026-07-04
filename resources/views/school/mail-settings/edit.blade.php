@@ -128,6 +128,14 @@
                         @enderror
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Connection Timeout (seconds)</label>
+                        <input name="timeout" type="number" min="1" max="120" value="{{ old('timeout', data_get($setting->metadata, 'timeout', 10)) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
+                        @error('timeout')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="flex justify-end">
                         <button @disabled($schoolMailControlsDisabled) class="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Save Settings</button>
                     </div>
@@ -136,20 +144,43 @@
 
             <div class="space-y-6">
                 <div class="rounded-lg bg-white p-6 text-sm text-gray-600 shadow-sm">
-                    <h3 class="text-base font-semibold text-gray-900">Delivery Source</h3>
+                    <h3 class="text-base font-semibold text-gray-900">Delivery Status</h3>
                     <dl class="mt-4 space-y-3">
                         <div class="flex items-center justify-between gap-4">
-                            <dt>School override</dt>
-                            <dd class="font-medium {{ $setting->is_enabled ? 'text-green-700' : 'text-gray-700' }}">{{ $setting->is_enabled ? 'Enabled' : 'Disabled' }}</dd>
+                            <dt>School SMTP enabled</dt>
+                            <dd class="font-medium {{ $schoolStatus['enabled'] ? 'text-green-700' : 'text-gray-700' }}">{{ $schoolStatus['enabled'] ? 'Enabled' : 'Disabled' }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt>School SMTP configured</dt>
+                            <dd class="font-medium {{ $schoolStatus['configured'] ? 'text-green-700' : 'text-amber-700' }}">{{ $schoolStatus['configured'] ? 'Complete' : 'Incomplete' }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt>SMTP password</dt>
+                            <dd class="font-medium {{ $schoolStatus['password_unusable'] ? 'text-red-700' : ($schoolStatus['password_available'] ? 'text-green-700' : 'text-amber-700') }}">{{ $schoolStatus['password_unusable'] ? 'Needs re-entry' : ($schoolStatus['password_available'] ? 'Available' : 'Not set') }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-4">
                             <dt>Platform fallback</dt>
                             <dd class="font-medium {{ $platformFallbackConfigured ? 'text-green-700' : 'text-amber-700' }}">{{ $platformFallbackEnabled ? ($platformFallbackConfigured ? 'Configured' : 'Not configured') : 'Disabled' }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-4">
+                            <dt>Fallback transport</dt>
+                            <dd class="font-medium text-gray-700">{{ strtoupper($platformStatus['driver']) }}{{ $platformStatus['external_delivery'] ? '' : ' (non-delivery)' }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
                             <dt>Platform-only mode</dt>
                             <dd class="font-medium {{ $forcePlatformMailer ? 'text-amber-700' : 'text-gray-700' }}">{{ $forcePlatformMailer ? 'Enabled' : 'Off' }}</dd>
                         </div>
+                        @if ($schoolStatus['last_test_outcome'])
+                            <div class="flex items-center justify-between gap-4">
+                                <dt>Last school test</dt>
+                                <dd class="text-right font-medium {{ $schoolStatus['last_test_outcome'] === 'accepted' ? 'text-green-700' : 'text-red-700' }}">
+                                    {{ ucfirst($schoolStatus['last_test_outcome']) }} via {{ $schoolStatus['last_test_transport'] }}
+                                    @if ($schoolStatus['last_test_configuration'] === 'temporary')
+                                        <span class="block text-xs font-normal text-amber-700">temporary values</span>
+                                    @endif
+                                </dd>
+                            </div>
+                        @endif
                     </dl>
                     @if ($platformFallbackEnabled && ! $platformFallbackConfigured)
                         <p class="mt-4 text-xs leading-5 text-amber-700">Platform fallback is not configured. Please configure platform mail settings or use school SMTP.</p>
@@ -158,15 +189,33 @@
 
                 <form id="school-mail-test-form" method="POST" action="{{ route('school.mail-settings.test') }}" data-loading-text="Testing..." class="rounded-lg bg-white p-6 shadow-sm">
                     @csrf
-                    <h3 class="text-base font-semibold text-gray-900">Send Test Email</h3>
+                    <h3 class="text-base font-semibold text-gray-900">Test School SMTP</h3>
+                    <p class="mt-1 text-sm text-gray-600">Tests the form values directly. Platform fallback is never used by this action.</p>
                     <div id="school-mail-test-payload"></div>
                     <label class="mt-4 block text-sm font-medium text-gray-700">Recipient</label>
                     <input name="test_email" value="{{ old('test_email', auth()->user()->email) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                     @error('test_email')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
-                    <button @disabled($schoolMailControlsDisabled) class="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Send Test</button>
+                    <button @disabled($schoolMailControlsDisabled) class="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Test School SMTP</button>
                 </form>
+
+                <form method="POST" action="{{ route('school.mail-settings.test-fallback') }}" data-loading-text="Testing fallback..." class="rounded-lg bg-white p-6 shadow-sm">
+                    @csrf
+                    <h3 class="text-base font-semibold text-gray-900">Test Platform Fallback</h3>
+                    <p class="mt-1 text-sm text-gray-600">Tests the platform mailer separately. Log and array transports do not deliver external email.</p>
+                    <label class="mt-4 block text-sm font-medium text-gray-700">Recipient</label>
+                    <input name="test_email" value="{{ old('test_email', auth()->user()->email) }}" class="mt-1 block w-full rounded-lg border-gray-300">
+                    <button class="mt-4 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Test Platform Fallback</button>
+                </form>
+
+                <div class="rounded-lg bg-white p-6 text-sm leading-6 text-gray-600 shadow-sm">
+                    <h3 class="text-base font-semibold text-gray-900">Provider Guidance</h3>
+                    <p class="mt-2 font-medium text-gray-800">Gmail / Google Workspace</p>
+                    <p>Use <span class="font-mono">smtp.gmail.com</span>, the full address, and usually a Google App Password. Choose 465 + SSL or 587 + TLS.</p>
+                    <p class="mt-3 font-medium text-gray-800">cPanel / Webmail</p>
+                    <p>Use the exact outgoing server from “Connect Devices”, the full mailbox username, and its password. Choose 465 + SSL or 587 + TLS.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -191,6 +240,7 @@
                 'from_address',
                 'from_name',
                 'reply_to_email',
+                'timeout',
             ];
 
             testForm.addEventListener('submit', () => {
