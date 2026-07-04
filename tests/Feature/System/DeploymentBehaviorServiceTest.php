@@ -91,7 +91,7 @@ class DeploymentBehaviorServiceTest extends TestCase
         $this->assertFalse($behavior->allowsDashboardWidget('active_subscriptions'));
     }
 
-    public function test_single_school_mode_exposes_license_and_update_placeholders_only_when_features_allow(): void
+    public function test_single_school_mode_hides_license_and_exposes_updates_only_when_features_allow(): void
     {
         config([
             'sanfaani.deployment.mode' => 'single_school',
@@ -100,7 +100,7 @@ class DeploymentBehaviorServiceTest extends TestCase
 
         $behavior = app(DeploymentBehaviorService::class);
 
-        $this->assertTrue($behavior->allowsRouteGroup('standalone_license'));
+        $this->assertFalse($behavior->allowsRouteGroup('standalone_license'));
         $this->assertTrue($behavior->allowsRouteGroup('standalone_updates'));
 
         config(['features.features.update_manager.enabled' => false]);
@@ -182,7 +182,7 @@ class DeploymentBehaviorServiceTest extends TestCase
             ->get(route('admin.dashboard'))
             ->assertOk()
             ->assertSee('Local School Settings')
-            ->assertSee('License Status')
+            ->assertDontSee('License Status')
             ->assertDontSee('School Subscriptions');
     }
 
@@ -196,7 +196,7 @@ class DeploymentBehaviorServiceTest extends TestCase
         ]);
 
         $this->get(route('admin.schools.index'))->assertNotFound();
-        $this->get(route('admin.deployment.placeholder', 'standalone-license'))->assertOk();
+        $this->get(route('admin.deployment.placeholder', 'standalone-license'))->assertNotFound();
     }
 
     private function superAdmin(): User

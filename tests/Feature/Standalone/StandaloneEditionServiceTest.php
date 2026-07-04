@@ -65,7 +65,7 @@ class StandaloneEditionServiceTest extends TestCase
         $this->assertTrue($service->hidesPlatformMarketingSurfaces());
     }
 
-    public function test_service_warns_when_saas_or_demo_modes_are_enabled_for_standalone(): void
+    public function test_service_warns_about_saas_and_demo_but_ignores_license_mode_while_enforcement_is_disabled(): void
     {
         config([
             'sanfaani.deployment.mode' => 'saas',
@@ -77,7 +77,7 @@ class StandaloneEditionServiceTest extends TestCase
         $warnings = implode(' ', app(StandaloneEditionService::class)->warnings());
 
         $this->assertStringContainsString('SaaS portal mode', $warnings);
-        $this->assertStringContainsString('subscription license mode', $warnings);
+        $this->assertStringNotContainsString('subscription license mode', $warnings);
         $this->assertStringContainsString('Public sales mode is enabled', $warnings);
         $this->assertStringContainsString('Marketplace live demo is enabled', $warnings);
     }

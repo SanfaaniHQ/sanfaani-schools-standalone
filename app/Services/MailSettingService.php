@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\MailConfigurationException;
 use App\Models\MailSetting;
 use App\Models\School;
 use App\Support\MailSecurity;
@@ -9,6 +10,7 @@ use Illuminate\Mail\MailManager;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Testing\Fakes\MailFake;
 use RuntimeException;
 use Throwable;
 
@@ -16,9 +18,12 @@ class MailSettingService
 {
     private array $baseMailConfig;
 
-    public function __construct()
+    private SchoolSmtpService $smtp;
+
+    public function __construct(?SchoolSmtpService $smtp = null)
     {
         $this->baseMailConfig = config('mail');
+        $this->smtp = $smtp ?? app(SchoolSmtpService::class);
     }
 
     public function tableIsReady(): bool
@@ -127,7 +132,10 @@ class MailSettingService
             ? $this->current($school->id)
             : null;
 
-        if ($schoolSetting && $schoolSetting->is_enabled && $this->schoolCustomSmtpAllowed()) {
+        if ($schoolSetting
+            && $schoolSetting->is_enabled
+            && $schoolSetting->mailer === 'smtp'
+            && $this->schoolCustomSmtpAllowed()) {
             return $schoolSetting;
         }
 
@@ -139,6 +147,17 @@ class MailSettingService
         $setting = $this->current($school->id);
         $setting->fill($this->normalizedUpdateData($data, $setting));
         $setting->save();
+        $this->smtp->forgetRuntimeMailers();
+
+        return $setting->fresh() ?? $setting;
+    }
+
+    public function updatePlatform(array $data): MailSetting
+    {
+        $setting = $this->current();
+        $setting->fill($this->normalizedUpdateData($data, $setting));
+        $setting->save();
+        $this->smtp->forgetRuntimeMailers();
 
         return $setting->fresh() ?? $setting;
     }
@@ -157,25 +176,30 @@ class MailSettingService
             return;
         }
 
-        Config::set('mail.default', $setting->mailer);
-        Config::set('mail.from.address', $setting->from_address ?: config('mail.from.address'));
-        Config::set('mail.from.name', $setting->from_name ?: config('mail.from.name'));
-
-        if ($this->replyToColumnIsReady()) {
-            Config::set('mail.reply_to.address', $setting->reply_to_email ?: null);
-        }
-
         if ($setting->mailer === 'smtp') {
-            Config::set('mail.mailers.smtp.host', $setting->host);
-            Config::set('mail.mailers.smtp.port', $setting->port ?: 587);
-            Config::set('mail.mailers.smtp.username', $setting->username);
-            Config::set('mail.mailers.smtp.password', $setting->password);
-            Config::set('mail.mailers.smtp.scheme', $this->smtpScheme($setting));
-            Config::set('mail.mailers.smtp.encryption', $setting->encryption ?: null);
-            Config::set('mail.mailers.smtp.timeout', $this->smtpTimeout());
+            $school = filled($setting->school_id) ? School::find($setting->school_id) : null;
+            $normalized = $this->smtp->normalizeSetting($setting, $school);
+            $mailerName = $setting->school_id
+                ? SchoolSmtpService::MAILER
+                : SchoolSmtpService::PLATFORM_MAILER;
+
+            $this->smtp->configure($normalized, $mailerName);
+
+            return;
         }
 
-        app(MailManager::class)->forgetMailers();
+        $normalized = $this->smtp->normalize([
+            'is_enabled' => true,
+            'mailer' => $setting->mailer,
+            'from_address' => $setting->from_address,
+            'from_name' => $setting->from_name,
+            'reply_to_email' => $this->replyToColumnIsReady() ? $setting->reply_to_email : null,
+        ]);
+
+        Config::set('mail.default', $setting->mailer);
+        Config::set('mail.from', $normalized['from']);
+        Config::set('mail.reply_to', $normalized['reply_to']);
+        app(MailManager::class)->purge($setting->mailer);
     }
 
     public function applyForSchool(?School $school): void
@@ -183,14 +207,16 @@ class MailSettingService
         $this->apply($this->resolveForSchool($school));
     }
 
-    public function sendTest(MailSetting $setting, string $recipient): void
+    public function sendTest(MailSetting $setting, string $recipient): array
     {
-        $this->withMailSettingContext($setting, fn () => $this->sendTestMessage($recipient));
+        return $this->sendPlatformTest($recipient, $setting);
     }
 
     public function sendSchoolTest(School $school, string $recipient): array
     {
-        return $this->sendSchoolSettingTest($school, $this->resolveForSchool($school), $recipient);
+        $setting = $this->configured($school->id) ?? $this->current($school->id);
+
+        return $this->sendSchoolSettingTest($school, $setting, $recipient);
     }
 
     public function sendSchoolTestUsingData(School $school, array $data, string $recipient, ?MailSetting $existing = null): array
@@ -205,9 +231,8 @@ class MailSettingService
         $existing ??= $this->current($school->id);
         $data = $this->normalizedUpdateData($data, $existing);
 
-        if (! array_key_exists('password', $data) && filled($existing->getRawOriginal('password'))) {
-            $data['password'] = $existing->password;
-        }
+        $newPassword = $data['password'] ?? null;
+        unset($data['password']);
 
         $setting = new MailSetting(array_merge([
             'school_id' => $school->id,
@@ -223,6 +248,14 @@ class MailSettingService
             'metadata' => $existing->metadata,
         ], $data));
 
+        if (filled($newPassword)) {
+            $setting->password = $newPassword;
+        } elseif (filled($existing->getRawOriginal('password'))) {
+            $setting->setRawAttributes(array_merge($setting->getAttributes(), [
+                'password' => $existing->getRawOriginal('password'),
+            ]));
+        }
+
         $setting->exists = false;
 
         return $setting;
@@ -230,41 +263,56 @@ class MailSettingService
 
     private function sendSchoolSettingTest(School $school, MailSetting $setting, string $recipient): array
     {
-        try {
-            $this->withMailSettingContext($setting, fn () => $this->sendTestMessage($recipient));
+        $this->smtp->normalizeSetting($setting, $school);
+        $this->withMailSettingContext(
+            $setting,
+            fn () => $this->sendTestMessage($recipient, SchoolSmtpService::MAILER)
+        );
 
+        return [
+            'accepted' => true,
+            'fallback_used' => false,
+            'primary_error' => null,
+            'mailer' => SchoolSmtpService::MAILER,
+            'transport' => 'smtp',
+        ];
+    }
+
+    public function sendPlatformTest(string $recipient, ?MailSetting $setting = null): array
+    {
+        $setting ??= $this->current();
+        $status = $this->platformMailerStatus($setting);
+
+        if ($status['password_unusable']) {
+            throw new MailConfigurationException(
+                'password_decryption_failed',
+                'The saved SMTP password can no longer be decrypted. Re-enter and save the password.'
+            );
+        }
+
+        if (! $status['configured']) {
+            throw new RuntimeException('Platform fallback is not configured.');
+        }
+
+        if (! $status['external_delivery']) {
             return [
-                'fallback_used' => false,
-                'primary_error' => null,
-                'mailer' => $setting->mailer,
-            ];
-        } catch (Throwable $primaryException) {
-            if ($this->platformFallbackEnabled() && ! $this->platformMailerConfigured()) {
-                throw new RuntimeException(
-                    'School SMTP test failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback is not configured. Please configure platform mail settings or use school SMTP.',
-                    previous: $primaryException
-                );
-            }
-
-            if (! $this->shouldTryPlatformFallback($setting)) {
-                throw $primaryException;
-            }
-
-            try {
-                $this->withPlatformMailContext(fn () => $this->sendTestMessage($recipient));
-            } catch (Throwable $fallbackException) {
-                throw new RuntimeException(
-                    'School SMTP test failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback failed: '.MailSecurity::sanitizeError($fallbackException),
-                    previous: $fallbackException
-                );
-            }
-
-            return [
-                'fallback_used' => true,
-                'primary_error' => MailSecurity::sanitizeError($primaryException),
-                'mailer' => $setting->mailer,
+                'accepted' => false,
+                'logged_only' => true,
+                'mailer' => $status['driver'],
+                'transport' => $status['driver'],
             ];
         }
+
+        $this->withPlatformMailContext(
+            fn () => $this->sendTestMessage($recipient, (string) config('mail.default'))
+        );
+
+        return [
+            'accepted' => true,
+            'logged_only' => false,
+            'mailer' => $status['driver'],
+            'transport' => $status['driver'],
+        ];
     }
 
     public function withMailSettingContext(MailSetting $setting, callable $callback): mixed
@@ -277,6 +325,7 @@ class MailSettingService
             return $callback();
         } finally {
             Config::set('mail', $original);
+            $this->smtp->forgetRuntimeMailers();
             app(MailManager::class)->forgetMailers();
         }
     }
@@ -291,6 +340,110 @@ class MailSettingService
         return $this->withSchoolMailContext(null, $callback);
     }
 
+    /**
+     * Deliver one message with an isolated tenant configuration and an optional
+     * platform fallback. The callback is only repeated when school SMTP failed
+     * before accepting the message and the fallback policy permits a retry.
+     */
+    public function deliverForSchool(?School $school, callable $callback): array
+    {
+        if (! $school) {
+            if (! $this->platformMailerCanDeliver()) {
+                throw $this->platformDeliveryException(
+                    'platform_non_delivery',
+                    'Platform mail is configured for non-delivery logging only; no external email was delivered.'
+                );
+            }
+
+            $result = $this->withPlatformMailContext($callback);
+
+            return [
+                'result' => $result,
+                'fallback_used' => false,
+                'primary_error' => null,
+                'transport' => $this->platformMailerStatus()['driver'],
+            ];
+        }
+
+        if (! $this->hasEnabledSchoolMailer($school)) {
+            $platformRequiredByPolicy = $this->forcePlatformMailer() || ! $this->schoolCustomSmtpAllowed();
+
+            if (! $platformRequiredByPolicy && ! $this->platformFallbackEnabled()) {
+                throw new MailConfigurationException(
+                    'school_smtp_unavailable',
+                    'School SMTP is disabled or incomplete, and platform fallback is disabled.'
+                );
+            }
+
+            if (! $this->platformMailerCanDeliver()) {
+                throw $this->platformDeliveryException(
+                    'platform_fallback_unavailable',
+                    'School SMTP is disabled or incomplete, and platform fallback cannot deliver external email.'
+                );
+            }
+
+            $result = $this->withPlatformMailContext($callback);
+
+            return [
+                'result' => $result,
+                'fallback_used' => true,
+                'primary_error' => 'school_smtp_unavailable',
+                'transport' => $this->platformMailerStatus()['driver'],
+            ];
+        }
+
+        try {
+            $result = $this->withSchoolMailContext($school, $callback);
+
+            return [
+                'result' => $result,
+                'fallback_used' => false,
+                'primary_error' => null,
+                'transport' => SchoolSmtpService::MAILER,
+            ];
+        } catch (Throwable $schoolException) {
+            $schoolDiagnostic = MailSecurity::diagnostic($schoolException);
+
+            if (! $this->platformFallbackEnabled()) {
+                throw $schoolException;
+            }
+
+            if (! $this->platformMailerCanDeliver()) {
+                $platformException = $this->platformDeliveryException(
+                    'platform_fallback_unavailable',
+                    $schoolDiagnostic['message'].' Platform fallback is not configured for external delivery.'
+                );
+
+                throw new RuntimeException($platformException->getMessage(), previous: $schoolException);
+            }
+
+            try {
+                $result = $this->withPlatformMailContext($callback);
+            } catch (Throwable $platformException) {
+                $platformDiagnostic = MailSecurity::diagnostic($platformException);
+
+                throw new RuntimeException(
+                    $schoolDiagnostic['message'].' Platform fallback failed: '.$platformDiagnostic['message'],
+                    previous: $platformException
+                );
+            }
+
+            $transport = $this->platformMailerStatus()['driver'];
+            logger()->warning('School SMTP failed; platform fallback accepted the message.', [
+                'school_id' => $school->id,
+                'school_error_category' => $schoolDiagnostic['category'],
+                'transport' => $transport,
+            ]);
+
+            return [
+                'result' => $result,
+                'fallback_used' => true,
+                'primary_error' => $schoolDiagnostic['category'],
+                'transport' => $transport,
+            ];
+        }
+    }
+
     public function hasEnabledSchoolMailer(?School $school): bool
     {
         if (! $school || ! $this->schoolScopeIsReady() || ! $this->schoolCustomSmtpAllowed()) {
@@ -300,6 +453,7 @@ class MailSettingService
         try {
             return MailSetting::where('school_id', $school->id)
                 ->where('is_enabled', true)
+                ->where('mailer', 'smtp')
                 ->exists();
         } catch (Throwable) {
             return false;
@@ -319,7 +473,18 @@ class MailSettingService
 
     public function maskedPassword(MailSetting $setting): string
     {
-        return filled($setting->getRawOriginal('password')) ? '************' : 'Not set';
+        $state = $this->smtp->passwordState($setting);
+
+        return match (true) {
+            $state['unusable'] => 'Needs re-entry',
+            $state['available'] => '************',
+            default => 'Not set',
+        };
+    }
+
+    public function passwordState(MailSetting $setting): array
+    {
+        return $this->smtp->passwordState($setting);
     }
 
     public function auditSnapshot(MailSetting $setting): array
@@ -343,20 +508,19 @@ class MailSettingService
     {
         $data['is_enabled'] = (bool) ($data['is_enabled'] ?? false);
 
-        if (($data['encryption'] ?? null) === 'none') {
-            $data['encryption'] = null;
-        }
-
         if (array_key_exists('from_name', $data) && ! filled($data['from_name'])) {
             $data['from_name'] = config('mail.from.name') ?: config('app.name', 'Sanfaani Schools');
         }
 
-        if (! filled($data['password'] ?? null)) {
+        if (! filled($data['password'] ?? null) || $this->isPasswordMask($data['password'] ?? null)) {
             unset($data['password']);
         }
 
-        if ($setting && array_key_exists('password', $data) && ! filled($data['password'])) {
-            unset($data['password']);
+        if (array_key_exists('timeout', $data)) {
+            $metadata = is_array($setting?->metadata) ? $setting->metadata : [];
+            $metadata['timeout'] = max(1, min(120, (int) $data['timeout']));
+            $data['metadata'] = $metadata;
+            unset($data['timeout']);
         }
 
         if (! $this->replyToColumnIsReady()) {
@@ -364,6 +528,89 @@ class MailSettingService
         }
 
         return $data;
+    }
+
+    public function schoolMailerStatus(MailSetting $setting): array
+    {
+        $password = $this->passwordState($setting);
+        $configured = $setting->mailer === 'smtp'
+            && filled($setting->host)
+            && filled($setting->port)
+            && filled($setting->from_address)
+            && (! filled($setting->username) || $password['available']);
+        $metadata = is_array($setting->metadata) ? $setting->metadata : [];
+
+        return [
+            'enabled' => (bool) $setting->is_enabled,
+            'configured' => $configured,
+            'password_available' => $password['available'],
+            'password_unusable' => $password['unusable'],
+            'last_test_outcome' => data_get($metadata, 'last_test.outcome'),
+            'last_test_transport' => data_get($metadata, 'last_test.transport'),
+            'last_test_configuration' => data_get($metadata, 'last_test.configuration', 'saved'),
+            'last_test_at' => data_get($metadata, 'last_test.at'),
+        ];
+    }
+
+    public function candidateMatchesSaved(MailSetting $candidate, MailSetting $saved): bool
+    {
+        foreach ([
+            'mailer',
+            'host',
+            'port',
+            'username',
+            'encryption',
+            'from_address',
+            'from_name',
+            'reply_to_email',
+            'is_enabled',
+        ] as $field) {
+            if ((string) $candidate->{$field} !== (string) $saved->{$field}) {
+                return false;
+            }
+        }
+
+        if ((int) data_get($candidate->metadata, 'timeout', 10) !== (int) data_get($saved->metadata, 'timeout', 10)) {
+            return false;
+        }
+
+        $candidatePassword = $this->passwordState($candidate);
+        $savedPassword = $this->passwordState($saved);
+
+        if ($candidatePassword['unusable'] || $savedPassword['unusable']) {
+            return false;
+        }
+
+        if (! $candidatePassword['available'] && ! $savedPassword['available']) {
+            return true;
+        }
+
+        return $candidatePassword['available']
+            && $savedPassword['available']
+            && hash_equals((string) $savedPassword['password'], (string) $candidatePassword['password']);
+    }
+
+    public function recordTestResult(
+        MailSetting $setting,
+        string $outcome,
+        string $transport,
+        ?string $category = null,
+        string $configuration = 'saved'
+    ): void {
+        if (! $setting->exists) {
+            return;
+        }
+
+        $metadata = is_array($setting->metadata) ? $setting->metadata : [];
+        $metadata['last_test'] = [
+            'outcome' => $outcome,
+            'transport' => $transport,
+            'category' => $category,
+            'configuration' => $configuration === 'temporary' ? 'temporary' : 'saved',
+            'at' => now()->toIso8601String(),
+        ];
+        $setting->metadata = $metadata;
+        $setting->save();
     }
 
     public function schoolCustomSmtpAllowed(): bool
@@ -384,30 +631,58 @@ class MailSettingService
 
     public function platformMailerConfigured(): bool
     {
-        $setting = $this->configured();
+        return $this->platformMailerStatus()['configured'];
+    }
+
+    public function platformMailerCanDeliver(): bool
+    {
+        if (app()->environment('testing') && Mail::getFacadeRoot() instanceof MailFake) {
+            return true;
+        }
+
+        $status = $this->platformMailerStatus();
+
+        return $status['configured'] && $status['external_delivery'];
+    }
+
+    public function platformMailerStatus(?MailSetting $setting = null): array
+    {
+        $setting ??= $this->configured();
 
         if ($setting && $setting->is_enabled) {
-            if ($setting->mailer === 'log') {
-                return true;
-            }
-
-            return $setting->mailer === 'smtp'
+            $driver = (string) $setting->mailer;
+            $password = $this->passwordState($setting);
+            $configured = $driver === 'log' || ($driver === 'smtp'
                 && filled($setting->host)
                 && filled($setting->from_address)
-                && filled($setting->from_name ?: config('mail.from.name'));
+                && (! filled($setting->username) || $password['available']));
+
+            return [
+                'driver' => $driver,
+                'configured' => $configured,
+                'external_delivery' => $configured && $driver !== 'log' && $driver !== 'array',
+                'password_unusable' => $password['unusable'],
+            ];
         }
 
-        $mailer = (string) config('mail.default', 'log');
+        $currentDriver = (string) config('mail.default', 'log');
+        $platformConfig = in_array($currentDriver, [SchoolSmtpService::MAILER, SchoolSmtpService::PLATFORM_MAILER], true)
+            ? $this->baseMailConfig
+            : config('mail');
+        $driver = (string) data_get($platformConfig, 'default', 'log');
+        $configured = match ($driver) {
+            'log', 'array' => true,
+            'smtp' => filled(data_get($platformConfig, 'mailers.smtp.host'))
+                && filled(data_get($platformConfig, 'from.address')),
+            default => filled(data_get($platformConfig, "mailers.{$driver}")),
+        };
 
-        if ($mailer === 'log') {
-            return filled(config('mail.from.address'))
-                && filled(config('mail.from.name'));
-        }
-
-        return $mailer === 'smtp'
-            && filled(config('mail.mailers.smtp.host'))
-            && filled(config('mail.from.address'))
-            && filled(config('mail.from.name'));
+        return [
+            'driver' => $driver,
+            'configured' => $configured,
+            'external_delivery' => $configured && ! in_array($driver, ['log', 'array'], true),
+            'password_unusable' => false,
+        ];
     }
 
     public function mailGovernance(): array
@@ -430,41 +705,37 @@ class MailSettingService
         }
     }
 
-    private function shouldTryPlatformFallback(MailSetting $setting): bool
-    {
-        return filled($setting->school_id)
-            && $setting->is_enabled
-            && $setting->mailer === 'smtp'
-            && $this->platformFallbackEnabled()
-            && $this->platformMailerConfigured();
-    }
-
-    private function smtpScheme(MailSetting $setting): ?string
-    {
-        if ($setting->encryption === 'ssl' || (int) $setting->port === 465) {
-            return 'smtps';
-        }
-
-        if ($setting->encryption === 'tls') {
-            return 'smtp';
-        }
-
-        return null;
-    }
-
-    private function smtpTimeout(): int
-    {
-        return max(1, (int) config('mail.mailers.smtp.timeout', 10));
-    }
-
-    private function sendTestMessage(string $recipient): void
+    protected function sendTestMessage(string $recipient, ?string $mailer = null): void
     {
         $brandName = app(BrandingService::class)->current()->name
             ?: app(PlatformSettingService::class)->get()->platform_name;
 
-        Mail::raw($brandName.' mail settings test completed successfully.', function ($message) use ($recipient, $brandName) {
+        $pending = $mailer ? Mail::mailer($mailer) : Mail::mailer();
+
+        $pending->raw($brandName.' SMTP test. The server accepted this message for delivery.', function ($message) use ($recipient, $brandName) {
             $message->to($recipient)->subject($brandName.' Mail Test');
         });
+    }
+
+    private function isPasswordMask(mixed $value): bool
+    {
+        if (! is_string($value)) {
+            return false;
+        }
+
+        return preg_match('/^\*{6,}$/', trim($value)) === 1;
+    }
+
+    private function platformDeliveryException(string $category, string $message): MailConfigurationException
+    {
+        if ($this->platformMailerStatus()['password_unusable']) {
+            return new MailConfigurationException(
+                'password_decryption_failed',
+                'The saved platform SMTP password can no longer be decrypted. Re-enter and save the password.'
+            );
+        }
+
+        return new MailConfigurationException($category, $message);
     }
 
     private function restoreBaseMailConfig(): void

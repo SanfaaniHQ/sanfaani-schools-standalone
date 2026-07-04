@@ -6,6 +6,7 @@ use App\Events\StudentTransactionalEmailRequested;
 use App\Services\AuditLogService;
 use App\Services\CommunicationService;
 use App\Services\NotificationPreferenceService;
+use App\Support\MailSecurity;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -66,23 +67,25 @@ class SendStudentTransactionalEmail implements ShouldQueue
                 'communication_status' => $log->status,
             ]);
         } catch (Throwable $exception) {
+            $diagnostic = MailSecurity::diagnostic($exception);
             Log::warning('Student transactional email listener failed.', [
                 'event_key' => $event->eventKey,
                 'school_id' => $event->school->id,
                 'student_id' => $event->student->id,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => $diagnostic['category'],
             ]);
 
             try {
                 $this->auditLog->log('student_transactional_email_failed', $event->student, $event->school, metadata: [
                     'event_key' => $event->eventKey,
                     'recipient' => $event->recipient,
-                    'error' => $exception->getMessage(),
+                    'error_category' => $diagnostic['category'],
                 ]);
             } catch (Throwable $auditException) {
                 Log::warning('Student transactional email failure audit failed.', [
                     'event_key' => $event->eventKey,
-                    'message' => $auditException->getMessage(),
+                    'exception' => $auditException::class,
                 ]);
             }
         }
@@ -99,7 +102,7 @@ class SendStudentTransactionalEmail implements ShouldQueue
             Log::warning('Student transactional email skip audit failed.', [
                 'event_key' => $event->eventKey,
                 'reason' => $reason,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
         }
     }

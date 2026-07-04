@@ -12,6 +12,8 @@ use App\Services\MailSettingService;
 use App\Support\Notifications\SchoolNotificationTemplateRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
@@ -99,12 +101,12 @@ class LiveClientReadinessTest extends TestCase
         $setting = $service->updateForSchool($this->school, [
             'is_enabled' => true,
             'mailer' => 'smtp',
-            'host' => 'premium63.web-hosting.com',
+            'host' => 'mail.school.example',
             'port' => 465,
-            'username' => 'info@fazcollege.com.ng',
+            'username' => 'mailer@school.example',
             'password' => 'first-secret',
             'encryption' => 'ssl',
-            'from_address' => 'info@fazcollege.com.ng',
+            'from_address' => 'mailer@school.example',
             'from_name' => 'Faz College',
         ]);
 
@@ -114,12 +116,12 @@ class LiveClientReadinessTest extends TestCase
         $service->updateForSchool($this->school, [
             'is_enabled' => true,
             'mailer' => 'smtp',
-            'host' => 'premium63.web-hosting.com',
+            'host' => 'mail.school.example',
             'port' => 465,
-            'username' => 'info@fazcollege.com.ng',
+            'username' => 'mailer@school.example',
             'password' => '',
             'encryption' => 'ssl',
-            'from_address' => 'info@fazcollege.com.ng',
+            'from_address' => 'mailer@school.example',
             'from_name' => 'Faz College',
         ]);
 
@@ -132,23 +134,24 @@ class LiveClientReadinessTest extends TestCase
         $setting = $service->updateForSchool($this->school, [
             'is_enabled' => true,
             'mailer' => 'smtp',
-            'host' => 'premium63.web-hosting.com',
+            'host' => 'mail.school.example',
             'port' => 465,
-            'username' => 'info@fazcollege.com.ng',
+            'username' => 'mailer@school.example',
             'password' => 'mail-secret',
             'encryption' => 'ssl',
-            'from_address' => 'info@fazcollege.com.ng',
+            'from_address' => 'mailer@school.example',
             'from_name' => 'Faz College',
         ]);
 
         $service->withMailSettingContext($setting, function (): void {
-            $this->assertSame('info@fazcollege.com.ng', config('mail.from.address'));
+            $this->assertSame('mailer@school.example', config('mail.from.address'));
             $this->assertSame('Faz College', config('mail.from.name'));
-            $this->assertSame('premium63.web-hosting.com', config('mail.mailers.smtp.host'));
-            $this->assertSame('smtps', config('mail.mailers.smtp.scheme'));
+            $this->assertSame('mail.school.example', config('mail.mailers.school_smtp.host'));
+            $this->assertSame('smtps', config('mail.mailers.school_smtp.scheme'));
         });
 
-        $failingService = new class extends MailSettingService {
+        $failingService = new class extends MailSettingService
+        {
             public function withMailSettingContext(MailSetting $setting, callable $callback): mixed
             {
                 throw new RuntimeException('primary smtp failed');
@@ -161,19 +164,97 @@ class LiveClientReadinessTest extends TestCase
         };
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Platform fallback is not configured.');
+        $this->expectExceptionMessage('primary smtp failed');
 
         $failingService->sendSchoolTestUsingData($this->school, [
             'is_enabled' => true,
             'mailer' => 'smtp',
-            'host' => 'premium63.web-hosting.com',
+            'host' => 'mail.school.example',
             'port' => 465,
-            'username' => 'info@fazcollege.com.ng',
+            'username' => 'mailer@school.example',
             'password' => 'mail-secret',
             'encryption' => 'ssl',
-            'from_address' => 'info@fazcollege.com.ng',
+            'from_address' => 'mailer@school.example',
             'from_name' => 'Faz College',
         ], 'admin@example.test');
+    }
+
+    public function test_unsaved_school_smtp_controller_test_reports_acceptance_without_fallback(): void
+    {
+        Mail::fake();
+
+        $response = $this->actingAs($this->superAdmin)
+            ->post(route('admin.local-mail-settings.test'), [
+                'is_enabled' => '1',
+                'mailer' => 'smtp',
+                'host' => 'smtp.gmail.com',
+                'port' => 587,
+                'username' => 'school@example.test',
+                'password' => 'app-password',
+                'encryption' => 'tls',
+                'from_address' => 'school@example.test',
+                'from_name' => 'Live Client Academy',
+                'reply_to_email' => 'reply@example.test',
+                'timeout' => 10,
+                'test_email' => 'admin@example.test',
+            ]);
+
+        $response->assertSessionHas('success', fn (string $message) => str_contains($message, 'School SMTP accepted'));
+        $response->assertSessionMissing('error');
+        $this->assertNull(MailSetting::where('school_id', $this->school->id)->value('host'));
+        $this->assertSame('temporary', data_get(
+            MailSetting::where('school_id', $this->school->id)->firstOrFail()->metadata,
+            'last_test.configuration'
+        ));
+    }
+
+    public function test_school_smtp_controller_failure_is_safe_and_never_claims_fallback_success(): void
+    {
+        Log::spy();
+        $failingService = new class extends MailSettingService
+        {
+            public function sendSchoolTestUsingData(School $school, array $data, string $recipient, ?MailSetting $existing = null): array
+            {
+                throw new RuntimeException('535 authentication failed app-password-should-not-leak');
+            }
+        };
+        $this->app->instance(MailSettingService::class, $failingService);
+
+        $response = $this->actingAs($this->superAdmin)
+            ->post(route('admin.local-mail-settings.test'), [
+                'is_enabled' => '1',
+                'mailer' => 'smtp',
+                'host' => 'smtp.gmail.com',
+                'port' => 587,
+                'username' => 'school@example.test',
+                'password' => 'app-password-should-not-leak',
+                'encryption' => 'tls',
+                'from_address' => 'school@example.test',
+                'from_name' => 'Live Client Academy',
+                'timeout' => 10,
+                'test_email' => 'admin@example.test',
+            ]);
+
+        $response->assertSessionHas('error', fn (string $message) => str_contains($message, 'SMTP authentication failed'));
+        $response->assertSessionMissing('success');
+        $this->assertStringNotContainsString('app-password-should-not-leak', (string) session('error'));
+        $this->assertStringNotContainsString('fallback sent', (string) session('error'));
+        Log::shouldHaveReceived('warning')->withArgs(function (string $message, array $context): bool {
+            return $message === 'Local school SMTP test failed.'
+                && ! str_contains(json_encode($context), 'app-password-should-not-leak');
+        })->once();
+    }
+
+    public function test_separate_log_fallback_test_does_not_claim_external_delivery(): void
+    {
+        config(['mail.default' => 'log']);
+        $this->app->instance(MailSettingService::class, new MailSettingService);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('admin.local-mail-settings.test-fallback'), [
+                'test_email' => 'admin@example.test',
+            ])
+            ->assertSessionHas('success', 'Fallback is configured to log messages only; no external email was delivered.');
     }
 
     public function test_local_branding_saves_school_branding(): void

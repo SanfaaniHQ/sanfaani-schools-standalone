@@ -26,6 +26,7 @@ class StudentCreatedGuardianNotification extends BaseSchoolNotification
         $this->studentName = $student->fullName();
         $this->admissionNumber = (string) $student->admission_number;
         $this->schoolId = $student->school_id;
+        $this->mailSchoolId = $student->school_id;
         $this->schoolName = $student->school?->name;
         $this->schoolSlug = $student->school?->slug;
     }

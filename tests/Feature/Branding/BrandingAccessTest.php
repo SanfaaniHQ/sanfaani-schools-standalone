@@ -81,7 +81,7 @@ class BrandingAccessTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_demo_user_cannot_upload_branding_assets(): void
+    public function test_license_mode_does_not_block_branding_assets_while_license_enforcement_is_disabled(): void
     {
         config(['sanfaani.deployment.license_mode' => 'demo']);
 
@@ -89,7 +89,7 @@ class BrandingAccessTest extends TestCase
             ->post(route('admin.branding.logo'), [
                 'asset' => UploadedFile::fake()->image('logo.png')->size(32),
             ])
-            ->assertNotFound();
+            ->assertRedirect();
     }
 
     public function test_dashboard_renders_with_branding_context(): void

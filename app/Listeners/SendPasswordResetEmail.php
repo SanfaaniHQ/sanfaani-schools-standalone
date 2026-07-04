@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\User;
 use App\Services\AuditLogService;
 use App\Services\CommunicationService;
+use App\Support\MailSecurity;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -75,22 +76,24 @@ class SendPasswordResetEmail implements ShouldQueue
                 'communication_status' => $log->status,
             ]);
         } catch (Throwable $exception) {
+            $diagnostic = MailSecurity::diagnostic($exception);
             Log::warning('Password reset email listener failed.', [
                 'user_id' => $user->id,
                 'school_id' => $school?->id,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => $diagnostic['category'],
             ]);
 
             try {
                 $this->auditLog->log('password_reset_email_failed', $user, $school, metadata: [
                     'recipient' => $recipient,
                     'role' => $role,
-                    'error' => $exception->getMessage(),
+                    'error_category' => $diagnostic['category'],
                 ]);
             } catch (Throwable $auditException) {
                 Log::warning('Password reset email failure audit failed.', [
                     'user_id' => $user->id,
-                    'message' => $auditException->getMessage(),
+                    'exception' => $auditException::class,
                 ]);
             }
         }

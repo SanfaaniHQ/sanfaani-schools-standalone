@@ -47,25 +47,26 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\ChooseWorkspaceController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ParentDashboardController;
-use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\Demo\DemoRequestController;
 use App\Http\Controllers\Demo\MarketplaceLiveDemoController;
 use App\Http\Controllers\MarketingTrackingController;
 use App\Http\Controllers\MarketingUnsubscribeController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\Portal\ResultAccessController as PortalResultAccessController;
-use App\Http\Controllers\School\ResultAccessRequestController;
 use App\Http\Controllers\Onboarding\OnboardingController;
+use App\Http\Controllers\ParentDashboardController;
+use App\Http\Controllers\Portal\ConversationController;
+use App\Http\Controllers\Portal\ResultAccessController as PortalResultAccessController;
+use App\Http\Controllers\Portal\TeacherReviewController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\CbtAccessController as PublicCbtAccessController;
 use App\Http\Controllers\Public\LandingPageController;
+use App\Http\Controllers\Public\ReportCardSnapshotController;
 use App\Http\Controllers\Public\ResultCheckerController;
 use App\Http\Controllers\Public\ResultCheckerPaymentController;
-use App\Http\Controllers\Public\ReportCardSnapshotController;
 use App\Http\Controllers\Public\ResultVerificationController;
 use App\Http\Controllers\Public\SchoolPublicPageController as PublicSchoolPublicPageController;
 use App\Http\Controllers\PublicResultController;
+use App\Http\Controllers\RoleContextController;
 use App\Http\Controllers\School\AcademicSessionController;
 use App\Http\Controllers\School\AdmissionNumberSettingController;
 use App\Http\Controllers\School\AttendanceController;
@@ -78,6 +79,7 @@ use App\Http\Controllers\School\CbtQuestionBankController;
 use App\Http\Controllers\School\CbtQuestionController;
 use App\Http\Controllers\School\ClassUploadController;
 use App\Http\Controllers\School\CommunicationController as SchoolCommunicationController;
+use App\Http\Controllers\School\FeatureControlController;
 use App\Http\Controllers\School\FinanceController;
 use App\Http\Controllers\School\GradingScaleController;
 use App\Http\Controllers\School\ImportExportController;
@@ -92,6 +94,7 @@ use App\Http\Controllers\School\ManualResultController;
 use App\Http\Controllers\School\ReportCardSettingController;
 use App\Http\Controllers\School\ReportsController;
 use App\Http\Controllers\School\ResultAccessPolicyController as SchoolResultAccessPolicyController;
+use App\Http\Controllers\School\ResultAccessRequestController;
 use App\Http\Controllers\School\ResultPublishingController;
 use App\Http\Controllers\School\ResultSystemController as SchoolResultSystemController;
 use App\Http\Controllers\School\ResultUploadController;
@@ -105,8 +108,8 @@ use App\Http\Controllers\School\StaffUserController;
 use App\Http\Controllers\School\StudentBulkUploadController;
 use App\Http\Controllers\School\StudentController;
 use App\Http\Controllers\School\StudentElectiveSubjectController;
-use App\Http\Controllers\School\StudentPromotionController;
 use App\Http\Controllers\School\StudentPortalAccountController;
+use App\Http\Controllers\School\StudentPromotionController;
 use App\Http\Controllers\School\StudentResultWorkspaceController;
 use App\Http\Controllers\School\SubjectAssignmentController;
 use App\Http\Controllers\School\SubjectController;
@@ -116,8 +119,10 @@ use App\Http\Controllers\School\SupportThreadController as SchoolSupportThreadCo
 use App\Http\Controllers\School\TeacherAssignmentController;
 use App\Http\Controllers\School\TeacherResultEntryController;
 use App\Http\Controllers\School\TeacherResultReviewController;
+use App\Http\Controllers\School\TeacherReviewModerationController;
 use App\Http\Controllers\School\TermController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\StudentDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingPageController::class, 'home'])
@@ -420,7 +425,11 @@ Route::middleware(['auth', 'installation.admin', 'role:super_admin', 'demo.safe'
                 Route::patch('/', [LocalMailSettingController::class, 'update'])
                     ->name('update');
                 Route::post('/test', [LocalMailSettingController::class, 'test'])
+                    ->middleware('throttle:5,1')
                     ->name('test');
+                Route::post('/test-fallback', [LocalMailSettingController::class, 'testFallback'])
+                    ->middleware('throttle:5,1')
+                    ->name('test-fallback');
             });
 
         Route::prefix('local-admins')
@@ -834,7 +843,7 @@ Route::middleware(['auth', 'installation.admin', 'role:super_admin', 'demo.safe'
 
         Route::post('/mail-settings/test', [MailSettingController::class, 'test'])
             ->name('mail-settings.test')
-            ->middleware('deployment.behavior:platform_mail');
+            ->middleware(['deployment.behavior:platform_mail', 'throttle:5,1']);
 
         Route::get('/audit-logs', [AuditLogController::class, 'index'])
             ->name('audit-logs.index')
@@ -1263,7 +1272,12 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                             ->name('mail-settings.update');
 
                         Route::post('/mail-settings/test', [SchoolMailSettingController::class, 'test'])
+                            ->middleware('throttle:5,1')
                             ->name('mail-settings.test');
+
+                        Route::post('/mail-settings/test-fallback', [SchoolMailSettingController::class, 'testFallback'])
+                            ->middleware('throttle:5,1')
+                            ->name('mail-settings.test-fallback');
 
                         Route::get('/audit-logs', [SchoolAuditLogController::class, 'index'])
                             ->name('audit-logs.index');
@@ -1870,7 +1884,6 @@ Route::middleware(['auth', 'demo.safe'])->group(function () {
 
 require __DIR__.'/auth.php';
 
-
 // Stage D portal result access routes.
 Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
     Route::middleware(['role:parent|student', 'feature.school:result.access.portal'])->group(function () {
@@ -1902,40 +1915,39 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
         });
 });
 
-
 // Stage E chat and teacher review routes.
 Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
     Route::middleware('role:parent|student|teacher|school_admin|result_officer|accountant|super_admin')->group(function () {
-        Route::get('/portal/live-classes', [\App\Http\Controllers\Portal\LiveClassController::class, 'index'])
+        Route::get('/portal/live-classes', [App\Http\Controllers\Portal\LiveClassController::class, 'index'])
             ->middleware('feature.school:live_classes.view,live_classes.join')
             ->name('portal.live-classes.index');
 
-        Route::get('/portal/live-classes/{liveClass}', [\App\Http\Controllers\Portal\LiveClassController::class, 'show'])
+        Route::get('/portal/live-classes/{liveClass}', [App\Http\Controllers\Portal\LiveClassController::class, 'show'])
             ->middleware('feature.school:live_classes.view,live_classes.join')
             ->name('portal.live-classes.show');
 
-        Route::post('/portal/live-classes/{liveClass}/join', [\App\Http\Controllers\Portal\LiveClassController::class, 'join'])
+        Route::post('/portal/live-classes/{liveClass}/join', [App\Http\Controllers\Portal\LiveClassController::class, 'join'])
             ->middleware('feature.school:live_classes.join,live_classes.view')
             ->name('portal.live-classes.join');
 
-        Route::get('/portal/conversations', [\App\Http\Controllers\Portal\ConversationController::class, 'index'])
+        Route::get('/portal/conversations', [ConversationController::class, 'index'])
             ->name('portal.conversations.index');
 
-        Route::post('/portal/conversations', [\App\Http\Controllers\Portal\ConversationController::class, 'store'])
+        Route::post('/portal/conversations', [ConversationController::class, 'store'])
             ->name('portal.conversations.store');
 
-        Route::get('/portal/conversations/{conversationId}', [\App\Http\Controllers\Portal\ConversationController::class, 'show'])
+        Route::get('/portal/conversations/{conversationId}', [ConversationController::class, 'show'])
             ->name('portal.conversations.show');
 
-        Route::post('/portal/conversations/{conversationId}/messages', [\App\Http\Controllers\Portal\ConversationController::class, 'message'])
+        Route::post('/portal/conversations/{conversationId}/messages', [ConversationController::class, 'message'])
             ->name('portal.conversations.messages.store');
     });
 
     Route::middleware('role:parent|student')->group(function () {
-        Route::get('/portal/teacher-reviews', [\App\Http\Controllers\Portal\TeacherReviewController::class, 'index'])
+        Route::get('/portal/teacher-reviews', [TeacherReviewController::class, 'index'])
             ->name('portal.teacher-reviews.index');
 
-        Route::post('/portal/teacher-reviews', [\App\Http\Controllers\Portal\TeacherReviewController::class, 'store'])
+        Route::post('/portal/teacher-reviews', [TeacherReviewController::class, 'store'])
             ->name('portal.teacher-reviews.store');
     });
 
@@ -1943,42 +1955,41 @@ Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(fu
         ->prefix('school')
         ->name('school.')
         ->group(function () {
-            Route::get('/teacher-reviews', [\App\Http\Controllers\School\TeacherReviewModerationController::class, 'index'])
+            Route::get('/teacher-reviews', [TeacherReviewModerationController::class, 'index'])
                 ->name('teacher-reviews.index');
 
-            Route::post('/teacher-reviews/{teacherReview}/approve', [\App\Http\Controllers\School\TeacherReviewModerationController::class, 'approve'])
+            Route::post('/teacher-reviews/{teacherReview}/approve', [TeacherReviewModerationController::class, 'approve'])
                 ->name('teacher-reviews.approve');
 
-            Route::post('/teacher-reviews/{teacherReview}/reject', [\App\Http\Controllers\School\TeacherReviewModerationController::class, 'reject'])
+            Route::post('/teacher-reviews/{teacherReview}/reject', [TeacherReviewModerationController::class, 'reject'])
                 ->name('teacher-reviews.reject');
         });
 });
 
-
 Route::middleware(['auth', 'verified', 'school.context', 'demo.safe'])->group(function () {
-    Route::get('/role-context', [\App\Http\Controllers\RoleContextController::class, 'index'])
+    Route::get('/role-context', [RoleContextController::class, 'index'])
         ->name('role-context.index');
 
-    Route::post('/role-context/switch', [\App\Http\Controllers\RoleContextController::class, 'switch'])
+    Route::post('/role-context/switch', [RoleContextController::class, 'switch'])
         ->name('role-context.switch');
 
     Route::middleware('role:school_admin|super_admin')
         ->prefix('school')
         ->name('school.')
         ->group(function () {
-            Route::get('/feature-control', [\App\Http\Controllers\School\FeatureControlController::class, 'index'])
+            Route::get('/feature-control', [FeatureControlController::class, 'index'])
                 ->middleware('feature.school:school.features.manage')
                 ->name('feature-control.index');
 
-            Route::post('/feature-control', [\App\Http\Controllers\School\FeatureControlController::class, 'update'])
+            Route::post('/feature-control', [FeatureControlController::class, 'update'])
                 ->middleware('feature.school:school.features.manage')
                 ->name('feature-control.update');
 
-            Route::get('/role-permissions', [\App\Http\Controllers\School\RolePermissionController::class, 'index'])
+            Route::get('/role-permissions', [App\Http\Controllers\School\RolePermissionController::class, 'index'])
                 ->middleware('feature.school:school.roles.manage')
                 ->name('role-permissions.index');
 
-            Route::post('/role-permissions', [\App\Http\Controllers\School\RolePermissionController::class, 'update'])
+            Route::post('/role-permissions', [App\Http\Controllers\School\RolePermissionController::class, 'update'])
                 ->middleware('feature.school:school.roles.manage')
                 ->name('role-permissions.update');
         });

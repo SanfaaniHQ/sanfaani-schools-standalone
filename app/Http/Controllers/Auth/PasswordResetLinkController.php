@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Events\PasswordResetEmailRequested;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\MailSecurity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -56,7 +57,8 @@ class PasswordResetLinkController extends Controller
             }
         } catch (\Throwable $exception) {
             Log::warning('Password reset email failed.', [
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => MailSecurity::diagnostic($exception)['category'],
             ]);
         }
 
@@ -86,7 +88,8 @@ class PasswordResetLinkController extends Controller
             }
         } catch (\Throwable $exception) {
             Log::warning('Admin password reset email failed.', [
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => MailSecurity::diagnostic($exception)['category'],
             ]);
         }
 

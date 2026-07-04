@@ -90,7 +90,10 @@ class InstallerFlowTest extends TestCase
         $this->assertDatabaseHas('schools', ['slug' => 'local-school']);
         $this->assertDatabaseHas('users', ['email' => 'owner@example.test']);
         $this->assertDatabaseCount('licenses', 0);
-        $this->assertArrayNotHasKey('license_mode', app(InstallerStateService::class)->installationMetadata());
+        $installationMetadata = app(InstallerStateService::class)->installationMetadata();
+        $this->assertArrayNotHasKey('license_mode', $installationMetadata);
+        $this->assertArrayNotHasKey('password', data_get($installationMetadata, 'smtp_placeholder', []));
+        $this->assertStringNotContainsString('mail-secret', json_encode($installationMetadata));
         $owner = User::where('email', 'owner@example.test')->first();
         $this->assertTrue($owner->hasRole('super_admin'));
         $this->assertTrue($owner->hasRole('school_admin'));

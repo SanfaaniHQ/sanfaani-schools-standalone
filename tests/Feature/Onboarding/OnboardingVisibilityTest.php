@@ -48,12 +48,12 @@ class OnboardingVisibilityTest extends TestCase
         $this->assertTrue($steps->contains('single_school_only'));
     }
 
-    public function test_steps_are_filtered_by_license_mode(): void
+    public function test_license_mode_step_filters_are_ignored_while_license_enforcement_is_disabled(): void
     {
         [$school, $user] = $this->schoolUser('school_admin');
         $step = $this->step('annual_only', licenseModes: ['annual']);
 
-        $this->assertFalse(app(OnboardingChecklistService::class)
+        $this->assertTrue(app(OnboardingChecklistService::class)
             ->visibleSteps($step->checklist, $user, $school)
             ->pluck('key')
             ->contains('annual_only'));

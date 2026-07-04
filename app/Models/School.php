@@ -19,6 +19,10 @@ class School extends Model
     use HasFactory;
     use SoftDeletes;
 
+    protected $hidden = [
+        'smtp_password',
+    ];
+
     protected $fillable = [
         'name',
         'slug',

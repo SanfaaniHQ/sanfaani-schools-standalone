@@ -2,19 +2,22 @@
 
 namespace App\Notifications;
 
+use App\Contracts\SchoolAwareMailNotification;
 use App\Models\School;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use stdClass;
 
-abstract class BaseSchoolNotification extends Notification implements ShouldQueue
+abstract class BaseSchoolNotification extends Notification implements SchoolAwareMailNotification, ShouldQueue
 {
     use Queueable;
 
     public int $tries = 3;
 
     public int $timeout = 60;
+
+    protected ?int $mailSchoolId = null;
 
     public function __construct()
     {
@@ -24,6 +27,13 @@ abstract class BaseSchoolNotification extends Notification implements ShouldQueu
     public function retryUntil(): \DateTimeInterface
     {
         return now()->addMinutes(10);
+    }
+
+    public function schoolIdForMail(object $notifiable): ?int
+    {
+        $schoolId = $this->mailSchoolId ?: data_get($notifiable, 'school_id');
+
+        return filled($schoolId) ? (int) $schoolId : null;
     }
 
     protected function getSchoolBranding(object $notifiable): stdClass

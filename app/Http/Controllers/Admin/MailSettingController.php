@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\ValidatesSchoolMailSettings;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogService;
 use App\Services\MailSettingService;
 use App\Services\PlatformSettingService;
+use App\Support\MailSecurity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 
 class MailSettingController extends Controller
 {
+    use ValidatesSchoolMailSettings;
+
     public function edit(MailSettingService $mailSettings)
     {
         return view('admin.mail-settings.edit', [
@@ -26,24 +29,16 @@ class MailSettingController extends Controller
         MailSettingService $mailSettings,
         PlatformSettingService $platformSettings,
         AuditLogService $auditLog
-    )
-    {
+    ) {
         $setting = $mailSettings->current();
-        $data = $request->validate([
-            'mailer' => ['required', Rule::in(['log', 'smtp'])],
-            'host' => ['nullable', 'string', 'max:255'],
-            'port' => ['nullable', 'integer', 'min:1', 'max:65535'],
-            'username' => ['nullable', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'max:2000'],
-            'encryption' => ['nullable', Rule::in(['tls', 'ssl'])],
-            'from_address' => ['nullable', 'email', 'max:255'],
-            'from_name' => ['nullable', 'string', 'max:255'],
-            'reply_to_email' => ['nullable', 'email', 'max:255'],
-            'is_enabled' => ['nullable', 'boolean'],
-            'school_custom_smtp_enabled' => ['nullable', 'boolean'],
-            'force_platform_mailer' => ['nullable', 'boolean'],
-            'platform_fallback_enabled' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validate(array_merge(
+            $this->schoolMailValidationRules($request, $setting, $mailSettings),
+            [
+                'school_custom_smtp_enabled' => ['nullable', 'boolean'],
+                'force_platform_mailer' => ['nullable', 'boolean'],
+                'platform_fallback_enabled' => ['nullable', 'boolean'],
+            ]
+        ));
 
         $governance = [
             'school_custom_smtp_enabled' => (bool) ($data['school_custom_smtp_enabled'] ?? false),
@@ -55,8 +50,7 @@ class MailSettingController extends Controller
             ->except(['school_custom_smtp_enabled', 'force_platform_mailer', 'platform_fallback_enabled'])
             ->all();
 
-        $setting->fill($mailSettings->normalizedUpdateData($settingData, $setting));
-        $setting->save();
+        $setting = $mailSettings->updatePlatform($settingData);
 
         $platform = $platformSettings->get();
         $metadata = $platform->metadata ?? [];
@@ -75,25 +69,36 @@ class MailSettingController extends Controller
     public function test(Request $request, MailSettingService $mailSettings, AuditLogService $auditLog)
     {
         $data = $request->validate([
-            'test_email' => ['required', 'email', 'max:255'],
+            'test_email' => ['required', 'email:rfc', 'max:255'],
         ]);
 
         $setting = $mailSettings->current();
 
         try {
-            $mailSettings->sendTest($setting, $data['test_email']);
+            $delivery = $mailSettings->sendTest($setting, $data['test_email']);
         } catch (\Throwable $exception) {
+            $diagnostic = MailSecurity::diagnostic($exception);
             Log::warning('Mail settings test failed.', [
-                'message' => $exception->getMessage(),
+                'mailer' => $mailSettings->platformMailerStatus($setting)['driver'],
+                'exception' => $exception::class,
+                'category' => $diagnostic['category'],
             ]);
 
-            return back()->with('error', 'Mail test could not be sent. Check the settings and try again.');
+            return back()->with('error', 'Platform fallback failed: '.$diagnostic['message']);
         }
 
         $auditLog->log('mail_settings_test_sent', $setting, null, metadata: [
             'mailer' => $setting->mailer,
         ], request: $request);
 
-        return back()->with('success', 'Test email sent successfully.');
+        if ($delivery['logged_only']) {
+            $message = $delivery['transport'] === 'log'
+                ? 'Fallback is configured to log messages only; no external email was delivered.'
+                : 'Fallback is configured to use the '.strtoupper($delivery['transport']).' test transport; no external email was delivered.';
+
+            return back()->with('success', $message);
+        }
+
+        return back()->with('success', 'Platform mailer accepted the test email for delivery. Inbox delivery is not guaranteed.');
     }
 }

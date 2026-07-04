@@ -2,13 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\CommunicationLog;
-use App\Models\School;
-use App\Models\StudentResult;
-use App\Models\TeacherClassAssignment;
-use App\Models\TeacherResultSubmission;
-use App\Models\TeacherSubjectAssignment;
-use App\Models\User;
 use App\Events\DemoRequested;
 use App\Events\LicenseExpiring;
 use App\Events\OnboardingChecklistCompleted;
@@ -16,6 +9,14 @@ use App\Events\OnboardingStepCompleted;
 use App\Listeners\Marketing\CreateRenewalReminderFromLicense;
 use App\Listeners\Marketing\CreateSalesTaskFromDemoRequest;
 use App\Listeners\Marketing\TrackOnboardingConversionActivity;
+use App\Models\CommunicationLog;
+use App\Models\School;
+use App\Models\StudentResult;
+use App\Models\TeacherClassAssignment;
+use App\Models\TeacherResultSubmission;
+use App\Models\TeacherSubjectAssignment;
+use App\Models\User;
+use App\Notifications\Channels\TenantAwareMailChannel;
 use App\Policies\CommunicationLogPolicy;
 use App\Policies\SchoolPolicy;
 use App\Policies\StudentResultPolicy;
@@ -33,9 +34,9 @@ use App\Services\ScratchAnalyticsService;
 use App\Services\System\DeploymentBehaviorService;
 use App\Services\System\DeploymentModeService;
 use App\Services\System\FeatureAccessService;
-use App\Services\TenantMailManager;
 use App\Services\TenantThemeResolver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Channels\MailChannel;
 use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
@@ -55,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(MailSettingService::class);
         $this->app->singleton(BrandingService::class);
         $this->app->singleton(TenantThemeResolver::class);
-        $this->app->singleton(TenantMailManager::class);
+        $this->app->bind(MailChannel::class, TenantAwareMailChannel::class);
         $this->app->singleton(ScratchAnalyticsService::class);
         $this->app->singleton(DashboardWidgetService::class);
         $this->app->singleton(DeploymentModeService::class);
@@ -144,7 +145,6 @@ class AppServiceProvider extends ServiceProvider
         });
 
         app(MailSettingService::class)->applyConfigured();
-        app(TenantMailManager::class)->configureCurrent();
 
         Event::listen(NotificationSending::class, function (NotificationSending $event): void {
             AuditService::log('notification', class_basename($event->notification), [

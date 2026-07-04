@@ -9,6 +9,8 @@ use App\Services\SchoolMailConfigService;
 use App\Services\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Mail\MailManager;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,9 +37,7 @@ class EnsureValidSchoolContext
             }
 
             TenantContext::set($school->id, session('support_role_context', 'school_admin'));
-            SchoolMailConfigService::configure($school->id);
-
-            $response = $next($request);
+            $response = $this->withSchoolMailConfig($school->id, fn () => $next($request));
             $this->logSupportAccess($request, $school->id);
 
             return $response;
@@ -72,9 +72,22 @@ class EnsureValidSchoolContext
         }
 
         TenantContext::set($school->id, $roleName);
-        SchoolMailConfigService::configure($school->id);
 
-        return $next($request);
+        return $this->withSchoolMailConfig($school->id, fn () => $next($request));
+    }
+
+    private function withSchoolMailConfig(int $schoolId, Closure $callback): Response
+    {
+        $original = config('mail');
+
+        try {
+            SchoolMailConfigService::configure($schoolId);
+
+            return $callback();
+        } finally {
+            Config::set('mail', $original);
+            app(MailManager::class)->forgetMailers();
+        }
     }
 
     private function defaultRoleName($user, ?int $schoolId): ?string

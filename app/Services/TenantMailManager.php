@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Models\School;
 use App\Support\MailSecurity;
-use Illuminate\Mail\MailManager;
-use Illuminate\Support\Facades\Config;
 use Throwable;
 
 class TenantMailManager
@@ -22,45 +20,27 @@ class TenantMailManager
         try {
             $this->mailSettings->applyForSchool($school);
         } catch (Throwable $schoolException) {
+            $diagnostic = MailSecurity::diagnostic($schoolException);
+            logger()->warning('School mailer configuration failed.', [
+                'school_id' => $school?->id,
+                'exception' => $schoolException::class,
+                'category' => $diagnostic['category'],
+            ]);
+
+            if ($school && (! $this->mailSettings->platformFallbackEnabled() || ! $this->mailSettings->platformMailerCanDeliver())) {
+                throw $schoolException;
+            }
+
             try {
                 $this->mailSettings->apply($this->mailSettings->current());
-            } catch (Throwable) {
-                $this->useLogMailer(MailSecurity::sanitizeError($schoolException));
+            } catch (Throwable $platformException) {
+                throw $platformException;
             }
         }
     }
 
     public function withTenantMailer(?School $school, callable $callback): mixed
     {
-        try {
-            return $this->mailSettings->withSchoolMailContext($school, $callback);
-        } catch (Throwable $schoolException) {
-            if (! $school) {
-                throw $schoolException;
-            }
-
-            try {
-                return $this->mailSettings->withPlatformMailContext($callback);
-            } catch (Throwable $platformException) {
-                $this->useLogMailer(MailSecurity::sanitizeError($platformException));
-
-                return $callback();
-            }
-        }
-    }
-
-    private function useLogMailer(?string $reason = null): void
-    {
-        Config::set('mail.default', 'log');
-        Config::set('mail.mailers.log.transport', 'log');
-        Config::set('mail.mailers.log.channel', config('mail.mailers.log.channel'));
-
-        if ($reason) {
-            logger()->warning('Tenant mail fallback switched to log mailer.', [
-                'reason' => $reason,
-            ]);
-        }
-
-        app(MailManager::class)->forgetMailers();
+        return $this->mailSettings->deliverForSchool($school, $callback)['result'];
     }
 }

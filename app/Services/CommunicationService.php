@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
-use RuntimeException;
 use Throwable;
 
 class CommunicationService
@@ -132,7 +131,7 @@ class CommunicationService
         $log = $this->createLog($this->logAttributes($school, $sender, $recipient, $subject, $body, $type, $category, $metadata));
 
         try {
-            $delivery = $this->deliverWithFallback($school, function () use ($recipient, $subject, $headline, $body, $school, $metadata, $category) {
+            $delivery = $this->mailSettings->deliverForSchool($school, function () use ($recipient, $subject, $headline, $body, $school, $metadata, $category) {
                 Mail::to($recipient)->send($this->attachFiles(
                     $this->mailableForCategory($category, $subject, $headline, $body, $school, $metadata),
                     $metadata
@@ -159,7 +158,8 @@ class CommunicationService
                 'school_id' => $school?->id,
                 'recipient' => $recipient,
                 'type' => $type,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'category' => MailSecurity::diagnostic($exception)['category'],
             ]);
 
             $this->notifyFailure($log, $school, $recipient, $type, $exception);
@@ -207,7 +207,7 @@ class CommunicationService
             Log::warning('Communication log creation failed.', [
                 'recipient' => $attributes['recipient'] ?? null,
                 'type' => $attributes['type'] ?? null,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
 
             return new CommunicationLog($attributes);
@@ -236,63 +236,6 @@ class CommunicationService
         }
     }
 
-    private function deliverWithFallback(?School $school, callable $callback): array
-    {
-        if ($school && ! $this->mailSettings->hasEnabledSchoolMailer($school)) {
-            if (! $this->mailSettings->platformMailerConfigured()) {
-                throw new RuntimeException('Platform fallback is not configured. Please configure platform mail settings or use school SMTP.');
-            }
-
-            $this->mailSettings->withPlatformMailContext($callback);
-
-            return [
-                'fallback_used' => true,
-                'primary_error' => 'school_mailer_unavailable_or_disabled',
-            ];
-        }
-
-        try {
-            $this->mailSettings->withSchoolMailContext($school, $callback);
-
-            return [
-                'fallback_used' => false,
-                'primary_error' => null,
-            ];
-        } catch (Throwable $primaryException) {
-            if ($this->mailSettings->platformFallbackEnabled() && ! $this->mailSettings->platformMailerConfigured()) {
-                throw new RuntimeException(
-                    'School SMTP failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback is not configured. Please configure platform mail settings or use school SMTP.',
-                    previous: $primaryException
-                );
-            }
-
-            if (! $this->shouldTryPlatformFallback($school)) {
-                throw $primaryException;
-            }
-
-            try {
-                $this->mailSettings->withPlatformMailContext($callback);
-
-                return [
-                    'fallback_used' => true,
-                    'primary_error' => MailSecurity::sanitizeError($primaryException),
-                ];
-            } catch (Throwable $fallbackException) {
-                throw new RuntimeException(
-                    'School SMTP failed: '.MailSecurity::sanitizeError($primaryException).' Platform fallback failed: '.MailSecurity::sanitizeError($fallbackException),
-                    previous: $fallbackException
-                );
-            }
-        }
-    }
-
-    private function shouldTryPlatformFallback(?School $school): bool
-    {
-        return $this->mailSettings->hasEnabledSchoolMailer($school)
-            && $this->mailSettings->platformFallbackEnabled()
-            && $this->mailSettings->platformMailerConfigured();
-    }
-
     private function markSent(CommunicationLog $log, array $delivery): void
     {
         $log->status = CommunicationLog::STATUS_SENT;
@@ -302,6 +245,7 @@ class CommunicationService
             'delivery' => [
                 'fallback_used' => $delivery['fallback_used'],
                 'primary_error' => $delivery['primary_error'],
+                'transport' => $delivery['transport'] ?? null,
             ],
         ]);
 
@@ -311,7 +255,7 @@ class CommunicationService
     private function markFailed(CommunicationLog $log, Throwable $exception): void
     {
         $log->status = CommunicationLog::STATUS_FAILED;
-        $log->failure_reason = MailSecurity::sanitizeError($exception, 1000);
+        $log->failure_reason = MailSecurity::diagnostic($exception)['message'];
 
         $this->saveLog($log);
     }
@@ -327,7 +271,7 @@ class CommunicationService
         } catch (Throwable $exception) {
             Log::warning('Communication log update failed.', [
                 'communication_log_id' => $log->id,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
         }
     }
@@ -340,7 +284,7 @@ class CommunicationService
             Log::warning('Communication audit log failed.', [
                 'action' => $action,
                 'communication_log_id' => $log->id,
-                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
             ]);
         }
     }
@@ -362,7 +306,7 @@ class CommunicationService
                     'communication_log_id' => $log->id,
                     'recipient' => $recipient,
                     'type' => $type,
-                    'error' => MailSecurity::sanitizeError($exception),
+                    'error_category' => MailSecurity::diagnostic($exception)['category'],
                 ],
             ];
 
@@ -374,7 +318,7 @@ class CommunicationService
         } catch (Throwable $notificationException) {
             Log::warning('Communication failure notification failed.', [
                 'communication_log_id' => $log->id,
-                'message' => $notificationException->getMessage(),
+                'exception' => $notificationException::class,
             ]);
         }
     }
