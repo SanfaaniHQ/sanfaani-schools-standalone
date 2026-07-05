@@ -149,9 +149,9 @@ class MultiFieldLoginTest extends TestCase
         ]);
 
         $this->assertAuthenticatedAs($owner);
-        $response->assertRedirect(route('dashboard', absolute: false));
-        $response->assertSessionHas('active_school_id', $school->id);
-        $response->assertSessionHas('active_role_context', 'school_admin');
+        $response->assertRedirect(route('workspace.create'));
+        $response->assertSessionMissing('active_school_id');
+        $response->assertSessionMissing('active_role_context');
     }
 
     public function test_super_admin_can_login_through_admin_login(): void

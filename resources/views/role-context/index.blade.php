@@ -94,12 +94,15 @@
                         <h2 class="font-semibold text-text-primary">{{ __('ui.installation_admin') }}</h2>
                         <p class="mt-1 text-sm text-text-secondary">{{ __('ui.installation_admin_intro') }}</p>
                     </div>
-                    <a href="{{ route('admin.dashboard') }}" class="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-border-subtle bg-bg-secondary px-4 py-2 text-sm font-semibold text-text-secondary shadow-sm transition-all duration-200 ease-out hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary hover:shadow-md">
-                        <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
-                        </svg>
-                        {{ __('ui.installation_admin') }}
-                    </a>
+                    <form method="POST" action="{{ route('workspace.installation-admin') }}">
+                        @csrf
+                        <button type="submit" class="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-border-subtle bg-bg-secondary px-4 py-2 text-sm font-semibold text-text-secondary shadow-sm transition-all duration-200 ease-out hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary hover:shadow-md">
+                            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
+                            </svg>
+                            {{ __('ui.installation_admin') }}
+                        </button>
+                    </form>
                 </section>
             @endif
         </div>

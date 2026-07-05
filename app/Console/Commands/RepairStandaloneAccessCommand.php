@@ -6,17 +6,23 @@ use App\Models\School;
 use App\Models\SchoolFeatureSetting;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\Installer\InstallerStateService;
 use App\Services\RolePermissionService;
 use App\Services\SchoolRoleFeatureService;
 use App\Services\Standalone\StandaloneEditionService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class RepairStandaloneAccessCommand extends Command
 {
-    protected $signature = 'standalone:repair-access {--dry-run : Report changes without writing them} {--json : Output the report as JSON}';
+    protected $signature = 'standalone:repair-access
+        {--dry-run : Report changes without writing them}
+        {--json : Output the report as JSON}
+        {--user= : Target user ID or email for an otherwise ambiguous school assignment}
+        {--school= : Target school ID or slug for use with --user}';
 
     protected $description = 'Repair standalone school workspace roles, permissions, and default role-feature access.';
 
@@ -24,6 +30,7 @@ class RepairStandaloneAccessCommand extends Command
         StandaloneEditionService $standalone,
         RolePermissionService $permissions,
         SchoolRoleFeatureService $roleFeatures,
+        InstallerStateService $installerState,
     ): int {
         $dryRun = (bool) $this->option('dry-run');
         $standaloneProduct = $standalone->isStandalone();
@@ -31,8 +38,11 @@ class RepairStandaloneAccessCommand extends Command
             'standalone_mode' => $standaloneProduct,
             'dry_run' => $dryRun,
             'roles_checked' => [],
+            'roles_created' => 0,
             'permissions_created' => 0,
+            'permissions_missing' => [],
             'role_permissions_added' => 0,
+            'role_permissions_missing' => [],
             'owner_assignments_repaired' => 0,
             'installation_admin_access_repaired' => 0,
             'feature_settings_repaired' => 0,
@@ -48,28 +58,36 @@ class RepairStandaloneAccessCommand extends Command
         foreach ($permissions->roleNames() as $roleName) {
             $report['roles_checked'][] = $roleName;
 
+            if (! Role::query()->where('name', $roleName)->where('guard_name', 'web')->exists()) {
+                $report['roles_created']++;
+            }
+
             if (! $dryRun) {
                 Role::findOrCreate($roleName, 'web');
             }
         }
 
-        if (! $dryRun) {
-            $beforeCount = Schema::hasTable('permissions')
-                ? \Spatie\Permission\Models\Permission::query()->count()
-                : 0;
+        if (Schema::hasTable('permissions')) {
+            $permissionNames = array_keys($permissions->permissionCatalog());
+            $report['permissions_missing'] = collect($permissionNames)
+                ->reject(fn (string $name): bool => Permission::query()->where('name', $name)->where('guard_name', 'web')->exists())
+                ->values()
+                ->all();
+            $report['permissions_created'] = count($report['permissions_missing']);
 
-            $permissions->ensurePermissions();
+            if (! $dryRun) {
+                $permissions->ensurePermissions();
+            }
 
-            $afterCount = Schema::hasTable('permissions')
-                ? \Spatie\Permission\Models\Permission::query()->count()
-                : $beforeCount;
-
-            $report['permissions_created'] = max(0, $afterCount - $beforeCount);
-            $report['role_permissions_added'] = $this->repairRolePermissions($permissions, $roleFeatures);
+            $report['role_permissions_added'] = $this->repairRolePermissions(
+                $permissions,
+                $dryRun,
+                $report['role_permissions_missing'],
+            );
         }
 
-        $report['owner_assignments_repaired'] = $this->repairOwnerAssignments($dryRun);
-        $report['installation_admin_access_repaired'] = $this->confirmInstallationAdminAccess();
+        $report['owner_assignments_repaired'] = $this->repairOwnerAssignments($dryRun, $report['warnings']);
+        $report['installation_admin_access_repaired'] = $this->repairInstallationAdminAccess($installerState, $dryRun, $report['warnings']);
         $report['feature_settings_repaired'] = $this->repairDefaultFeatureSettings($roleFeatures, $dryRun);
 
         if (! $dryRun) {
@@ -79,34 +97,32 @@ class RepairStandaloneAccessCommand extends Command
         return $this->finish($report);
     }
 
-    private function repairRolePermissions(RolePermissionService $permissions, SchoolRoleFeatureService $roleFeatures): int
+    private function repairRolePermissions(RolePermissionService $permissions, bool $dryRun, array &$missing): int
     {
         $added = 0;
-        $catalog = array_keys($permissions->permissionCatalog());
-
         foreach ($permissions->roleNames() as $roleName) {
-            $role = Role::findOrCreate($roleName, 'web');
-            $targetPermissions = $roleName === 'super_admin'
-                ? $catalog
-                : array_values(array_unique(array_merge(
-                    ['role.context.switch'],
-                    array_keys($roleFeatures->getAvailableFeatures($roleName)),
-                )));
+            $role = Role::query()->where('name', $roleName)->where('guard_name', 'web')->first();
+            $targetPermissions = $permissions->defaultPermissionNamesForRole($roleName);
 
             foreach ($targetPermissions as $permissionName) {
-                if (! in_array($permissionName, $catalog, true) || $role->hasPermissionTo($permissionName)) {
+                if ($role?->permissions()->where('name', $permissionName)->exists()) {
                     continue;
                 }
 
-                $role->givePermissionTo($permissionName);
                 $added++;
+                $missing[] = $roleName.':'.$permissionName;
+
+                if (! $dryRun) {
+                    $role ??= Role::findOrCreate($roleName, 'web');
+                    $role->givePermissionTo(Permission::findOrCreate($permissionName, 'web'));
+                }
             }
         }
 
         return $added;
     }
 
-    private function repairOwnerAssignments(bool $dryRun): int
+    private function repairOwnerAssignments(bool $dryRun, array &$warnings): int
     {
         if (! Schema::hasTable('users') || ! Schema::hasTable('schools') || ! Schema::hasTable('user_school_roles')) {
             return 0;
@@ -114,58 +130,81 @@ class RepairStandaloneAccessCommand extends Command
 
         $count = 0;
 
-        School::query()
-            ->where('status', 'active')
-            ->get()
-            ->each(function (School $school) use (&$count, $dryRun): void {
-                $owners = User::query()
+        $schools = School::query()->where('status', 'active')->get();
+        $targetUser = $this->targetUser($warnings);
+        $targetSchool = $this->targetSchool($schools, $warnings);
+
+        if (($this->option('user') || $this->option('school')) && (! $targetUser || ! $targetSchool)) {
+            return 0;
+        }
+
+        $schools->each(function (School $school) use (&$count, $dryRun, $schools, $targetUser, $targetSchool, &$warnings): void {
+            if ($targetSchool && ! $school->is($targetSchool)) {
+                return;
+            }
+
+            $owners = User::query()
+                ->where('school_id', $school->id)
+                ->whereHas('roles', fn ($query) => $query->whereIn('name', ['super_admin', 'school_admin']))
+                ->get();
+
+            if ($targetUser) {
+                if (! $targetUser->hasAnyRole(['super_admin', 'school_admin'])) {
+                    $warnings[] = "Target user {$targetUser->id} has neither super_admin nor school_admin; no school access was inferred.";
+
+                    return;
+                }
+
+                $owners = collect([$targetUser]);
+            } elseif ($owners->isEmpty() && $schools->count() === 1) {
+                $installationAdmins = User::query()->activeAccount()->role('super_admin')->get();
+
+                if ($installationAdmins->count() === 1) {
+                    $owners = $installationAdmins;
+                } elseif ($installationAdmins->count() > 1) {
+                    $warnings[] = "School {$school->id} has no explicit owner and multiple Installation Admins. Re-run with --user and --school to choose safely.";
+                }
+            }
+
+            foreach ($owners as $owner) {
+                $needsRole = ! $owner->hasRole('school_admin');
+                $needsSchool = ! $owner->school_id;
+                $needsSchoolRole = ! $owner->activeSchoolRoles()
                     ->where('school_id', $school->id)
-                    ->whereHas('roles', fn ($query) => $query->whereIn('name', ['super_admin', 'school_admin']))
-                    ->get();
+                    ->where('role_name', 'school_admin')
+                    ->exists();
 
-                if ($owners->isEmpty() && School::query()->where('status', 'active')->count() === 1) {
-                    $owners = User::query()->role('super_admin')->get();
+                if (! $needsRole && ! $needsSchool && ! $needsSchoolRole) {
+                    continue;
                 }
 
-                foreach ($owners as $owner) {
-                    $needsRole = ! $owner->hasRole('school_admin');
-                    $needsSchool = ! $owner->school_id;
-                    $needsSchoolRole = ! $owner->activeSchoolRoles()
-                        ->where('school_id', $school->id)
-                        ->where('role_name', 'school_admin')
-                        ->exists();
+                $count++;
 
-                    if (! $needsRole && ! $needsSchool && ! $needsSchoolRole) {
-                        continue;
-                    }
-
-                    $count++;
-
-                    if ($dryRun) {
-                        continue;
-                    }
-
-                    if ($needsRole) {
-                        $owner->assignRole('school_admin');
-                    }
-
-                    if ($needsSchool) {
-                        $owner->forceFill(['school_id' => $school->id])->save();
-                    }
-
-                    UserSchoolRole::query()->updateOrCreate(
-                        [
-                            'user_id' => $owner->id,
-                            'school_id' => $school->id,
-                            'role_name' => 'school_admin',
-                        ],
-                        [
-                            'status' => 'active',
-                            'metadata' => ['source' => 'standalone_repair_access'],
-                        ]
-                    );
+                if ($dryRun) {
+                    continue;
                 }
-            });
+
+                if ($needsRole) {
+                    $owner->assignRole('school_admin');
+                }
+
+                if ($needsSchool) {
+                    $owner->forceFill(['school_id' => $school->id])->save();
+                }
+
+                UserSchoolRole::query()->updateOrCreate(
+                    [
+                        'user_id' => $owner->id,
+                        'school_id' => $school->id,
+                        'role_name' => 'school_admin',
+                    ],
+                    [
+                        'status' => 'active',
+                        'metadata' => ['source' => 'standalone_repair_access'],
+                    ]
+                );
+            }
+        });
 
         return $count;
     }
@@ -219,17 +258,88 @@ class RepairStandaloneAccessCommand extends Command
         return $count;
     }
 
-    private function confirmInstallationAdminAccess(): int
+    private function repairInstallationAdminAccess(InstallerStateService $state, bool $dryRun, array &$warnings): int
     {
         if (! Schema::hasTable('users') || ! Schema::hasTable('roles')) {
             return 0;
         }
 
-        return User::query()
-            ->role('super_admin')
-            ->get()
-            ->filter(fn (User $user): bool => $user->isActiveAccount())
-            ->count();
+        $installerAdminId = data_get($state->installationMetadata(), 'admin_user_id');
+
+        if (! $installerAdminId) {
+            return 0;
+        }
+
+        $user = User::query()->find($installerAdminId);
+
+        if (! $user || ! $user->isActiveAccount()) {
+            $warnings[] = 'The installer-recorded Installation Admin is missing or inactive; no account was changed.';
+
+            return 0;
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return 0;
+        }
+
+        if (! $dryRun) {
+            Role::findOrCreate('super_admin', 'web');
+            $user->assignRole('super_admin');
+        }
+
+        return 1;
+    }
+
+    private function targetUser(array &$warnings): ?User
+    {
+        $target = trim((string) $this->option('user'));
+
+        if ($target === '') {
+            return null;
+        }
+
+        $user = is_numeric($target)
+            ? User::query()->find((int) $target)
+            : User::query()->whereRaw('LOWER(email) = ?', [strtolower($target)])->first();
+
+        if (! $user) {
+            $warnings[] = 'The requested --user could not be found.';
+        }
+
+        return $user;
+    }
+
+    private function targetSchool($schools, array &$warnings): ?School
+    {
+        $target = trim((string) $this->option('school'));
+
+        if ($target !== '' && ! $this->option('user')) {
+            $warnings[] = 'The --school option must be paired with --user.';
+
+            return null;
+        }
+
+        if ($target === '') {
+            if ($this->option('user') && $schools->count() === 1) {
+                return $schools->first();
+            }
+
+            if ($this->option('user')) {
+                $warnings[] = 'Multiple active schools exist; provide --school with --user.';
+            }
+
+            return null;
+        }
+
+        $school = is_numeric($target)
+            ? $schools->firstWhere('id', (int) $target)
+            : $schools->firstWhere('slug', $target);
+
+        if (! $school) {
+            $warnings[] = 'The requested --school is not an active school.';
+        }
+
+        return $school;
     }
 
     private function finish(array $report): int

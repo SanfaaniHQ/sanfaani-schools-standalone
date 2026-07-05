@@ -18,7 +18,7 @@ class AdminAuthenticatedSessionController extends Controller
     public function create(UserWorkspaceService $workspaces): View|RedirectResponse
     {
         if (auth()->check() && auth()->user()->hasRole('super_admin')) {
-            $workspaces->selectInstallationAdmin(auth()->user());
+            $workspaces->selectInstallationAdmin(auth()->user(), true);
 
             return redirect()->route('admin.dashboard');
         }
@@ -137,6 +137,6 @@ class AdminAuthenticatedSessionController extends Controller
             'user_agent' => $request->userAgent(),
         ], request: $request);
 
-        return redirect()->intended(route('admin.dashboard'));
+        return redirect()->route('admin.dashboard');
     }
 }

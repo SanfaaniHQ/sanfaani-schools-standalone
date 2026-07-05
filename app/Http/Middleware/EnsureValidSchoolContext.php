@@ -7,6 +7,7 @@ use App\Services\AuditService;
 use App\Services\CurrentSchoolService;
 use App\Services\SchoolMailConfigService;
 use App\Services\TenantContext;
+use App\Services\UserWorkspaceService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Mail\MailManager;
@@ -47,24 +48,57 @@ class EnsureValidSchoolContext
             $this->clearSupportSession();
         }
 
-        $schoolId = TenantContext::schoolId() ?: (filled($user->school_id) ? (int) $user->school_id : null);
-        $roleName = TenantContext::roleName() ?: session('active_role_context') ?: $this->defaultRoleName($user, $schoolId);
+        $workspaces = app(UserWorkspaceService::class);
 
-        if (! $schoolId || ! $roleName) {
-            return redirect()->route('workspace.create')
-                ->with('error', 'Choose a school workspace before continuing.');
+        if (TenantContext::workspaceType() === TenantContext::WORKSPACE_INSTALLATION_ADMIN) {
+            if ($user->hasRole('super_admin')) {
+                return redirect()->route('workspace.create')
+                    ->with('error', 'Switch to a school workspace before opening school pages.');
+            }
+
+            session()->forget(['workspace.type', 'workspace.key']);
         }
+
+        $context = $workspaces->activeSchoolContextFor($user);
+
+        if (! $context) {
+            $hadStoredContext = TenantContext::workspaceKey()
+                || TenantContext::schoolId()
+                || TenantContext::roleName();
+
+            if ($hadStoredContext) {
+                TenantContext::clear();
+
+                return redirect()->route('workspace.create')
+                    ->with('error', 'Your previous school workspace is no longer valid. Choose an assigned workspace.');
+            }
+
+            $schoolContexts = $workspaces->schoolContextsFor($user);
+
+            if ($schoolContexts->count() === 1) {
+                $context = $schoolContexts->first();
+                $workspaces->select($user, $context);
+            } else {
+                TenantContext::clear();
+
+                return redirect()->route('workspace.create')
+                    ->with('error', 'Choose a valid school workspace before continuing.');
+            }
+        }
+
+        $schoolId = (int) $context['school_id'];
+        $roleName = (string) $context['role_name'];
 
         $school = School::where('status', 'active')->find($schoolId);
 
-        if (! $school || ! TenantContext::userBelongsToSchool($user, (int) $schoolId)) {
+        if (! $school || ! TenantContext::userBelongsToSchool($user, $schoolId)) {
             TenantContext::clear();
 
             return redirect()->route('workspace.create')
                 ->with('error', 'Your school context is no longer valid.');
         }
 
-        if (! $this->roleBelongsToSchoolContext($user, $roleName, (int) $schoolId)) {
+        if (! $this->roleBelongsToSchoolContext($user, $roleName, $schoolId)) {
             TenantContext::clear();
 
             return redirect()->route('workspace.create')
@@ -90,32 +124,21 @@ class EnsureValidSchoolContext
         }
     }
 
-    private function defaultRoleName($user, ?int $schoolId): ?string
-    {
-        if ($schoolId) {
-            $schoolRole = $user->activeSchoolRoles()
-                ->where('school_id', $schoolId)
-                ->value('role_name');
-
-            if ($schoolRole) {
-                return $schoolRole;
-            }
-        }
-
-        return $user->roles()->pluck('name')->first();
-    }
-
     private function roleBelongsToSchoolContext($user, string $roleName, int $schoolId): bool
     {
-        if ($roleName === 'super_admin') {
-            return $user->hasRole('super_admin');
+        if (! in_array($roleName, UserWorkspaceService::SCHOOL_WORKSPACE_ROLES, true)
+            || ! $user->hasRole($roleName)) {
+            return false;
         }
 
-        return $user->activeSchoolRoles()
-            ->where('school_id', $schoolId)
-            ->where('role_name', $roleName)
-            ->exists()
-            || ((int) $user->school_id === $schoolId && $user->hasRole($roleName));
+        if ($user->schoolRoles()->exists()) {
+            return $user->activeSchoolRoles()
+                ->where('school_id', $schoolId)
+                ->where('role_name', $roleName)
+                ->exists();
+        }
+
+        return (int) $user->school_id === $schoolId;
     }
 
     private function clearSupportSession(): void

@@ -59,6 +59,7 @@ return [
     'installation_admin_intro' => 'أدر إعدادات التثبيت والتشخيصات بشكل منفصل عن أدوار المدرسة.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
+    'switch_to_school_workspace' => 'Switch to School Workspace',
     'mail_settings' => 'إعدادات البريد',
     'mark_all_as_read' => 'تعليم الكل كمقروء',
     'my_classes' => 'فصولي',

@@ -63,6 +63,7 @@ return [
     'installation_admin_intro' => 'Manage installation-wide settings and diagnostics separately from school roles.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
+    'switch_to_school_workspace' => 'Switch to School Workspace',
     'mail_settings' => 'Mail Settings',
     'mark_all_as_read' => 'Mark all as read',
     'my_classes' => 'My Classes',

@@ -221,13 +221,19 @@ class SchoolAuthorizationService
             return true;
         }
 
-        return (int) $user->school_id === (int) $school->id
-            || $user->activeSchoolRoles()->where('school_id', $school->id)->exists();
+        if ($user->schoolRoles()->exists()) {
+            return $user->activeSchoolRoles()->where('school_id', $school->id)->exists();
+        }
+
+        return (int) $user->school_id === (int) $school->id;
     }
 
     private function hasPlatformOverride(User $user): bool
     {
-        return $user->hasRole('super_admin');
+        return $user->hasRole('super_admin')
+            && (bool) session('is_support_session')
+            && session()->has('support_school_id')
+            && session()->has('support_access_started_by');
     }
 
     private function schoolFeatureIsExplicitlyDisabled(School $school, string $featureKey): bool

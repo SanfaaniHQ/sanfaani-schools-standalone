@@ -6,6 +6,7 @@ use App\Models\School;
 use App\Models\SchoolFeatureOverride;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\SchoolRoleFeatureService;
 use App\Services\UserWorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
@@ -171,7 +172,7 @@ class RoleAwareNavigationTest extends TestCase
             ->assertSee('disabled', false)
             ->assertSee('action="'.route('role-context.switch').'"', false)
             ->assertSee('data-installation-admin-action', false)
-            ->assertSee('href="'.route('admin.dashboard').'"', false)
+            ->assertSee('action="'.route('workspace.installation-admin').'"', false)
             ->assertDontSee('data-role-name="super_admin"', false)
             ->assertDontSee('Support mode:')
             ->assertDontSee('Support access active');
@@ -185,7 +186,7 @@ class RoleAwareNavigationTest extends TestCase
     {
         $school = $this->createSchool();
         $admin = $this->createUserForSchool($school, 'school_admin');
-        $roleFeatures = app(\App\Services\SchoolRoleFeatureService::class);
+        $roleFeatures = app(SchoolRoleFeatureService::class);
 
         foreach ([
             'reports.view',

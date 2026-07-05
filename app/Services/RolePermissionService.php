@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolePermissionService
 {
@@ -70,6 +71,45 @@ class RolePermissionService
         }
     }
 
+    public function defaultPermissionNamesForRole(string $roleName): array
+    {
+        $catalog = array_keys($this->permissionCatalog());
+
+        if ($roleName === 'super_admin') {
+            return $catalog;
+        }
+
+        return array_values(array_unique(array_merge(
+            ['role.context.switch'],
+            array_keys($this->features->getAvailableFeatures($roleName)),
+        )));
+    }
+
+    public function ensureDefaultRolePermissions(?array $roleNames = null): int
+    {
+        $this->ensurePermissions();
+        $added = 0;
+
+        foreach ($roleNames ?? $this->roleNames() as $roleName) {
+            $role = Role::findOrCreate($roleName, 'web');
+
+            foreach ($this->defaultPermissionNamesForRole($roleName) as $permissionName) {
+                $permission = Permission::findOrCreate($permissionName, 'web');
+
+                if ($role->hasPermissionTo($permission)) {
+                    continue;
+                }
+
+                $role->givePermissionTo($permission);
+                $added++;
+            }
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return $added;
+    }
+
     public function roleMatrix(): array
     {
         $this->ensurePermissions();
@@ -107,5 +147,6 @@ class RolePermissionService
         }
 
         $role->syncPermissions($permissionNames);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

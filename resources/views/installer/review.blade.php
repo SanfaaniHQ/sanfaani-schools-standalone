@@ -10,10 +10,17 @@
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
-                <p class="text-xs uppercase tracking-normal text-text-muted">Owner</p>
+                <p class="text-xs uppercase tracking-normal text-text-muted">Installation Administrator</p>
                 <p class="mt-1 text-sm font-semibold text-text-primary">{{ $admin['name'] }}</p>
                 <p class="text-sm text-text-secondary">{{ $admin['email'] }}</p>
             </div>
+            @if (isset($admin['school_admin']))
+                <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
+                    <p class="text-xs uppercase tracking-normal text-text-muted">School Admin</p>
+                    <p class="mt-1 text-sm font-semibold text-text-primary">{{ data_get($admin, 'school_admin.name') }}</p>
+                    <p class="text-sm text-text-secondary">{{ data_get($admin, 'school_admin.email') }}</p>
+                </div>
+            @endif
             <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
                 <p class="text-xs uppercase tracking-normal text-text-muted">School</p>
                 <p class="mt-1 text-sm font-semibold text-text-primary">{{ $school['name'] }}</p>

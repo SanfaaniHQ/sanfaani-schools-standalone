@@ -59,6 +59,7 @@ return [
     'installation_admin_intro' => 'Gerez les parametres et diagnostics de l installation separement des roles scolaires.',
     'local_admin_console' => 'Console admin locale',
     'go_to_school_workspace' => 'Ouvrir l espace ecole',
+    'switch_to_school_workspace' => 'Basculer vers l espace ecole',
     'mail_settings' => 'Parametres e-mail',
     'mark_all_as_read' => 'Tout marquer comme lu',
     'my_classes' => 'Mes classes',

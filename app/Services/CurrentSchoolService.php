@@ -19,6 +19,10 @@ class CurrentSchoolService
             return School::where('status', 'active')->find(session('support_school_id'));
         }
 
+        if (TenantContext::workspaceType() === TenantContext::WORKSPACE_INSTALLATION_ADMIN) {
+            return null;
+        }
+
         if (TenantContext::schoolId()) {
             $schoolId = TenantContext::schoolId();
 
@@ -27,7 +31,11 @@ class CurrentSchoolService
             }
         }
 
-        return $user->school;
+        if ($user->schoolRoles()->exists()) {
+            return null;
+        }
+
+        return $user->school?->status === 'active' ? $user->school : null;
     }
 
     public function inSupportMode(?User $user = null): bool
@@ -68,6 +76,10 @@ class CurrentSchoolService
             return session('support_role_context', 'school_admin');
         }
 
+        if (TenantContext::workspaceType() === TenantContext::WORKSPACE_INSTALLATION_ADMIN) {
+            return $user->hasRole('super_admin') ? 'super_admin' : null;
+        }
+
         $tenantRoleName = TenantContext::roleName();
 
         if ($tenantRoleName && $this->roleBelongsToUser($user, $tenantRoleName, TenantContext::schoolId())) {
@@ -85,7 +97,11 @@ class CurrentSchoolService
             return (string) $sessionRole;
         }
 
-        return $user->roles()->pluck('name')->first();
+        return $user->roles()
+            ->whereIn('name', UserWorkspaceService::SCHOOL_WORKSPACE_ROLES)
+            ->pluck('name')
+            ->first()
+            ?? ($user->hasRole('super_admin') ? 'super_admin' : null);
     }
 
     private function roleBelongsToUser(User $user, string $roleName, mixed $schoolId = null): bool
@@ -95,11 +111,18 @@ class CurrentSchoolService
         }
 
         if (filled($schoolId)) {
-            return $user->activeSchoolRoles()
-                ->where('school_id', (int) $schoolId)
-                ->where('role_name', $roleName)
-                ->exists()
-                || ((int) $user->school_id === (int) $schoolId && $user->hasRole($roleName));
+            if (! $user->hasRole($roleName)) {
+                return false;
+            }
+
+            if ($user->schoolRoles()->exists()) {
+                return $user->activeSchoolRoles()
+                    ->where('school_id', (int) $schoolId)
+                    ->where('role_name', $roleName)
+                    ->exists();
+            }
+
+            return (int) $user->school_id === (int) $schoolId;
         }
 
         return $user->hasRole($roleName);

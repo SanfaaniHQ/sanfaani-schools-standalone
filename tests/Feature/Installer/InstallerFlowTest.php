@@ -10,6 +10,7 @@ use App\Services\Installer\InstallerRequirementsService;
 use App\Services\Installer\InstallerStateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -97,11 +98,22 @@ class InstallerFlowTest extends TestCase
         $owner = User::where('email', 'owner@example.test')->first();
         $this->assertTrue($owner->hasRole('super_admin'));
         $this->assertTrue($owner->hasRole('school_admin'));
+        $this->assertTrue(Role::findByName('school_admin')->hasPermissionTo('school.mail.manage'));
         $this->assertDatabaseHas('user_school_roles', [
             'user_id' => $owner->id,
             'role_name' => 'school_admin',
             'status' => 'active',
         ]);
+
+        $this->post('/admin/login', [
+            'email' => 'owner@example.test',
+            'password' => 'password123',
+        ])->assertRedirect(route('admin.dashboard'));
+        $this->post('/logout')->assertRedirect('/');
+        $this->post('/login', [
+            'email' => 'owner@example.test',
+            'password' => 'password123',
+        ])->assertRedirect(route('dashboard', absolute: false));
     }
 
     public function test_finalization_prevents_reinstall(): void
@@ -111,6 +123,57 @@ class InstallerFlowTest extends TestCase
 
         $this->get(route('installer.admin'))->assertNotFound();
         $this->post(route('installer.complete'))->assertNotFound();
+    }
+
+    public function test_separate_installation_and_school_admin_emails_create_scoped_accounts(): void
+    {
+        $this->post(route('installer.admin.store'), [
+            'name' => 'Installation Owner',
+            'email' => 'installation@example.test',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'separate_school_admin' => '1',
+            'school_admin_name' => 'School Owner',
+            'school_admin_email' => 'school-admin@example.test',
+            'school_admin_password' => 'password456',
+            'school_admin_password_confirmation' => 'password456',
+        ])->assertRedirect(route('installer.school'));
+
+        $this->post(route('installer.school.store'), [
+            'name' => 'Separate Accounts School',
+            'slug' => 'separate-accounts-school',
+            'email' => 'school@example.test',
+        ])->assertRedirect(route('installer.smtp'));
+
+        $this->post(route('installer.smtp.store'), ['mailer' => 'log'])
+            ->assertRedirect(route('installer.review'));
+        $this->post(route('installer.complete'))->assertOk();
+
+        $installationAdmin = User::where('email', 'installation@example.test')->firstOrFail();
+        $schoolAdmin = User::where('email', 'school-admin@example.test')->firstOrFail();
+
+        $this->assertTrue($installationAdmin->hasRole('super_admin'));
+        $this->assertFalse($installationAdmin->hasRole('school_admin'));
+        $this->assertNull($installationAdmin->school_id);
+        $this->assertTrue($schoolAdmin->hasRole('school_admin'));
+        $this->assertFalse($schoolAdmin->hasRole('super_admin'));
+        $this->assertNotNull($schoolAdmin->school_id);
+        $this->assertDatabaseHas('user_school_roles', [
+            'user_id' => $schoolAdmin->id,
+            'school_id' => $schoolAdmin->school_id,
+            'role_name' => 'school_admin',
+            'status' => 'active',
+        ]);
+
+        $this->post('/admin/login', [
+            'email' => 'installation@example.test',
+            'password' => 'password123',
+        ])->assertRedirect(route('admin.dashboard'));
+        $this->post('/logout')->assertRedirect('/');
+        $this->post('/login', [
+            'email' => 'school-admin@example.test',
+            'password' => 'password456',
+        ])->assertRedirect(route('dashboard', absolute: false));
     }
 
     public function test_single_school_setup_creates_only_one_school(): void

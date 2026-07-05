@@ -368,6 +368,12 @@ Route::middleware(['auth', 'verified', 'demo.safe'])->group(function () {
     Route::post('/choose-workspace', [ChooseWorkspaceController::class, 'store'])
         ->name('workspace.store');
 
+    Route::post('/workspace/installation-admin', [ChooseWorkspaceController::class, 'installationAdmin'])
+        ->name('workspace.installation-admin');
+
+    Route::post('/workspace/school', [ChooseWorkspaceController::class, 'school'])
+        ->name('workspace.school');
+
     Route::middleware(['feature:guided_onboarding', 'role:super_admin|school_admin|teacher|parent|student|result_officer|accountant'])
         ->prefix('onboarding')
         ->name('onboarding.')
@@ -1266,17 +1272,19 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                             ->name('students.upload.template');
 
                         Route::get('/mail-settings', [SchoolMailSettingController::class, 'edit'])
+                            ->middleware('feature.school:school.mail.manage')
                             ->name('mail-settings.edit');
 
                         Route::patch('/mail-settings', [SchoolMailSettingController::class, 'update'])
+                            ->middleware('feature.school:school.mail.manage')
                             ->name('mail-settings.update');
 
                         Route::post('/mail-settings/test', [SchoolMailSettingController::class, 'test'])
-                            ->middleware('throttle:5,1')
+                            ->middleware(['feature.school:school.mail.manage', 'throttle:5,1'])
                             ->name('mail-settings.test');
 
                         Route::post('/mail-settings/test-fallback', [SchoolMailSettingController::class, 'testFallback'])
-                            ->middleware('throttle:5,1')
+                            ->middleware(['feature.school:school.mail.manage', 'throttle:5,1'])
                             ->name('mail-settings.test-fallback');
 
                         Route::get('/audit-logs', [SchoolAuditLogController::class, 'index'])
