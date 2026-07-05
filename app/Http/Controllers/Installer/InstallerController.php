@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use RuntimeException;
 use Throwable;
@@ -119,23 +118,31 @@ class InstallerController extends Controller
 
     public function storeAdmin(Request $request): RedirectResponse
     {
-        $emailRules = ['required', 'email', 'max:255'];
-
-        if ($this->usersTableReady()) {
-            $emailRules[] = Rule::unique('users', 'email');
-        }
-
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => $emailRules,
+            'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'separate_school_admin' => ['nullable', 'boolean'],
+            'school_admin_name' => ['required_if:separate_school_admin,1', 'nullable', 'string', 'max:255'],
+            'school_admin_email' => ['required_if:separate_school_admin,1', 'nullable', 'email', 'max:255', 'different:email'],
+            'school_admin_password' => ['required_if:separate_school_admin,1', 'nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
-        Session::put('installer.admin', [
+        $admin = [
             'name' => $data['name'],
             'email' => $data['email'],
             'password_hash' => Hash::make($data['password']),
-        ]);
+        ];
+
+        if ($request->boolean('separate_school_admin')) {
+            $admin['school_admin'] = [
+                'name' => $data['school_admin_name'],
+                'email' => $data['school_admin_email'],
+                'password_hash' => Hash::make($data['school_admin_password']),
+            ];
+        }
+
+        Session::put('installer.admin', $admin);
 
         return redirect()->route('installer.school');
     }
@@ -261,6 +268,8 @@ class InstallerController extends Controller
             'deployment_mode' => config('sanfaani.deployment.mode'),
             'school_id' => $result['school']->id,
             'admin_user_id' => $result['admin']->id,
+            'installation_admin_user_id' => $result['installation_admin']->id,
+            'school_admin_user_id' => $result['school_admin']->id,
         ]);
 
         Session::forget('installer');

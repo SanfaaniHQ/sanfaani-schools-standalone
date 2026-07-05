@@ -145,7 +145,7 @@ class SchoolAuthorizationServiceTest extends TestCase
         $this->assertTrue($classIds->contains($classB->id));
     }
 
-    public function test_explicit_school_feature_disable_blocks_school_admin_but_not_super_admin(): void
+    public function test_explicit_school_feature_disable_blocks_school_admin_and_unscoped_super_admin(): void
     {
         $school = $this->createSchool();
         $admin = $this->createUserForSchool($school, 'school_admin');
@@ -169,8 +169,8 @@ class SchoolAuthorizationServiceTest extends TestCase
         $this->assertFalse(app(SchoolAuthorizationService::class)->can($admin, $school, 'support.manage'));
 
         $this->actingAs($superAdmin);
-        $this->assertTrue(app(SchoolAuthorizationService::class)->can($superAdmin, $school, 'results.publish'));
-        $this->assertTrue(app(SchoolAuthorizationService::class)->can($superAdmin, $school, 'support.manage'));
+        $this->assertFalse(app(SchoolAuthorizationService::class)->can($superAdmin, $school, 'results.publish'));
+        $this->assertFalse(app(SchoolAuthorizationService::class)->can($superAdmin, $school, 'support.manage'));
     }
 
     private function createSchool(string $name = 'Sanfaani School', string $slug = 'sanfaani-school'): School

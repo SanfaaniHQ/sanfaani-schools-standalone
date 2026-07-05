@@ -4,6 +4,7 @@
             $headerBehavior = app(\App\Services\System\DeploymentBehaviorService::class);
             $headerIsLocal = $headerBehavior->allowsRouteGroup('local_dashboard', user: auth()->user());
             $workspaceService = app(\App\Services\UserWorkspaceService::class);
+            $schoolWorkspaceContexts = $workspaceService->schoolContextsFor(auth()->user());
             $schoolWorkspaceContext = $workspaceService->defaultSchoolContextFor(auth()->user());
         @endphp
         <x-ui.page-header
@@ -12,12 +13,14 @@
             :description="$headerIsLocal ? 'Local Admin Console for backups, diagnostics, branding, SMTP, and school administrator setup.' : 'Local system control for '.$platformSettings->platform_name"
         >
             <x-slot name="actions">
-                @if ($schoolWorkspaceContext && ($schoolWorkspaceContext['role_name'] ?? null) === 'school_admin')
-                    <form method="POST" action="{{ route('workspace.store') }}">
+                @if ($schoolWorkspaceContexts->isNotEmpty())
+                    <form method="POST" action="{{ route('workspace.school') }}">
                         @csrf
-                        <input type="hidden" name="workspace" value="{{ $schoolWorkspaceContext['key'] }}">
+                        @if ($schoolWorkspaceContexts->count() === 1)
+                            <input type="hidden" name="workspace" value="{{ $schoolWorkspaceContext['key'] }}">
+                        @endif
                         <button type="submit" class="ui-button-secondary min-h-10">
-                            {{ __('ui.go_to_school_workspace') }}
+                            {{ __('ui.switch_to_school_workspace') }}
                         </button>
                     </form>
                 @endif

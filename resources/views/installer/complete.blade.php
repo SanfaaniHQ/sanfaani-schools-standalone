@@ -14,7 +14,11 @@
             </div>
             <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
                 <p class="text-xs uppercase tracking-normal text-text-muted">School Admin</p>
-                <p class="mt-1 text-sm font-semibold text-text-primary">{{ $result['admin']->email }}</p>
+                <p class="mt-1 text-sm font-semibold text-text-primary">{{ $result['school_admin']->email }}</p>
+            </div>
+            <div class="rounded-md border border-border-subtle bg-bg-secondary p-4">
+                <p class="text-xs uppercase tracking-normal text-text-muted">Installation Administrator</p>
+                <p class="mt-1 text-sm font-semibold text-text-primary">{{ $result['installation_admin']->email }}</p>
             </div>
         </div>
 

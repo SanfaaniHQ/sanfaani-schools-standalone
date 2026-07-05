@@ -2,12 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Services\RolePermissionService;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 
 class RoleSeeder extends Seeder
 {
-    public function run(): void
+    public function run(RolePermissionService $permissions): void
     {
         $roles = [
             'super_admin',
@@ -22,5 +23,7 @@ class RoleSeeder extends Seeder
         foreach ($roles as $role) {
             Role::findOrCreate($role);
         }
+
+        $permissions->ensureDefaultRolePermissions($roles);
     }
 }

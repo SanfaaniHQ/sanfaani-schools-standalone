@@ -5,12 +5,13 @@ namespace App\Services;
 use App\Models\School;
 use App\Models\User;
 use App\Services\Standalone\StandaloneEditionService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Collection;
 use Spatie\Permission\PermissionRegistrar;
 
 class UserWorkspaceService
 {
-    private const SCHOOL_WORKSPACE_ROLES = [
+    public const SCHOOL_WORKSPACE_ROLES = [
         'school_admin',
         'teacher',
         'parent',
@@ -51,8 +52,12 @@ class UserWorkspaceService
         $user->activeSchoolRoles()
             ->with('school')
             ->get()
-            ->each(function ($role) use ($contexts) {
-                if ($role->school_id && ! $role->school) {
+            ->each(function ($role) use ($contexts, $user) {
+                if (! $role->school_id
+                    || ! $role->school
+                    || $role->school->status !== 'active'
+                    || ! in_array($role->role_name, self::SCHOOL_WORKSPACE_ROLES, true)
+                    || ! $user->hasRole($role->role_name)) {
                     return;
                 }
 
@@ -68,15 +73,17 @@ class UserWorkspaceService
                 ]);
             });
 
-        if ($contexts->isEmpty() && $user->school_id) {
+        $hasSchoolContext = $contexts->contains(fn (array $context): bool => filled($context['school_id'] ?? null));
+
+        if (! $hasSchoolContext && $user->school_id && ! $user->schoolRoles()->exists()) {
             foreach ($user->roles->pluck('name') as $roleName) {
-                if (! in_array($roleName, ['school_admin', 'result_officer', 'teacher', 'accountant'], true)) {
+                if (! in_array($roleName, self::SCHOOL_WORKSPACE_ROLES, true)) {
                     continue;
                 }
 
                 $school = $user->school ?: School::find($user->school_id);
 
-                if (! $school) {
+                if (! $school || $school->status !== 'active') {
                     continue;
                 }
 
@@ -135,16 +142,33 @@ class UserWorkspaceService
             ];
     }
 
-    public function select(User $user, array $context): void
+    public function select(User $user, array $context, bool $regenerateSession = false): void
     {
+        $key = (string) ($context['key'] ?? '');
+        $authorized = $this->contextsFor($user)->firstWhere('key', $key);
+
+        if (! $authorized) {
+            throw new AuthorizationException('The selected workspace is not available for this account.');
+        }
+
         $this->clearSupportSession();
 
         TenantContext::set(
-            filled($context['school_id']) ? (int) $context['school_id'] : null,
-            $context['role_name']
+            filled($authorized['school_id']) ? (int) $authorized['school_id'] : null,
+            $authorized['role_name']
         );
 
+        if ($regenerateSession) {
+            session()->regenerate(true);
+        }
+
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    public function clear(): void
+    {
+        $this->clearSupportSession();
+        TenantContext::clear();
     }
 
     public function activeKey(?User $user = null): ?string
@@ -153,6 +177,12 @@ class UserWorkspaceService
 
         if (! $user) {
             return null;
+        }
+
+        if ($key = TenantContext::workspaceKey()) {
+            if ($this->contextsFor($user)->contains('key', $key)) {
+                return $key;
+            }
         }
 
         $schoolId = TenantContext::schoolId();
@@ -165,7 +195,7 @@ class UserWorkspaceService
         return $schoolId ? "school:{$schoolId}:{$roleName}" : "global:{$roleName}";
     }
 
-    public function selectByKey(User $user, string $key): bool
+    public function selectByKey(User $user, string $key, bool $regenerateSession = false): bool
     {
         $context = $this->contextsFor($user)->firstWhere('key', $key);
 
@@ -173,12 +203,12 @@ class UserWorkspaceService
             return false;
         }
 
-        $this->select($user, $context);
+        $this->select($user, $context, $regenerateSession);
 
         return true;
     }
 
-    public function selectSchoolByKey(User $user, string $key): bool
+    public function selectSchoolByKey(User $user, string $key, bool $regenerateSession = false): bool
     {
         $context = $this->schoolContextsFor($user)->firstWhere('key', $key);
 
@@ -186,12 +216,12 @@ class UserWorkspaceService
             return false;
         }
 
-        $this->select($user, $context);
+        $this->select($user, $context, $regenerateSession);
 
         return true;
     }
 
-    public function selectInstallationAdmin(User $user): ?array
+    public function selectInstallationAdmin(User $user, bool $regenerateSession = false): ?array
     {
         $context = $this->installationAdminContextFor($user);
 
@@ -199,7 +229,7 @@ class UserWorkspaceService
             return null;
         }
 
-        $this->select($user, $context);
+        $this->select($user, $context, $regenerateSession);
 
         return $context;
     }
@@ -215,6 +245,17 @@ class UserWorkspaceService
         $this->select($user, $context);
 
         return $context;
+    }
+
+    public function activeSchoolContextFor(User $user): ?array
+    {
+        if (TenantContext::workspaceType() === TenantContext::WORKSPACE_INSTALLATION_ADMIN) {
+            return null;
+        }
+
+        $key = $this->activeKey($user);
+
+        return $key ? $this->schoolContextsFor($user)->firstWhere('key', $key) : null;
     }
 
     public function defaultContextFor(User $user): ?array

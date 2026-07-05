@@ -36,7 +36,7 @@ class RoleContextController extends Controller
 
         abort_unless($context, 403);
 
-        $workspaces->select($user, $context);
+        $workspaces->select($user, $context, true);
 
         return redirect()
             ->route('dashboard')

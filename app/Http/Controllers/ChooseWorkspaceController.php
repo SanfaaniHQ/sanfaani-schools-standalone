@@ -14,13 +14,13 @@ class ChooseWorkspaceController extends Controller
         $contexts = $workspaces->schoolContextsFor(auth()->user());
 
         if ($contexts->isEmpty() && auth()->user()?->hasRole('super_admin')) {
-            $workspaces->selectInstallationAdmin(auth()->user());
+            $workspaces->selectInstallationAdmin(auth()->user(), true);
 
             return redirect()->route('admin.dashboard');
         }
 
         if ($contexts->count() === 1) {
-            $workspaces->select(auth()->user(), $contexts->first());
+            $workspaces->select(auth()->user(), $contexts->first(), true);
 
             return $this->redirectFor($contexts->first());
         }
@@ -36,13 +36,44 @@ class ChooseWorkspaceController extends Controller
             'workspace' => ['required', 'string', 'max:150'],
         ]);
 
-        if (! $workspaces->selectSchoolByKey($request->user(), $data['workspace'])) {
-            return back()->with('error', 'The selected workspace is not available for this account.');
-        }
+        abort_unless($workspaces->selectSchoolByKey($request->user(), $data['workspace'], true), 403);
 
         $context = $workspaces->schoolContextsFor($request->user())->firstWhere('key', $data['workspace']);
 
         return $this->redirectFor($context);
+    }
+
+    public function installationAdmin(Request $request, UserWorkspaceService $workspaces): RedirectResponse
+    {
+        abort_unless($workspaces->selectInstallationAdmin($request->user(), true), 403);
+
+        return redirect()->route('admin.dashboard');
+    }
+
+    public function school(Request $request, UserWorkspaceService $workspaces): RedirectResponse
+    {
+        $data = $request->validate([
+            'workspace' => ['nullable', 'string', 'max:150'],
+        ]);
+        $contexts = $workspaces->schoolContextsFor($request->user());
+
+        abort_if($contexts->isEmpty(), 403, 'No school workspace is assigned to this account.');
+
+        if (filled($data['workspace'] ?? null)) {
+            abort_unless($workspaces->selectSchoolByKey($request->user(), $data['workspace'], true), 403);
+
+            return redirect()->route('school.dashboard');
+        }
+
+        if ($contexts->count() === 1) {
+            $workspaces->select($request->user(), $contexts->first(), true);
+
+            return redirect()->route('school.dashboard');
+        }
+
+        $workspaces->clear();
+
+        return redirect()->route('workspace.create');
     }
 
     private function redirectFor(?array $context): RedirectResponse

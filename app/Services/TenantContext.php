@@ -9,11 +9,23 @@ use Throwable;
 
 class TenantContext
 {
+    public const WORKSPACE_INSTALLATION_ADMIN = 'installation_admin';
+
+    public const WORKSPACE_SCHOOL = 'school';
+
     public static function set(?int $schoolId, int|string|null $role): void
     {
         $roleContext = self::resolveRole($role);
+        $workspaceType = $schoolId === null && $roleContext['name'] === 'super_admin'
+            ? self::WORKSPACE_INSTALLATION_ADMIN
+            : self::WORKSPACE_SCHOOL;
+        $workspaceKey = $workspaceType === self::WORKSPACE_INSTALLATION_ADMIN
+            ? 'global:super_admin'
+            : ($schoolId && $roleContext['name'] ? "school:{$schoolId}:{$roleContext['name']}" : null);
 
         session([
+            'workspace.type' => $workspaceType,
+            'workspace.key' => $workspaceKey,
             'tenant.school_id' => $schoolId,
             'tenant.role_id' => $roleContext['id'],
             'tenant.role_name' => $roleContext['name'],
@@ -26,6 +38,8 @@ class TenantContext
     public static function clear(): void
     {
         session()->forget([
+            'workspace.type',
+            'workspace.key',
             'tenant.school_id',
             'tenant.role_id',
             'tenant.role_name',
@@ -33,6 +47,22 @@ class TenantContext
             'active_school_id',
             'active_role_context',
         ]);
+    }
+
+    public static function workspaceType(): ?string
+    {
+        $type = session('workspace.type');
+
+        return in_array($type, [self::WORKSPACE_INSTALLATION_ADMIN, self::WORKSPACE_SCHOOL], true)
+            ? $type
+            : null;
+    }
+
+    public static function workspaceKey(): ?string
+    {
+        $key = session('workspace.key');
+
+        return filled($key) ? (string) $key : null;
     }
 
     public static function schoolId(): ?int
@@ -72,12 +102,11 @@ class TenantContext
 
     public static function userBelongsToSchool(User $user, int $schoolId): bool
     {
-        if ($user->hasRole('super_admin')) {
-            return true;
+        if ($user->schoolRoles()->exists()) {
+            return $user->activeSchoolRoles()->where('school_id', $schoolId)->exists();
         }
 
-        return (int) $user->school_id === $schoolId
-            || $user->activeSchoolRoles()->where('school_id', $schoolId)->exists();
+        return (int) $user->school_id === $schoolId;
     }
 
     private static function resolveRole(int|string|null $role): array

@@ -39,6 +39,8 @@ class SchoolRoleFeatureService
         'school.profile.view' => 'school.profile.manage',
         'school.branding.view' => 'school.branding.manage',
         'school.settings.manage' => 'school.profile.manage',
+        'mail.settings.manage' => 'school.mail.manage',
+        'smtp.manage' => 'school.mail.manage',
         'staff.manage' => 'school.users.manage',
         'users.manage' => 'school.users.manage',
         'roles.manage' => 'school.roles.manage',
@@ -55,6 +57,10 @@ class SchoolRoleFeatureService
         'school.profile.update' => 'school.profile.manage',
         'school.public-page.edit' => 'school.profile.manage',
         'school.public-page.update' => 'school.profile.manage',
+        'school.mail-settings.edit' => 'school.mail.manage',
+        'school.mail-settings.update' => 'school.mail.manage',
+        'school.mail-settings.test' => 'school.mail.manage',
+        'school.mail-settings.test-fallback' => 'school.mail.manage',
         'school.admission-number-settings.edit' => 'admission_numbers.manage',
         'school.admission-number-settings.update' => 'admission_numbers.manage',
 
@@ -308,6 +314,7 @@ class SchoolRoleFeatureService
             'school.users.manage' => $this->feature('User management', 'Administration', 'Create, link, archive, restore, and manage portal users.', ['school_admin']),
             'school.roles.manage' => $this->feature('Roles and permissions', 'Administration', 'Manage school role capabilities and access settings.', ['school_admin']),
             'school.features.manage' => $this->feature('Feature control', 'Administration', 'Enable or disable school features by role.', ['school_admin']),
+            'school.mail.manage' => $this->feature('School mail settings', 'Administration', 'View, update, and test school-scoped SMTP settings.', ['school_admin']),
             'sessions.manage' => $this->feature('Academic sessions', 'Administration', 'Manage academic sessions.', ['school_admin']),
             'terms.manage' => $this->feature('Terms', 'Administration', 'Manage school terms.', ['school_admin']),
             'admission_numbers.manage' => $this->feature('Admission numbers', 'Administration', 'Manage admission number settings.', ['school_admin']),
@@ -586,11 +593,13 @@ class SchoolRoleFeatureService
         foreach ($arguments as $argument) {
             if (is_object($argument) && method_exists($argument, 'getKey')) {
                 $schoolId ??= (int) $argument->getKey();
+
                 continue;
             }
 
             if (is_object($argument) && property_exists($argument, 'id')) {
                 $schoolId ??= (int) $argument->id;
+
                 continue;
             }
 
@@ -606,11 +615,13 @@ class SchoolRoleFeatureService
 
             if (is_bool($argument)) {
                 $enabled = $argument;
+
                 continue;
             }
 
             if (is_array($argument)) {
                 $roleNames = array_values(array_filter($argument, fn ($item): bool => is_string($item) && trim($item) !== ''));
+
                 continue;
             }
 
@@ -646,16 +657,19 @@ class SchoolRoleFeatureService
         foreach ($arguments as $argument) {
             if (is_int($argument) && $schoolId === null) {
                 $schoolId = $argument;
+
                 continue;
             }
 
             if (is_object($argument) && method_exists($argument, 'getKey')) {
                 $schoolId ??= (int) $argument->getKey();
+
                 continue;
             }
 
             if (is_object($argument) && property_exists($argument, 'id')) {
                 $schoolId ??= (int) $argument->id;
+
                 continue;
             }
 

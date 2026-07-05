@@ -189,7 +189,7 @@
                 $item('Communication Center', 'school.communications.index', 'school.communications.index', 'mail', 'communication.logs.view'),
                 $item(__('ui.bulk_communication'), 'school.communications.bulk', 'school.communications.bulk*', 'mail', 'communication.bulk'),
                 $item(__('ui.direct_messages'), 'portal.conversations.index', 'portal.conversations.*', 'mail'),
-                $item(__('ui.mail_settings'), 'school.mail-settings.edit', 'school.mail-settings.*', 'mail'),
+                $item(__('ui.mail_settings'), 'school.mail-settings.edit', 'school.mail-settings.*', 'mail', 'school.mail.manage'),
                 $item('Branding', 'school.branding.edit', 'school.branding.*', 'layout-grid'),
                 $item(__('ui.settings'), 'school.profile.edit', 'school.profile.*', 'settings'),
                 $item(__('ui.user_management'), 'school.staff.index', 'school.staff.*', 'shield'),

@@ -103,6 +103,7 @@ return [
     'installation_admin_intro' => 'Ṣakoso eto fifi sori ẹrọ ati ayẹwo lọtọ si awọn ipa ile-iwe.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
+    'switch_to_school_workspace' => 'Switch to School Workspace',
     'name' => 'Name',
     'no_accounts_for_filter' => 'No accounts match this filter.',
     'no_staff_code' => 'No staff code',

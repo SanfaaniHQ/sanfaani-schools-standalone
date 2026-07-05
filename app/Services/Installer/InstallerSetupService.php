@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Throwable;
 
 class InstallerSetupService
@@ -53,11 +54,36 @@ class InstallerSetupService
         return $user;
     }
 
+    public function createInstallationAdmin(array $data, ?School $school = null): User
+    {
+        $user = User::query()->firstOrNew(['email' => $data['email']]);
+        $attributes = [
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password' => $data['password_hash'],
+            'email_verified_at' => now(),
+            'must_change_password' => false,
+        ];
+
+        if ($school || ! $user->exists) {
+            $attributes['school_id'] = $school?->id;
+        }
+
+        $user->forceFill($attributes)->save();
+
+        return $user;
+    }
+
+    public function createSchoolAdmin(array $data, School $school): User
+    {
+        return $this->createOwnerAdmin($data, $school);
+    }
+
     public function assignOwnerRole(User $user, School $school): void
     {
         Role::findOrCreate('super_admin');
         Role::findOrCreate('school_admin');
-        app(RolePermissionService::class)->ensurePermissions();
+        app(RolePermissionService::class)->ensureDefaultRolePermissions(['super_admin', 'school_admin']);
 
         $user->assignRole('super_admin');
         $user->assignRole('school_admin');
@@ -73,6 +99,37 @@ class InstallerSetupService
                 'metadata' => ['source' => 'installer'],
             ]
         );
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    public function assignInstallationAdminRole(User $user): void
+    {
+        Role::findOrCreate('super_admin');
+        app(RolePermissionService::class)->ensureDefaultRolePermissions(['super_admin']);
+        $user->assignRole('super_admin');
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    public function assignSchoolAdminRole(User $user, School $school): void
+    {
+        Role::findOrCreate('school_admin');
+        app(RolePermissionService::class)->ensureDefaultRolePermissions(['school_admin']);
+        $user->assignRole('school_admin');
+
+        UserSchoolRole::query()->updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'school_id' => $school->id,
+                'role_name' => 'school_admin',
+            ],
+            [
+                'status' => 'active',
+                'metadata' => ['source' => 'installer'],
+            ]
+        );
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     public function saveSchoolProfile(School $school, array $data): School
@@ -103,19 +160,33 @@ class InstallerSetupService
 
         return DB::transaction(function () use ($adminData, $schoolData, $metadata): array {
             $school = $this->createLocalSchool($schoolData);
-            $admin = $this->createOwnerAdmin($adminData, $school);
-            $this->assignOwnerRole($admin, $school);
+            $schoolAdminData = (array) ($adminData['school_admin'] ?? $adminData);
+            $sameAccount = strcasecmp((string) $adminData['email'], (string) $schoolAdminData['email']) === 0;
+            $installationAdmin = $this->createInstallationAdmin($adminData, $sameAccount ? $school : null);
+
+            if ($sameAccount) {
+                $schoolAdmin = $installationAdmin;
+                $this->assignOwnerRole($installationAdmin, $school);
+            } else {
+                $schoolAdmin = $this->createSchoolAdmin($schoolAdminData, $school);
+                $this->assignInstallationAdminRole($installationAdmin);
+                $this->assignSchoolAdminRole($schoolAdmin, $school);
+            }
+
             $this->configureSchoolMail($school, (array) data_get($metadata, 'smtp_placeholder', []));
             $this->runSafePostInstallTasks();
 
             $this->state->markInstalled(array_merge($this->safeInstallationMetadata($metadata), [
                 'school_id' => $school->id,
-                'admin_user_id' => $admin->id,
+                'admin_user_id' => $installationAdmin->id,
+                'school_admin_user_id' => $schoolAdmin->id,
             ]));
 
             return [
                 'school' => $school,
-                'admin' => $admin,
+                'admin' => $schoolAdmin,
+                'installation_admin' => $installationAdmin,
+                'school_admin' => $schoolAdmin,
             ];
         });
     }

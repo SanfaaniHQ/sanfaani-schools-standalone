@@ -68,7 +68,7 @@
             </button>
 
             <div class="flex min-w-0 items-center gap-2">
-                @if ($workspaceContexts->count() > 1)
+                @if ($activeRoleContext !== 'super_admin' && $workspaceContexts->count() > 1)
                     <div x-data="{ open: false }" @keydown.escape.window="open = false" class="relative">
                         <div class="hidden items-center gap-2 sm:flex">
                             <span class="max-w-[13rem] truncate text-xs font-medium text-text-tertiary">{{ $activeWorkspaceLabel }}</span>
@@ -168,9 +168,12 @@
                                         {{ __('ui.manage_role_contexts') }}
                                     </a>
                                     @if ($installationAdminContext)
-                                        <a href="{{ route('admin.dashboard') }}" class="inline-flex min-h-10 items-center justify-center rounded-md border border-border-subtle px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary">
-                                            {{ __('ui.installation_admin') }}
-                                        </a>
+                                        <form method="POST" action="{{ route('workspace.installation-admin') }}">
+                                            @csrf
+                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-md border border-border-subtle px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary">
+                                                {{ __('ui.installation_admin') }}
+                                            </button>
+                                        </form>
                                     @endif
                                 </div>
                             </section>
@@ -178,15 +181,20 @@
                     </div>
                 @endif
 
-                @if ($installationAdminContext)
-                    <a href="{{ route('admin.dashboard') }}" class="hidden h-10 items-center rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary md:inline-flex">
-                        {{ __('ui.installation_admin') }}
-                    </a>
-                    <a href="{{ route('admin.dashboard') }}" class="hidden h-11 w-11 items-center justify-center rounded-md border border-border-subtle text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary sm:inline-flex md:hidden" aria-label="{{ __('ui.installation_admin') }}">
-                        <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path>
-                        </svg>
-                    </a>
+                @if ($activeRoleContext === 'super_admin' && $workspaceContexts->isNotEmpty())
+                    <form method="POST" action="{{ route('workspace.school') }}" class="hidden md:block">
+                        @csrf
+                        <button type="submit" class="inline-flex h-10 items-center rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary">
+                            {{ __('ui.switch_to_school_workspace') }}
+                        </button>
+                    </form>
+                @elseif ($activeRoleContext !== 'super_admin' && $installationAdminContext)
+                    <form method="POST" action="{{ route('workspace.installation-admin') }}" class="hidden md:block">
+                        @csrf
+                        <button type="submit" class="inline-flex h-10 items-center rounded-md border border-border-subtle bg-bg-secondary px-3 text-xs font-semibold text-text-secondary transition hover:border-border-hover hover:bg-bg-tertiary hover:text-text-primary">
+                            {{ __('ui.installation_admin') }}
+                        </button>
+                    </form>
                 @endif
 
                 <div x-data="{ open: false }" class="relative hidden sm:block">
@@ -292,8 +300,16 @@
                     </button>
                     <div x-cloak x-show="open" x-transition.origin.top.right @click.outside="open = false" class="absolute end-0 z-50 mt-2 w-[min(16rem,calc(100vw-2rem))] overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary p-1 shadow-lg">
                         <a href="{{ route('profile.edit') }}" class="block rounded-md px-3 py-2 text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.profile') }}</a>
-                        @if ($installationAdminContext)
-                            <a href="{{ route('admin.dashboard') }}" class="block rounded-md px-3 py-2 text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary sm:hidden">{{ __('ui.installation_admin') }}</a>
+                        @if ($activeRoleContext === 'super_admin' && $workspaceContexts->isNotEmpty())
+                            <form method="POST" action="{{ route('workspace.school') }}" class="sm:hidden">
+                                @csrf
+                                <button type="submit" class="block w-full rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.switch_to_school_workspace') }}</button>
+                            </form>
+                        @elseif ($activeRoleContext !== 'super_admin' && $installationAdminContext)
+                            <form method="POST" action="{{ route('workspace.installation-admin') }}" class="sm:hidden">
+                                @csrf
+                                <button type="submit" class="block w-full rounded-md px-3 py-2 text-start text-sm text-text-secondary transition hover:bg-bg-tertiary hover:text-text-primary">{{ __('ui.installation_admin') }}</button>
+                            </form>
                         @endif
                         <div class="border-y border-border-subtle py-1 sm:hidden">
                             @foreach ($supportedLanguages as $code => $language)

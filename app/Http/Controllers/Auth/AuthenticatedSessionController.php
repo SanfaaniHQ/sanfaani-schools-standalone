@@ -55,14 +55,6 @@ class AuthenticatedSessionController extends Controller
                 ]);
         }
 
-        if ($user?->hasRole('super_admin')) {
-            if ($context = $workspaces->defaultSchoolContextFor($user)) {
-                $workspaces->select($user, $context);
-            }
-
-            return redirect()->intended(route('dashboard', absolute: false));
-        }
-
         if ($schoolContexts->count() > 1) {
             return redirect()->route('workspace.create');
         }
@@ -71,14 +63,15 @@ class AuthenticatedSessionController extends Controller
             $workspaces->select($user, $schoolContexts->first());
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->to(route('dashboard', absolute: false));
     }
 
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, UserWorkspaceService $workspaces): RedirectResponse
     {
+        $workspaces->clear();
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
