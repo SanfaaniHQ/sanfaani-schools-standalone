@@ -3,7 +3,6 @@
 namespace Tests\Feature\Licensing;
 
 use App\Models\License;
-use App\Models\LicenseAuditLog;
 use App\Models\School;
 use App\Models\User;
 use App\Services\Licensing\LicenseKeyHasher;

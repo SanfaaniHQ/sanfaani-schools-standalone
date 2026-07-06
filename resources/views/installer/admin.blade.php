@@ -63,6 +63,19 @@
             </label>
         </div>
 
+        <fieldset class="rounded-md border border-border-subtle p-4">
+            <legend class="px-1 text-sm font-semibold text-text-primary">Additional school workspaces (optional)</legend>
+            <p class="mt-1 text-sm text-text-secondary">Assign only roles this first School Admin will actually use. Installation Admin access does not grant these roles automatically.</p>
+            <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                @foreach (['teacher' => 'Teacher', 'result_officer' => 'Result Officer', 'accountant' => 'Accountant', 'admissions_officer' => 'Admissions Officer'] as $role => $label)
+                    <label class="flex items-center gap-2 rounded-md border border-border-subtle bg-bg-secondary px-3 py-2 text-sm text-text-primary">
+                        <input type="checkbox" name="additional_roles[]" value="{{ $role }}" @checked(in_array($role, old('additional_roles', data_get($admin, 'school_admin.additional_roles', $admin['additional_roles'] ?? [])), true)) class="rounded border-border-subtle">
+                        {{ $label }}
+                    </label>
+                @endforeach
+            </div>
+        </fieldset>
+
         <div class="flex justify-between">
             <a href="{{ route('installer.migrations') }}" class="rounded-md border border-border-subtle px-4 py-2 text-sm font-semibold text-text-secondary hover:bg-bg-secondary">Back</a>
             <button type="submit" data-loading-text="Saving administrators..." class="rounded-md bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-primary/90">Save and continue</button>

@@ -16,7 +16,7 @@ class InstallerRequirementsService
                 ->map(fn (string $extension): array => $this->check("PHP extension: {$extension}", extension_loaded($extension), true, $extension, "Enable the {$extension} PHP extension."))
                 ->all(),
             ...collect(config('installer.requirements.optional_extensions', []))
-                ->map(fn (string $extension): array => $this->check("Optional extension: {$extension}", extension_loaded($extension), false, $extension, "Recommended for some deployments, but not required for installation."))
+                ->map(fn (string $extension): array => $this->check("Optional extension: {$extension}", extension_loaded($extension), false, $extension, 'Recommended for some deployments, but not required for installation.'))
                 ->all(),
         ])->values()->all();
     }

@@ -9,6 +9,7 @@ use App\Models\SchoolClass;
 use App\Models\User;
 use App\Models\UserSchoolRole;
 use App\Services\Admissions\AdmissionApplicationService;
+use App\Services\Admissions\AdmissionWorkflowService;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -99,7 +100,7 @@ trait InteractsWithAdmissions
 
     protected function acceptApplication(AdmissionApplication $application, User $admin): AdmissionApplication
     {
-        return app(\App\Services\Admissions\AdmissionWorkflowService::class)
+        return app(AdmissionWorkflowService::class)
             ->changeStatus($application, AdmissionApplication::STATUS_ACCEPTED, $admin->id, 'Accepted for admission.', false);
     }
 }

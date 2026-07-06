@@ -126,12 +126,15 @@ class InstallerController extends Controller
             'school_admin_name' => ['required_if:separate_school_admin,1', 'nullable', 'string', 'max:255'],
             'school_admin_email' => ['required_if:separate_school_admin,1', 'nullable', 'email', 'max:255', 'different:email'],
             'school_admin_password' => ['required_if:separate_school_admin,1', 'nullable', 'string', 'min:8', 'confirmed'],
+            'additional_roles' => ['nullable', 'array'],
+            'additional_roles.*' => ['string', 'in:teacher,result_officer,accountant,admissions_officer'],
         ]);
 
         $admin = [
             'name' => $data['name'],
             'email' => $data['email'],
             'password_hash' => Hash::make($data['password']),
+            'additional_roles' => $request->boolean('separate_school_admin') ? [] : ($data['additional_roles'] ?? []),
         ];
 
         if ($request->boolean('separate_school_admin')) {
@@ -139,6 +142,7 @@ class InstallerController extends Controller
                 'name' => $data['school_admin_name'],
                 'email' => $data['school_admin_email'],
                 'password_hash' => Hash::make($data['school_admin_password']),
+                'additional_roles' => $data['additional_roles'] ?? [],
             ];
         }
 

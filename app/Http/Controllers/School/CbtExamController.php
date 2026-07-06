@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\CbtAccessCode;
 use App\Models\CbtExam;
 use App\Models\CbtQuestion;
-use App\Models\CbtResultPublication;
 use App\Models\School;
 use App\Services\CbtResultIntegrationService;
 use App\Services\CurrentSchoolService;

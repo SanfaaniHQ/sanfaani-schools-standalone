@@ -7,9 +7,12 @@ use RuntimeException;
 class StoredZipWriter
 {
     private const UTF8_FLAG = 0x0800;
+
     private const STORE_METHOD = 0;
+
     private const ZIP_VERSION = 20;
-    private const MAX_ZIP32_SIZE = 0xffffffff;
+
+    private const MAX_ZIP32_SIZE = 0xFFFFFFFF;
 
     /**
      * @param  array<int, array{absolute_path: string, relative_path: string}>  $files
@@ -41,7 +44,7 @@ class StoredZipWriter
                 $handle,
                 pack(
                     'VvvvvVVv',
-                    0x06054b50,
+                    0x06054B50,
                     0,
                     0,
                     count($centralDirectory),
@@ -114,7 +117,7 @@ class StoredZipWriter
     {
         return pack(
             'VvvvvvVVVvv',
-            0x04034b50,
+            0x04034B50,
             self::ZIP_VERSION,
             self::UTF8_FLAG,
             self::STORE_METHOD,
@@ -135,7 +138,7 @@ class StoredZipWriter
     {
         return pack(
             'VvvvvvvVVVvvvvvVV',
-            0x02014b50,
+            0x02014B50,
             self::ZIP_VERSION,
             self::ZIP_VERSION,
             self::UTF8_FLAG,

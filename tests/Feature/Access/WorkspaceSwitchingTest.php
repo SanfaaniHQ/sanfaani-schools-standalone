@@ -5,7 +5,9 @@ namespace Tests\Feature\Access;
 use App\Models\School;
 use App\Models\User;
 use App\Models\UserSchoolRole;
+use App\Services\SchoolAuthorizationService;
 use App\Services\TenantContext;
+use App\Services\UserWorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -22,7 +24,7 @@ class WorkspaceSwitchingTest extends TestCase
         $this->withoutVite();
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        foreach (['super_admin', 'school_admin', 'teacher'] as $role) {
+        foreach (['super_admin', 'school_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer'] as $role) {
             Role::findOrCreate($role, 'web');
         }
 
@@ -59,7 +61,7 @@ class WorkspaceSwitchingTest extends TestCase
         $this->assertSame('super_admin', session('active_role_context'));
     }
 
-    public function test_dual_access_user_can_switch_both_directions(): void
+    public function test_role_switch_dual_access_user_can_switch_both_directions(): void
     {
         $school = $this->school();
         $owner = $this->dualAccessUser($school);
@@ -103,6 +105,10 @@ class WorkspaceSwitchingTest extends TestCase
             ])
             ->assertForbidden();
 
+        $this->post(route('workspace.store'), [
+            'workspace' => "school:{$school->id}:teacher",
+        ])->assertForbidden();
+
         $owner->schoolRoles()->where('role_name', 'school_admin')->update(['status' => 'disabled']);
 
         $this->withSession([
@@ -140,8 +146,9 @@ class WorkspaceSwitchingTest extends TestCase
             'active_role_context' => 'school_admin',
         ])->get(route('school.dashboard'))
             ->assertOk()
-            ->assertSee('action="'.route('workspace.installation-admin').'"', false)
-            ->assertDontSee('data-role-name="super_admin"', false);
+            ->assertSee('data-workspace-switcher', false)
+            ->assertSee('data-role-name="super_admin"', false)
+            ->assertSee('data-workspace-type="installation_admin"', false);
 
         $this->withSession([
             'workspace.type' => TenantContext::WORKSPACE_INSTALLATION_ADMIN,
@@ -150,9 +157,9 @@ class WorkspaceSwitchingTest extends TestCase
             'active_role_context' => 'super_admin',
         ])->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('action="'.route('workspace.school').'"', false)
-            ->assertSee('Switch to School Workspace')
-            ->assertDontSee('data-role-switcher="segmented"', false);
+            ->assertSee('data-workspace-switcher', false)
+            ->assertSee('data-role-name="school_admin"', false)
+            ->assertSee('data-workspace-type="school"', false);
 
         $schoolAdmin = $this->schoolUser($school, 'school_admin');
 
@@ -161,7 +168,125 @@ class WorkspaceSwitchingTest extends TestCase
             'active_role_context' => 'school_admin',
         ])->get(route('school.dashboard'))
             ->assertOk()
-            ->assertDontSee('action="'.route('workspace.installation-admin').'"', false);
+            ->assertDontSee('data-workspace-switcher', false)
+            ->assertDontSee('data-role-name="super_admin"', false);
+    }
+
+    public function test_one_account_discovers_and_switches_among_every_assigned_workspace_only(): void
+    {
+        $school = $this->school('Unified Academy');
+        $otherSchool = $this->school('Unassigned Academy');
+        $user = $this->schoolUser($school, 'school_admin');
+        $user->assignRole(['super_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer']);
+
+        foreach (['teacher', 'result_officer', 'accountant', 'admissions_officer'] as $role) {
+            UserSchoolRole::create([
+                'user_id' => $user->id,
+                'school_id' => $school->id,
+                'role_name' => $role,
+                'status' => 'active',
+            ]);
+        }
+
+        $contexts = app(UserWorkspaceService::class)->contextsFor($user);
+
+        $this->assertSame(6, $contexts->count());
+        $this->assertSame([
+            'global:super_admin',
+            "school:{$school->id}:accountant",
+            "school:{$school->id}:admissions_officer",
+            "school:{$school->id}:result_officer",
+            "school:{$school->id}:school_admin",
+            "school:{$school->id}:teacher",
+        ], $contexts->pluck('key')->sort()->values()->all());
+        $this->assertFalse($contexts->contains('key', "school:{$otherSchool->id}:teacher"));
+
+        $this->actingAs($user);
+
+        $this->post(route('workspace.store'), [
+            'workspace' => 'global:super_admin',
+        ])->assertRedirect(route('admin.dashboard'));
+
+        foreach (['school_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer'] as $role) {
+            $before = session()->getId();
+
+            $this->post(route('workspace.store'), [
+                'workspace' => "school:{$school->id}:{$role}",
+            ])->assertRedirect(route('school.dashboard'));
+
+            $this->assertNotSame($before, session()->getId());
+            $this->assertSame($school->id, session('active_school_id'));
+            $this->assertSame($role, session('active_role_context'));
+        }
+
+        $this->post(route('workspace.store'), [
+            'workspace' => "school:{$school->id}:teacher",
+        ])->assertRedirect(route('school.dashboard'));
+        $this->post(route('workspace.store'), [
+            'workspace' => "school:{$school->id}:school_admin",
+        ])->assertRedirect(route('school.dashboard'));
+        $this->post(route('workspace.store'), [
+            'workspace' => "school:{$school->id}:result_officer",
+        ])->assertRedirect(route('school.dashboard'));
+        $this->post(route('workspace.store'), [
+            'workspace' => "school:{$school->id}:admissions_officer",
+        ])->assertRedirect(route('school.dashboard'));
+        $this->post(route('workspace.store'), [
+            'workspace' => 'global:super_admin',
+        ])->assertRedirect(route('admin.dashboard'));
+        $this->assertNull(session('active_school_id'));
+        $this->assertSame('super_admin', session('active_role_context'));
+    }
+
+    public function test_school_login_uses_only_a_last_valid_school_workspace(): void
+    {
+        $school = $this->school('Remembered Academy');
+        $user = $this->schoolUser($school, 'school_admin');
+        $user->assignRole('teacher');
+        UserSchoolRole::create([
+            'user_id' => $user->id,
+            'school_id' => $school->id,
+            'role_name' => 'teacher',
+            'status' => 'active',
+        ]);
+
+        $this->withSession([
+            'workspace.type' => TenantContext::WORKSPACE_INSTALLATION_ADMIN,
+            'workspace.key' => 'global:super_admin',
+            'workspace.last_school_key' => "school:{$school->id}:teacher",
+            'active_role_context' => 'super_admin',
+        ])->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ])->assertRedirect(route('school.dashboard'));
+
+        $this->assertSame(TenantContext::WORKSPACE_SCHOOL, session('workspace.type'));
+        $this->assertSame($school->id, session('active_school_id'));
+        $this->assertSame('teacher', session('active_role_context'));
+    }
+
+    public function test_active_role_permissions_are_isolated_across_switches(): void
+    {
+        $school = $this->school('Permission Academy');
+        $user = $this->schoolUser($school, 'school_admin');
+        $user->assignRole('teacher');
+        UserSchoolRole::create([
+            'user_id' => $user->id,
+            'school_id' => $school->id,
+            'role_name' => 'teacher',
+            'status' => 'active',
+        ]);
+        $this->actingAs($user);
+
+        $this->post(route('workspace.store'), [
+            'workspace' => "school:{$school->id}:teacher",
+        ])->assertRedirect(route('school.dashboard'));
+        $this->assertFalse(app(SchoolAuthorizationService::class)->can($user, $school, 'communication.bulk'));
+
+        $this->post(route('workspace.store'), [
+            'workspace' => "school:{$school->id}:school_admin",
+        ])->assertRedirect(route('school.dashboard'));
+        $this->assertTrue(app(SchoolAuthorizationService::class)->can($user, $school, 'communication.bulk'));
     }
 
     private function school(string $name = 'Workspace Academy'): School

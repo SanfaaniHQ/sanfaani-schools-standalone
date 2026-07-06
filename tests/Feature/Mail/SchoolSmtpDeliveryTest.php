@@ -4,6 +4,7 @@ namespace Tests\Feature\Mail;
 
 use App\Contracts\SchoolAwareMailNotification;
 use App\Exceptions\MailConfigurationException;
+use App\Models\MailDeliveryAttempt;
 use App\Models\MailSetting;
 use App\Models\School;
 use App\Models\User;
@@ -96,9 +97,31 @@ class SchoolSmtpDeliveryTest extends TestCase
             'from_address' => 'info@school.example',
             'from_name' => 'School',
         ]);
+        $gmailTls = $smtp->normalize([
+            'is_enabled' => true,
+            'mailer' => 'smtp',
+            'host' => 'smtp.gmail.com',
+            'port' => 587,
+            'username' => 'teacher@example.test',
+            'password' => 'app-password',
+            'encryption' => 'tls',
+            'from_address' => 'teacher@example.test',
+        ]);
+        $cpanelSsl = $smtp->normalize([
+            'is_enabled' => true,
+            'mailer' => 'smtp',
+            'host' => 'server.example.test',
+            'port' => 465,
+            'username' => 'info@example.test',
+            'password' => 'mailbox-password',
+            'encryption' => 'ssl',
+            'from_address' => 'info@example.test',
+        ]);
 
         $sslConfig = $smtp->mailerConfig($ssl);
         $tlsConfig = $smtp->mailerConfig($tls);
+        $gmailTlsConfig = $smtp->mailerConfig($gmailTls);
+        $cpanelSslConfig = $smtp->mailerConfig($cpanelSsl);
 
         $this->assertSame('smtps', $sslConfig['scheme']);
         $this->assertSame(465, $sslConfig['port']);
@@ -106,6 +129,10 @@ class SchoolSmtpDeliveryTest extends TestCase
         $this->assertSame(587, $tlsConfig['port']);
         $this->assertTrue($tlsConfig['require_tls']);
         $this->assertTrue($tlsConfig['auto_tls']);
+        $this->assertSame('smtp', $gmailTlsConfig['scheme']);
+        $this->assertTrue($gmailTlsConfig['require_tls']);
+        $this->assertSame('smtps', $cpanelSslConfig['scheme']);
+        $this->assertSame(465, $cpanelSslConfig['port']);
         $this->assertArrayNotHasKey('verify_peer', $sslConfig);
     }
 
@@ -224,6 +251,55 @@ class SchoolSmtpDeliveryTest extends TestCase
         $this->assertTrue($result['logged_only']);
         $this->assertFalse($result['accepted']);
         $this->assertSame('log', $result['transport']);
+    }
+
+    public function test_array_fallback_is_reported_as_non_delivery(): void
+    {
+        $result = (new MailSettingService)->sendPlatformTest('admin@example.test', new MailSetting([
+            'is_enabled' => true,
+            'mailer' => 'array',
+            'from_address' => 'platform@example.test',
+            'from_name' => 'Platform',
+        ]));
+
+        $this->assertFalse($result['accepted']);
+        $this->assertTrue($result['logged_only']);
+        $this->assertSame('array', $result['transport']);
+    }
+
+    public function test_smtp_failures_are_classified_into_safe_categories(): void
+    {
+        $this->assertSame('connection_failed', MailSecurity::diagnostic('Connection refused by server')['category']);
+        $this->assertSame('tls_failed', MailSecurity::diagnostic('STARTTLS crypto negotiation failed')['category']);
+        $this->assertSame('authentication_failed', MailSecurity::diagnostic('535 authentication failed')['category']);
+        $this->assertSame('sender_rejected', MailSecurity::diagnostic('sender address rejected')['category']);
+        $this->assertSame('recipient_rejected', MailSecurity::diagnostic('recipient address rejected')['category']);
+        $this->assertSame('relay_denied', MailSecurity::diagnostic('relay access denied')['category']);
+    }
+
+    public function test_safe_delivery_attempts_store_provider_ids_without_secrets_or_bodies(): void
+    {
+        $service = app(MailSettingService::class);
+        $service->recordDeliveryAttempt([
+            'school_id' => $this->school->id,
+            'transport' => 'smtp',
+            'host' => 'smtp.example.test',
+            'port' => 587,
+            'encryption' => 'tls',
+            'sender' => 'sender@example.test',
+            'recipient' => 'recipient@example.test',
+            'status' => 'accepted_by_smtp',
+            'provider_message_id' => 'provider-message-id-123',
+            'configuration' => 'temporary',
+            'external_delivery_attempted' => true,
+        ]);
+
+        $attempt = MailDeliveryAttempt::firstOrFail();
+        $this->assertSame('accepted_by_smtp', $attempt->status);
+        $this->assertSame('provider-message-id-123', $attempt->provider_message_id);
+        $this->assertSame('temporary', $attempt->configuration);
+        $this->assertArrayNotHasKey('password', $attempt->getAttributes());
+        $this->assertArrayNotHasKey('body', $attempt->getAttributes());
     }
 
     public function test_runtime_mailer_is_refreshed_and_tenant_settings_do_not_leak(): void
@@ -350,7 +426,7 @@ class SchoolSmtpDeliveryTest extends TestCase
         $this->assertContains('throttle:5,1', $fallbackRoute->gatherMiddleware());
     }
 
-    public function test_diagnostic_command_reports_status_without_printing_secrets(): void
+    public function test_mail_diagnose_command_reports_status_without_printing_secrets(): void
     {
         $setting = app(MailSettingService::class)->updateForSchool($this->school, $this->settings([
             'password' => 'diagnostic-secret',

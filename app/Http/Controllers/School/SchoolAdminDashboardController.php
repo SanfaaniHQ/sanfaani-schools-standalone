@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\School;
 
 use App\Http\Controllers\Controller;
+use App\Models\LiveClass;
 use App\Models\ResultAccessRequest;
 use App\Services\CurrentSchoolService;
 use App\Services\Finance\SchoolFinanceService;
+use App\Services\LiveClasses\LiveClassAccessService;
+use App\Services\LiveClasses\LiveClassService;
 use App\Services\OnboardingProgressService;
 use App\Services\SchoolAuthorizationService;
 use App\Services\Standalone\StandaloneDashboardSummaryService;
@@ -77,7 +80,7 @@ class SchoolAdminDashboardController extends Controller
                 'totalStudents' => $school->students()->count(),
                 'totalLiveClasses' => $school->liveClasses()->count(),
                 'upcomingLiveClasses' => $school->liveClasses()
-                    ->where('status', \App\Models\LiveClass::STATUS_SCHEDULED)
+                    ->where('status', LiveClass::STATUS_SCHEDULED)
                     ->where('starts_at', '>=', now())
                     ->count(),
                 'totalResults' => $resultMetrics['total'],
@@ -188,7 +191,7 @@ class SchoolAdminDashboardController extends Controller
             'totalAssignedClasses' => $classAssignments->count(),
             'totalAssignedSubjects' => $subjectAssignments->count(),
             'totalAssignedStudents' => $totalStudents,
-            'upcomingLiveClasses' => app(\App\Services\LiveClasses\LiveClassService::class)
+            'upcomingLiveClasses' => app(LiveClassService::class)
                 ->summaryForUser($school, $user)['upcoming'],
             'draftResults' => $draftResults,
             'submittedResults' => $submittedResults,
@@ -206,10 +209,10 @@ class SchoolAdminDashboardController extends Controller
     {
         $resultMetrics = $this->resultStatusMetrics($school);
         $totalStudents = $school->students()->count();
-        $liveClassAccess = app(\App\Services\LiveClasses\LiveClassAccessService::class);
+        $liveClassAccess = app(LiveClassAccessService::class);
         $upcomingParticipantLiveClasses = $liveClassAccess->canView($user, $school)
-            ? app(\App\Services\LiveClasses\LiveClassService::class)
-                ->sessionsForUser($school, $user, ['status' => \App\Models\LiveClass::STATUS_SCHEDULED])
+            ? app(LiveClassService::class)
+                ->sessionsForUser($school, $user, ['status' => LiveClass::STATUS_SCHEDULED])
                 ->where('starts_at', '>=', now())
                 ->limit(3)
                 ->get()

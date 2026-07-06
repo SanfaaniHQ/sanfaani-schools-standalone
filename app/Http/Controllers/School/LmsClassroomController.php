@@ -18,7 +18,7 @@ class LmsClassroomController extends Controller
 {
     public function index(Request $request, LmsDashboardController $dashboard)
     {
-        return $dashboard($request, app(LmsAccessService::class), app(LmsClassroomService::class), app(\App\Services\Lms\LmsResourceStorageService::class));
+        return $dashboard($request, app(LmsAccessService::class), app(LmsClassroomService::class), app(LmsResourceStorageService::class));
     }
 
     public function store(Request $request, LmsClassroomService $classrooms)

@@ -24,7 +24,7 @@ class RepairStandaloneAccessCommandTest extends TestCase
         ]);
     }
 
-    public function test_dry_run_reports_mail_permission_without_writing(): void
+    public function test_repair_access_dry_run_reports_mail_permission_without_writing(): void
     {
         $exitCode = Artisan::call('standalone:repair-access', ['--dry-run' => true, '--json' => true]);
         $output = Artisan::output();

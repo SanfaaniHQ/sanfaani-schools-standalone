@@ -19,6 +19,9 @@
                 @if (session('error'))
                     <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">{{ session('error') }}</div>
                 @endif
+                @if (session('warning'))
+                    <div class="mb-6 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">{{ session('warning') }}</div>
+                @endif
 
                 <form method="POST" action="{{ route('admin.mail-settings.update') }}" data-loading-text="Saving..." class="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
                     @csrf

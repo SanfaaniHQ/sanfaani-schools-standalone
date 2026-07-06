@@ -221,6 +221,12 @@ class SchoolAuthorizationService
             return true;
         }
 
+        $activeSchool = $this->currentSchool->get($user);
+
+        if (! $activeSchool || ! $activeSchool->is($school)) {
+            return false;
+        }
+
         if ($user->schoolRoles()->exists()) {
             return $user->activeSchoolRoles()->where('school_id', $school->id)->exists();
         }

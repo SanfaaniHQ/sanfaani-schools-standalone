@@ -18,6 +18,13 @@ class UserWorkspaceService
         'student',
         'result_officer',
         'accountant',
+        'admissions_officer',
+    ];
+
+    private const ROLE_DESTINATIONS = [
+        'super_admin' => 'admin.dashboard',
+        'parent' => 'parent.dashboard',
+        'student' => 'student.dashboard',
     ];
 
     private const SUPPORT_SESSION_KEYS = [
@@ -39,14 +46,14 @@ class UserWorkspaceService
         }
 
         if ($user->hasRole('super_admin')) {
-            $contexts->push([
+            $contexts->push($this->workspaceRecord([
                 'key' => 'global:super_admin',
                 'school_id' => null,
-                'school_name' => $this->isStandaloneMode() ? 'Standalone diagnostics' : 'Platform Administration',
+                'school_name' => null,
                 'role_name' => 'super_admin',
                 'label' => $this->isStandaloneMode() ? 'Installation Admin' : 'Super Admin',
                 'is_global' => true,
-            ]);
+            ]));
         }
 
         $user->activeSchoolRoles()
@@ -61,16 +68,19 @@ class UserWorkspaceService
                     return;
                 }
 
-                $contexts->push([
+                $roleLabel = str($role->role_name)->replace('_', ' ')->title()->toString();
+
+                $contexts->push($this->workspaceRecord([
                     'key' => $role->school_id
                         ? "school:{$role->school_id}:{$role->role_name}"
                         : "global:{$role->role_name}",
                     'school_id' => $role->school_id,
                     'school_name' => $role->school?->name ?? 'Platform',
                     'role_name' => $role->role_name,
-                    'label' => str($role->role_name)->replace('_', ' ')->title()->toString(),
+                    'label' => $role->school?->name.' — '.$roleLabel,
+                    'role_label' => $roleLabel,
                     'is_global' => blank($role->school_id),
-                ]);
+                ]));
             });
 
         $hasSchoolContext = $contexts->contains(fn (array $context): bool => filled($context['school_id'] ?? null));
@@ -87,14 +97,17 @@ class UserWorkspaceService
                     continue;
                 }
 
-                $contexts->push([
+                $roleLabel = str($roleName)->replace('_', ' ')->title()->toString();
+
+                $contexts->push($this->workspaceRecord([
                     'key' => "school:{$school->id}:{$roleName}",
                     'school_id' => $school->id,
                     'school_name' => $school->name,
                     'role_name' => $roleName,
-                    'label' => str($roleName)->replace('_', ' ')->title()->toString(),
+                    'label' => $school->name.' — '.$roleLabel,
+                    'role_label' => $roleLabel,
                     'is_global' => false,
-                ]);
+                ]));
             }
         }
 
@@ -132,14 +145,14 @@ class UserWorkspaceService
         }
 
         return $this->contextsFor($user)->firstWhere('key', 'global:super_admin')
-            ?? [
+            ?? $this->workspaceRecord([
                 'key' => 'global:super_admin',
                 'school_id' => null,
-                'school_name' => $this->isStandaloneMode() ? 'Standalone diagnostics' : 'Platform Administration',
+                'school_name' => null,
                 'role_name' => 'super_admin',
                 'label' => $this->isStandaloneMode() ? 'Installation Admin' : 'Super Admin',
                 'is_global' => true,
-            ];
+            ]);
     }
 
     public function select(User $user, array $context, bool $regenerateSession = false): void
@@ -158,17 +171,27 @@ class UserWorkspaceService
             $authorized['role_name']
         );
 
+        if (($authorized['type'] ?? null) === TenantContext::WORKSPACE_SCHOOL) {
+            session(['workspace.last_school_key' => $authorized['key']]);
+        }
+
         if ($regenerateSession) {
             session()->regenerate(true);
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $user->unsetRelation('roles');
+        $user->unsetRelation('permissions');
     }
 
-    public function clear(): void
+    public function clear(bool $forgetRememberedWorkspace = false): void
     {
         $this->clearSupportSession();
         TenantContext::clear();
+
+        if ($forgetRememberedWorkspace) {
+            session()->forget('workspace.last_school_key');
+        }
     }
 
     public function activeKey(?User $user = null): ?string
@@ -247,6 +270,22 @@ class UserWorkspaceService
         return $context;
     }
 
+    public function lastValidSchoolContextFor(User $user): ?array
+    {
+        $key = session('workspace.last_school_key');
+
+        return filled($key)
+            ? $this->schoolContextsFor($user)->firstWhere('key', (string) $key)
+            : null;
+    }
+
+    public function destinationRoute(array $context): string
+    {
+        return (string) ($context['destination_route']
+            ?? self::ROLE_DESTINATIONS[(string) ($context['role_name'] ?? '')]
+            ?? 'school.dashboard');
+    }
+
     public function activeSchoolContextFor(User $user): ?array
     {
         if (TenantContext::workspaceType() === TenantContext::WORKSPACE_INSTALLATION_ADMIN) {
@@ -316,6 +355,23 @@ class UserWorkspaceService
         }
 
         return 30;
+    }
+
+    private function workspaceRecord(array $context): array
+    {
+        $type = filled($context['school_id'] ?? null)
+            ? TenantContext::WORKSPACE_SCHOOL
+            : TenantContext::WORKSPACE_INSTALLATION_ADMIN;
+        $roleName = (string) ($context['role_name'] ?? '');
+        $activeKey = TenantContext::workspaceKey();
+
+        return array_merge([
+            'type' => $type,
+            'workspace_type' => $type,
+            'role_label' => str($roleName)->replace('_', ' ')->title()->toString(),
+            'destination_route' => self::ROLE_DESTINATIONS[$roleName] ?? 'school.dashboard',
+            'active' => $activeKey === ($context['key'] ?? null),
+        ], $context);
     }
 
     private function clearSupportSession(): void

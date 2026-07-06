@@ -12,15 +12,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class AdmissionApplication extends Model
 {
     public const STATUS_SUBMITTED = 'submitted';
+
     public const STATUS_UNDER_REVIEW = 'under_review';
+
     public const STATUS_MISSING_DOCUMENTS = 'missing_documents';
+
     public const STATUS_ENTRANCE_EXAM_SCHEDULED = 'entrance_exam_scheduled';
+
     public const STATUS_INTERVIEW_SCHEDULED = 'interview_scheduled';
+
     public const STATUS_ACCEPTED = 'accepted';
+
     public const STATUS_REJECTED = 'rejected';
+
     public const STATUS_WAITLISTED = 'waitlisted';
+
     public const STATUS_PAYMENT_PENDING = 'payment_pending';
+
     public const STATUS_ADMITTED = 'admitted';
+
     public const STATUS_CONVERTED = 'converted_to_student';
 
     public const STATUSES = [
@@ -38,10 +48,15 @@ class AdmissionApplication extends Model
     ];
 
     public const PAYMENT_NOT_REQUIRED = 'not_required';
+
     public const PAYMENT_PENDING = 'pending';
+
     public const PAYMENT_PAID = 'paid';
+
     public const PAYMENT_FAILED = 'failed';
+
     public const PAYMENT_WAIVED = 'waived';
+
     public const PAYMENT_CONFIRMED = 'confirmed';
 
     public const PAYMENT_STATUSES = [

@@ -3,7 +3,6 @@
 namespace App\Services\Reports;
 
 use App\Models\Admissions\AdmissionApplication;
-use App\Models\AttendanceOfflineSyncReceipt;
 use App\Models\Backup;
 use App\Models\CbtAttempt;
 use App\Models\CbtExam;

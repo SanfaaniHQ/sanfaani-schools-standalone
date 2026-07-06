@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admissions;
 
 use App\Models\Admissions\AdmissionApplication;
+use App\Models\Admissions\AdmissionDocument;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -86,7 +87,7 @@ class AdmissionPublicApplicationTest extends TestCase
         $payload['documents'] = [UploadedFile::fake()->create('birth-certificate.pdf', 200, 'application/pdf')];
 
         $this->post('/admissions/apply', $payload)->assertCreated();
-        $document = \App\Models\Admissions\AdmissionDocument::firstOrFail();
+        $document = AdmissionDocument::firstOrFail();
         Storage::disk('local')->assertExists($document->storage_path);
         $this->assertStringStartsWith('admissions/', $document->storage_path);
 
@@ -110,7 +111,7 @@ class AdmissionPublicApplicationTest extends TestCase
         $payload['document_types'] = ['shell_script'];
 
         $this->post('/admissions/apply', $payload)->assertSessionHasErrors('document_types.0');
-        $this->assertSame(0, \App\Models\Admissions\AdmissionDocument::count());
+        $this->assertSame(0, AdmissionDocument::count());
     }
 
     public function test_honeypot_and_timing_fallback_blocks_bot_like_submissions_when_captcha_is_required(): void
@@ -150,6 +151,6 @@ class AdmissionPublicApplicationTest extends TestCase
         $payload['documents'] = [UploadedFile::fake()->create('birth-certificate.pdf', 200, 'application/pdf')];
 
         $this->post('/admissions/apply', $payload)->assertSessionHasErrors('documents');
-        $this->assertSame(0, \App\Models\Admissions\AdmissionDocument::count());
+        $this->assertSame(0, AdmissionDocument::count());
     }
 }

@@ -39,6 +39,9 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $schoolContexts = $workspaces->schoolContextsFor($user);
 
+        // A school login must never inherit an Installation Admin workspace.
+        $workspaces->clear();
+
         if ($user?->hasRole('super_admin') && $schoolContexts->isEmpty()) {
             Auth::guard('web')->logout();
 
@@ -56,6 +59,12 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($schoolContexts->count() > 1) {
+            if ($lastContext = $workspaces->lastValidSchoolContextFor($user)) {
+                $workspaces->select($user, $lastContext);
+
+                return redirect()->route($workspaces->destinationRoute($lastContext));
+            }
+
             return redirect()->route('workspace.create');
         }
 
@@ -71,7 +80,7 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request, UserWorkspaceService $workspaces): RedirectResponse
     {
-        $workspaces->clear();
+        $workspaces->clear(true);
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

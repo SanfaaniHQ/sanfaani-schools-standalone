@@ -20,8 +20,29 @@
                 @if (session('success'))
                     <div class="mb-6 rounded-lg bg-green-50 p-4 text-sm text-green-700">{{ session('success') }}</div>
                 @endif
+                @if (session('mail_test_result'))
+                    @php($testResult = session('mail_test_result'))
+                    <div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+                        <p class="font-semibold">School SMTP accepted the test message for delivery.</p>
+                        <p class="mt-1">SMTP acceptance means the sending server accepted the message. It does not guarantee inbox placement.</p>
+                        <dl class="mt-3 grid gap-2 sm:grid-cols-2">
+                            <div><dt class="text-xs uppercase text-green-700">Transport</dt><dd>{{ strtoupper($testResult['transport']) }}</dd></div>
+                            <div><dt class="text-xs uppercase text-green-700">Configuration</dt><dd>{{ ucfirst($testResult['configuration']) }} values</dd></div>
+                            <div><dt class="text-xs uppercase text-green-700">Server</dt><dd>{{ $testResult['host'] }}:{{ $testResult['port'] }} ({{ strtoupper($testResult['encryption']) }})</dd></div>
+                            <div><dt class="text-xs uppercase text-green-700">Sender</dt><dd class="break-all">{{ $testResult['sender'] }}</dd></div>
+                            <div><dt class="text-xs uppercase text-green-700">Recipient</dt><dd class="break-all">{{ $testResult['recipient'] }}</dd></div>
+                            <div><dt class="text-xs uppercase text-green-700">Timestamp</dt><dd>{{ $testResult['timestamp'] }}</dd></div>
+                            @if ($testResult['provider_message_id'])
+                                <div class="sm:col-span-2"><dt class="text-xs uppercase text-green-700">Provider message ID</dt><dd class="break-all font-mono text-xs">{{ $testResult['provider_message_id'] }}</dd></div>
+                            @endif
+                        </dl>
+                    </div>
+                @endif
                 @if (session('error'))
                     <div class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">{{ session('error') }}</div>
+                @endif
+                @if (session('warning'))
+                    <div class="mb-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">{{ session('warning') }}</div>
                 @endif
                 @if (! $schoolScopeReady)
                     <div class="mb-6 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">School scoped mail settings are not ready. Run migrations before saving changes.</div>
@@ -41,11 +62,16 @@
 
                     <div class="grid gap-6 md:grid-cols-2">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Mailer</label>
-                            <select name="mailer" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
-                                <option value="log" @selected(old('mailer', $setting->mailer) === 'log')>Log</option>
-                                <option value="smtp" @selected(old('mailer', $setting->mailer) === 'smtp')>SMTP</option>
+                            <label class="block text-sm font-medium text-gray-700">Provider preset</label>
+                            <select id="smtp-provider-preset" class="mt-1 block w-full rounded-lg border-gray-300" @disabled($schoolMailControlsDisabled)>
+                                <option value="custom">Custom SMTP</option>
+                                <option value="gmail-587">Gmail / Google Workspace — TLS 587</option>
+                                <option value="gmail-465">Gmail / Google Workspace — SSL 465</option>
+                                <option value="cpanel-587">cPanel / Webmail — TLS 587</option>
+                                <option value="cpanel-465">cPanel / Webmail — SSL 465</option>
                             </select>
+                            <input type="hidden" name="mailer" value="smtp">
+                            <p class="mt-1 text-xs text-gray-500">Presets fill safe defaults; confirm the exact server details with your provider.</p>
                             @error('mailer')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
@@ -173,12 +199,39 @@
                         @if ($schoolStatus['last_test_outcome'])
                             <div class="flex items-center justify-between gap-4">
                                 <dt>Last school test</dt>
-                                <dd class="text-right font-medium {{ $schoolStatus['last_test_outcome'] === 'accepted' ? 'text-green-700' : 'text-red-700' }}">
+                                <dd class="text-right font-medium {{ $schoolStatus['last_test_outcome'] === 'accepted_by_smtp' ? 'text-green-700' : 'text-red-700' }}">
                                     {{ ucfirst($schoolStatus['last_test_outcome']) }} via {{ $schoolStatus['last_test_transport'] }}
                                     @if ($schoolStatus['last_test_configuration'] === 'temporary')
                                         <span class="block text-xs font-normal text-amber-700">temporary values</span>
                                     @endif
+                                    @if ($schoolStatus['last_test_at'])
+                                        <span class="block text-xs font-normal text-gray-500">{{ $schoolStatus['last_test_at'] }}</span>
+                                    @endif
                                 </dd>
+                            </div>
+                        @endif
+                        <div class="flex items-center justify-between gap-4">
+                            <dt>SMTP accepted</dt>
+                            <dd class="font-medium {{ $schoolStatus['last_test_smtp_accepted'] ? 'text-green-700' : 'text-gray-700' }}">{{ $schoolStatus['last_test_smtp_accepted'] ? 'Yes' : 'No' }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt>Fallback used</dt>
+                            <dd class="font-medium text-gray-700">{{ $schoolStatus['last_test_fallback_used'] ? 'Yes' : 'No' }}</dd>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <dt>External delivery attempted</dt>
+                            <dd class="font-medium text-gray-700">{{ $schoolStatus['last_test_external_delivery_attempted'] ? 'Yes' : 'No' }}</dd>
+                        </div>
+                        @if ($schoolStatus['last_test_category'])
+                            <div class="flex items-center justify-between gap-4">
+                                <dt>Last safe error category</dt>
+                                <dd class="font-mono text-xs text-red-700">{{ $schoolStatus['last_test_category'] }}</dd>
+                            </div>
+                        @endif
+                        @if ($latestDeliveryAttempt)
+                            <div class="flex items-center justify-between gap-4">
+                                <dt>Latest delivery status</dt>
+                                <dd class="font-mono text-xs text-gray-700">{{ $latestDeliveryAttempt->status }}</dd>
                             </div>
                         @endif
                     </dl>
@@ -190,14 +243,17 @@
                 <form id="school-mail-test-form" method="POST" action="{{ route('school.mail-settings.test') }}" data-loading-text="Testing..." class="rounded-lg bg-white p-6 shadow-sm">
                     @csrf
                     <h3 class="text-base font-semibold text-gray-900">Test School SMTP</h3>
-                    <p class="mt-1 text-sm text-gray-600">Tests the form values directly. Platform fallback is never used by this action.</p>
+                    <p class="mt-1 text-sm text-gray-600">Choose saved settings or the unsaved values currently in the form. Platform fallback is never used by either action.</p>
                     <div id="school-mail-test-payload"></div>
                     <label class="mt-4 block text-sm font-medium text-gray-700">Recipient</label>
                     <input name="test_email" value="{{ old('test_email', auth()->user()->email) }}" @disabled($schoolMailControlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                     @error('test_email')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                     @enderror
-                    <button @disabled($schoolMailControlsDisabled) class="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Test School SMTP</button>
+                    <div class="mt-4 grid gap-2">
+                        <button name="test_mode" value="saved" @disabled($schoolMailControlsDisabled) class="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Test Saved School SMTP</button>
+                        <button name="test_mode" value="temporary" @disabled($schoolMailControlsDisabled) class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:text-gray-400">Test Temporary Values</button>
+                    </div>
                 </form>
 
                 <form method="POST" action="{{ route('school.mail-settings.test-fallback') }}" data-loading-text="Testing fallback..." class="rounded-lg bg-white p-6 shadow-sm">
@@ -214,7 +270,15 @@
                     <p class="mt-2 font-medium text-gray-800">Gmail / Google Workspace</p>
                     <p>Use <span class="font-mono">smtp.gmail.com</span>, the full address, and usually a Google App Password. Choose 465 + SSL or 587 + TLS.</p>
                     <p class="mt-3 font-medium text-gray-800">cPanel / Webmail</p>
-                    <p>Use the exact outgoing server from “Connect Devices”, the full mailbox username, and its password. Choose 465 + SSL or 587 + TLS.</p>
+                    <p>Use the exact outgoing server from "Connect Devices", the full mailbox username, and its password. Choose 465 + SSL or 587 + TLS. Keep the From Address aligned with the authenticated mailbox.</p>
+                    <h4 class="mt-4 font-semibold text-gray-900">If SMTP accepts but the message is not visible</h4>
+                    <ul class="mt-2 list-disc space-y-1 pl-5">
+                        <li>Check Spam, Promotions, Updates, and All Mail.</li>
+                        <li>In cPanel, open Track Delivery and Email Deliverability.</li>
+                        <li>Verify SPF, DKIM, and DMARC for the sender domain.</li>
+                        <li>Confirm the sender matches the authenticated mailbox or an authorised alias.</li>
+                        <li>Test a same-domain recipient first, then an external provider.</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -225,10 +289,28 @@
             const settingsForm = document.getElementById('school-mail-settings-form');
             const testForm = document.getElementById('school-mail-test-form');
             const payload = document.getElementById('school-mail-test-payload');
+            const preset = document.getElementById('smtp-provider-preset');
 
             if (!settingsForm || !testForm || !payload) {
                 return;
             }
+
+            preset?.addEventListener('change', () => {
+                const options = {
+                    'gmail-587': { host: 'smtp.gmail.com', port: '587', encryption: 'tls' },
+                    'gmail-465': { host: 'smtp.gmail.com', port: '465', encryption: 'ssl' },
+                    'cpanel-587': { port: '587', encryption: 'tls' },
+                    'cpanel-465': { port: '465', encryption: 'ssl' },
+                };
+                const selected = options[preset.value];
+
+                if (!selected) return;
+
+                Object.entries(selected).forEach(([name, value]) => {
+                    const field = settingsForm.elements.namedItem(name);
+                    if (field && value) field.value = value;
+                });
+            });
 
             const fields = [
                 'mailer',

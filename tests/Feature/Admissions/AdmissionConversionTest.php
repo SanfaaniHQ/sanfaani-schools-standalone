@@ -5,6 +5,7 @@ namespace Tests\Feature\Admissions;
 use App\Models\Admissions\AdmissionApplication;
 use App\Models\Student;
 use App\Services\Admissions\AdmissionConversionService;
+use App\Services\Admissions\AdmissionWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -59,7 +60,7 @@ class AdmissionConversionTest extends TestCase
             $this->assertSame(0, Student::count());
         }
 
-        app(\App\Services\Admissions\AdmissionWorkflowService::class)
+        app(AdmissionWorkflowService::class)
             ->changeStatus($application, AdmissionApplication::STATUS_REJECTED, $admin->id, null, false);
 
         $this->expectException(ValidationException::class);

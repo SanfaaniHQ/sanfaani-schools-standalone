@@ -11,13 +11,19 @@ class ResultAccessRequest extends Model
     use HasFactory;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_PENDING_PAYMENT = 'pending_payment';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
+
     public const STATUS_EXPIRED = 'expired';
 
     public const METHOD_MANUAL_APPROVAL = 'manual_approval';
+
     public const METHOD_PAYMENT_REQUEST = 'payment_request';
+
     public const METHOD_SCRATCH_CARD = 'scratch_card';
 
     protected $fillable = [

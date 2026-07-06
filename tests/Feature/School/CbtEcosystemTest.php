@@ -15,7 +15,6 @@ use App\Models\PdfSnapshot;
 use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
-use App\Models\StudentResult;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;

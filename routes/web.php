@@ -973,7 +973,7 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
     ->prefix('school')
     ->name('school.')
     ->group(function () {
-        Route::middleware('role:school_admin|result_officer|teacher|accountant|super_admin')
+        Route::middleware('role:school_admin|result_officer|teacher|accountant|admissions_officer|super_admin')
             ->group(function () {
                 Route::get('/dashboard', [SchoolAdminDashboardController::class, 'index'])
                     ->name('dashboard');

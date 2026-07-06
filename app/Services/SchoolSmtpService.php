@@ -59,12 +59,14 @@ class SchoolSmtpService
         ]);
 
         return [
+            'transport' => 'smtp',
             'enabled' => (bool) ($settings['is_enabled'] ?? $settings['enabled'] ?? false),
             'mailer' => strtolower((string) ($settings['mailer'] ?? 'smtp')),
             'host' => trim((string) ($settings['host'] ?? '')),
             'port' => (int) ($settings['port'] ?? ($encryption === 'ssl' ? 465 : 587)),
             'username' => $this->nullableTrim($settings['username'] ?? null),
             'password' => isset($settings['password']) ? (string) $settings['password'] : null,
+            'password_available' => filled($settings['password'] ?? null),
             'encryption' => $encryption,
             'timeout' => max(1, min(120, (int) ($settings['timeout'] ?? 10))),
             'from' => [
@@ -73,8 +75,13 @@ class SchoolSmtpService
             ],
             'reply_to' => $replyAddress ? [
                 'address' => $replyAddress,
-                'name' => $senderName,
+                'name' => $this->firstFilled([
+                    $settings['reply_to_name'] ?? null,
+                    $replyTo['name'] ?? null,
+                    $senderName,
+                ]) ?? '',
             ] : null,
+            'configuration' => ($settings['configuration'] ?? null) === 'temporary' ? 'temporary' : 'saved',
         ];
     }
 

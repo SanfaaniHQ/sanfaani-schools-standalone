@@ -5,7 +5,6 @@ namespace Tests\Feature\School;
 use App\Enums\ResultWorkflowStatus;
 use App\Mail\Transactional\StudentTransactionalMail;
 use App\Models\AcademicSession;
-use App\Models\BulkCommunicationBatch;
 use App\Models\CommunicationLog;
 use App\Models\MailSetting;
 use App\Models\ReportCardSnapshot;

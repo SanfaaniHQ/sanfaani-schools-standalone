@@ -21,6 +21,7 @@ class RolePermissionService
             'teacher',
             'result_officer',
             'accountant',
+            'admissions_officer',
             'parent',
             'student',
         ];

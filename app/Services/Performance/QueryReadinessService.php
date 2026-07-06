@@ -32,7 +32,7 @@ class QueryReadinessService
         return PerformanceCheckResult::warning(
             'index_'.$table.'_review',
             "{$table} index review",
-            "Review index coverage for [{$table}] on columns [".implode(', ', $columns)."]. Live schema inspection is intentionally skipped so diagnostics do not require a database connection.",
+            "Review index coverage for [{$table}] on columns [".implode(', ', $columns).']. Live schema inspection is intentionally skipped so diagnostics do not require a database connection.',
             ['table' => $table, 'columns' => $columns, 'reason' => $reason, 'migration_applied' => false],
         );
     }

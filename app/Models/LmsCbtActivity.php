@@ -12,9 +12,11 @@ class LmsCbtActivity extends Model
     use HasFactory;
 
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_ARCHIVED = 'archived';
 
     public const TARGET_CLASSROOM = 'classroom';
+
     public const TARGET_MATERIAL = 'material';
 
     protected $fillable = [

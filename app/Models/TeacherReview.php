@@ -11,7 +11,9 @@ class TeacherReview extends Model
     use HasFactory;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
 
     public const CATEGORY_RATINGS = [

@@ -39,8 +39,10 @@ class StageHStandaloneCompletionTest extends TestCase
 
     public function test_role_switcher_popup_markup_is_present(): void
     {
-        $contents = file_get_contents(resource_path('views/layouts/partials/topbar.blade.php'));
+        $topbarContents = file_get_contents(resource_path('views/layouts/partials/topbar.blade.php'));
+        $contents = file_get_contents(resource_path('views/components/workspace-switcher.blade.php'));
 
+        $this->assertStringContainsString('<x-workspace-switcher', $topbarContents);
         $this->assertStringContainsString('workspace-switcher-popup', $contents);
         $this->assertStringContainsString("__('ui.switch_role')", $contents);
         $this->assertStringContainsString('role="dialog"', $contents);
@@ -50,7 +52,7 @@ class StageHStandaloneCompletionTest extends TestCase
         $this->assertStringContainsString("__('ui.available_school_workspaces')", $contents);
         $this->assertStringContainsString("__('ui.installation_admin')", $contents);
         $this->assertStringContainsString("__('ui.manage_role_contexts')", $contents);
-        $this->assertStringNotContainsString("contextsFor(auth()->user())", $contents);
+        $this->assertStringNotContainsString('contextsFor(auth()->user())', $topbarContents);
         $this->assertStringNotContainsString('aria-modal="false"', $contents);
         $this->assertStringNotContainsString('@click.outside="open = false" role="dialog"', $contents);
     }

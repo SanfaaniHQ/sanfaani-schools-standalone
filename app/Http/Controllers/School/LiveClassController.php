@@ -12,6 +12,7 @@ use App\Services\CurrentSchoolService;
 use App\Services\LiveClasses\LiveClassAccessService;
 use App\Services\LiveClasses\LiveClassProviderRegistry;
 use App\Services\LiveClasses\LiveClassService;
+use App\Services\SchoolAuthorizationService;
 use App\Services\TeacherAssignmentAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -35,7 +36,7 @@ class LiveClassController extends Controller
             'activeProvider' => $providers->detailsFor(),
             'futureProviders' => $providers->futureProviderSummaries(),
             'canManage' => $access->canView($request->user(), $school)
-                && app(\App\Services\SchoolAuthorizationService::class)->canAny($request->user(), $school, ['live_classes.create', 'live_classes.manage']),
+                && app(SchoolAuthorizationService::class)->canAny($request->user(), $school, ['live_classes.create', 'live_classes.manage']),
             'studentPortalSafe' => $access->studentPortalIsSafe(),
             'studentPortalBoundary' => $access->studentPortalBoundaryNote(),
             'parentPortalSafe' => $access->parentPortalIsSafe(),
@@ -47,7 +48,7 @@ class LiveClassController extends Controller
     {
         $school = $this->currentSchoolOrFail();
         abort_unless($access->canView($request->user(), $school), 403);
-        abort_unless(app(\App\Services\SchoolAuthorizationService::class)->canAny($request->user(), $school, ['live_classes.create', 'live_classes.manage']), 403);
+        abort_unless(app(SchoolAuthorizationService::class)->canAny($request->user(), $school, ['live_classes.create', 'live_classes.manage']), 403);
 
         return view('school.live-classes.form', array_merge([
             'school' => $school,

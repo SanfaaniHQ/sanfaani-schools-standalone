@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\Standalone\StandaloneEditionService;
-use App\Services\Standalone\StandaloneSystemHealthService;
 use App\Services\Standalone\StandaloneSyncService;
+use App\Services\Standalone\StandaloneSystemHealthService;
 use Illuminate\Contracts\View\View;
 
 class StandaloneStatusController extends Controller
@@ -14,8 +14,7 @@ class StandaloneStatusController extends Controller
         StandaloneEditionService $edition,
         StandaloneSyncService $sync,
         StandaloneSystemHealthService $health,
-    ): View
-    {
+    ): View {
         return view('admin.standalone.status', [
             'editionStatus' => $edition->status(),
             'syncStatus' => $sync->status(),

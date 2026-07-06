@@ -4,8 +4,8 @@ namespace App\Services\Updates;
 
 use App\Models\UpdatePackage;
 use App\Models\User;
-use App\Services\Installer\InstallerStateService;
 use App\Services\Backups\BackupVerificationService;
+use App\Services\Installer\InstallerStateService;
 use App\Services\Licensing\LicenseValidationService;
 use App\Support\Updates\UpdatePreflightResult;
 use Illuminate\Support\Facades\DB;
@@ -240,7 +240,7 @@ class UpdatePreflightService
             return;
         }
 
-        $result->add('php_version', 'PHP version', 'pass', 'info', "PHP ".PHP_VERSION.' satisfies the update requirement.');
+        $result->add('php_version', 'PHP version', 'pass', 'info', 'PHP '.PHP_VERSION.' satisfies the update requirement.');
     }
 
     private function checkLaravel(array $manifest, UpdatePreflightResult $result): void

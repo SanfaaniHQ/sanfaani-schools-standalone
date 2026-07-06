@@ -36,6 +36,7 @@ class SecretRedactionService
 
             if ($this->isSensitiveKey($key)) {
                 $sanitized[$key] = '[redacted]';
+
                 continue;
             }
 

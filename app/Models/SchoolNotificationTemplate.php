@@ -10,9 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class SchoolNotificationTemplate extends Model
 {
     public const CHANNEL_DATABASE = 'database';
+
     public const CHANNEL_EMAIL = 'email';
+
     public const CHANNEL_SMS = 'sms';
+
     public const CHANNEL_WHATSAPP = 'whatsapp';
+
     public const CHANNEL_LOG = 'log';
 
     public const CHANNELS = [
@@ -24,11 +28,17 @@ class SchoolNotificationTemplate extends Model
     ];
 
     public const AUDIENCE_SCHOOL_ADMIN = 'school_admin';
+
     public const AUDIENCE_TEACHER = 'teacher';
+
     public const AUDIENCE_ACCOUNTANT = 'accountant';
+
     public const AUDIENCE_RESULT_OFFICER = 'result_officer';
+
     public const AUDIENCE_STUDENT = 'student';
+
     public const AUDIENCE_CLASS = 'class';
+
     public const AUDIENCE_SCHOOL_OPERATIONS = 'school_operations';
 
     public const AUDIENCE_TYPES = [

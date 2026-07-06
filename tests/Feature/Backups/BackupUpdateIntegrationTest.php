@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Backups;
 
-use App\Services\Updates\UpdatePreflightService;
 use App\Services\Standalone\StandaloneSystemHealthService;
+use App\Services\Updates\UpdatePreflightService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\PermissionRegistrar;

@@ -21,7 +21,7 @@ class SchoolMailSettingsAccessTest extends TestCase
         parent::setUp();
 
         $this->withoutVite();
-        foreach (['super_admin', 'school_admin', 'teacher', 'parent', 'student'] as $role) {
+        foreach (['super_admin', 'school_admin', 'teacher', 'result_officer', 'parent', 'student'] as $role) {
             Role::findOrCreate($role, 'web');
         }
         app(RolePermissionService::class)->ensureDefaultRolePermissions();
@@ -49,13 +49,21 @@ class SchoolMailSettingsAccessTest extends TestCase
         $this->post(route('school.mail-settings.test'), array_merge($this->settings(), [
             'test_email' => 'recipient@example.test',
         ]))->assertSessionHas('success');
+
+        $this->assertDatabaseHas('mail_delivery_attempts', [
+            'school_id' => $school->id,
+            'recipient' => 'recipient@example.test',
+            'status' => 'accepted_by_smtp',
+            'configuration' => 'saved',
+            'fallback_used' => false,
+        ]);
     }
 
     public function test_non_admin_school_roles_cannot_access_school_mail_settings(): void
     {
         $school = $this->school('Denied Mail Academy');
 
-        foreach (['teacher', 'parent', 'student'] as $role) {
+        foreach (['teacher', 'result_officer', 'parent', 'student'] as $role) {
             $user = $this->schoolUser($school, $role);
             $this->actInSchool($user, $school, $role);
             $this->get(route('school.mail-settings.edit'))->assertForbidden();

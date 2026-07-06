@@ -88,7 +88,7 @@ class LiveClientReadinessTest extends TestCase
         $this->get(route('admin.local-mail-settings.edit'))
             ->assertOk()
             ->assertSee('Email Delivery')
-            ->assertSee('Use the outgoing SMTP details from your hosting email account.')
+            ->assertSee('Test the saved configuration or the unsaved form values.')
             ->assertSee('Platform fallback is not configured.')
             ->assertDontSee('Requires setup')
             ->assertDontSee('not implemented');
@@ -197,6 +197,7 @@ class LiveClientReadinessTest extends TestCase
                 'reply_to_email' => 'reply@example.test',
                 'timeout' => 10,
                 'test_email' => 'admin@example.test',
+                'test_mode' => 'temporary',
             ]);
 
         $response->assertSessionHas('success', fn (string $message) => str_contains($message, 'School SMTP accepted'));
@@ -233,6 +234,7 @@ class LiveClientReadinessTest extends TestCase
                 'from_name' => 'Live Client Academy',
                 'timeout' => 10,
                 'test_email' => 'admin@example.test',
+                'test_mode' => 'temporary',
             ]);
 
         $response->assertSessionHas('error', fn (string $message) => str_contains($message, 'SMTP authentication failed'));
@@ -254,7 +256,7 @@ class LiveClientReadinessTest extends TestCase
             ->post(route('admin.local-mail-settings.test-fallback'), [
                 'test_email' => 'admin@example.test',
             ])
-            ->assertSessionHas('success', 'Fallback is configured to log messages only; no external email was delivered.');
+            ->assertSessionHas('warning', 'No external email was sent because the platform fallback uses a non-delivery transport (LOG).');
     }
 
     public function test_local_branding_saves_school_branding(): void

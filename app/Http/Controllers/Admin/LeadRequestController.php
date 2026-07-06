@@ -130,8 +130,7 @@ class LeadRequestController extends Controller
         LeadRequest $leadRequest,
         LeadCrmService $leadCrm,
         CommunicationService $communications
-    )
-    {
+    ) {
         $data = $request->validate([
             'channel' => ['required', Rule::in(['email', 'phone', 'sms', 'whatsapp', 'in_app', 'manual'])],
             'direction' => ['required', Rule::in(['outbound', 'inbound'])],

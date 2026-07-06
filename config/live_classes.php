@@ -1,24 +1,30 @@
 <?php
 
+use App\Models\LiveClass;
+use App\Services\LiveClasses\Providers\GoogleMeetLiveClassProvider;
+use App\Services\LiveClasses\Providers\ManualLiveClassProvider;
+use App\Services\LiveClasses\Providers\MicrosoftTeamsLiveClassProvider;
+use App\Services\LiveClasses\Providers\ZoomLiveClassProvider;
+
 return [
-    'default_provider' => App\Models\LiveClass::PROVIDER_MANUAL,
+    'default_provider' => LiveClass::PROVIDER_MANUAL,
 
     'providers' => [
-        App\Models\LiveClass::PROVIDER_MANUAL => [
+        LiveClass::PROVIDER_MANUAL => [
             'enabled' => true,
-            'class' => App\Services\LiveClasses\Providers\ManualLiveClassProvider::class,
+            'class' => ManualLiveClassProvider::class,
         ],
-        App\Models\LiveClass::PROVIDER_GOOGLE_MEET => [
+        LiveClass::PROVIDER_GOOGLE_MEET => [
             'enabled' => false,
-            'class' => App\Services\LiveClasses\Providers\GoogleMeetLiveClassProvider::class,
+            'class' => GoogleMeetLiveClassProvider::class,
         ],
-        App\Models\LiveClass::PROVIDER_ZOOM => [
+        LiveClass::PROVIDER_ZOOM => [
             'enabled' => false,
-            'class' => App\Services\LiveClasses\Providers\ZoomLiveClassProvider::class,
+            'class' => ZoomLiveClassProvider::class,
         ],
-        App\Models\LiveClass::PROVIDER_MICROSOFT_TEAMS => [
+        LiveClass::PROVIDER_MICROSOFT_TEAMS => [
             'enabled' => false,
-            'class' => App\Services\LiveClasses\Providers\MicrosoftTeamsLiveClassProvider::class,
+            'class' => MicrosoftTeamsLiveClassProvider::class,
         ],
     ],
 ];

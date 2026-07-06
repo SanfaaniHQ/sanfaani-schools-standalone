@@ -17,7 +17,10 @@ class EnsureInstallationAdminContext
             abort(403, 'You do not have access to the Installation Admin console.');
         }
 
-        abort_unless(app(UserWorkspaceService::class)->selectInstallationAdmin($user), 403);
+        $workspaces = app(UserWorkspaceService::class);
+        $switchingContext = $workspaces->activeKey($user) !== 'global:super_admin';
+
+        abort_unless($workspaces->selectInstallationAdmin($user, $switchingContext), 403);
 
         return $next($request);
     }

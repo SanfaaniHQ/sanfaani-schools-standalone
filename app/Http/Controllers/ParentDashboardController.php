@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LiveClass;
 use App\Services\CurrentSchoolService;
 use App\Services\LiveClasses\LiveClassAccessService;
 use App\Services\LiveClasses\LiveClassService;
@@ -43,7 +44,7 @@ class ParentDashboardController extends Controller
         ];
 
         $upcomingLiveClasses = $liveClassAccess->canView($user, $school)
-            ? $liveClasses->sessionsForUser($school, $user, ['status' => \App\Models\LiveClass::STATUS_SCHEDULED])
+            ? $liveClasses->sessionsForUser($school, $user, ['status' => LiveClass::STATUS_SCHEDULED])
                 ->where('starts_at', '>=', now())
                 ->limit(3)
                 ->get()
