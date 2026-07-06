@@ -22,8 +22,7 @@ class AdmissionApplicationService
     public function __construct(
         private readonly AdmissionNumberGenerator $numberGenerator,
         private readonly AdmissionWebsiteIntegrationService $integration
-    ) {
-    }
+    ) {}
 
     public function validationRules(School $school): array
     {
@@ -171,8 +170,7 @@ class AdmissionApplicationService
         ?string $trackingToken,
         ?string $guardianPhone,
         ?string $dateOfBirth = null
-    ): ?AdmissionApplication
-    {
+    ): ?AdmissionApplication {
         $application = AdmissionApplication::query()
             ->with(['school', 'cycle', 'requestedClass', 'guardians', 'statusLogs' => fn ($query) => $query->latest()])
             ->where('application_number', trim($applicationNumber))

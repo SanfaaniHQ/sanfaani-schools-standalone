@@ -3,7 +3,6 @@
 namespace App\Listeners\Marketing;
 
 use App\Events\OnboardingChecklistCompleted;
-use App\Events\OnboardingStepCompleted;
 use App\Models\LeadRequest;
 use App\Services\Marketing\LeadScoringService;
 use App\Services\Marketing\MarketingActivityService;

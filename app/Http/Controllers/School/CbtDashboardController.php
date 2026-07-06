@@ -17,7 +17,7 @@ class CbtDashboardController extends Controller
             ->where('school_id', $school->id)
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("SUM(CASE WHEN status IN ('scheduled', 'open', 'published') THEN 1 ELSE 0 END) as active")
-            ->selectRaw("SUM(CASE WHEN supports_public_candidates = 1 THEN 1 ELSE 0 END) as public_count")
+            ->selectRaw('SUM(CASE WHEN supports_public_candidates = 1 THEN 1 ELSE 0 END) as public_count')
             ->first();
 
         $attemptMetrics = CbtAttempt::query()

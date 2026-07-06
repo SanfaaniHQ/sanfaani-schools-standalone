@@ -230,7 +230,9 @@ class RepairStandaloneAccessCommand extends Command
                         ->where('feature_key', $featureKey)
                         ->first();
 
-                    if ($setting && $setting->enabled) {
+                    // Explicitly disabled feature settings are administrator choices,
+                    // not schema drift. Repair only records that are genuinely missing.
+                    if ($setting) {
                         continue;
                     }
 

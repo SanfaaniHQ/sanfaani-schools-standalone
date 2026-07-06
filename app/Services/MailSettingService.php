@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\MailConfigurationException;
+use App\Models\MailDeliveryAttempt;
 use App\Models\MailSetting;
 use App\Models\School;
 use App\Support\MailSecurity;
@@ -19,6 +20,8 @@ class MailSettingService
     private array $baseMailConfig;
 
     private SchoolSmtpService $smtp;
+
+    private ?string $lastProviderMessageId = null;
 
     public function __construct(?SchoolSmtpService $smtp = null)
     {
@@ -263,7 +266,8 @@ class MailSettingService
 
     private function sendSchoolSettingTest(School $school, MailSetting $setting, string $recipient): array
     {
-        $this->smtp->normalizeSetting($setting, $school);
+        $normalized = $this->smtp->normalizeSetting($setting, $school);
+        $this->lastProviderMessageId = null;
         $this->withMailSettingContext(
             $setting,
             fn () => $this->sendTestMessage($recipient, SchoolSmtpService::MAILER)
@@ -275,6 +279,13 @@ class MailSettingService
             'primary_error' => null,
             'mailer' => SchoolSmtpService::MAILER,
             'transport' => 'smtp',
+            'host' => $normalized['host'],
+            'port' => $normalized['port'],
+            'encryption' => $normalized['encryption'],
+            'sender' => data_get($normalized, 'from.address'),
+            'recipient' => $recipient,
+            'provider_message_id' => $this->lastProviderMessageId,
+            'accepted_at' => now()->toIso8601String(),
         ];
     }
 
@@ -300,9 +311,13 @@ class MailSettingService
                 'logged_only' => true,
                 'mailer' => $status['driver'],
                 'transport' => $status['driver'],
+                'recipient' => $recipient,
+                'provider_message_id' => null,
+                'accepted_at' => null,
             ];
         }
 
+        $this->lastProviderMessageId = null;
         $this->withPlatformMailContext(
             fn () => $this->sendTestMessage($recipient, (string) config('mail.default'))
         );
@@ -312,6 +327,9 @@ class MailSettingService
             'logged_only' => false,
             'mailer' => $status['driver'],
             'transport' => $status['driver'],
+            'recipient' => $recipient,
+            'provider_message_id' => $this->lastProviderMessageId,
+            'accepted_at' => now()->toIso8601String(),
         ];
     }
 
@@ -345,66 +363,76 @@ class MailSettingService
      * platform fallback. The callback is only repeated when school SMTP failed
      * before accepting the message and the fallback policy permits a retry.
      */
-    public function deliverForSchool(?School $school, callable $callback): array
+    public function deliverForSchool(?School $school, callable $callback, array $attemptContext = []): array
     {
         if (! $school) {
             if (! $this->platformMailerCanDeliver()) {
-                throw $this->platformDeliveryException(
+                $exception = $this->platformDeliveryException(
                     'platform_non_delivery',
                     'Platform mail is configured for non-delivery logging only; no external email was delivered.'
                 );
+                $this->recordRuntimeFailure(null, $exception, $attemptContext);
+
+                throw $exception;
             }
 
             $result = $this->withPlatformMailContext($callback);
 
-            return [
+            return $this->runtimeDeliveryResult($school, $result, [
                 'result' => $result,
                 'fallback_used' => false,
                 'primary_error' => null,
                 'transport' => $this->platformMailerStatus()['driver'],
-            ];
+            ], $attemptContext);
         }
 
         if (! $this->hasEnabledSchoolMailer($school)) {
             $platformRequiredByPolicy = $this->forcePlatformMailer() || ! $this->schoolCustomSmtpAllowed();
 
             if (! $platformRequiredByPolicy && ! $this->platformFallbackEnabled()) {
-                throw new MailConfigurationException(
+                $exception = new MailConfigurationException(
                     'school_smtp_unavailable',
                     'School SMTP is disabled or incomplete, and platform fallback is disabled.'
                 );
+                $this->recordRuntimeFailure($school, $exception, $attemptContext);
+
+                throw $exception;
             }
 
             if (! $this->platformMailerCanDeliver()) {
-                throw $this->platformDeliveryException(
+                $exception = $this->platformDeliveryException(
                     'platform_fallback_unavailable',
                     'School SMTP is disabled or incomplete, and platform fallback cannot deliver external email.'
                 );
+                $this->recordRuntimeFailure($school, $exception, $attemptContext);
+
+                throw $exception;
             }
 
             $result = $this->withPlatformMailContext($callback);
 
-            return [
+            return $this->runtimeDeliveryResult($school, $result, [
                 'result' => $result,
                 'fallback_used' => true,
                 'primary_error' => 'school_smtp_unavailable',
                 'transport' => $this->platformMailerStatus()['driver'],
-            ];
+            ], $attemptContext);
         }
 
         try {
             $result = $this->withSchoolMailContext($school, $callback);
 
-            return [
+            return $this->runtimeDeliveryResult($school, $result, [
                 'result' => $result,
                 'fallback_used' => false,
                 'primary_error' => null,
                 'transport' => SchoolSmtpService::MAILER,
-            ];
+            ], $attemptContext);
         } catch (Throwable $schoolException) {
             $schoolDiagnostic = MailSecurity::diagnostic($schoolException);
 
             if (! $this->platformFallbackEnabled()) {
+                $this->recordRuntimeFailure($school, $schoolException, $attemptContext);
                 throw $schoolException;
             }
 
@@ -414,6 +442,8 @@ class MailSettingService
                     $schoolDiagnostic['message'].' Platform fallback is not configured for external delivery.'
                 );
 
+                $this->recordRuntimeFailure($school, $platformException, $attemptContext);
+
                 throw new RuntimeException($platformException->getMessage(), previous: $schoolException);
             }
 
@@ -421,6 +451,10 @@ class MailSettingService
                 $result = $this->withPlatformMailContext($callback);
             } catch (Throwable $platformException) {
                 $platformDiagnostic = MailSecurity::diagnostic($platformException);
+
+                $this->recordRuntimeFailure($school, $platformException, array_merge($attemptContext, [
+                    'fallback_used' => true,
+                ]));
 
                 throw new RuntimeException(
                     $schoolDiagnostic['message'].' Platform fallback failed: '.$platformDiagnostic['message'],
@@ -435,12 +469,12 @@ class MailSettingService
                 'transport' => $transport,
             ]);
 
-            return [
+            return $this->runtimeDeliveryResult($school, $result, [
                 'result' => $result,
                 'fallback_used' => true,
                 'primary_error' => $schoolDiagnostic['category'],
                 'transport' => $transport,
-            ];
+            ], $attemptContext);
         }
     }
 
@@ -549,6 +583,11 @@ class MailSettingService
             'last_test_transport' => data_get($metadata, 'last_test.transport'),
             'last_test_configuration' => data_get($metadata, 'last_test.configuration', 'saved'),
             'last_test_at' => data_get($metadata, 'last_test.at'),
+            'last_test_category' => data_get($metadata, 'last_test.category'),
+            'last_test_smtp_accepted' => (bool) data_get($metadata, 'last_test.smtp_accepted', false),
+            'last_test_fallback_used' => (bool) data_get($metadata, 'last_test.fallback_used', false),
+            'last_test_external_delivery_attempted' => (bool) data_get($metadata, 'last_test.external_delivery_attempted', false),
+            'last_test_provider_message_id' => data_get($metadata, 'last_test.provider_message_id'),
         ];
     }
 
@@ -595,7 +634,11 @@ class MailSettingService
         string $outcome,
         string $transport,
         ?string $category = null,
-        string $configuration = 'saved'
+        string $configuration = 'saved',
+        ?string $providerMessageId = null,
+        bool $smtpAccepted = false,
+        bool $fallbackUsed = false,
+        bool $externalDeliveryAttempted = true
     ): void {
         if (! $setting->exists) {
             return;
@@ -607,6 +650,10 @@ class MailSettingService
             'transport' => $transport,
             'category' => $category,
             'configuration' => $configuration === 'temporary' ? 'temporary' : 'saved',
+            'provider_message_id' => $providerMessageId,
+            'smtp_accepted' => $smtpAccepted,
+            'fallback_used' => $fallbackUsed,
+            'external_delivery_attempted' => $externalDeliveryAttempted,
             'at' => now()->toIso8601String(),
         ];
         $setting->metadata = $metadata;
@@ -652,7 +699,7 @@ class MailSettingService
         if ($setting && $setting->is_enabled) {
             $driver = (string) $setting->mailer;
             $password = $this->passwordState($setting);
-            $configured = $driver === 'log' || ($driver === 'smtp'
+            $configured = in_array($driver, ['log', 'array'], true) || ($driver === 'smtp'
                 && filled($setting->host)
                 && filled($setting->from_address)
                 && (! filled($setting->username) || $password['available']));
@@ -712,9 +759,104 @@ class MailSettingService
 
         $pending = $mailer ? Mail::mailer($mailer) : Mail::mailer();
 
-        $pending->raw($brandName.' SMTP test. The server accepted this message for delivery.', function ($message) use ($recipient, $brandName) {
+        $sent = $pending->raw($brandName.' SMTP test. The server accepted this message for delivery.', function ($message) use ($recipient, $brandName) {
             $message->to($recipient)->subject($brandName.' Mail Test');
         });
+
+        $this->lastProviderMessageId = $this->extractProviderMessageId($sent);
+    }
+
+    public function recordDeliveryAttempt(array $attributes): void
+    {
+        $schoolId = filled($attributes['school_id'] ?? null) ? (int) $attributes['school_id'] : null;
+        $setting = $schoolId ? $this->configured($schoolId) : $this->configured();
+
+        if ($setting) {
+            $attributes = array_merge([
+                'host' => $setting->host,
+                'port' => $setting->port,
+                'encryption' => $setting->encryption,
+                'sender' => $setting->from_address,
+            ], $attributes);
+        }
+
+        app(MailDeliveryAttemptService::class)->record($attributes);
+    }
+
+    public function latestDeliveryAttempt(?int $schoolId): ?MailDeliveryAttempt
+    {
+        return app(MailDeliveryAttemptService::class)->latestForSchool($schoolId);
+    }
+
+    private function extractProviderMessageId(mixed $sent): ?string
+    {
+        if (! is_object($sent)) {
+            return null;
+        }
+
+        try {
+            if (method_exists($sent, 'getMessageId')) {
+                return filled($sent->getMessageId()) ? (string) $sent->getMessageId() : null;
+            }
+
+            $original = method_exists($sent, 'getSymfonySentMessage')
+                ? $sent->getSymfonySentMessage()
+                : null;
+
+            return $original && method_exists($original, 'getMessageId') && filled($original->getMessageId())
+                ? (string) $original->getMessageId()
+                : null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function runtimeDeliveryResult(?School $school, mixed $result, array $delivery, array $context): array
+    {
+        $providerMessageId = $this->extractProviderMessageId($result);
+        $delivery['provider_message_id'] = $providerMessageId;
+
+        if ($context !== []) {
+            $platformTransport = $delivery['transport'] !== SchoolSmtpService::MAILER;
+            $this->recordDeliveryAttempt(array_merge($context, [
+                'school_id' => $school?->id,
+                'transport' => $delivery['transport'],
+                'status' => $delivery['fallback_used'] || $platformTransport ? 'fallback_accepted' : 'accepted_by_smtp',
+                'safe_error_category' => $delivery['primary_error'],
+                'provider_message_id' => $providerMessageId,
+                'fallback_used' => $delivery['fallback_used'],
+                'external_delivery_attempted' => true,
+            ]));
+        }
+
+        return $delivery;
+    }
+
+    private function recordRuntimeFailure(?School $school, Throwable $exception, array $context): void
+    {
+        if ($context === []) {
+            return;
+        }
+
+        $diagnostic = MailSecurity::diagnostic($exception);
+        $externalDeliveryAttempted = ($school && $this->hasEnabledSchoolMailer($school))
+            || ! in_array($diagnostic['category'], [
+                'missing_configuration',
+                'missing_password',
+                'password_decryption_failed',
+                'platform_non_delivery',
+                'platform_fallback_unavailable',
+                'school_smtp_unavailable',
+                'unsupported_encryption',
+            ], true);
+        $this->recordDeliveryAttempt(array_merge($context, [
+            'school_id' => $school?->id,
+            'transport' => $school ? 'smtp' : $this->platformMailerStatus()['driver'],
+            'status' => app(MailDeliveryAttemptService::class)->statusForCategory($diagnostic['category']),
+            'safe_error_category' => $diagnostic['category'],
+            'sanitized_error_message' => $diagnostic['message'],
+            'external_delivery_attempted' => $externalDeliveryAttempted,
+        ]));
     }
 
     private function isPasswordMask(mixed $value): bool

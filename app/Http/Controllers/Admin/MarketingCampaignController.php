@@ -9,7 +9,6 @@ use App\Models\MarketingCampaign;
 use App\Models\MarketingEmailTemplate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -37,7 +36,7 @@ class MarketingCampaignController extends Controller
 
     public function create(): View
     {
-        return view('admin.email-marketing.campaigns.form', $this->formData(new MarketingCampaign()));
+        return view('admin.email-marketing.campaigns.form', $this->formData(new MarketingCampaign));
     }
 
     public function store(Request $request): RedirectResponse

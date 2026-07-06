@@ -173,6 +173,12 @@ class InstallerSetupService
                 $this->assignSchoolAdminRole($schoolAdmin, $school);
             }
 
+            $this->assignAdditionalSchoolRoles(
+                $schoolAdmin,
+                $school,
+                (array) ($schoolAdminData['additional_roles'] ?? [])
+            );
+
             $this->configureSchoolMail($school, (array) data_get($metadata, 'smtp_placeholder', []));
             $this->runSafePostInstallTasks();
 
@@ -214,6 +220,39 @@ class InstallerSetupService
             'from_address' => $smtp['from_address'] ?? $school->email,
             'from_name' => $smtp['from_name'] ?? $school->name,
         ]);
+    }
+
+    private function assignAdditionalSchoolRoles(User $user, School $school, array $roleNames): void
+    {
+        $roleNames = collect($roleNames)
+            ->map(fn ($role) => trim((string) $role))
+            ->filter(fn (string $role): bool => in_array($role, ['teacher', 'result_officer', 'accountant', 'admissions_officer'], true))
+            ->unique()
+            ->values();
+
+        if ($roleNames->isEmpty()) {
+            return;
+        }
+
+        app(RolePermissionService::class)->ensureDefaultRolePermissions($roleNames->all());
+
+        foreach ($roleNames as $roleName) {
+            Role::findOrCreate($roleName, 'web');
+            $user->assignRole($roleName);
+            UserSchoolRole::query()->updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'school_id' => $school->id,
+                    'role_name' => $roleName,
+                ],
+                [
+                    'status' => 'active',
+                    'metadata' => ['source' => 'installer'],
+                ]
+            );
+        }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     private function safeInstallationMetadata(array $metadata): array

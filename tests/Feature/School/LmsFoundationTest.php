@@ -3,7 +3,6 @@
 namespace Tests\Feature\School;
 
 use App\Models\AcademicSession;
-use App\Models\AuditLog;
 use App\Models\ClassSubjectAssignment;
 use App\Models\LmsClassroom;
 use App\Models\LmsMaterial;

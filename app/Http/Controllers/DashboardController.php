@@ -27,16 +27,15 @@ class DashboardController extends Controller
             }
         }
 
-        $activeRole = app(\App\Services\CurrentSchoolService::class)->roleContext(auth()->user());
+        $activeKey = $workspaces->activeKey(auth()->user());
+        $context = $activeKey
+            ? $workspaces->contextsFor(auth()->user())->firstWhere('key', $activeKey)
+            : null;
 
-        if ($activeRole === 'super_admin') {
-            return redirect()->route('admin.dashboard');
+        if (! $context) {
+            return redirect()->route('workspace.create');
         }
 
-        if (in_array($activeRole, ['school_admin', 'result_officer', 'teacher'], true)) {
-            return redirect()->route('school.dashboard');
-        }
-
-        return redirect()->route('profile.edit');
+        return redirect()->route($workspaces->destinationRoute($context));
     }
 }

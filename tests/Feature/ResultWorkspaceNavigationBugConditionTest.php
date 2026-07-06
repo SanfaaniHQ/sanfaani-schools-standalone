@@ -8,6 +8,7 @@ use App\Models\School;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Models\TeacherResultSubmission;
 use App\Models\TeacherSubjectAssignment;
 use App\Models\Term;
 use App\Models\User;
@@ -64,7 +65,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
         $subject = $this->createSubject($school);
         $student = $this->createStudent($school, $schoolClass);
         $teacher = $this->createUserForSchool($school, 'teacher');
-        
+
         // Create teacher assignment for the class and subject using the current teacher-assignment architecture.
         TeacherSubjectAssignment::create([
             'school_id' => $school->id,
@@ -91,7 +92,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
                 "Expected: HTTP 200 response\n".
                 "Actual: HTTP {$createResponse->status()} response\n".
                 "This indicates navigation is broken before even entering results.\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
@@ -122,18 +123,18 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
                 "- Missing navigation event handlers\n".
                 "- Form submission may not complete properly\n".
                 "- Redirect logic may be broken\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
         // Check if redirect target is correct
-        if (!$storeResponse->isRedirect()) {
+        if (! $storeResponse->isRedirect()) {
             $this->markTestIncomplete(
                 "BUG CONFIRMED: Result entry form submission did not redirect as expected.\n".
                 "Expected: Redirect to result show page\n".
                 "Actual: No redirect occurred\n".
                 "This indicates navigation flow is broken.\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
@@ -147,7 +148,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
                 "Expected: HTTP 200 response on redirect target\n".
                 "Actual: HTTP {$redirectResponse->status()} response\n".
                 "This indicates navigation breaks after form submission.\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
@@ -171,7 +172,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
         $subject = $this->createSubject($school);
         $student = $this->createStudent($school, $schoolClass);
         $resultOfficer = $this->createUserForSchool($school, 'result_officer');
-        
+
         $this->actAsSchoolRole($resultOfficer, $school, 'result_officer');
 
         // Execute: Navigate to result management workspace
@@ -187,7 +188,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
                 "Expected: HTTP 200 response\n".
                 "Actual: HTTP {$response->status()} response\n".
                 "This indicates navigation is broken in Result Management Workspace.\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
@@ -208,7 +209,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
         $subject = $this->createSubject($school);
         $student = $this->createStudent($school, $schoolClass);
         $teacher = $this->createUserForSchool($school, 'teacher');
-        
+
         // Create teacher assignment using the current teacher-assignment architecture.
         TeacherSubjectAssignment::create([
             'school_id' => $school->id,
@@ -221,7 +222,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
         ]);
 
         // Create a draft submission
-        $submission = \App\Models\TeacherResultSubmission::create([
+        $submission = TeacherResultSubmission::create([
             'school_id' => $school->id,
             'teacher_user_id' => $teacher->id,
             'school_class_id' => $schoolClass->id,
@@ -255,7 +256,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
                 "Expected: HTTP 200 response\n".
                 "Actual: HTTP {$editResponse->status()} response\n".
                 "This indicates navigation breaks when editing results.\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
@@ -278,17 +279,17 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
                 "Expected: Successful update with redirect (HTTP 302)\n".
                 "Actual: HTTP {$updateResponse->status()} response\n".
                 "This indicates navigation breaks during result editing.\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
-        if (!$updateResponse->isRedirect()) {
+        if (! $updateResponse->isRedirect()) {
             $this->markTestIncomplete(
                 "BUG CONFIRMED: Result update did not redirect as expected.\n".
                 "Expected: Redirect to result show page\n".
                 "Actual: No redirect occurred\n".
                 "This indicates navigation flow is broken during editing.\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         }
 
@@ -299,7 +300,7 @@ class ResultWorkspaceNavigationBugConditionTest extends TestCase
 
     /**
      * Test the CORRECT behavior (this should always pass)
-     * 
+     *
      * This demonstrates that basic page loading works without result operations.
      */
     public function test_basic_navigation_to_teacher_results_index_works(): void

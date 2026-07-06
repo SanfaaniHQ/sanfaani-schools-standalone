@@ -9,6 +9,7 @@ use App\Services\Backups\BackupService;
 use App\Services\Installer\InstallerStateService;
 use App\Services\Licensing\LicenseValidationService;
 use App\Services\Security\SecretRedactionService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -128,7 +129,7 @@ class StandaloneSystemHealthService
             'php_version',
             'PHP version',
             $passes ? 'pass' : 'fail',
-            $passes ? "PHP ".PHP_VERSION." meets the {$minimum}+ requirement." : "PHP {$minimum} or newer is required.",
+            $passes ? 'PHP '.PHP_VERSION." meets the {$minimum}+ requirement." : "PHP {$minimum} or newer is required.",
             ['current' => PHP_VERSION, 'minimum' => $minimum],
         );
     }
@@ -714,7 +715,7 @@ class StandaloneSystemHealthService
     private function ageLabel(string $isoDate): string
     {
         try {
-            return \Illuminate\Support\Carbon::parse($isoDate)->diffForHumans();
+            return Carbon::parse($isoDate)->diffForHumans();
         } catch (Throwable) {
             return 'Unknown';
         }

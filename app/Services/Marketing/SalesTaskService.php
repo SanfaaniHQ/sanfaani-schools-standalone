@@ -6,7 +6,6 @@ use App\Models\DemoRequest;
 use App\Models\LeadRequest;
 use App\Models\License;
 use App\Models\SalesTask;
-use App\Models\School;
 use App\Models\User;
 
 class SalesTaskService

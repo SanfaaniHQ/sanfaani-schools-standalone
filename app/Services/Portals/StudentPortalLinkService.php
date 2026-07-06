@@ -59,7 +59,7 @@ class StudentPortalLinkService
         $email = strtolower(trim((string) $parent->email));
 
         if ($email === '') {
-            return new Collection();
+            return new Collection;
         }
 
         return Student::query()

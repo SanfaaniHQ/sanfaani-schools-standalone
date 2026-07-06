@@ -3,7 +3,6 @@
 namespace Tests\Feature\School;
 
 use App\Models\School;
-use App\Models\SchoolFeatureSetting;
 use App\Models\User;
 use App\Models\UserSchoolRole;
 use App\Services\CurrentSchoolService;
@@ -38,7 +37,7 @@ class StageFRolesPermissionsFeatureControlTest extends TestCase
                 'school_id' => $school->id,
                 'role_name' => 'teacher',
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('school.dashboard'));
 
         $this->assertSame($school->id, session('active_school_id'));
         $this->assertSame('teacher', session('active_role_context'));
@@ -71,7 +70,7 @@ class StageFRolesPermissionsFeatureControlTest extends TestCase
                 'school_id' => $school->id,
                 'role_name' => 'teacher',
             ])
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('school.dashboard'));
 
         $this->assertSame($school->id, session('active_school_id'));
         $this->assertSame('teacher', session('active_role_context'));

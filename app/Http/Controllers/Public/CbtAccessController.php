@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\CbtAttempt;
+use App\Models\CbtCandidate;
 use App\Models\CbtExam;
 use App\Models\School;
 use App\Models\Student;
@@ -220,7 +221,7 @@ class CbtAccessController extends Controller
     {
         do {
             $code = 'PUB-'.strtoupper(Str::random(12));
-        } while (\App\Models\CbtCandidate::where('candidate_code', $code)->exists());
+        } while (CbtCandidate::where('candidate_code', $code)->exists());
 
         return $code;
     }

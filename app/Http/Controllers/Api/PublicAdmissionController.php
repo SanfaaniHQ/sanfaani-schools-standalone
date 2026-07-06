@@ -13,8 +13,7 @@ class PublicAdmissionController extends Controller
     public function __construct(
         private readonly AdmissionApplicationService $applications,
         private readonly AdmissionWebsiteIntegrationService $integration
-    ) {
-    }
+    ) {}
 
     public function config(Request $request): JsonResponse
     {

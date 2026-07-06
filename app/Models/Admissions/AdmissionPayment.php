@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AdmissionPayment extends Model
 {
     public const STATUSES = ['pending', 'paid', 'failed', 'waived', 'confirmed'];
+
     public const METHODS = ['manual', 'online', 'waived'];
 
     protected $fillable = [

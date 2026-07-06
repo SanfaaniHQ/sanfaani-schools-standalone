@@ -206,6 +206,7 @@ class BackupService
     public function visibleBackups(?User $user = null): Builder
     {
         $user ??= auth()->user();
+
         return Backup::query()
             ->with(['school', 'creator', 'latestVerification'])
             ->when(! $user?->hasRole('super_admin'), function (Builder $query) use ($user): void {

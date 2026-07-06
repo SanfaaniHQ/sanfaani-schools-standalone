@@ -90,8 +90,7 @@ class TeacherAssignmentAccessService
         ?int $classId = null,
         ?int $academicSessionId = null,
         ?int $termId = null
-    ): Collection
-    {
+    ): Collection {
         $subjectIds = collect();
 
         if ($classId && $this->hasClassAssignment($school, $teacher, $classId, $academicSessionId, $termId)) {

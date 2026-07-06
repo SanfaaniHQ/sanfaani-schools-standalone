@@ -15,13 +15,19 @@ class LiveClass extends Model
     use SoftDeletes;
 
     public const PROVIDER_MANUAL = 'manual';
+
     public const PROVIDER_GOOGLE_MEET = 'google_meet';
+
     public const PROVIDER_ZOOM = 'zoom';
+
     public const PROVIDER_MICROSOFT_TEAMS = 'microsoft_teams';
 
     public const STATUS_SCHEDULED = 'scheduled';
+
     public const STATUS_LIVE = 'live';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     public const STATUSES = [

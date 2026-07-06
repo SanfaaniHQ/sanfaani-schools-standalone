@@ -12,12 +12,19 @@ class LiveClassParticipant extends Model
     use HasFactory;
 
     public const AUDIENCE_SELECTED_USERS = 'selected_users';
+
     public const AUDIENCE_WHOLE_SCHOOL = 'whole_school';
+
     public const AUDIENCE_CLASS = 'class';
+
     public const AUDIENCE_SUBJECT = 'subject';
+
     public const AUDIENCE_TEACHERS = 'teachers';
+
     public const AUDIENCE_STUDENTS = 'students';
+
     public const AUDIENCE_PARENTS = 'parents';
+
     public const AUDIENCE_STAFF = 'staff';
 
     public const AUDIENCE_TYPES = [
@@ -32,7 +39,9 @@ class LiveClassParticipant extends Model
     ];
 
     public const STATUS_INVITED = 'invited';
+
     public const STATUS_JOINED = 'joined';
+
     public const STATUS_REMOVED = 'removed';
 
     public const ACTIVE_STATUSES = [

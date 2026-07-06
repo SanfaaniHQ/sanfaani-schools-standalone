@@ -36,9 +36,9 @@ class ChooseWorkspaceController extends Controller
             'workspace' => ['required', 'string', 'max:150'],
         ]);
 
-        abort_unless($workspaces->selectSchoolByKey($request->user(), $data['workspace'], true), 403);
+        abort_unless($workspaces->selectByKey($request->user(), $data['workspace'], true), 403);
 
-        $context = $workspaces->schoolContextsFor($request->user())->firstWhere('key', $data['workspace']);
+        $context = $workspaces->contextsFor($request->user())->firstWhere('key', $data['workspace']);
 
         return $this->redirectFor($context);
     }
@@ -78,6 +78,8 @@ class ChooseWorkspaceController extends Controller
 
     private function redirectFor(?array $context): RedirectResponse
     {
-        return redirect()->route('school.dashboard');
+        abort_unless($context, 403);
+
+        return redirect()->route(app(UserWorkspaceService::class)->destinationRoute($context));
     }
 }

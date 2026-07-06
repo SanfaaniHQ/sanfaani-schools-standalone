@@ -8,6 +8,7 @@ use App\Models\MailSetting;
 use App\Models\School;
 use App\Services\AuditLogService;
 use App\Services\CurrentSchoolService;
+use App\Services\MailDeliveryAttemptService;
 use App\Services\MailSettingService;
 use App\Support\MailSecurity;
 use Illuminate\Http\RedirectResponse;
@@ -37,6 +38,7 @@ class MailSettingController extends Controller
             'platformFallbackConfigured' => $mailSettings->platformMailerConfigured(),
             'platformStatus' => $mailSettings->platformMailerStatus(),
             'schoolStatus' => $mailSettings->schoolMailerStatus($setting),
+            'latestDeliveryAttempt' => $mailSettings->latestDeliveryAttempt($school->id),
             'masker' => $mailSettings,
         ]);
     }
@@ -80,21 +82,36 @@ class MailSettingController extends Controller
     ): RedirectResponse {
         $school = $this->schoolAdminSchool($request, $currentSchool);
         $setting = $mailSettings->current($school->id);
-        $request->merge($this->schoolMailSettingsPayload($request, $setting));
+        $testMode = $request->input('test_mode') === 'temporary' ? 'temporary' : 'saved';
 
-        if (! $mailSettings->schoolCustomSmtpAllowed() && $request->boolean('is_enabled')) {
+        if (! $mailSettings->schoolCustomSmtpAllowed()) {
             return back()->with('error', 'Custom school SMTP is currently disabled by the platform administrator.');
         }
 
-        $data = $request->validate(array_merge($this->schoolMailValidationRules($request, $setting, $mailSettings), [
+        if ($testMode === 'temporary') {
+            $request->merge($this->schoolMailSettingsPayload($request, $setting));
+        }
+
+        $rules = [
             'test_email' => ['required', 'email:rfc', 'max:255'],
-        ]));
-        $settingsData = Arr::except($data, 'test_email');
-        $candidate = $mailSettings->candidateForSchool($school, $settingsData, $setting);
-        $testConfiguration = $mailSettings->candidateMatchesSaved($candidate, $setting) ? 'saved' : 'temporary';
+            'test_mode' => ['nullable', 'in:saved,temporary'],
+        ];
+
+        if ($testMode === 'temporary') {
+            $rules = array_merge($this->schoolMailValidationRules($request, $setting, $mailSettings), $rules);
+        }
+
+        $data = $request->validate($rules);
+        $settingsData = $testMode === 'temporary' ? Arr::except($data, ['test_email', 'test_mode']) : [];
+        $candidate = $testMode === 'temporary'
+            ? $mailSettings->candidateForSchool($school, $settingsData, $setting)
+            : $setting;
+        $testConfiguration = $testMode;
 
         try {
-            $delivery = $mailSettings->sendSchoolTestUsingData($school, $settingsData, $data['test_email'], $setting);
+            $delivery = $testMode === 'temporary'
+                ? $mailSettings->sendSchoolTestUsingData($school, $settingsData, $data['test_email'], $setting)
+                : $mailSettings->sendSchoolTest($school, $data['test_email']);
         } catch (Throwable $exception) {
             $diagnostic = MailSecurity::diagnostic($exception);
             Log::warning('School SMTP test failed.', [
@@ -106,7 +123,22 @@ class MailSettingController extends Controller
                 'exception' => $exception::class,
                 'category' => $diagnostic['category'],
             ]);
-            $mailSettings->recordTestResult($setting, 'failed', 'school_smtp', $diagnostic['category'], $testConfiguration);
+            $mailSettings->recordTestResult($setting, 'failed', 'school_smtp', $diagnostic['category'], $testConfiguration, externalDeliveryAttempted: true);
+            $mailSettings->recordDeliveryAttempt([
+                'school_id' => $school->id,
+                'initiating_user_id' => $request->user()->id,
+                'transport' => 'smtp',
+                'host' => $candidate->host,
+                'port' => $candidate->port,
+                'encryption' => $candidate->encryption,
+                'sender' => $candidate->from_address,
+                'recipient' => $data['test_email'],
+                'status' => app(MailDeliveryAttemptService::class)->statusForCategory($diagnostic['category']),
+                'safe_error_category' => $diagnostic['category'],
+                'sanitized_error_message' => $diagnostic['message'],
+                'configuration' => $testConfiguration,
+                'external_delivery_attempted' => true,
+            ]);
 
             $this->recordTestAudit($auditLog, 'school_mail_settings_test_failed', $candidate, $school, [
                 'mailer' => 'school_smtp',
@@ -120,7 +152,29 @@ class MailSettingController extends Controller
                 ->with('error', $diagnostic['message']);
         }
 
-        $mailSettings->recordTestResult($setting, 'accepted', $delivery['mailer'], configuration: $testConfiguration);
+        $mailSettings->recordTestResult(
+            $setting,
+            'accepted_by_smtp',
+            $delivery['mailer'],
+            configuration: $testConfiguration,
+            providerMessageId: $delivery['provider_message_id'],
+            smtpAccepted: true,
+            externalDeliveryAttempted: true,
+        );
+        $mailSettings->recordDeliveryAttempt([
+            'school_id' => $school->id,
+            'initiating_user_id' => $request->user()->id,
+            'transport' => 'smtp',
+            'host' => $delivery['host'],
+            'port' => $delivery['port'],
+            'encryption' => $delivery['encryption'],
+            'sender' => $delivery['sender'],
+            'recipient' => $delivery['recipient'],
+            'status' => 'accepted_by_smtp',
+            'provider_message_id' => $delivery['provider_message_id'],
+            'configuration' => $testConfiguration,
+            'external_delivery_attempted' => true,
+        ]);
         $this->recordTestAudit($auditLog, 'school_mail_settings_test_sent', $candidate, $school, [
             'mailer' => $delivery['mailer'],
             'is_enabled' => $candidate->is_enabled,
@@ -129,7 +183,7 @@ class MailSettingController extends Controller
             'fallback_used' => false,
         ], $request);
 
-        $message = 'School SMTP accepted the test email for delivery. Transport: school_smtp. Inbox delivery is not guaranteed.';
+        $message = 'School SMTP accepted the test message for delivery. SMTP acceptance means the sending server accepted the message. It does not guarantee inbox placement.';
 
         if ($testConfiguration === 'temporary') {
             $message .= ' Save settings to keep these SMTP details.';
@@ -137,7 +191,11 @@ class MailSettingController extends Controller
 
         return back()
             ->withInput($request->except('password'))
-            ->with('success', $message);
+            ->with('success', $message)
+            ->with('mail_test_result', array_merge($delivery, [
+                'configuration' => $testConfiguration,
+                'timestamp' => $delivery['accepted_at'],
+            ]));
     }
 
     public function testFallback(
@@ -162,8 +220,32 @@ class MailSettingController extends Controller
                 'category' => $diagnostic['category'],
             ]);
 
+            $status = $mailSettings->platformMailerStatus();
+            $mailSettings->recordDeliveryAttempt([
+                'school_id' => $school->id,
+                'initiating_user_id' => $request->user()->id,
+                'transport' => $status['driver'],
+                'recipient' => $data['test_email'],
+                'status' => app(MailDeliveryAttemptService::class)->statusForCategory($diagnostic['category']),
+                'safe_error_category' => $diagnostic['category'],
+                'sanitized_error_message' => $diagnostic['message'],
+                'fallback_used' => true,
+                'external_delivery_attempted' => $status['external_delivery'],
+            ]);
+
             return back()->withInput()->with('error', 'Platform fallback failed: '.$diagnostic['message']);
         }
+
+        $mailSettings->recordDeliveryAttempt([
+            'school_id' => $school->id,
+            'initiating_user_id' => $request->user()->id,
+            'transport' => $delivery['transport'],
+            'recipient' => $data['test_email'],
+            'status' => $delivery['logged_only'] ? 'fallback_non_delivery' : 'fallback_accepted',
+            'provider_message_id' => $delivery['provider_message_id'] ?? null,
+            'fallback_used' => true,
+            'external_delivery_attempted' => ! $delivery['logged_only'],
+        ]);
 
         $this->recordTestAudit($auditLog, 'school_platform_fallback_test_completed', $mailSettings->current($school->id), $school, [
             'transport' => $delivery['transport'],
@@ -171,12 +253,12 @@ class MailSettingController extends Controller
         ], $request);
 
         $message = match (true) {
-            ! $delivery['logged_only'] => 'Platform fallback accepted the test email for delivery. Transport: '.$delivery['transport'].'. Inbox delivery is not guaranteed.',
-            $delivery['transport'] === 'log' => 'Fallback is configured to log messages only; no external email was delivered.',
-            default => 'Fallback is configured to use the '.strtoupper($delivery['transport']).' test transport; no external email was delivered.',
+            ! $delivery['logged_only'] => 'Platform fallback accepted the test message for delivery. Transport: '.$delivery['transport'].'. Inbox placement is not guaranteed.',
+            $delivery['transport'] === 'log' => 'No external email was sent because the platform fallback uses a non-delivery transport (LOG).',
+            default => 'No external email was sent because the platform fallback uses a non-delivery transport ('.strtoupper($delivery['transport']).').',
         };
 
-        return back()->withInput()->with('success', $message);
+        return back()->withInput()->with($delivery['logged_only'] ? 'warning' : 'success', $message);
     }
 
     private function schoolAdminSchool(Request $request, CurrentSchoolService $currentSchool): School

@@ -11,7 +11,7 @@ class BackupPreflightService
 {
     public function run(?School $school = null, ?User $actor = null): BackupPreflightResult
     {
-        $result = new BackupPreflightResult();
+        $result = new BackupPreflightResult;
 
         $this->checkEnabled($result);
         $this->checkDisk($result);

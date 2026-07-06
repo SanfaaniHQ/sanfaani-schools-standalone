@@ -14,13 +14,21 @@ use Illuminate\Validation\ValidationException;
 class NotificationRecipientResolver
 {
     public const TYPE_SCHOOL_OPERATIONS = 'school_operations';
+
     public const TYPE_SCHOOL_ADMIN = SchoolNotificationTemplate::AUDIENCE_SCHOOL_ADMIN;
+
     public const TYPE_TEACHER = SchoolNotificationTemplate::AUDIENCE_TEACHER;
+
     public const TYPE_ACCOUNTANT = SchoolNotificationTemplate::AUDIENCE_ACCOUNTANT;
+
     public const TYPE_RESULT_OFFICER = SchoolNotificationTemplate::AUDIENCE_RESULT_OFFICER;
+
     public const TYPE_STUDENT = SchoolNotificationTemplate::AUDIENCE_STUDENT;
+
     public const TYPE_CLASS = SchoolNotificationTemplate::AUDIENCE_CLASS;
+
     public const TYPE_USER = 'user';
+
     public const TYPE_LIVE_CLASS_AUDIENCE = 'school_live_class_audience';
 
     public const RECIPIENT_TYPES = [

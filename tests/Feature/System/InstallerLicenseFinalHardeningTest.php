@@ -3,7 +3,6 @@
 namespace Tests\Feature\System;
 
 use App\Models\AuditLog;
-use App\Models\License;
 use App\Models\School;
 use App\Models\User;
 use App\Services\Installer\InstallerStateService;

@@ -94,24 +94,27 @@ class RoleAwareNavigationTest extends TestCase
         $this->assertSame('school_admin', $default['role_name']);
         $this->assertSame($school->id, $default['school_id']);
         $this->assertSame('Installation Admin', $contexts->firstWhere('key', 'global:super_admin')['label']);
-        $this->assertSame('Standalone diagnostics', $contexts->firstWhere('key', 'global:super_admin')['school_name']);
+        $this->assertNull($contexts->firstWhere('key', 'global:super_admin')['school_name']);
     }
 
-    public function test_multi_role_owner_topbar_keeps_installation_admin_out_of_school_workspace_list(): void
+    public function test_multi_role_owner_topbar_groups_installation_and_school_workspaces(): void
     {
         $school = $this->createSchool();
         $owner = $this->createUserForSchool($school, 'school_admin');
         Role::findOrCreate('super_admin');
         Role::findOrCreate('teacher');
+        Role::findOrCreate('admissions_officer');
         $owner->assignRole('super_admin');
-        $owner->assignRole('teacher');
+        $owner->assignRole(['teacher', 'admissions_officer']);
 
-        UserSchoolRole::create([
-            'user_id' => $owner->id,
-            'school_id' => $school->id,
-            'role_name' => 'teacher',
-            'status' => 'active',
-        ]);
+        foreach (['teacher', 'admissions_officer'] as $roleName) {
+            UserSchoolRole::create([
+                'user_id' => $owner->id,
+                'school_id' => $school->id,
+                'role_name' => $roleName,
+                'status' => 'active',
+            ]);
+        }
 
         $this->actAsSchoolRole($owner, $school, 'school_admin');
 
@@ -120,19 +123,21 @@ class RoleAwareNavigationTest extends TestCase
             ->assertSee('Switch Role')
             ->assertSee('workspace-switcher-popup')
             ->assertSee('fixed inset-0 z-[80]', false)
-            ->assertSee('data-role-switcher="segmented"', false)
-            ->assertSee('overflow-x-auto', false)
-            ->assertSee('flex-nowrap', false)
+            ->assertSee('data-workspace-switcher', false)
+            ->assertSee('data-workspace-options', false)
+            ->assertSee('sm:grid-cols-2', false)
             ->assertSee('data-role-name="school_admin"', false)
             ->assertSee('data-role-name="teacher"', false)
-            ->assertSee('data-state="active"', false)
+            ->assertSee('data-role-name="admissions_officer"', false)
+            ->assertSee('data-role-name="super_admin"', false)
+            ->assertSee('data-workspace-type="installation_admin"', false)
+            ->assertSee('data-workspace-type="school"', false)
             ->assertSee('aria-current="true"', false)
             ->assertSee('action="'.route('workspace.store').'"', false)
             ->assertSee('School Admin')
             ->assertSee('Teacher')
+            ->assertSee('Admissions Officer')
             ->assertSee('Installation Admin')
-            ->assertDontSee('data-role-name="super_admin"', false)
-            ->assertDontSee('Super Admin')
             ->assertDontSee('Support mode:')
             ->assertDontSee('Support access active');
     }
@@ -141,7 +146,7 @@ class RoleAwareNavigationTest extends TestCase
     {
         $school = $this->createSchool();
         $owner = $this->createUserForSchool($school, 'school_admin');
-        $schoolRoles = ['teacher', 'parent', 'student', 'result_officer', 'accountant'];
+        $schoolRoles = ['teacher', 'parent', 'student', 'result_officer', 'accountant', 'admissions_officer'];
 
         foreach ($schoolRoles as $roleName) {
             Role::findOrCreate($roleName);
@@ -173,7 +178,6 @@ class RoleAwareNavigationTest extends TestCase
             ->assertSee('action="'.route('role-context.switch').'"', false)
             ->assertSee('data-installation-admin-action', false)
             ->assertSee('action="'.route('workspace.installation-admin').'"', false)
-            ->assertDontSee('data-role-name="super_admin"', false)
             ->assertDontSee('Support mode:')
             ->assertDontSee('Support access active');
 

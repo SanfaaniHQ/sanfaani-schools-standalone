@@ -13,7 +13,8 @@ class RoleContextController extends Controller
     public function index(Request $request, UserWorkspaceService $workspaces): View
     {
         return view('role-context.index', [
-            'contexts' => $workspaces->schoolContextsFor($request->user())->all(),
+            'contexts' => $workspaces->contextsFor($request->user())->all(),
+            'activeWorkspaceKey' => $workspaces->activeKey($request->user()),
             'activeSchoolId' => TenantContext::schoolId(),
             'activeRoleName' => TenantContext::roleName(),
         ]);
@@ -22,13 +23,21 @@ class RoleContextController extends Controller
     public function switch(Request $request, UserWorkspaceService $workspaces): RedirectResponse
     {
         $data = $request->validate([
+            'workspace' => ['nullable', 'string', 'max:150'],
             'school_id' => ['nullable', 'integer'],
-            'role_name' => ['required', 'string', 'max:100'],
+            'role_name' => ['nullable', 'required_without:workspace', 'string', 'max:100'],
         ]);
 
         $user = $request->user();
+        if (filled($data['workspace'] ?? null)) {
+            abort_unless($workspaces->selectByKey($user, (string) $data['workspace'], true), 403);
+            $context = $workspaces->contextsFor($user)->firstWhere('key', $data['workspace']);
+
+            return redirect()->route($workspaces->destinationRoute($context));
+        }
+
         $schoolId = filled($data['school_id'] ?? null) ? (int) $data['school_id'] : null;
-        $roleName = (string) $data['role_name'];
+        $roleName = (string) ($data['role_name'] ?? '');
 
         $context = $workspaces->schoolContextsFor($user)
             ->first(fn (array $context): bool => (string) ($context['role_name'] ?? '') === $roleName
@@ -39,7 +48,7 @@ class RoleContextController extends Controller
         $workspaces->select($user, $context, true);
 
         return redirect()
-            ->route('dashboard')
+            ->route($workspaces->destinationRoute($context))
             ->with('success', __('ui.role_context_switched', [
                 'role' => str($roleName)->replace('_', ' ')->title(),
             ]));

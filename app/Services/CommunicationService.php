@@ -132,11 +132,15 @@ class CommunicationService
 
         try {
             $delivery = $this->mailSettings->deliverForSchool($school, function () use ($recipient, $subject, $headline, $body, $school, $metadata, $category) {
-                Mail::to($recipient)->send($this->attachFiles(
+                return Mail::to($recipient)->send($this->attachFiles(
                     $this->mailableForCategory($category, $subject, $headline, $body, $school, $metadata),
                     $metadata
                 ));
-            });
+            }, [
+                'initiating_user_id' => $sender?->getAuthIdentifier(),
+                'recipient' => $recipient,
+                'configuration' => 'saved',
+            ]);
 
             $this->markSent($log, $delivery);
 

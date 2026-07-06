@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admissions;
 
 use App\Models\Admissions\AdmissionApiKey;
+use App\Services\Admissions\AdmissionWebsiteIntegrationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -16,7 +17,7 @@ class AdmissionSecurityTest extends TestCase
     {
         $school = $this->createSchool();
         $this->createCycle($school);
-        $created = app(\App\Services\Admissions\AdmissionWebsiteIntegrationService::class)
+        $created = app(AdmissionWebsiteIntegrationService::class)
             ->createApiKey($school, 'Hashed key');
 
         $stored = AdmissionApiKey::firstOrFail();

@@ -26,7 +26,11 @@ class TenantAwareMailChannel extends MailChannel
 
         return $this->mailSettings->deliverForSchool(
             $school,
-            fn () => parent::send($notifiable, $notification)
+            fn () => parent::send($notifiable, $notification),
+            [
+                'recipient' => $this->recipientFor($notifiable, $notification),
+                'configuration' => 'saved',
+            ]
         )['result'];
     }
 
@@ -37,5 +41,20 @@ class TenantAwareMailChannel extends MailChannel
             : data_get($notifiable, 'school_id');
 
         return filled($schoolId) ? School::find((int) $schoolId) : null;
+    }
+
+    private function recipientFor(object $notifiable, Notification $notification): ?string
+    {
+        $recipient = method_exists($notifiable, 'routeNotificationFor')
+            ? $notifiable->routeNotificationFor('mail', $notification)
+            : data_get($notifiable, 'email');
+
+        if (is_array($recipient)) {
+            $recipient = array_is_list($recipient)
+                ? reset($recipient)
+                : array_key_first($recipient);
+        }
+
+        return filled($recipient) ? (string) $recipient : null;
     }
 }

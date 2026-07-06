@@ -102,5 +102,4 @@ class AcademicSession extends Model
     {
         return $this->hasMany(ReportCardSnapshot::class);
     }
-
 }

@@ -136,7 +136,7 @@ class DatabaseBackupService
             ->map(fn ($column) => $this->quoteIdentifier($column, $driver))
             ->implode(', ');
 
-        $writeRows = function ($rows) use ($file, $driver, $table, $columns, $identifier, $quotedColumns): void {
+        $writeRows = function ($rows) use ($file, $columns, $identifier, $quotedColumns): void {
             foreach ($rows as $row) {
                 $row = (array) $row;
                 $values = collect($columns)

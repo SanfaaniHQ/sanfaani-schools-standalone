@@ -15,8 +15,7 @@ class AdmissionConversionService
         private readonly AdmissionNumberGeneratorService $studentNumberGenerator,
         private readonly StudentClassEnrollmentService $enrollments,
         private readonly AdmissionWorkflowService $workflow
-    ) {
-    }
+    ) {}
 
     public function convert(AdmissionApplication $application, ?int $convertedBy = null): Student
     {

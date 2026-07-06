@@ -331,10 +331,10 @@ class TeacherResultReviewController extends Controller
             ->chunkById(100, function ($students) use ($submission) {
                 foreach ($students as $student) {
                     event(StudentTransactionalEmailRequested::resultPublished($student, $submission->academicSession, $submission->term, [
-                            'result_type' => $submission->result_type,
-                            'scope_type' => 'teacher_submission',
-                            'teacher_result_submission_id' => $submission->id,
-                            'subject_id' => $submission->subject_id,
+                        'result_type' => $submission->result_type,
+                        'scope_type' => 'teacher_submission',
+                        'teacher_result_submission_id' => $submission->id,
+                        'subject_id' => $submission->subject_id,
                     ]));
                 }
             });

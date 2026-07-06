@@ -198,6 +198,34 @@ class InstallerFlowTest extends TestCase
         $this->assertSame('school_admin', UserSchoolRole::first()->role_name);
     }
 
+    public function test_installer_assigns_only_selected_additional_school_roles(): void
+    {
+        $this->post(route('installer.admin.store'), [
+            'name' => 'Multi Workspace Owner',
+            'email' => 'multi-owner@example.test',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'additional_roles' => ['teacher', 'result_officer', 'admissions_officer'],
+        ])->assertRedirect(route('installer.school'));
+
+        $this->post(route('installer.school.store'), [
+            'name' => 'Multi Workspace School',
+            'slug' => 'multi-workspace-school',
+            'email' => 'school@example.test',
+        ])->assertRedirect(route('installer.smtp'));
+        $this->post(route('installer.smtp.store'), ['mailer' => 'log'])
+            ->assertRedirect(route('installer.review'));
+        $this->post(route('installer.complete'))->assertOk();
+
+        $owner = User::where('email', 'multi-owner@example.test')->firstOrFail();
+        $this->assertTrue($owner->hasAllRoles(['super_admin', 'school_admin', 'teacher', 'result_officer', 'admissions_officer']));
+        $this->assertFalse($owner->hasRole('accountant'));
+        $this->assertDatabaseHas('user_school_roles', ['user_id' => $owner->id, 'role_name' => 'teacher', 'status' => 'active']);
+        $this->assertDatabaseHas('user_school_roles', ['user_id' => $owner->id, 'role_name' => 'result_officer', 'status' => 'active']);
+        $this->assertDatabaseHas('user_school_roles', ['user_id' => $owner->id, 'role_name' => 'admissions_officer', 'status' => 'active']);
+        $this->assertDatabaseMissing('user_school_roles', ['user_id' => $owner->id, 'role_name' => 'accountant']);
+    }
+
     private function completeInstallerForms(array $schoolOverrides = []): void
     {
         $this->post(route('installer.admin.store'), [

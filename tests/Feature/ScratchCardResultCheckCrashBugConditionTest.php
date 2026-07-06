@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use App\Events\StudentTransactionalEmailRequested;
 use App\Models\AcademicSession;
+use App\Models\School;
 use App\Models\ScratchCard;
 use App\Models\ScratchCardBatch;
-use App\Models\School;
 use App\Models\Student;
 use App\Models\StudentResult;
 use App\Models\Subject;
@@ -42,7 +42,7 @@ class ScratchCardResultCheckCrashBugConditionTest extends TestCase
      * - Event constructor receives correct School model instance
      *
      * CURRENT BEHAVIOR (UNFIXED):
-     * - System crashes with: StudentTransactionalEmailRequested::__construct(): 
+     * - System crashes with: StudentTransactionalEmailRequested::__construct():
      *   Argument #1 ($school) must be of type App\Models\School
      */
     public function test_scratch_card_result_email_event_is_constructed_and_dispatched_safely(): void
@@ -113,7 +113,7 @@ class ScratchCardResultCheckCrashBugConditionTest extends TestCase
 
     /**
      * Test the CORRECT dispatch pattern (this should always pass)
-     * 
+     *
      * This demonstrates the expected behavior after the fix.
      */
     public function test_correct_event_dispatch_pattern_works(): void
@@ -167,7 +167,7 @@ class ScratchCardResultCheckCrashBugConditionTest extends TestCase
         // Execute: Test the CORRECT dispatch pattern
         // This is how it should be after the fix:
         // Use event() helper or dispatch the event directly
-        
+
         try {
             // CORRECT PATTERN: Use event() helper to dispatch the constructed event
             event(StudentTransactionalEmailRequested::resultAvailable(

@@ -51,8 +51,7 @@ class AttendanceController extends Controller
         SchoolClass $class,
         AttendanceService $attendance,
         StandaloneEditionService $edition
-    )
-    {
+    ) {
         $school = $this->currentSchoolOrFail();
         $user = $request->user();
         $this->authorizeAttendance($user, $school, 'attendance.view');

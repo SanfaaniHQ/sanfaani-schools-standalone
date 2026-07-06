@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Concerns\ValidatesSchoolMailSettings;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogService;
+use App\Services\MailDeliveryAttemptService;
 use App\Services\MailSettingService;
 use App\Services\PlatformSettingService;
 use App\Support\MailSecurity;
@@ -83,6 +84,16 @@ class MailSettingController extends Controller
                 'exception' => $exception::class,
                 'category' => $diagnostic['category'],
             ]);
+            $status = $mailSettings->platformMailerStatus($setting);
+            $mailSettings->recordDeliveryAttempt([
+                'initiating_user_id' => $request->user()->id,
+                'transport' => $status['driver'],
+                'recipient' => $data['test_email'],
+                'status' => app(MailDeliveryAttemptService::class)->statusForCategory($diagnostic['category']),
+                'safe_error_category' => $diagnostic['category'],
+                'sanitized_error_message' => $diagnostic['message'],
+                'external_delivery_attempted' => $status['external_delivery'],
+            ]);
 
             return back()->with('error', 'Platform fallback failed: '.$diagnostic['message']);
         }
@@ -90,15 +101,23 @@ class MailSettingController extends Controller
         $auditLog->log('mail_settings_test_sent', $setting, null, metadata: [
             'mailer' => $setting->mailer,
         ], request: $request);
+        $mailSettings->recordDeliveryAttempt([
+            'initiating_user_id' => $request->user()->id,
+            'transport' => $delivery['transport'],
+            'recipient' => $data['test_email'],
+            'status' => $delivery['logged_only'] ? 'fallback_non_delivery' : 'fallback_accepted',
+            'provider_message_id' => $delivery['provider_message_id'] ?? null,
+            'external_delivery_attempted' => ! $delivery['logged_only'],
+        ]);
 
         if ($delivery['logged_only']) {
             $message = $delivery['transport'] === 'log'
-                ? 'Fallback is configured to log messages only; no external email was delivered.'
-                : 'Fallback is configured to use the '.strtoupper($delivery['transport']).' test transport; no external email was delivered.';
+                ? 'No external email was sent because the platform fallback uses a non-delivery transport (LOG).'
+                : 'No external email was sent because the platform fallback uses a non-delivery transport ('.strtoupper($delivery['transport']).').';
 
-            return back()->with('success', $message);
+            return back()->with('warning', $message);
         }
 
-        return back()->with('success', 'Platform mailer accepted the test email for delivery. Inbox delivery is not guaranteed.');
+        return back()->with('success', 'Platform mailer accepted the test message for delivery. SMTP acceptance does not guarantee inbox placement.');
     }
 }

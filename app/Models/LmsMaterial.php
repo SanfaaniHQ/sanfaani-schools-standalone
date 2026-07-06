@@ -15,8 +15,11 @@ class LmsMaterial extends Model
     use SoftDeletes;
 
     public const TYPE_LESSON = 'lesson';
+
     public const TYPE_NOTE = 'note';
+
     public const TYPE_RESOURCE = 'resource';
+
     public const TYPE_ASSIGNMENT = 'assignment';
 
     public const TYPES = [
@@ -27,7 +30,9 @@ class LmsMaterial extends Model
     ];
 
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_PUBLISHED = 'published';
+
     public const STATUS_ARCHIVED = 'archived';
 
     public const STATUSES = [

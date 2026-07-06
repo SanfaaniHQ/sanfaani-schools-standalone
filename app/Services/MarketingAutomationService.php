@@ -11,6 +11,7 @@ use App\Models\MarketingCampaignRecipient;
 use App\Models\MarketingDeliveryEvent;
 use App\Models\MarketingSuppression;
 use App\Models\User;
+use App\Services\Marketing\UnsubscribeService;
 use App\Support\MailSecurity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,7 @@ class MarketingAutomationService
 
                     if ($email === '' || $this->isSuppressed($email)) {
                         $this->recordEvent($campaign, null, 'skipped', $email, metadata: ['reason' => 'suppressed_or_blank']);
+
                         continue;
                     }
 
@@ -221,7 +223,7 @@ class MarketingAutomationService
         );
 
         try {
-            app(\App\Services\Marketing\UnsubscribeService::class)->record(
+            app(UnsubscribeService::class)->record(
                 $email,
                 $reason,
                 $metadata['source'] ?? 'marketing',

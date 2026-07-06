@@ -148,7 +148,7 @@ class ResultEntryPermissionBypassBugConditionTest extends TestCase
                 "- Controllers like TeacherResultReviewController use updateOrCreate() which bypasses policies\n".
                 "- Missing middleware enforcement on result edit routes\n".
                 "- Need to add model observers or database-level constraints to enforce authorization\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         } else {
             // AFTER FIX: The update was blocked
@@ -210,7 +210,7 @@ class ResultEntryPermissionBypassBugConditionTest extends TestCase
                 "Result Status: {$publishedResult->status}\n".
                 "Expected: Edit operation should be blocked for published results\n".
                 "Actual: Edit operation succeeded, result was updated from CA=20.00 to CA=25.00\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         } else {
             // AFTER FIX: The update was blocked
@@ -268,7 +268,7 @@ class ResultEntryPermissionBypassBugConditionTest extends TestCase
                 "Result Status: {$archivedResult->status}\n".
                 "Expected: Edit operation should be blocked for archived results\n".
                 "Actual: Edit operation succeeded, result was updated from CA=20.00 to CA=25.00\n".
-                "This test will pass after the fix is implemented."
+                'This test will pass after the fix is implemented.'
             );
         } else {
             // AFTER FIX: The update was blocked
@@ -278,7 +278,7 @@ class ResultEntryPermissionBypassBugConditionTest extends TestCase
 
     /**
      * Test the CORRECT behavior (this should always pass)
-     * 
+     *
      * This demonstrates that teachers CAN edit draft and returned results.
      */
     public function test_teacher_can_edit_draft_result_as_expected(): void

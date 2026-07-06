@@ -10,17 +10,25 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class SchoolNotificationLog extends Model
 {
     public const CHANNEL_DATABASE = SchoolNotificationTemplate::CHANNEL_DATABASE;
+
     public const CHANNEL_EMAIL = SchoolNotificationTemplate::CHANNEL_EMAIL;
+
     public const CHANNEL_SMS = SchoolNotificationTemplate::CHANNEL_SMS;
+
     public const CHANNEL_WHATSAPP = SchoolNotificationTemplate::CHANNEL_WHATSAPP;
+
     public const CHANNEL_LOG = SchoolNotificationTemplate::CHANNEL_LOG;
 
     public const CHANNELS = SchoolNotificationTemplate::CHANNELS;
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_LOGGED = 'logged';
+
     public const STATUS_DEFERRED = 'deferred';
+
     public const STATUS_SENT = 'sent';
+
     public const STATUS_FAILED = 'failed';
 
     public const STATUSES = [

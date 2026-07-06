@@ -22,6 +22,9 @@
             @if (session('error'))
                 <x-ui.alert tone="danger" :body="session('error')" />
             @endif
+            @if (session('warning'))
+                <x-ui.alert tone="warning" :body="session('warning')" />
+            @endif
             @if ($errors->any())
                 <x-ui.alert tone="danger" body="Review the highlighted email settings and try again." />
             @endif
@@ -153,7 +156,7 @@
                     @if ($schoolStatus['last_test_outcome'])
                         <div class="flex items-center justify-between gap-4">
                             <dt>Last school test</dt>
-                            <dd class="text-right font-medium {{ $schoolStatus['last_test_outcome'] === 'accepted' ? 'text-green-700' : 'text-red-700' }}">
+                            <dd class="text-right font-medium {{ $schoolStatus['last_test_outcome'] === 'accepted_by_smtp' ? 'text-green-700' : 'text-red-700' }}">
                                 {{ ucfirst($schoolStatus['last_test_outcome']) }} via {{ $schoolStatus['last_test_transport'] }}
                                 @if ($schoolStatus['last_test_configuration'] === 'temporary')
                                     <span class="block text-xs font-normal text-amber-700">temporary values</span>
@@ -170,12 +173,15 @@
             <form id="local-mail-test-form" method="POST" action="{{ route('admin.local-mail-settings.test') }}" data-loading-text="Testing..." class="rounded-lg bg-white p-6 shadow-sm">
                 @csrf
                 <h3 class="text-base font-semibold text-gray-900">Test School SMTP</h3>
-                <p class="mt-1 text-sm text-gray-600">Use the outgoing SMTP details from your hosting email account. This tests the form values directly and never hides a school SMTP failure behind fallback.</p>
+                <p class="mt-1 text-sm text-gray-600">Test the saved configuration or the unsaved form values. Neither action hides a School SMTP failure behind fallback.</p>
                 <div id="local-mail-test-payload"></div>
                 <label for="test_email" class="mt-4 block text-sm font-medium text-gray-700">Test Recipient</label>
                 <input id="test_email" name="test_email" value="{{ old('test_email', auth()->user()->email) }}" @disabled($controlsDisabled) class="mt-1 block w-full rounded-lg border-gray-300">
                 @error('test_email')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
-                <button @disabled($controlsDisabled) class="mt-4 w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Test School SMTP</button>
+                <div class="mt-4 grid gap-2">
+                    <button name="test_mode" value="saved" @disabled($controlsDisabled) class="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400">Test Saved School SMTP</button>
+                    <button name="test_mode" value="temporary" @disabled($controlsDisabled) class="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700">Test Temporary Values</button>
+                </div>
             </form>
 
             <form method="POST" action="{{ route('admin.local-mail-settings.test-fallback') }}" data-loading-text="Testing fallback..." class="rounded-lg bg-white p-6 shadow-sm">

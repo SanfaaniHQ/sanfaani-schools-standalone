@@ -32,10 +32,6 @@ class EnsureActiveRole
             return $next($request);
         }
 
-        if (! $activeRole && $user->hasAnyRole($allowedRoles->all())) {
-            return $next($request);
-        }
-
         abort(403, 'This workspace is not available for your active role.');
     }
 }

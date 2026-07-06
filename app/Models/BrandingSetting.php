@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class BrandingSetting extends Model
 {
     public const SCOPE_PLATFORM = 'platform';
+
     public const SCOPE_SCHOOL = 'school';
+
     public const SCOPE_MANAGED_CLIENT = 'managed_client';
+
     public const SCOPE_WHITE_LABEL = 'white_label';
 
     protected $fillable = [
