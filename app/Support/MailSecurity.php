@@ -36,7 +36,7 @@ class MailSecurity
         return match (true) {
             Str::contains($lower, ['decrypt', 'mac is invalid', 'payload is invalid']) => [
                 'category' => 'password_decryption_failed',
-                'message' => 'The saved SMTP password can no longer be decrypted. Re-enter and save the password.',
+                'message' => 'The saved SMTP password cannot be decrypted. Re-enter and save the password.',
             ],
             Str::contains($lower, ['authentication failed', 'auth failed', '535 ', 'invalid credentials', 'username and password not accepted']) => [
                 'category' => 'authentication_failed',

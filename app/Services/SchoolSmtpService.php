@@ -98,7 +98,7 @@ class SchoolSmtpService
             if ($passwordState['unusable']) {
                 throw new MailConfigurationException(
                     'password_decryption_failed',
-                    'The saved SMTP password can no longer be decrypted. Re-enter and save the password.'
+                    'The saved SMTP password cannot be decrypted. Re-enter and save the password.'
                 );
             }
 

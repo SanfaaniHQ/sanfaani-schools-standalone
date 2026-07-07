@@ -24,7 +24,7 @@ class WorkspaceSwitchingTest extends TestCase
         $this->withoutVite();
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        foreach (['super_admin', 'school_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer'] as $role) {
+        foreach (['super_admin', 'school_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer', 'parent', 'student'] as $role) {
             Role::findOrCreate($role, 'web');
         }
 
@@ -177,9 +177,9 @@ class WorkspaceSwitchingTest extends TestCase
         $school = $this->school('Unified Academy');
         $otherSchool = $this->school('Unassigned Academy');
         $user = $this->schoolUser($school, 'school_admin');
-        $user->assignRole(['super_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer']);
+        $user->assignRole(['super_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer', 'parent', 'student']);
 
-        foreach (['teacher', 'result_officer', 'accountant', 'admissions_officer'] as $role) {
+        foreach (['teacher', 'result_officer', 'accountant', 'admissions_officer', 'parent', 'student'] as $role) {
             UserSchoolRole::create([
                 'user_id' => $user->id,
                 'school_id' => $school->id,
@@ -190,13 +190,15 @@ class WorkspaceSwitchingTest extends TestCase
 
         $contexts = app(UserWorkspaceService::class)->contextsFor($user);
 
-        $this->assertSame(6, $contexts->count());
+        $this->assertSame(8, $contexts->count());
         $this->assertSame([
             'global:super_admin',
             "school:{$school->id}:accountant",
             "school:{$school->id}:admissions_officer",
+            "school:{$school->id}:parent",
             "school:{$school->id}:result_officer",
             "school:{$school->id}:school_admin",
+            "school:{$school->id}:student",
             "school:{$school->id}:teacher",
         ], $contexts->pluck('key')->sort()->values()->all());
         $this->assertFalse($contexts->contains('key', "school:{$otherSchool->id}:teacher"));
@@ -207,12 +209,14 @@ class WorkspaceSwitchingTest extends TestCase
             'workspace' => 'global:super_admin',
         ])->assertRedirect(route('admin.dashboard'));
 
-        foreach (['school_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer'] as $role) {
+        foreach (['school_admin', 'teacher', 'result_officer', 'accountant', 'admissions_officer', 'parent', 'student'] as $role) {
             $before = session()->getId();
 
             $this->post(route('workspace.store'), [
                 'workspace' => "school:{$school->id}:{$role}",
-            ])->assertRedirect(route('school.dashboard'));
+            ])->assertRedirect(route(app(UserWorkspaceService::class)->destinationRoute([
+                'role_name' => $role,
+            ])));
 
             $this->assertNotSame($before, session()->getId());
             $this->assertSame($school->id, session('active_school_id'));

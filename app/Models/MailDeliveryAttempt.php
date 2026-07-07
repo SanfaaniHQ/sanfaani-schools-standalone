@@ -10,6 +10,11 @@ class MailDeliveryAttempt extends Model
     protected $fillable = [
         'school_id',
         'initiating_user_id',
+        'provider_profile_id',
+        'provider_name',
+        'provider_type',
+        'provider_position',
+        'attempt_sequence',
         'transport',
         'host',
         'port',
@@ -21,6 +26,7 @@ class MailDeliveryAttempt extends Model
         'sanitized_error_message',
         'provider_message_id',
         'configuration',
+        'message_kind',
         'fallback_used',
         'external_delivery_attempted',
     ];
@@ -41,5 +47,10 @@ class MailDeliveryAttempt extends Model
     public function initiatingUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'initiating_user_id');
+    }
+
+    public function providerProfile(): BelongsTo
+    {
+        return $this->belongsTo(SchoolMailProviderProfile::class, 'provider_profile_id');
     }
 }
