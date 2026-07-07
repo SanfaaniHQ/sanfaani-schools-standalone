@@ -207,6 +207,17 @@ class MailSettingService
 
     public function applyForSchool(?School $school): void
     {
+        if ($school && app(SchoolMailProviderService::class)->tableIsReady()) {
+            $profile = app(SchoolMailProviderService::class)->primaryForSchool($school);
+
+            if ($profile) {
+                $normalized = app(SchoolMailProviderService::class)->normalize($profile);
+                $this->smtp->configure($normalized, SchoolSmtpService::MAILER);
+
+                return;
+            }
+        }
+
         $this->apply($this->resolveForSchool($school));
     }
 
@@ -297,7 +308,7 @@ class MailSettingService
         if ($status['password_unusable']) {
             throw new MailConfigurationException(
                 'password_decryption_failed',
-                'The saved SMTP password can no longer be decrypted. Re-enter and save the password.'
+                'The saved SMTP password cannot be decrypted. Re-enter and save the password.'
             );
         }
 
@@ -343,8 +354,16 @@ class MailSettingService
             return $callback();
         } finally {
             Config::set('mail', $original);
-            $this->smtp->forgetRuntimeMailers();
-            app(MailManager::class)->forgetMailers();
+
+            try {
+                $this->smtp->forgetRuntimeMailers();
+                app(MailManager::class)->forgetMailers();
+            } catch (Throwable $cleanupException) {
+                logger()->warning('Runtime mailer cleanup failed after delivery.', [
+                    'school_id' => $setting->school_id,
+                    'exception' => $cleanupException::class,
+                ]);
+            }
         }
     }
 
@@ -384,6 +403,66 @@ class MailSettingService
                 'primary_error' => null,
                 'transport' => $this->platformMailerStatus()['driver'],
             ], $attemptContext);
+        }
+
+        if ($this->schoolCustomSmtpAllowed()
+            && app(SchoolMailProviderService::class)->enabledChain($school)->isNotEmpty()) {
+            try {
+                return app(SchoolMailDeliveryOrchestrator::class)->deliver($school, $callback, $attemptContext);
+            } catch (Throwable $providerException) {
+                $diagnostic = MailSecurity::diagnostic($providerException);
+                $platformStatus = $this->platformMailerStatus();
+
+                if (! $this->platformFallbackEnabled()) {
+                    throw $providerException;
+                }
+
+                if ($platformStatus['configured'] && ! $platformStatus['external_delivery']) {
+                    $this->recordDeliveryAttempt(array_merge($attemptContext, [
+                        'school_id' => $school->id,
+                        'provider_name' => 'Platform fallback',
+                        'provider_type' => $platformStatus['driver'],
+                        'provider_position' => 'platform',
+                        'attempt_sequence' => app(SchoolMailProviderService::class)->enabledChain($school)->count() + 1,
+                        'transport' => $platformStatus['driver'],
+                        'status' => 'fallback_non_delivery',
+                        'safe_error_category' => $diagnostic['category'],
+                        'sanitized_error_message' => strtoupper($platformStatus['driver']).' is a non-delivery fallback.',
+                        'fallback_used' => true,
+                        'external_delivery_attempted' => false,
+                    ]));
+
+                    throw new MailConfigurationException(
+                        'platform_fallback_non_delivery',
+                        strtoupper($platformStatus['driver']).' is a non-delivery fallback. No external email was sent.'
+                    );
+                }
+
+                if (! $this->platformMailerCanDeliver()) {
+                    throw $providerException;
+                }
+
+                try {
+                    $result = $this->withPlatformMailContext($callback);
+                } catch (Throwable $platformException) {
+                    $platformDiagnostic = MailSecurity::diagnostic($platformException);
+                    $this->recordRuntimeFailure($school, $platformException, array_merge($attemptContext, [
+                        'fallback_used' => true,
+                    ]));
+
+                    throw new RuntimeException(
+                        $diagnostic['message'].' Platform fallback failed: '.$platformDiagnostic['message'],
+                        previous: $platformException
+                    );
+                }
+
+                return $this->runtimeDeliveryResult($school, $result, [
+                    'result' => $result,
+                    'fallback_used' => true,
+                    'primary_error' => $diagnostic['category'],
+                    'transport' => $this->platformMailerStatus()['driver'],
+                ], $attemptContext);
+            }
         }
 
         if (! $this->hasEnabledSchoolMailer($school)) {
@@ -485,6 +564,10 @@ class MailSettingService
         }
 
         try {
+            if (app(SchoolMailProviderService::class)->enabledChain($school)->isNotEmpty()) {
+                return true;
+            }
+
             return MailSetting::where('school_id', $school->id)
                 ->where('is_enabled', true)
                 ->where('mailer', 'smtp')
@@ -873,7 +956,7 @@ class MailSettingService
         if ($this->platformMailerStatus()['password_unusable']) {
             return new MailConfigurationException(
                 'password_decryption_failed',
-                'The saved platform SMTP password can no longer be decrypted. Re-enter and save the password.'
+                'The saved platform SMTP password cannot be decrypted. Re-enter and save the password.'
             );
         }
 

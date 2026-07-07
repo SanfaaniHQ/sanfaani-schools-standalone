@@ -1287,6 +1287,46 @@ Route::middleware(['auth', 'school.context', 'demo.safe'])
                             ->middleware(['feature.school:school.mail.manage', 'throttle:5,1'])
                             ->name('mail-settings.test-fallback');
 
+                        Route::post('/mail-settings/providers', [SchoolMailSettingController::class, 'storeProvider'])
+                            ->middleware('feature.school:school.mail.manage')
+                            ->name('mail-settings.providers.store');
+
+                        Route::put('/mail-settings/providers/{provider}', [SchoolMailSettingController::class, 'updateProvider'])
+                            ->middleware('feature.school:school.mail.manage')
+                            ->name('mail-settings.providers.update');
+
+                        Route::delete('/mail-settings/providers/{provider}', [SchoolMailSettingController::class, 'destroyProvider'])
+                            ->middleware('feature.school:school.mail.manage')
+                            ->name('mail-settings.providers.destroy');
+
+                        Route::post('/mail-settings/providers/{provider}/primary', [SchoolMailSettingController::class, 'makeProviderPrimary'])
+                            ->middleware('feature.school:school.mail.manage')
+                            ->name('mail-settings.providers.primary');
+
+                        Route::post('/mail-settings/providers/{provider}/toggle', [SchoolMailSettingController::class, 'toggleProvider'])
+                            ->middleware('feature.school:school.mail.manage')
+                            ->name('mail-settings.providers.toggle');
+
+                        Route::post('/mail-settings/providers/{provider}/move', [SchoolMailSettingController::class, 'moveProvider'])
+                            ->middleware('feature.school:school.mail.manage')
+                            ->name('mail-settings.providers.move');
+
+                        Route::post('/mail-settings/providers/{provider}/test', [SchoolMailSettingController::class, 'testProvider'])
+                            ->middleware(['feature.school:school.mail.manage', 'throttle:5,1'])
+                            ->name('mail-settings.providers.test');
+
+                        Route::post('/mail-settings/providers/test-temporary', [SchoolMailSettingController::class, 'testTemporaryProvider'])
+                            ->middleware(['feature.school:school.mail.manage', 'throttle:5,1'])
+                            ->name('mail-settings.providers.test-temporary');
+
+                        Route::post('/mail-settings/test-chain', [SchoolMailSettingController::class, 'testProviderChain'])
+                            ->middleware(['feature.school:school.mail.manage', 'throttle:5,1'])
+                            ->name('mail-settings.test-chain');
+
+                        Route::get('/mail-settings/history', [SchoolMailSettingController::class, 'history'])
+                            ->middleware('feature.school:school.mail.manage')
+                            ->name('mail-settings.history');
+
                         Route::get('/audit-logs', [SchoolAuditLogController::class, 'index'])
                             ->name('audit-logs.index');
 

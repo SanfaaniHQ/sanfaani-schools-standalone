@@ -189,6 +189,11 @@ class School extends Model
         return $this->hasMany(CommunicationLog::class);
     }
 
+    public function mailProviderProfiles(): HasMany
+    {
+        return $this->hasMany(SchoolMailProviderProfile::class);
+    }
+
     public function notificationTemplates(): HasMany
     {
         return $this->hasMany(SchoolNotificationTemplate::class);

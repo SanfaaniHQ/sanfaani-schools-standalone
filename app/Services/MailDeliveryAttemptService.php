@@ -18,6 +18,11 @@ class MailDeliveryAttemptService
         $safe = [
             'school_id' => $attributes['school_id'] ?? null,
             'initiating_user_id' => $attributes['initiating_user_id'] ?? auth()->id(),
+            'provider_profile_id' => filled($attributes['provider_profile_id'] ?? null) ? (int) $attributes['provider_profile_id'] : null,
+            'provider_name' => $this->limited($attributes['provider_name'] ?? null, 160),
+            'provider_type' => $this->limited($attributes['provider_type'] ?? null, 40),
+            'provider_position' => $this->limited($attributes['provider_position'] ?? null, 20),
+            'attempt_sequence' => filled($attributes['attempt_sequence'] ?? null) ? (int) $attributes['attempt_sequence'] : null,
             'transport' => $this->limited($attributes['transport'] ?? 'unknown', 50),
             'host' => $this->limited($attributes['host'] ?? null, 255),
             'port' => filled($attributes['port'] ?? null) ? (int) $attributes['port'] : null,
@@ -29,6 +34,7 @@ class MailDeliveryAttemptService
             'sanitized_error_message' => MailSecurity::sanitizeError($attributes['sanitized_error_message'] ?? null),
             'provider_message_id' => $this->limited($attributes['provider_message_id'] ?? null, 255),
             'configuration' => ($attributes['configuration'] ?? null) === 'temporary' ? 'temporary' : 'saved',
+            'message_kind' => ($attributes['message_kind'] ?? null) === 'test' ? 'test' : 'transactional',
             'fallback_used' => (bool) ($attributes['fallback_used'] ?? false),
             'external_delivery_attempted' => (bool) ($attributes['external_delivery_attempted'] ?? false),
         ];
@@ -63,7 +69,8 @@ class MailDeliveryAttemptService
         return match ($category) {
             'missing_configuration', 'unsupported_encryption' => 'configuration_invalid',
             'missing_password', 'password_decryption_failed' => 'password_unavailable',
-            'dns_failed', 'connection_failed' => 'connection_failed',
+            'dns_failed' => 'dns_failed',
+            'connection_failed' => 'connection_failed',
             'connection_timeout', 'timeout' => 'timeout',
             'tls_failed' => 'tls_failed',
             'certificate_mismatch', 'certificate_failed' => 'certificate_failed',
