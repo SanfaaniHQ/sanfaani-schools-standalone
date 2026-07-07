@@ -209,6 +209,13 @@
             @endauth
         </div>
 
+        @if (session('toast_success'))
+            <div hidden data-session-toast data-tone="success" data-message="{{ session('toast_success') }}"></div>
+        @endif
+        @if (session('toast_error'))
+            <div hidden data-session-toast data-tone="error" data-message="{{ session('toast_error') }}"></div>
+        @endif
+
         @stack('scripts')
     </body>
 </html>

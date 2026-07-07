@@ -276,6 +276,28 @@
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
 
+    .workspace-popover,
+    .workspace-sheet {
+        contain: layout paint;
+    }
+
+    .workspace-options-scroll {
+        scrollbar-gutter: stable;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .responsive-dashboard-grid {
+        @apply grid gap-4 sm:grid-cols-2 xl:grid-cols-4;
+    }
+
+    .responsive-card-grid {
+        @apply grid gap-4 md:grid-cols-2 xl:grid-cols-3;
+    }
+
+    .responsive-two-column {
+        @apply grid gap-6 lg:grid-cols-2;
+    }
+
     .enterprise-table {
         @apply min-w-full divide-y divide-border-subtle text-sm;
     }
@@ -403,6 +425,73 @@
 
 .education-ops-shell .max-w-dashboard {
     width: 100%;
+}
+
+.education-ops-shell [data-workspace-overlay] {
+    overscroll-behavior: contain;
+    touch-action: none;
+}
+
+.education-ops-shell [data-workspace-chooser-panel] {
+    touch-action: pan-y;
+}
+
+.education-ops-shell [data-workspace-option] {
+    scroll-margin-block: 0.75rem;
+}
+
+.education-ops-shell [data-workspace-option][data-active="true"] {
+    box-shadow: inset 0 0 0 1px var(--color-border-active);
+}
+
+.education-ops-shell [data-table-scroll],
+.education-ops-shell .safe-scroll-x,
+.education-ops-shell .ui-table-wrap,
+.education-ops-shell .overflow-x-auto {
+    max-width: 100%;
+    overscroll-behavior-inline: contain;
+    scrollbar-gutter: stable;
+}
+
+.education-ops-shell [data-table-scroll]:focus-visible,
+.education-ops-shell .safe-scroll-x:focus-visible,
+.education-ops-shell .ui-table-wrap:focus-visible {
+    outline: 2px solid var(--color-brand-primary);
+    outline-offset: 2px;
+}
+
+.education-ops-shell [data-provider-card],
+.education-ops-shell [data-provider-card] dl,
+.education-ops-shell [data-provider-card] form,
+.education-ops-shell [data-provider-card] a,
+.education-ops-shell [data-provider-card] button {
+    max-width: 100%;
+}
+
+.education-ops-shell [data-provider-card] a,
+.education-ops-shell [data-provider-card] button,
+.education-ops-shell [data-provider-card] span {
+    overflow-wrap: anywhere;
+}
+
+.education-ops-shell .status-badge,
+.education-ops-shell .enterprise-badge,
+.education-ops-shell [class*="rounded-full"] {
+    max-width: 100%;
+    white-space: normal;
+}
+
+.education-ops-shell form,
+.education-ops-shell fieldset,
+.education-ops-shell dl,
+.education-ops-shell article,
+.education-ops-shell section {
+    min-width: 0;
+}
+
+.education-ops-shell button,
+.education-ops-shell [role="button"] {
+    min-height: 2.75rem;
 }
 
 .education-ops-shell .rounded-xl,
@@ -614,6 +703,46 @@ footer * {
 
     footer .grid {
         width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .education-ops-shell main {
+        padding-inline: 0.75rem;
+    }
+
+    .education-ops-shell header.sticky > div {
+        padding-inline: 0.75rem;
+    }
+
+    .education-ops-shell .ui-card,
+    .education-ops-shell .enterprise-panel,
+    .education-ops-shell .ui-filter-bar,
+    .education-ops-shell [class*="rounded-"][class*="p-6"] {
+        padding: 1rem;
+    }
+
+    .education-ops-shell .grid[class*="grid-cols-"],
+    .education-ops-shell .grid[class*="lg:grid-cols-"],
+    .education-ops-shell .grid[class*="xl:grid-cols-"] {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .education-ops-shell .flex.flex-wrap,
+    .education-ops-shell .flex.items-center.justify-between,
+    .education-ops-shell .flex.items-end.justify-between {
+        align-items: stretch;
+    }
+
+    .education-ops-shell .flex.items-center.justify-between > *,
+    .education-ops-shell .flex.items-end.justify-between > * {
+        min-width: 0;
+    }
+
+    [data-toast-region] {
+        inset-inline: 0.75rem;
+        top: 5rem;
+        width: auto;
     }
 }
 
