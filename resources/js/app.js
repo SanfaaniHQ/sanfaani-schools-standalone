@@ -3,6 +3,276 @@ import './attendance-offline';
 
 import Alpine from 'alpinejs';
 
+const focusableSelector = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('workspaceChooser', (config = {}) => ({
+        open: false,
+        isSheet: false,
+        query: '',
+        panelStyle: '',
+        submittingKey: null,
+        searchable: Boolean(config.searchable),
+        previousActiveElement: null,
+        modeQuery: window.matchMedia('(max-width: 1023px), (pointer: coarse) and (max-width: 1180px)'),
+
+        mount() {
+            this.syncMode();
+
+            const sync = () => {
+                this.syncMode();
+
+                if (this.open) {
+                    if (this.isSheet) {
+                        this.lockBodyScroll();
+                    } else {
+                        this.unlockBodyScroll();
+                    }
+
+                    this.$nextTick(() => this.updatePlacement());
+                }
+            };
+
+            window.addEventListener('resize', sync, { passive: true });
+            window.addEventListener('orientationchange', sync, { passive: true });
+            window.addEventListener('scroll', () => {
+                if (this.open && !this.isSheet) {
+                    this.updatePlacement();
+                }
+            }, true);
+
+            this.$watch('open', (isOpen) => {
+                if (isOpen) {
+                    this.syncMode();
+                    this.lockBodyScroll();
+                    return;
+                }
+
+                this.unlockBodyScroll();
+            });
+        },
+
+        syncMode() {
+            this.isSheet = this.modeQuery.matches;
+        },
+
+        toggle() {
+            if (this.open) {
+                this.close();
+                return;
+            }
+
+            this.openChooser();
+        },
+
+        openChooser(source = 'pointer') {
+            this.previousActiveElement = document.activeElement;
+            this.syncMode();
+            this.open = true;
+
+            this.$nextTick(() => {
+                this.updatePlacement();
+
+                if (this.searchable && source !== 'keyboard' && this.$refs.search) {
+                    this.$refs.search.focus();
+                    return;
+                }
+
+                this.focusActiveOrFirst();
+            });
+        },
+
+        close() {
+            if (!this.open) {
+                return;
+            }
+
+            this.open = false;
+            this.query = '';
+            this.submittingKey = null;
+
+            this.$nextTick(() => {
+                const target = this.previousActiveElement || this.$refs.trigger;
+
+                if (target && typeof target.focus === 'function') {
+                    target.focus({ preventScroll: true });
+                }
+            });
+        },
+
+        markSubmitting(key) {
+            this.submittingKey = key;
+        },
+
+        matches(option) {
+            const query = this.query.trim().toLowerCase();
+
+            if (!query) {
+                return true;
+            }
+
+            return (option.dataset.searchText || '').includes(query);
+        },
+
+        optionButtons() {
+            return Array.from(this.$refs.panel?.querySelectorAll('[data-workspace-option]') || [])
+                .filter((option) => option.offsetParent !== null && !option.disabled);
+        },
+
+        focusActiveOrFirst() {
+            const active = this.$refs.panel?.querySelector('[data-workspace-option][data-active="true"]');
+
+            if (active && active.offsetParent !== null) {
+                active.focus({ preventScroll: true });
+                return;
+            }
+
+            this.focusFirst();
+        },
+
+        focusFirst() {
+            this.optionButtons()[0]?.focus({ preventScroll: true });
+        },
+
+        focusLast() {
+            const options = this.optionButtons();
+            options[options.length - 1]?.focus({ preventScroll: true });
+        },
+
+        focusNext(current) {
+            this.focusByOffset(current, 1);
+        },
+
+        focusPrevious(current) {
+            this.focusByOffset(current, -1);
+        },
+
+        focusByOffset(current, offset) {
+            const options = this.optionButtons();
+
+            if (options.length === 0) {
+                return;
+            }
+
+            const currentIndex = Math.max(0, options.indexOf(current));
+            const nextIndex = (currentIndex + offset + options.length) % options.length;
+
+            options[nextIndex].focus({ preventScroll: true });
+        },
+
+        trapFocus(event) {
+            if (!this.open || !this.$refs.panel) {
+                return;
+            }
+
+            const focusable = Array.from(this.$refs.panel.querySelectorAll(focusableSelector))
+                .filter((element) => element.offsetParent !== null && !element.disabled);
+
+            if (focusable.length === 0) {
+                event.preventDefault();
+                return;
+            }
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+
+            if (!this.$refs.panel.contains(document.activeElement)) {
+                event.preventDefault();
+                first.focus({ preventScroll: true });
+                return;
+            }
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus({ preventScroll: true });
+                return;
+            }
+
+            if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus({ preventScroll: true });
+            }
+        },
+
+        updatePlacement() {
+            if (this.isSheet || !this.$refs.trigger) {
+                this.panelStyle = '';
+                return;
+            }
+
+            const rect = this.$refs.trigger.getBoundingClientRect();
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            const gap = 8;
+            const margin = 8;
+            const width = Math.min(640, viewportWidth - (margin * 2));
+            const left = Math.min(
+                Math.max(margin, rect.right - width),
+                Math.max(margin, viewportWidth - width - margin),
+            );
+            const spaceBelow = viewportHeight - rect.bottom - gap - margin;
+            const spaceAbove = rect.top - gap - margin;
+            const placeAbove = spaceBelow < 360 && spaceAbove > spaceBelow;
+            const availableHeight = Math.max(280, Math.min(672, placeAbove ? spaceAbove : spaceBelow));
+            const top = placeAbove
+                ? Math.max(margin, rect.top - gap - availableHeight)
+                : Math.min(viewportHeight - margin - availableHeight, rect.bottom + gap);
+
+            this.panelStyle = [
+                `left: ${Math.round(left)}px`,
+                `top: ${Math.round(Math.max(margin, top))}px`,
+                `width: ${Math.round(width)}px`,
+                `max-height: ${Math.round(availableHeight)}px`,
+            ].join('; ');
+        },
+
+        lockBodyScroll() {
+            if (!this.isSheet || document.body.dataset.workspaceScrollLocked === 'true') {
+                return;
+            }
+
+            const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
+            document.body.dataset.workspaceScrollLocked = 'true';
+            document.body.dataset.workspaceScrollY = String(scrollY);
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.width = '100%';
+            document.documentElement.classList.add('overflow-hidden');
+            document.body.classList.add('overflow-hidden');
+        },
+
+        unlockBodyScroll() {
+            const wasLocked = document.body.dataset.workspaceScrollLocked === 'true';
+            const scrollY = Number(document.body.dataset.workspaceScrollY || 0);
+
+            if (!wasLocked) {
+                return;
+            }
+
+            document.documentElement.classList.remove('overflow-hidden');
+            document.body.classList.remove('overflow-hidden');
+            delete document.body.dataset.workspaceScrollLocked;
+            delete document.body.dataset.workspaceScrollY;
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.width = '';
+            window.scrollTo(0, scrollY);
+        },
+    }));
+});
+
 window.Alpine = window.Alpine || Alpine;
 
 if (!window.__SANFAANI_ALPINE_STARTED__) {
@@ -87,6 +357,29 @@ const showToast = (message, tone = 'success') => {
         toast.classList.add('opacity-0');
         window.setTimeout(() => toast.remove(), 250);
     }, 4200);
+};
+
+window.SanfaaniToast = showToast;
+
+window.addEventListener('sanfaani:toast', (event) => {
+    const detail = event.detail || {};
+
+    if (detail.message) {
+        showToast(detail.message, detail.tone || 'success');
+    }
+});
+
+const initSessionToasts = () => {
+    document.querySelectorAll('[data-session-toast]').forEach((toast) => {
+        const message = toast.dataset.message;
+
+        if (!message || toast.dataset.toastShown === 'true') {
+            return;
+        }
+
+        toast.dataset.toastShown = 'true';
+        showToast(message, toast.dataset.tone || 'success');
+    });
 };
 
 const escapeHtml = (value) => String(value ?? '')
@@ -460,6 +753,7 @@ const initNotificationPolling = () => {
 
 initGlobalSearch();
 initNotificationPolling();
+initSessionToasts();
 
 document.addEventListener('submit', (event) => {
     const form = event.target;

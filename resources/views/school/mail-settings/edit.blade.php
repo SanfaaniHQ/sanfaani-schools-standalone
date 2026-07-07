@@ -16,6 +16,19 @@
             'is_primary' => $providers->isEmpty(),
         ]);
         $fallbackLabel = strtoupper($platformStatus['driver']).($platformStatus['external_delivery'] ? '' : ' — non-delivery');
+        $deliveryStatusLabel = fn (?string $status) => match ($status) {
+            'accepted_by_smtp', 'fallback_accepted' => 'Accepted by SMTP',
+            'delivery_unconfirmed' => 'Delivery unconfirmed',
+            'deferred' => 'Deferred',
+            'rejected' => 'Rejected',
+            'fallback_non_delivery' => 'Non-delivery fallback',
+            default => filled($status) ? str($status)->replace('_', ' ')->title()->toString() : 'Delivery unconfirmed',
+        };
+        $deliveryStatusTone = fn (?string $status) => in_array($status, ['accepted_by_smtp', 'fallback_accepted'], true)
+            ? 'bg-emerald-100 text-emerald-800'
+            : (in_array($status, ['deferred', 'delivery_unconfirmed'], true)
+                ? 'bg-amber-100 text-amber-800'
+                : 'bg-red-100 text-red-800');
     @endphp
 
     <div
@@ -104,6 +117,30 @@
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $label }}</p>
                         <p class="mt-2 truncate text-lg font-bold text-slate-950" title="{{ $value }}">{{ $value }}</p>
                         <p class="mt-1 truncate text-xs text-slate-500">{{ $note }}</p>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+
+        <section aria-labelledby="delivery-status-legend-heading" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 id="delivery-status-legend-heading" class="text-base font-bold text-slate-950">Delivery status meanings</h2>
+                    <p class="text-sm leading-6 text-slate-600">SMTP acceptance confirms handoff to a mail server, not Inbox placement.</p>
+                </div>
+            </div>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach ([
+                    ['Accepted by SMTP', 'The selected provider accepted the message for delivery.'],
+                    ['Delivery unconfirmed', 'The application cannot verify Inbox placement after SMTP handoff.'],
+                    ['Failed', 'The provider rejected the attempt or the connection could not complete.'],
+                    ['Deferred', 'The provider asked for the message to be retried later.'],
+                    ['Rejected', 'The provider explicitly refused the message or credentials.'],
+                    ['Non-delivery fallback', 'The fallback transport is log or array and did not send externally.'],
+                ] as [$label, $description])
+                    <article class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <h3 class="text-sm font-bold text-slate-950">{{ $label }}</h3>
+                        <p class="mt-1 text-xs leading-5 text-slate-600">{{ $description }}</p>
                     </article>
                 @endforeach
             </div>
@@ -305,10 +342,10 @@
             <div class="hidden overflow-x-auto md:block">
                 <table class="min-w-full divide-y divide-slate-200 text-sm">
                     <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th class="px-5 py-3">Date</th><th class="px-5 py-3">Provider</th><th class="px-5 py-3">Recipient</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Kind</th></tr></thead>
-                    <tbody class="divide-y divide-slate-100">@forelse($recentAttempts as $attempt)<tr><td class="px-5 py-3 text-slate-600">{{ $attempt->created_at?->format('M j, Y H:i') }}</td><td class="px-5 py-3 font-semibold text-slate-900">{{ $attempt->provider_name ?? strtoupper($attempt->transport) }}</td><td class="px-5 py-3 text-slate-600">{{ $attempt->recipient ?? '—' }}</td><td class="px-5 py-3"><span class="rounded-full px-2 py-1 text-xs font-semibold {{ in_array($attempt->status, ['accepted_by_smtp', 'fallback_accepted']) ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">{{ str($attempt->status)->replace('_', ' ')->title() }}</span></td><td class="px-5 py-3 text-slate-600">{{ ucfirst($attempt->message_kind ?? 'transactional') }}</td></tr>@empty<tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">No delivery attempts recorded yet.</td></tr>@endforelse</tbody>
+                    <tbody class="divide-y divide-slate-100">@forelse($recentAttempts as $attempt)<tr><td class="px-5 py-3 text-slate-600">{{ $attempt->created_at?->format('M j, Y H:i') }}</td><td class="px-5 py-3 font-semibold text-slate-900">{{ $attempt->provider_name ?? strtoupper($attempt->transport) }}</td><td class="px-5 py-3 text-slate-600">{{ $attempt->recipient ?? '—' }}</td><td class="px-5 py-3"><span class="rounded-full px-2 py-1 text-xs font-semibold {{ $deliveryStatusTone($attempt->status) }}">{{ $deliveryStatusLabel($attempt->status) }}</span></td><td class="px-5 py-3 text-slate-600">{{ ucfirst($attempt->message_kind ?? 'transactional') }}</td></tr>@empty<tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">No delivery attempts recorded yet.</td></tr>@endforelse</tbody>
                 </table>
             </div>
-            <div class="divide-y divide-slate-100 md:hidden">@forelse($recentAttempts as $attempt)<article class="p-4"><div class="flex items-start justify-between gap-3"><p class="font-bold text-slate-900">{{ $attempt->provider_name ?? strtoupper($attempt->transport) }}</p><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold">{{ str($attempt->status)->replace('_', ' ')->title() }}</span></div><p class="mt-2 break-all text-sm text-slate-600">{{ $attempt->recipient ?? 'No recipient recorded' }}</p><p class="mt-1 text-xs text-slate-500">{{ $attempt->created_at?->format('M j, Y H:i') }}</p></article>@empty<p class="p-8 text-center text-sm text-slate-500">No delivery attempts recorded yet.</p>@endforelse</div>
+            <div class="divide-y divide-slate-100 md:hidden">@forelse($recentAttempts as $attempt)<article class="p-4"><div class="flex items-start justify-between gap-3"><p class="font-bold text-slate-900">{{ $attempt->provider_name ?? strtoupper($attempt->transport) }}</p><span class="rounded-full px-2 py-1 text-xs font-semibold {{ $deliveryStatusTone($attempt->status) }}">{{ $deliveryStatusLabel($attempt->status) }}</span></div><p class="mt-2 break-all text-sm text-slate-600">{{ $attempt->recipient ?? 'No recipient recorded' }}</p><p class="mt-1 text-xs text-slate-500">{{ $attempt->created_at?->format('M j, Y H:i') }}</p></article>@empty<p class="p-8 text-center text-sm text-slate-500">No delivery attempts recorded yet.</p>@endforelse</div>
         </section>
     </div>
 </x-app-layout>

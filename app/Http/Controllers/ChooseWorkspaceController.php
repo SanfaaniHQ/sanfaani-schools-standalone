@@ -40,14 +40,18 @@ class ChooseWorkspaceController extends Controller
 
         $context = $workspaces->contextsFor($request->user())->firstWhere('key', $data['workspace']);
 
-        return $this->redirectFor($context);
+        return $this->redirectFor($context, true);
     }
 
     public function installationAdmin(Request $request, UserWorkspaceService $workspaces): RedirectResponse
     {
         abort_unless($workspaces->selectInstallationAdmin($request->user(), true), 403);
 
-        return redirect()->route('admin.dashboard');
+        return redirect()
+            ->route('admin.dashboard')
+            ->with('toast_success', __('ui.workspace_changed_to', [
+                'workspace' => __('ui.installation_admin'),
+            ]));
     }
 
     public function school(Request $request, UserWorkspaceService $workspaces): RedirectResponse
@@ -61,14 +65,23 @@ class ChooseWorkspaceController extends Controller
 
         if (filled($data['workspace'] ?? null)) {
             abort_unless($workspaces->selectSchoolByKey($request->user(), $data['workspace'], true), 403);
+            $context = $workspaces->contextsFor($request->user())->firstWhere('key', $data['workspace']);
 
-            return redirect()->route('school.dashboard');
+            return redirect()
+                ->route('school.dashboard')
+                ->with('toast_success', __('ui.workspace_changed_to', [
+                    'workspace' => $context['label'] ?? __('ui.school_workspace'),
+                ]));
         }
 
         if ($contexts->count() === 1) {
             $workspaces->select($request->user(), $contexts->first(), true);
 
-            return redirect()->route('school.dashboard');
+            return redirect()
+                ->route('school.dashboard')
+                ->with('toast_success', __('ui.workspace_changed_to', [
+                    'workspace' => $contexts->first()['label'] ?? __('ui.school_workspace'),
+                ]));
         }
 
         $workspaces->clear();
@@ -76,10 +89,18 @@ class ChooseWorkspaceController extends Controller
         return redirect()->route('workspace.create');
     }
 
-    private function redirectFor(?array $context): RedirectResponse
+    private function redirectFor(?array $context, bool $withToast = false): RedirectResponse
     {
         abort_unless($context, 403);
 
-        return redirect()->route(app(UserWorkspaceService::class)->destinationRoute($context));
+        $redirect = redirect()->route(app(UserWorkspaceService::class)->destinationRoute($context));
+
+        if ($withToast) {
+            $redirect->with('toast_success', __('ui.workspace_changed_to', [
+                'workspace' => $context['label'] ?? __('ui.workspace'),
+            ]));
+        }
+
+        return $redirect;
     }
 }

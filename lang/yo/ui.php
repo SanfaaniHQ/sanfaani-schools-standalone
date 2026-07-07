@@ -100,6 +100,7 @@ return [
     'local_installation' => 'Local Installation',
     'available_school_workspaces' => 'Available school workspaces',
     'installation_admin' => 'Installation Admin',
+    'installation_level_workspace' => 'Installation-level workspace',
     'installation_admin_intro' => 'Ṣakoso eto fifi sori ẹrọ ati ayẹwo lọtọ si awọn ipa ile-iwe.',
     'local_admin_console' => 'Local Admin Console',
     'go_to_school_workspace' => 'Go to School Workspace',
@@ -153,6 +154,9 @@ return [
     'local_branding' => 'Local Branding',
     'local_installation' => 'Local Installation',
     'system_status' => 'System Status',
+    'search_workspaces' => 'Search workspaces',
+    'switching_workspace' => 'Switching...',
+    'workspace_changed_to' => 'Workspace changed to :workspace.',
     'super_admin_assignment_blocked' => 'This email belongs to a Super Admin account and cannot be assigned as a School Admin.',
     'user_not_in_school' => 'This user does not belong to the specified school.',
 ];
