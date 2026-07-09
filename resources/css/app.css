@@ -276,12 +276,11 @@
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
 
-    .workspace-popover,
-    .workspace-sheet {
+    .workspace-selector-modal {
         contain: layout paint;
     }
 
-    .workspace-options-scroll {
+    .workspace-selector-content {
         scrollbar-gutter: stable;
         -webkit-overflow-scrolling: touch;
     }
@@ -436,12 +435,36 @@
     touch-action: pan-y;
 }
 
+.education-ops-shell [data-workspace-chooser-panel][role="dialog"] > form {
+    max-height: none;
+    overflow: hidden;
+}
+
 .education-ops-shell [data-workspace-option] {
     scroll-margin-block: 0.75rem;
 }
 
 .education-ops-shell [data-workspace-option][data-active="true"] {
     box-shadow: inset 0 0 0 1px var(--color-border-active);
+}
+
+.education-ops-shell [data-workspace-card][data-installation-workspace="true"] {
+    border-color: rgba(4, 120, 87, 0.28);
+    background: rgba(4, 120, 87, 0.045);
+}
+
+.education-ops-shell [data-workspace-card][data-selected="true"] {
+    border-color: var(--color-brand-primary);
+    background: rgba(4, 120, 87, 0.10);
+    box-shadow: var(--shadow-md), inset 0 0 0 1px rgba(4, 120, 87, 0.18);
+}
+
+.education-ops-shell [data-workspace-card][data-selected="true"] .workspace-card-check {
+    opacity: 1;
+}
+
+.education-ops-shell [data-workspace-footer] {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
 .education-ops-shell [data-table-scroll],
@@ -661,6 +684,10 @@ footer * {
 @media (max-width: 640px) {
     html {
         overflow-x: hidden;
+    }
+
+    .education-ops-shell [data-workspace-modal] {
+        max-height: calc(100dvh - 0.75rem);
     }
 
     .education-ops-shell main {

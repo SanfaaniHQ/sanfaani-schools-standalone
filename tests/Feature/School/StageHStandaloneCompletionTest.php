@@ -11,6 +11,13 @@ class StageHStandaloneCompletionTest extends TestCase
         $keys = [
             'workspace_switcher_title',
             'workspace_switcher_intro',
+            'workspace_selector_title',
+            'workspace_selector_intro',
+            'close_workspace_selector',
+            'previous_workspaces',
+            'next_workspaces',
+            'workspace_pages',
+            'select_workspace',
             'available_workspaces',
             'available_school_workspaces',
             'installation_level_workspace',
@@ -41,7 +48,7 @@ class StageHStandaloneCompletionTest extends TestCase
         }
     }
 
-    public function test_role_switcher_anchored_chooser_markup_is_present(): void
+    public function test_workspace_switcher_centered_selector_markup_is_present(): void
     {
         $topbarContents = file_get_contents(resource_path('views/layouts/partials/topbar.blade.php'));
         $contents = file_get_contents(resource_path('views/components/workspace-switcher.blade.php'));
@@ -49,21 +56,26 @@ class StageHStandaloneCompletionTest extends TestCase
         $this->assertStringContainsString('<x-workspace-switcher', $topbarContents);
         $this->assertStringContainsString('workspaceChooser', $contents);
         $this->assertStringContainsString('x-teleport="body"', $contents);
-        $this->assertStringContainsString('data-positioning="anchored-popover"', $contents);
-        $this->assertStringContainsString('workspace-popover', $contents);
-        $this->assertStringContainsString('workspace-sheet', $contents);
-        $this->assertStringContainsString("__('ui.switch_role')", $contents);
+        $this->assertStringContainsString('data-positioning="centered-modal"', $contents);
+        $this->assertStringContainsString('workspace-selector-modal', $contents);
+        $this->assertStringContainsString('data-workspace-switch-form', $contents);
+        $this->assertStringContainsString('data-workspace-grid', $contents);
+        $this->assertStringContainsString('data-workspace-page-controls', $contents);
+        $this->assertStringContainsString("__('ui.switch_workspace')", $contents);
+        $this->assertStringContainsString("__('ui.workspace_selector_title')", $contents);
         $this->assertStringContainsString('role="dialog"', $contents);
         $this->assertStringContainsString('aria-modal="true"', $contents);
-        $this->assertStringContainsString('@click.self="close()"', $contents);
-        $this->assertStringContainsString("__('ui.available_school_workspaces')", $contents);
-        $this->assertStringContainsString("__('ui.installation_admin')", $contents);
-        $this->assertStringContainsString("__('ui.manage_role_contexts')", $contents);
+        $this->assertStringContainsString('@click.self="backdropClose()"', $contents);
+        $this->assertStringContainsString("__('ui.cancel')", $contents);
+        $this->assertStringContainsString("__('ui.continue')", $contents);
         $this->assertStringNotContainsString('contextsFor(auth()->user())', $topbarContents);
         $this->assertStringNotContainsString('aria-modal="false"', $contents);
         $this->assertStringNotContainsString('workspace-switcher-popup', $contents);
         $this->assertStringNotContainsString('fixed inset-0 z-[80]', $contents);
         $this->assertStringNotContainsString('@click.outside="open = false" role="dialog"', $contents);
+        $this->assertStringNotContainsString('data-positioning="anchored-popover"', $contents);
+        $this->assertStringNotContainsString('workspace-popover', $contents);
+        $this->assertStringNotContainsString('workspace-sheet', $contents);
     }
 
     public function test_stage_h_views_use_shared_ui_surfaces(): void

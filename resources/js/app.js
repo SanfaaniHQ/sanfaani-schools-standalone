@@ -15,42 +15,34 @@ const focusableSelector = [
 document.addEventListener('alpine:init', () => {
     Alpine.data('workspaceChooser', (config = {}) => ({
         open: false,
-        isSheet: false,
-        query: '',
-        panelStyle: '',
+        selectedKey: config.selectedKey || '',
+        selectedLabel: config.selectedLabel || '',
+        page: 0,
+        pageSize: 6,
+        totalItems: Number(config.totalItems || 0),
+        submitting: false,
         submittingKey: null,
-        searchable: Boolean(config.searchable),
         previousActiveElement: null,
-        modeQuery: window.matchMedia('(max-width: 1023px), (pointer: coarse) and (max-width: 1180px)'),
+        desktopQuery: window.matchMedia('(min-width: 1024px)'),
 
         mount() {
-            this.syncMode();
+            this.syncPageSize();
 
             const sync = () => {
-                this.syncMode();
+                this.syncPageSize();
+                this.clampPage();
 
                 if (this.open) {
-                    if (this.isSheet) {
-                        this.lockBodyScroll();
-                    } else {
-                        this.unlockBodyScroll();
-                    }
-
-                    this.$nextTick(() => this.updatePlacement());
+                    this.$nextTick(() => this.focusSelectedOrFirst());
                 }
             };
 
             window.addEventListener('resize', sync, { passive: true });
             window.addEventListener('orientationchange', sync, { passive: true });
-            window.addEventListener('scroll', () => {
-                if (this.open && !this.isSheet) {
-                    this.updatePlacement();
-                }
-            }, true);
 
             this.$watch('open', (isOpen) => {
                 if (isOpen) {
-                    this.syncMode();
+                    this.syncPageSize();
                     this.lockBodyScroll();
                     return;
                 }
@@ -59,44 +51,97 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        syncMode() {
-            this.isSheet = this.modeQuery.matches;
+        syncPageSize() {
+            this.pageSize = this.desktopQuery.matches ? 6 : 4;
         },
 
-        toggle() {
-            if (this.open) {
-                this.close();
+        hasMultiplePages() {
+            return this.totalPages() > 1;
+        },
+
+        totalPages() {
+            return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
+        },
+
+        pages() {
+            return Array.from({ length: this.totalPages() }, (_, index) => index);
+        },
+
+        pageLabel(index) {
+            return `Workspace page ${index + 1}`;
+        },
+
+        workspaceKeySelector(key) {
+            const escapedKey = window.CSS?.escape
+                ? CSS.escape(String(key))
+                : String(key).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+
+            return `[data-workspace-key="${escapedKey}"]`;
+        },
+
+        clampPage() {
+            this.page = Math.min(Math.max(0, this.page), this.totalPages() - 1);
+        },
+
+        pageForKey(key = this.selectedKey) {
+            if (!key || !this.$refs.panel) {
+                return this.page;
+            }
+
+            const option = this.$refs.panel.querySelector(this.workspaceKeySelector(key));
+            const index = Number(option?.dataset.workspaceIndex ?? 0);
+
+            return Math.max(0, Math.floor(index / this.pageSize));
+        },
+
+        visibleOnPage(option) {
+            const index = Number(option?.dataset.workspaceIndex ?? 0);
+            const pageStart = this.page * this.pageSize;
+
+            return index >= pageStart && index < pageStart + this.pageSize;
+        },
+
+        goToPage(index) {
+            if (this.submitting) {
                 return;
             }
 
-            this.openChooser();
+            this.page = Math.min(Math.max(0, Number(index) || 0), this.totalPages() - 1);
+            this.$nextTick(() => this.focusSelectedOrFirst());
+        },
+
+        nextPage() {
+            this.goToPage(this.page + 1);
+        },
+
+        previousPage() {
+            this.goToPage(this.page - 1);
         },
 
         openChooser(source = 'pointer') {
             this.previousActiveElement = document.activeElement;
-            this.syncMode();
+            this.syncPageSize();
+            this.page = this.pageForKey();
             this.open = true;
 
             this.$nextTick(() => {
-                this.updatePlacement();
+                this.page = this.pageForKey();
 
-                if (this.searchable && source !== 'keyboard' && this.$refs.search) {
-                    this.$refs.search.focus();
+                if (source === 'keyboard') {
+                    this.focusSelectedOrFirst();
                     return;
                 }
 
-                this.focusActiveOrFirst();
+                this.focusSelectedOrFirst();
             });
         },
 
         close() {
-            if (!this.open) {
+            if (!this.open || this.submitting) {
                 return;
             }
 
             this.open = false;
-            this.query = '';
-            this.submittingKey = null;
 
             this.$nextTick(() => {
                 const target = this.previousActiveElement || this.$refs.trigger;
@@ -107,18 +152,39 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        markSubmitting(key) {
-            this.submittingKey = key;
+        backdropClose() {
+            if (!this.submitting) {
+                this.close();
+            }
         },
 
-        matches(option) {
-            const query = this.query.trim().toLowerCase();
-
-            if (!query) {
-                return true;
+        selectWorkspace(key, label) {
+            if (this.submitting) {
+                return;
             }
 
-            return (option.dataset.searchText || '').includes(query);
+            this.selectedKey = key;
+            this.selectedLabel = label || '';
+        },
+
+        submitWorkspace(event) {
+            if (!this.selectedKey) {
+                event.preventDefault();
+                this.focusSelectedOrFirst();
+                return;
+            }
+
+            if (this.submitting) {
+                event.preventDefault();
+                return;
+            }
+
+            this.markSubmitting(this.selectedKey);
+        },
+
+        markSubmitting(key) {
+            this.submitting = true;
+            this.submittingKey = key;
         },
 
         optionButtons() {
@@ -126,7 +192,16 @@ document.addEventListener('alpine:init', () => {
                 .filter((option) => option.offsetParent !== null && !option.disabled);
         },
 
-        focusActiveOrFirst() {
+        focusSelectedOrFirst() {
+            const selected = this.selectedKey && this.$refs.panel
+                ? this.$refs.panel.querySelector(this.workspaceKeySelector(this.selectedKey))
+                : null;
+
+            if (selected && selected.offsetParent !== null) {
+                selected.focus({ preventScroll: true });
+                return;
+            }
+
             const active = this.$refs.panel?.querySelector('[data-workspace-option][data-active="true"]');
 
             if (active && active.offsetParent !== null) {
@@ -201,40 +276,8 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        updatePlacement() {
-            if (this.isSheet || !this.$refs.trigger) {
-                this.panelStyle = '';
-                return;
-            }
-
-            const rect = this.$refs.trigger.getBoundingClientRect();
-            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-            const gap = 8;
-            const margin = 8;
-            const width = Math.min(640, viewportWidth - (margin * 2));
-            const left = Math.min(
-                Math.max(margin, rect.right - width),
-                Math.max(margin, viewportWidth - width - margin),
-            );
-            const spaceBelow = viewportHeight - rect.bottom - gap - margin;
-            const spaceAbove = rect.top - gap - margin;
-            const placeAbove = spaceBelow < 360 && spaceAbove > spaceBelow;
-            const availableHeight = Math.max(280, Math.min(672, placeAbove ? spaceAbove : spaceBelow));
-            const top = placeAbove
-                ? Math.max(margin, rect.top - gap - availableHeight)
-                : Math.min(viewportHeight - margin - availableHeight, rect.bottom + gap);
-
-            this.panelStyle = [
-                `left: ${Math.round(left)}px`,
-                `top: ${Math.round(Math.max(margin, top))}px`,
-                `width: ${Math.round(width)}px`,
-                `max-height: ${Math.round(availableHeight)}px`,
-            ].join('; ');
-        },
-
         lockBodyScroll() {
-            if (!this.isSheet || document.body.dataset.workspaceScrollLocked === 'true') {
+            if (document.body.dataset.workspaceScrollLocked === 'true') {
                 return;
             }
 
