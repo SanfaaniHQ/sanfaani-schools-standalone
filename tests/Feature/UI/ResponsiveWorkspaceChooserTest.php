@@ -8,31 +8,39 @@ use Tests\TestCase;
 
 class ResponsiveWorkspaceChooserTest extends TestCase
 {
-    public function test_workspace_chooser_uses_anchored_popover_and_mobile_sheet_layout(): void
+    public function test_workspace_chooser_uses_centered_modal_and_mobile_sheet_layout(): void
     {
         $html = $this->renderWorkspaceChooser();
 
         $this->assertStringContainsString('data-workspace-switcher', $html);
         $this->assertStringContainsString('x-data="workspaceChooser', $html);
         $this->assertStringContainsString('x-teleport="body"', $html);
-        $this->assertStringContainsString('data-positioning="anchored-popover"', $html);
-        $this->assertStringContainsString('workspace-popover', $html);
+        $this->assertStringContainsString('data-positioning="centered-modal"', $html);
+        $this->assertStringContainsString('workspace-modal', $html);
         $this->assertStringContainsString('workspace-sheet', $html);
         $this->assertStringContainsString('100dvh', $html);
-        $this->assertStringNotContainsString('items-start justify-center overflow-y-auto bg-black/60', $html);
+        $this->assertStringContainsString(__('ui.workspace_switcher_title'), $html);
+        $this->assertStringNotContainsString('data-positioning="anchored-popover"', $html);
     }
 
-    public function test_workspace_chooser_preserves_post_forms_csrf_and_active_workspace_state(): void
+    public function test_workspace_chooser_preserves_post_form_csrf_selected_and_active_workspace_state(): void
     {
         $html = $this->renderWorkspaceChooser();
 
         $this->assertStringContainsString('method="POST"', $html);
+        $this->assertStringContainsString('data-workspace-switch-form', $html);
         $this->assertStringContainsString('name="_token"', $html);
         $this->assertStringContainsString('name="workspace"', $html);
+        $this->assertStringContainsString("x-bind:value=\"selectedKey ?? ''\"", $html);
         $this->assertStringContainsString('data-workspace-type="installation_admin"', $html);
         $this->assertStringContainsString('data-role-name="teacher"', $html);
+        $this->assertStringContainsString('data-workspace-key="school:10:teacher"', $html);
         $this->assertStringContainsString('aria-current="true"', $html);
         $this->assertStringContainsString('data-active="true"', $html);
+        $this->assertStringContainsString('x-bind:data-selected', $html);
+        $this->assertStringContainsString('x-bind:aria-checked', $html);
+        $this->assertStringContainsString(__('ui.selected_workspace'), $html);
+        $this->assertStringContainsString(__('ui.continue'), $html);
         $this->assertStringContainsString(__('ui.switching_workspace'), $html);
     }
 
@@ -49,6 +57,7 @@ class ResponsiveWorkspaceChooserTest extends TestCase
             '@keydown.escape.window="close()"',
             '@keydown.tab="trapFocus($event)"',
             'data-workspace-search',
+            'x-on:click="selectWorkspace($el)"',
             'x-on:keydown.arrow-down.prevent',
             'x-on:keydown.home.prevent',
             'x-on:keydown.end.prevent',
@@ -60,8 +69,9 @@ class ResponsiveWorkspaceChooserTest extends TestCase
             "Alpine.data('workspaceChooser'",
             'lockBodyScroll()',
             'unlockBodyScroll()',
+            'selectWorkspace(option)',
+            'selectedKey',
             'focusActiveOrFirst()',
-            'updatePlacement()',
             'preventScroll: true',
             'workspaceScrollLocked',
             'sanfaani:toast',
@@ -70,9 +80,10 @@ class ResponsiveWorkspaceChooserTest extends TestCase
         }
 
         foreach ([
-            '.workspace-popover',
+            '.workspace-modal',
             '.workspace-sheet',
             '[data-workspace-overlay]',
+            '[data-workspace-chooser-panel] > form',
             'overscroll-behavior',
             'scrollbar-gutter',
             '@media (max-width: 480px)',

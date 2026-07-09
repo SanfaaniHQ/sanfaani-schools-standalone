@@ -17,7 +17,8 @@ document.addEventListener('alpine:init', () => {
         open: false,
         isSheet: false,
         query: '',
-        panelStyle: '',
+        activeKey: config.activeKey || null,
+        selectedKey: config.activeKey || null,
         submittingKey: null,
         searchable: Boolean(config.searchable),
         previousActiveElement: null,
@@ -28,25 +29,10 @@ document.addEventListener('alpine:init', () => {
 
             const sync = () => {
                 this.syncMode();
-
-                if (this.open) {
-                    if (this.isSheet) {
-                        this.lockBodyScroll();
-                    } else {
-                        this.unlockBodyScroll();
-                    }
-
-                    this.$nextTick(() => this.updatePlacement());
-                }
             };
 
             window.addEventListener('resize', sync, { passive: true });
             window.addEventListener('orientationchange', sync, { passive: true });
-            window.addEventListener('scroll', () => {
-                if (this.open && !this.isSheet) {
-                    this.updatePlacement();
-                }
-            }, true);
 
             this.$watch('open', (isOpen) => {
                 if (isOpen) {
@@ -78,7 +64,7 @@ document.addEventListener('alpine:init', () => {
             this.open = true;
 
             this.$nextTick(() => {
-                this.updatePlacement();
+                this.ensureSelection();
 
                 if (this.searchable && source !== 'keyboard' && this.$refs.search) {
                     this.$refs.search.focus();
@@ -97,6 +83,7 @@ document.addEventListener('alpine:init', () => {
             this.open = false;
             this.query = '';
             this.submittingKey = null;
+            this.selectedKey = this.activeKey || null;
 
             this.$nextTick(() => {
                 const target = this.previousActiveElement || this.$refs.trigger;
@@ -107,8 +94,40 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
-        markSubmitting(key) {
-            this.submittingKey = key;
+        selectWorkspace(option) {
+            const key = option?.dataset?.workspaceKey;
+
+            if (!key || this.submittingKey !== null) {
+                return;
+            }
+
+            this.selectedKey = key;
+        },
+
+        isSelected(key) {
+            return this.selectedKey === key;
+        },
+
+        ensureSelection() {
+            const options = this.optionButtons();
+
+            if (options.some((option) => option.dataset.workspaceKey === this.selectedKey)) {
+                return;
+            }
+
+            this.selectedKey = options[0]?.dataset.workspaceKey || this.activeKey || null;
+        },
+
+        markSubmitting(event) {
+            this.ensureSelection();
+
+            if (!this.selectedKey) {
+                event.preventDefault();
+                this.focusFirst();
+                return;
+            }
+
+            this.submittingKey = this.selectedKey;
         },
 
         matches(option) {
@@ -127,9 +146,16 @@ document.addEventListener('alpine:init', () => {
         },
 
         focusActiveOrFirst() {
-            const active = this.$refs.panel?.querySelector('[data-workspace-option][data-active="true"]');
+            const options = this.optionButtons();
+            const selected = options.find((option) => option.dataset.workspaceKey === this.selectedKey);
+            const active = options.find((option) => option.dataset.active === 'true');
 
-            if (active && active.offsetParent !== null) {
+            if (selected) {
+                selected.focus({ preventScroll: true });
+                return;
+            }
+
+            if (active) {
                 active.focus({ preventScroll: true });
                 return;
             }
@@ -201,40 +227,8 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        updatePlacement() {
-            if (this.isSheet || !this.$refs.trigger) {
-                this.panelStyle = '';
-                return;
-            }
-
-            const rect = this.$refs.trigger.getBoundingClientRect();
-            const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-            const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-            const gap = 8;
-            const margin = 8;
-            const width = Math.min(640, viewportWidth - (margin * 2));
-            const left = Math.min(
-                Math.max(margin, rect.right - width),
-                Math.max(margin, viewportWidth - width - margin),
-            );
-            const spaceBelow = viewportHeight - rect.bottom - gap - margin;
-            const spaceAbove = rect.top - gap - margin;
-            const placeAbove = spaceBelow < 360 && spaceAbove > spaceBelow;
-            const availableHeight = Math.max(280, Math.min(672, placeAbove ? spaceAbove : spaceBelow));
-            const top = placeAbove
-                ? Math.max(margin, rect.top - gap - availableHeight)
-                : Math.min(viewportHeight - margin - availableHeight, rect.bottom + gap);
-
-            this.panelStyle = [
-                `left: ${Math.round(left)}px`,
-                `top: ${Math.round(Math.max(margin, top))}px`,
-                `width: ${Math.round(width)}px`,
-                `max-height: ${Math.round(availableHeight)}px`,
-            ].join('; ');
-        },
-
         lockBodyScroll() {
-            if (!this.isSheet || document.body.dataset.workspaceScrollLocked === 'true') {
+            if (document.body.dataset.workspaceScrollLocked === 'true') {
                 return;
             }
 

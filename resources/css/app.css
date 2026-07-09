@@ -276,6 +276,7 @@
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
 
+    .workspace-modal,
     .workspace-popover,
     .workspace-sheet {
         contain: layout paint;
@@ -434,6 +435,11 @@
 
 .education-ops-shell [data-workspace-chooser-panel] {
     touch-action: pan-y;
+}
+
+.education-ops-shell [data-workspace-chooser-panel] > form {
+    max-height: none;
+    overflow-y: visible;
 }
 
 .education-ops-shell [data-workspace-option] {
