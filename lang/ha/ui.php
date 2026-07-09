@@ -165,6 +165,7 @@ return [
     'next_workspaces' => 'Next workspaces',
     'workspace_pages' => 'Workspace pages',
     'select_workspace' => 'Select :workspace',
+    'current_workspace' => 'Current workspace',
     'switching_workspace' => 'Switching...',
     'workspace_changed_to' => 'Workspace changed to :workspace.',
     'super_admin_assignment_blocked' => 'This email belongs to a Super Admin account and cannot be assigned as a School Admin.',
