@@ -3,6 +3,7 @@
 namespace Tests\Feature\Mail;
 
 use App\Models\MailDeliveryAttempt;
+use App\Models\MailSetting;
 use App\Models\School;
 use App\Models\SchoolMailProviderProfile;
 use App\Models\User;
@@ -15,7 +16,9 @@ use App\Services\TenantContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use RuntimeException;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -263,7 +266,7 @@ class SchoolMailProviderProfileTest extends TestCase
 
     public function test_existing_single_profile_settings_are_backfilled_without_losing_encryption(): void
     {
-        $legacy = app(MailSettingService::class)->updateForSchool($this->school, [
+        $legacy = $this->legacyMailSetting([
             'is_enabled' => true,
             'mailer' => 'smtp',
             'host' => 'smtp.gmail.com',
@@ -276,14 +279,122 @@ class SchoolMailProviderProfileTest extends TestCase
             'timeout' => 10,
         ]);
 
-        $migration = require database_path('migrations/2026_07_06_000001_create_school_mail_provider_profiles_and_extend_attempts.php');
-        $migration->up();
+        $this->runMailProviderMigration();
 
         $provider = SchoolMailProviderProfile::where('school_id', $this->school->id)->sole();
         $this->assertSame('gmail', $provider->provider_type);
         $this->assertSame('legacy-app-password', $provider->password);
         $this->assertSame($legacy->getRawOriginal('password'), $provider->getRawOriginal('password'));
         $this->assertTrue($provider->is_primary);
+    }
+
+    public function test_mail_provider_migration_normalizes_iso_legacy_test_datetime_and_preserves_encrypted_password(): void
+    {
+        $legacy = $this->legacyMailSetting([
+            'host' => 'smtp.gmail.com',
+            'username' => 'legacy@example.test',
+            'password' => 'legacy-app-password',
+            'from_address' => 'legacy@example.test',
+        ]);
+
+        DB::table('mail_settings')->where('id', $legacy->id)->update([
+            'metadata' => json_encode([
+                'timeout' => 20,
+                'last_test' => [
+                    'outcome' => 'accepted_by_smtp',
+                    'category' => 'accepted',
+                    'at' => '2026-07-07T19:49:44+00:00',
+                ],
+            ]),
+            'created_at' => '2026-07-07T18:49:44+00:00',
+            'updated_at' => '2026-07-07T19:00:01+00:00',
+        ]);
+        $legacy = $legacy->fresh();
+
+        $this->runMailProviderMigration();
+
+        $provider = SchoolMailProviderProfile::where('school_id', $this->school->id)->sole();
+        $rawProvider = DB::table('school_mail_provider_profiles')->where('id', $provider->id)->first();
+
+        $this->assertSame('2026-07-07 19:49:44', $rawProvider->last_tested_at);
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $rawProvider->last_tested_at);
+        $this->assertSame('2026-07-07 18:49:44', $rawProvider->created_at);
+        $this->assertSame('2026-07-07 19:00:01', $rawProvider->updated_at);
+        $this->assertSame('legacy-app-password', $provider->password);
+        $this->assertSame($legacy->getRawOriginal('password'), $provider->getRawOriginal('password'));
+        $this->assertNotSame('legacy-app-password', $provider->getRawOriginal('password'));
+    }
+
+    public function test_mail_provider_migration_is_safe_after_partial_table_creation_and_reruns_without_duplicates(): void
+    {
+        $this->legacyMailSetting([
+            'host' => 'mail.example.test',
+            'username' => 'legacy@example.test',
+            'from_address' => 'legacy@example.test',
+        ]);
+
+        $this->runMailProviderMigration();
+        $this->runMailProviderMigration();
+
+        $this->assertTrue(Schema::hasTable('school_mail_provider_profiles'));
+
+        foreach (['provider_profile_id', 'provider_name', 'provider_type', 'provider_position', 'attempt_sequence', 'message_kind'] as $column) {
+            $this->assertTrue(Schema::hasColumn('mail_delivery_attempts', $column));
+        }
+
+        $this->assertSame(1, SchoolMailProviderProfile::where('school_id', $this->school->id)->count());
+    }
+
+    public function test_mail_provider_migration_updates_existing_matching_profile_without_replacing_encrypted_password(): void
+    {
+        $legacy = $this->legacyMailSetting([
+            'host' => 'mail.example.test',
+            'username' => 'legacy@example.test',
+            'password' => 'legacy-app-password',
+            'from_address' => 'legacy@example.test',
+        ]);
+        DB::table('mail_settings')->where('id', $legacy->id)->update([
+            'metadata' => json_encode([
+                'last_test' => [
+                    'outcome' => 'failed',
+                    'category' => 'authentication_failed',
+                    'at' => '2026-07-07T19:49:44+00:00',
+                ],
+            ]),
+        ]);
+
+        $existing = app(SchoolMailProviderService::class)->save($this->school, $this->profile([
+            'host' => 'mail.example.test',
+            'username' => 'legacy@example.test',
+            'password' => 'existing-provider-secret',
+            'from_address' => 'legacy@example.test',
+        ]));
+        $existingCiphertext = $existing->fresh()->getRawOriginal('password');
+
+        $this->runMailProviderMigration();
+
+        $provider = SchoolMailProviderProfile::where('school_id', $this->school->id)->sole();
+        $rawProvider = DB::table('school_mail_provider_profiles')->where('id', $provider->id)->first();
+
+        $this->assertSame($existing->id, $provider->id);
+        $this->assertSame($existingCiphertext, $provider->getRawOriginal('password'));
+        $this->assertSame('existing-provider-secret', $provider->password);
+        $this->assertSame('2026-07-07 19:49:44', $rawProvider->last_tested_at);
+        $this->assertSame($legacy->id, data_get($provider->metadata, 'migrated_from_mail_setting_id'));
+    }
+
+    public function test_mail_provider_migration_does_not_touch_protected_files(): void
+    {
+        $protectedFiles = [
+            public_path('build.zip'),
+            database_path('migrations/2026_05_01_173857_create_result_publications_table.php'),
+        ];
+        $before = $this->fileHashes($protectedFiles);
+
+        $this->legacyMailSetting();
+        $this->runMailProviderMigration();
+
+        $this->assertSame($before, $this->fileHashes($protectedFiles));
     }
 
     public function test_school_admin_provider_ui_is_tenant_isolated_and_never_renders_passwords(): void
@@ -348,6 +459,37 @@ class SchoolMailProviderProfileTest extends TestCase
             'is_primary' => false,
             'priority' => 10,
         ], $overrides);
+    }
+
+    private function legacyMailSetting(array $overrides = []): MailSetting
+    {
+        return app(MailSettingService::class)->updateForSchool($this->school, array_merge([
+            'is_enabled' => true,
+            'mailer' => 'smtp',
+            'host' => 'mail.example.test',
+            'port' => 587,
+            'username' => 'legacy@example.test',
+            'password' => 'legacy-app-password',
+            'encryption' => 'tls',
+            'from_address' => 'legacy@example.test',
+            'from_name' => 'Legacy School',
+            'timeout' => 10,
+        ], $overrides));
+    }
+
+    private function runMailProviderMigration(): void
+    {
+        $migration = require database_path('migrations/2026_07_06_000001_create_school_mail_provider_profiles_and_extend_attempts.php');
+        $migration->up();
+    }
+
+    private function fileHashes(array $paths): array
+    {
+        return collect($paths)
+            ->mapWithKeys(fn (string $path): array => [
+                $path => File::exists($path) ? hash_file('sha256', $path) : null,
+            ])
+            ->all();
     }
 
     private function school(string $name): School
